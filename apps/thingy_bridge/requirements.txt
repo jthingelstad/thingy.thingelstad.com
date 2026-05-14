@@ -1,0 +1,9 @@
+# thingy_bridge — minimal dependency set
+# (deliberately not pinned to workshop_bot's requirements; the bridge
+# has a much smaller surface and we want startup + reinstall to be fast)
+
+discord.py>=2.4.0,<3
+httpx>=0.27.0,<1
+anthropic>=0.40.0,<1
+APScheduler>=3.10.0,<4
+python-dotenv>=1.0.0,<2
