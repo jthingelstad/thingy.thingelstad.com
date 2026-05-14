@@ -226,14 +226,13 @@ class ReadCommandTests(_DBCase):
 
 
 class WiringTests(unittest.TestCase):
-    @unittest.skip("populated in commit 4 — bridge commands.py")
     def test_thingy_subgroup_wired(self):
         from apps.thingy_bridge.commands import register_thingy_commands
         tree = register_thingy_commands(MagicMock())
-        thingy = next(c for c in tree.commands if getattr(c, "name", None) == "thingy")
+        # The bridge tree holds `thingy` at the top level (no /workshop parent).
+        thingy = next(c for c in tree.groups if getattr(c, "name", None) == "thingy")
         self.assertEqual({getattr(c, "_cmd_name", None) for c in thingy.commands}, {"recent", "show", "sync"})
 
-    @unittest.skip("populated in commit 4 — bridge scheduler/jobs.py JOBS tuple")
     def test_scheduler_has_thingy_watch(self):
         from apps.thingy_bridge.scheduler.jobs import by_id
         spec = by_id("thingy-watch")
