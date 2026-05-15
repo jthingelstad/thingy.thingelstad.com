@@ -109,6 +109,14 @@ async def run() -> int:
             logger.info("slash sync: %d command(s) registered", len(synced))
         except Exception:  # noqa: BLE001
             logger.exception("slash sync failed (commands won't appear until sync succeeds)")
+        # Per-boot startup card in #chatter, matching the workshop_bot
+        # personas. Idempotent across discord.py's reconnection-fires-
+        # on_ready behaviour (single-shot flag on the bot).
+        try:
+            from .tools import startup
+            await startup.post_startup_card(bot)
+        except Exception:  # noqa: BLE001
+            logger.exception("startup announce failed")
 
     loop = asyncio.get_running_loop()
     stop_event = asyncio.Event()

@@ -9,7 +9,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, call, patch
 
 REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO))
@@ -124,6 +124,34 @@ class DbHelperTests(_DBCase):
         self.assertEqual(len(db.recent_thingy_conversations(10)), 1)
         self.assertIsNone(db.get_thingy_conversation(999))
 
+    def test_unposted_lists_only_null_rows_oldest_first(self):
+        # Three rows: A (posted), B (unposted, older), C (unposted, newer).
+        a = db.insert_thingy_conversation(
+            subscriber_hash="a", started_at="2026-05-12T00:00:00Z", ended_at="2026-05-12T00:01:00Z",
+            turn_count=1, transcript=[{"request_id": "ra"}], turn_request_ids=["ra"],
+            source_issues=[], feedback=None, topic="A", assessment_md=None,
+        )
+        db.mark_thingy_conversation_posted(a)
+        b = db.insert_thingy_conversation(
+            subscriber_hash="b", started_at="2026-05-12T01:00:00Z", ended_at="2026-05-12T01:01:00Z",
+            turn_count=1, transcript=[{"request_id": "rb"}], turn_request_ids=["rb"],
+            source_issues=[], feedback=None, topic="B", assessment_md=None,
+        )
+        c = db.insert_thingy_conversation(
+            subscriber_hash="c", started_at="2026-05-12T02:00:00Z", ended_at="2026-05-12T02:01:00Z",
+            turn_count=1, transcript=[{"request_id": "rc"}], turn_request_ids=["rc"],
+            source_issues=[], feedback=None, topic="C", assessment_md=None,
+        )
+        rows = db.unposted_thingy_conversations()
+        self.assertEqual([r["id"] for r in rows], [b, c])  # oldest first; A excluded
+        self.assertEqual(db.count_unposted_thingy_conversations(), 2)
+        # Limit honored.
+        self.assertEqual(len(db.unposted_thingy_conversations(limit=1)), 1)
+        # After posting B, only C remains.
+        db.mark_thingy_conversation_posted(b)
+        self.assertEqual([r["id"] for r in db.unposted_thingy_conversations()], [c])
+        self.assertEqual(db.count_unposted_thingy_conversations(), 1)
+
 
 class WatchTests(_DBCase):
     def _ctx(self):
@@ -177,6 +205,109 @@ class WatchTests(_DBCase):
             res = asyncio.run(thingy_job.watch(self._ctx()))
         self.assertFalse(res.ok)
         self.assertIn("bridge down", res.message)
+
+    def test_post_forbidden_stores_convo_but_leaves_unposted(self):
+        """Reproduces the 2026-05-14 outage: Thingy bot not in #chatter, so
+        ``ctx.post`` raised Forbidden mid-loop. Before the fix this killed
+        the run and the inserted conversation was orphaned forever. Now
+        the exception is caught, the row stays in the DB, the job result
+        is still ok, and ``posted_to_chatter_at`` is NULL so the next
+        run can retry."""
+        import discord
+        turns = [_turn("r1", "subA", "2026-05-12T01:00:00Z", q="?", issues=["247"])]
+        assessment = {"topic": "t", "reader": "R.", "thingy": "T.", "takeaway": "K."}
+        ctx = self._ctx()
+        ctx.post = AsyncMock(side_effect=discord.DiscordException("403 Forbidden 50001"))
+        with patch.object(thingy_job.thingy_client, "fetch_conversations", AsyncMock(return_value=turns)), \
+             patch.object(thingy_job, "_assess", AsyncMock(return_value=assessment)):
+            res = asyncio.run(thingy_job.watch(ctx))
+        self.assertTrue(res.ok, res.message)
+        self.assertEqual(res.data["stored"], 1)
+        self.assertEqual(res.data["posted"], 0)
+        # The conversation was stored but not marked posted.
+        rows = db.recent_thingy_conversations(10)
+        self.assertEqual(len(rows), 1)
+        self.assertIsNone(rows[0]["posted_to_chatter_at"])
+        self.assertEqual(db.count_unposted_thingy_conversations(), 1)
+        # No "...N more pending" tail when posted == 0 (channel unreachable).
+        self.assertEqual(ctx.post.await_count, 1)
+
+    def test_orphan_is_backfilled_on_next_run(self):
+        """After a Forbidden window heals (bot is added to #chatter), the
+        next watch run posts the orphan card without re-fetching it from
+        the Lambda — purely from the local mirror."""
+        import discord
+        turns = [_turn("r1", "subA", "2026-05-12T01:00:00Z", q="?", issues=["247"])]
+        assessment = {"topic": "t", "reader": "R.", "thingy": "T.", "takeaway": "K."}
+        # First run: post fails, conversation stored as orphan.
+        ctx1 = self._ctx()
+        ctx1.post = AsyncMock(side_effect=discord.DiscordException("403 Forbidden 50001"))
+        with patch.object(thingy_job.thingy_client, "fetch_conversations", AsyncMock(return_value=turns)), \
+             patch.object(thingy_job, "_assess", AsyncMock(return_value=assessment)):
+            asyncio.run(thingy_job.watch(ctx1))
+        self.assertEqual(db.count_unposted_thingy_conversations(), 1)
+
+        # Second run: post succeeds. The Lambda returns no new turns; the
+        # backfill alone should post the orphan card and mark it posted.
+        ctx2 = self._ctx()  # default post returns True
+        with patch.object(thingy_job.thingy_client, "fetch_conversations", AsyncMock(return_value=[])), \
+             patch.object(thingy_job, "_assess", AsyncMock(return_value=assessment)):
+            res = asyncio.run(thingy_job.watch(ctx2))
+        self.assertTrue(res.ok, res.message)
+        self.assertEqual(res.data["backfilled"], 1)
+        self.assertEqual(res.data["posted"], 1)
+        self.assertEqual(res.data["stored"], 0)
+        self.assertEqual(db.count_unposted_thingy_conversations(), 0)
+        rows = db.recent_thingy_conversations(10)
+        self.assertIsNotNone(rows[0]["posted_to_chatter_at"])
+        self.assertEqual(ctx2.post.await_count, 1)  # one orphan card, no tail
+
+    def test_orphan_backfill_bails_fast_on_persistent_forbidden(self):
+        """Three orphans, channel still broken: only one Forbidden round-trip,
+        not three. The break in the orphan loop saves throwaway API calls."""
+        import discord
+        for i, end in enumerate(("2026-05-12T01:00:00Z",
+                                 "2026-05-12T02:00:00Z",
+                                 "2026-05-12T03:00:00Z")):
+            db.insert_thingy_conversation(
+                subscriber_hash=f"s{i}", started_at=end, ended_at=end, turn_count=1,
+                transcript=[{"request_id": f"rid{i}"}], turn_request_ids=[f"rid{i}"],
+                source_issues=[], feedback=None, topic=f"T{i}", assessment_md=None,
+            )
+        ctx = self._ctx()
+        ctx.post = AsyncMock(side_effect=discord.DiscordException("403"))
+        with patch.object(thingy_job.thingy_client, "fetch_conversations", AsyncMock(return_value=[])):
+            res = asyncio.run(thingy_job.watch(ctx))
+        self.assertTrue(res.ok, res.message)
+        self.assertEqual(res.data["backfilled"], 0)
+        self.assertEqual(ctx.post.await_count, 1)  # bailed after the first failure
+        self.assertEqual(db.count_unposted_thingy_conversations(), 3)
+
+    def test_orphans_and_new_share_card_budget(self):
+        """Backfill orphans count toward the same per-run cap as new
+        cards — a long backlog drains over runs instead of flooding."""
+        # Plant _MAX_CARDS_PER_RUN + 2 orphans; expect the cap on cards.
+        cap = thingy_job._MAX_CARDS_PER_RUN
+        for i in range(cap + 2):
+            db.insert_thingy_conversation(
+                subscriber_hash=f"s{i}",
+                started_at=f"2026-05-12T0{i % 9}:00:00Z",
+                ended_at=f"2026-05-12T0{i % 9}:01:00Z",
+                turn_count=1, transcript=[{"request_id": f"o{i}"}],
+                turn_request_ids=[f"o{i}"], source_issues=[],
+                feedback=None, topic=f"O{i}", assessment_md=None,
+            )
+        ctx = self._ctx()  # post returns True
+        with patch.object(thingy_job.thingy_client, "fetch_conversations", AsyncMock(return_value=[])):
+            res = asyncio.run(thingy_job.watch(ctx))
+        self.assertTrue(res.ok, res.message)
+        self.assertEqual(res.data["backfilled"], cap)
+        # cap cards + one "…N more pending" tail.
+        self.assertEqual(ctx.post.await_count, cap + 1)
+        self.assertEqual(db.count_unposted_thingy_conversations(), 2)
+        # The tail message names the remaining count.
+        tail_text = ctx.post.await_args_list[-1].args[1]
+        self.assertIn("**2** more pending", tail_text)
 
 
 class ReadCommandTests(_DBCase):

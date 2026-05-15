@@ -287,6 +287,36 @@ def recent_thingy_conversations(limit: int = 8) -> list[dict[str, Any]]:
     return [_hydrate_thingy_conversation(r) for r in rows]
 
 
+def unposted_thingy_conversations(limit: int = 50) -> list[dict[str, Any]]:
+    """Conversations mirrored locally but whose ``#chatter`` card never
+    landed (``posted_to_chatter_at IS NULL``).
+
+    Returned oldest-first so the operator sees them in chronological
+    order when the bridge backfills after a permission/access window.
+    The watch job reads this at the top of each run and retries the
+    posts — without it, a row whose post failed is trapped forever
+    because :func:`seen_thingy_turn_request_ids` excludes its turns
+    from re-forming a fresh conversation.
+    """
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT * FROM thingy_conversations "
+            "WHERE posted_to_chatter_at IS NULL "
+            "ORDER BY ended_at ASC, id ASC LIMIT ?",
+            (int(limit),),
+        ).fetchall()
+    return [_hydrate_thingy_conversation(r) for r in rows]
+
+
+def count_unposted_thingy_conversations() -> int:
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT COUNT(*) AS n FROM thingy_conversations "
+            "WHERE posted_to_chatter_at IS NULL"
+        ).fetchone()
+    return int(row["n"]) if row else 0
+
+
 def latest_thingy_conversation_end() -> Optional[str]:
     """ISO timestamp of the newest mirrored turn — the watch watermark."""
     with connect() as conn:

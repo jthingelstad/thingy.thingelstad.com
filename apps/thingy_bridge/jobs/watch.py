@@ -31,6 +31,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from zoneinfo import ZoneInfo
 
+import discord
+
 from ..tools import anthropic_client, db, thingy_client
 from . import _base
 
@@ -329,7 +331,55 @@ async def watch(ctx: "_base.JobContext") -> "_base.JobResult":
         )
 
 
+async def _try_post_card(ctx: "_base.JobContext", conv_row: dict) -> bool:
+    """Post one conversation card to ``#chatter``.
+
+    Returns True on a successful send. Any :class:`discord.DiscordException`
+    (Forbidden 50001 when the Thingy bot isn't in ``#chatter``, NotFound
+    if the channel is deleted, transient rate-limit / server error) is
+    caught and logged — the conversation row is the durable receipt;
+    the unposted card is picked up by the orphan backfill at the top
+    of the next :func:`_watch_locked` run.
+    """
+    try:
+        return await ctx.post(
+            "DISCORD_CHANNEL_CHATTER", _card(conv_row), persona="thingy",
+        )
+    except discord.DiscordException as exc:
+        logger.warning(
+            "thingy-watch: couldn't post card for conversation #%s — %s; "
+            "will retry next run",
+            conv_row.get("id"), exc,
+        )
+        return False
+
+
 async def _watch_locked(ctx: "_base.JobContext") -> "_base.JobResult":
+    # 1) Orphan backfill — conversations whose post failed on a previous
+    #    run (e.g. the bot wasn't yet in #chatter). Without this they're
+    #    trapped: seen_thingy_turn_request_ids excludes their turns from
+    #    re-forming a fresh conversation, and the original post was a
+    #    one-shot. Capped at the same per-run budget as new cards so a
+    #    long backlog drains over a few hours instead of flooding the
+    #    channel in one burst.
+    posted = 0
+    backfilled = 0
+    orphans = db.unposted_thingy_conversations(limit=_MAX_CARDS_PER_RUN * 4)
+    for orphan in orphans:
+        if posted >= _MAX_CARDS_PER_RUN:
+            break
+        if await _try_post_card(ctx, orphan):
+            db.mark_thingy_conversation_posted(orphan["id"])
+            posted += 1
+            backfilled += 1
+        else:
+            # The failure is almost certainly structural (channel still
+            # not accessible); don't burn the rest of the budget — let
+            # the next run retry. We still proceed to ingest new turns
+            # below so the local DB stays current.
+            break
+
+    # 2) Pull new turns from the Lambda and mirror them.
     watermark = db.latest_thingy_conversation_end()
     wm_dt = _parse_iso(watermark)
     if wm_dt is not None:
@@ -346,58 +396,78 @@ async def _watch_locked(ctx: "_base.JobContext") -> "_base.JobResult":
     seen = db.seen_thingy_turn_request_ids()
     fresh = [t for t in turns if t.get("request_id") and str(t["request_id"]) not in seen
              and str(t.get("question") or "").strip()]
-    if not fresh:
+
+    stored = 0
+    overflow = 0
+    if fresh:
+        convos = group_into_conversations(fresh)
+        overflow = max(0, len(convos) - _MAX_CONVOS_PER_RUN)
+        convos = convos[:_MAX_CONVOS_PER_RUN]  # drain the rest next run
+        for turns_in_convo in convos:
+            assess = await _assess(turns_in_convo)
+            transcript = _build_transcript(turns_in_convo)
+            issues = _source_issues(turns_in_convo)
+            feedback = _feedback_rollup(turns_in_convo)
+            conv_id = db.insert_thingy_conversation(
+                subscriber_hash=str(turns_in_convo[0].get("subscriber_hash") or ""),
+                started_at=str(turns_in_convo[0].get("created_at") or ""),
+                ended_at=str(turns_in_convo[-1].get("created_at") or ""),
+                turn_count=len(turns_in_convo),
+                transcript=transcript,
+                turn_request_ids=[str(t.get("request_id")) for t in turns_in_convo if t.get("request_id")],
+                source_issues=issues,
+                feedback=feedback,
+                topic=assess.get("topic") or None,
+                assessment_md=_assessment_md(assess) or None,
+            )
+            stored += 1
+            if posted < _MAX_CARDS_PER_RUN:
+                conv_row = {
+                    "id": conv_id, "subscriber_hash": turns_in_convo[0].get("subscriber_hash"),
+                    "started_at": turns_in_convo[0].get("created_at"),
+                    "ended_at": turns_in_convo[-1].get("created_at"),
+                    "turn_count": len(turns_in_convo), "feedback": feedback,
+                    "topic": assess.get("topic"), "assessment_md": _assessment_md(assess),
+                    "source_issues": issues,
+                }
+                if await _try_post_card(ctx, conv_row):
+                    db.mark_thingy_conversation_posted(conv_id)
+                    posted += 1
+
+    # Nothing at all to report — silent PASS, same as the old behaviour.
+    if posted == 0 and stored == 0 and not orphans:
         return _base.JobResult(True, "(thingy-watch: no new conversations)")
 
-    convos = group_into_conversations(fresh)
-    overflow = max(0, len(convos) - _MAX_CONVOS_PER_RUN)
-    convos = convos[:_MAX_CONVOS_PER_RUN]  # drain the rest next run
+    # Tail message — derived from counters (orphans-not-backfilled +
+    # new-convos-not-posted + overflow-not-even-ingested). Only post the
+    # tail if at least one card landed; if posted == 0 the channel is
+    # unreachable and the next run will catch up.
+    remaining = (len(orphans) - backfilled) + (stored - (posted - backfilled)) + overflow
+    if posted > 0 and remaining > 0:
+        try:
+            await ctx.post(
+                "DISCORD_CHANNEL_CHATTER",
+                f"…and **{remaining}** more pending — `/thingy recent`.",
+                persona="thingy",
+            )
+        except discord.DiscordException as exc:
+            logger.warning("thingy-watch: couldn't post tail summary — %s", exc)
 
-    posted = 0
-    stored = 0
-    for turns_in_convo in convos:
-        assess = await _assess(turns_in_convo)
-        transcript = _build_transcript(turns_in_convo)
-        issues = _source_issues(turns_in_convo)
-        feedback = _feedback_rollup(turns_in_convo)
-        conv_id = db.insert_thingy_conversation(
-            subscriber_hash=str(turns_in_convo[0].get("subscriber_hash") or ""),
-            started_at=str(turns_in_convo[0].get("created_at") or ""),
-            ended_at=str(turns_in_convo[-1].get("created_at") or ""),
-            turn_count=len(turns_in_convo),
-            transcript=transcript,
-            turn_request_ids=[str(t.get("request_id")) for t in turns_in_convo if t.get("request_id")],
-            source_issues=issues,
-            feedback=feedback,
-            topic=assess.get("topic") or None,
-            assessment_md=_assessment_md(assess) or None,
-        )
-        stored += 1
-        if posted < _MAX_CARDS_PER_RUN:
-            conv_row = {
-                "id": conv_id, "subscriber_hash": turns_in_convo[0].get("subscriber_hash"),
-                "started_at": turns_in_convo[0].get("created_at"),
-                "ended_at": turns_in_convo[-1].get("created_at"),
-                "turn_count": len(turns_in_convo), "feedback": feedback,
-                "topic": assess.get("topic"), "assessment_md": _assessment_md(assess),
-                "source_issues": issues,
-            }
-            if await ctx.post("DISCORD_CHANNEL_CHATTER", _card(conv_row), persona="thingy"):
-                db.mark_thingy_conversation_posted(conv_id)
-                posted += 1
-
-    extra = stored - posted + overflow
-    if extra > 0 and posted > 0:
-        await ctx.post(
-            "DISCORD_CHANNEL_CHATTER",
-            f"…and **{extra}** more new conversation{'s' if extra != 1 else ''} — `/thingy recent`.",
-            persona="thingy",
-        )
-
-    note = f"thingy-watch: {stored} new conversation{'s' if stored != 1 else ''} mirrored ({posted} posted to #chatter)"
+    note_parts = []
+    if backfilled:
+        note_parts.append(f"{backfilled} backfilled")
+    if stored:
+        note_parts.append(f"{stored} new mirrored")
+    note_parts.append(f"{posted} card{'s' if posted != 1 else ''} posted to #chatter")
+    if remaining:
+        note_parts.append(f"{remaining} still pending")
     if overflow:
-        note += f"; {overflow} deferred to the next run"
-    return _base.JobResult(True, note + ".", data={"stored": stored, "posted": posted})
+        note_parts.append(f"{overflow} deferred to the next run")
+    return _base.JobResult(
+        True,
+        "thingy-watch: " + "; ".join(note_parts) + ".",
+        data={"stored": stored, "posted": posted, "backfilled": backfilled},
+    )
 
 
 # ---------- /thingy reads ----------
