@@ -116,41 +116,57 @@ class AuditTests(EnvCase):
 
 
 class FormatTests(unittest.TestCase):
-    def test_clean_line_uses_check_marker(self):
+    def test_clean_line_is_just_status(self):
+        """Clean boot: one bare line ``✓ **Thingy** online``. No channel
+        list (operator noise), no command list."""
         bot = _fake_bot()
         line = startup.format_line(bot, [
             ("DISCORD_CHANNEL_ASK_THINGY", "ask-thingy", []),
             ("DISCORD_CHANNEL_CHATTER", "chatter", []),
         ])
-        self.assertIn("✓", line)
-        self.assertIn("**Thingy** online", line)
-        self.assertIn("#ask-thingy", line)
-        self.assertIn("#chatter", line)
-        # No ⚠️ when everything's clean.
-        self.assertNotIn("⚠️", line)
+        self.assertEqual(line, "✓ **Thingy** online")
+        self.assertNotIn("#ask-thingy", line)
+        self.assertNotIn("#chatter", line)
 
-    def test_issue_flips_marker_and_inlines_reason(self):
+    def test_issue_surfaces_only_the_broken_channel(self):
         bot = _fake_bot()
         line = startup.format_line(bot, [
             ("DISCORD_CHANNEL_ASK_THINGY", "ask-thingy", []),
             ("DISCORD_CHANNEL_CHATTER", None, ["channel id 222 not visible to Thingy (not a member?)"]),
         ])
-        self.assertIn("⚠️", line)
+        self.assertTrue(line.startswith("⚠️ **Thingy** online — "))
         self.assertIn("not visible", line)
+        # The clean #ask-thingy is NOT echoed — only the broken row is.
+        self.assertNotIn("#ask-thingy", line)
 
-    def test_header_and_commands_summary_appended(self):
+    def test_header_prepended(self):
         bot = _fake_bot()
         out = startup.format_line(
             bot,
             [("DISCORD_CHANNEL_ASK_THINGY", "ask-thingy", []),
              ("DISCORD_CHANNEL_CHATTER", "chatter", [])],
             header="**thingy-bridge online** — `abc1234`",
-            commands_summary="/thingy recent",
         )
         lines = out.splitlines()
         self.assertEqual(lines[0], "**thingy-bridge online** — `abc1234`")
-        self.assertIn("**Thingy** online", lines[1])
-        self.assertIn("/thingy recent", lines[2])
+        self.assertEqual(lines[1], "✓ **Thingy** online")
+        # No third line — command summary is no longer rendered.
+        self.assertEqual(len(lines), 2)
+
+    def test_commands_summary_param_is_accepted_but_ignored(self):
+        """Back-compat: still accepts ``commands_summary`` so callers
+        that haven't been updated don't break, but the value isn't
+        rendered."""
+        bot = _fake_bot()
+        out = startup.format_line(
+            bot,
+            [("DISCORD_CHANNEL_ASK_THINGY", "ask-thingy", []),
+             ("DISCORD_CHANNEL_CHATTER", "chatter", [])],
+            commands_summary="/thingy recent",
+        )
+        self.assertEqual(out, "✓ **Thingy** online")
+        self.assertNotIn("/thingy recent", out)
+        self.assertNotIn("↳", out)
 
 
 class AnnounceTests(EnvCase):
@@ -197,7 +213,11 @@ class PostStartupCardTests(EnvCase):
         self.assertIn("**thingy-bridge online**", message)
         self.assertIn("abc1234", message)
         self.assertIn("**Thingy** online", message)
-        self.assertIn(startup.COMMANDS_SUMMARY, message)
+        # Slim card: no command list, no channel echo on a clean boot.
+        self.assertNotIn(startup.COMMANDS_SUMMARY, message)
+        self.assertNotIn("↳", message)
+        self.assertNotIn("#ask-thingy", message)
+        self.assertNotIn("#chatter", message)
         # Second call — reconnection fired on_ready again — must NOT
         # re-post. Real Discord blips would otherwise spam #chatter.
         asyncio.run(startup.post_startup_card(bot))

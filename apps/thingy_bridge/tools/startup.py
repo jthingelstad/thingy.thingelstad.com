@@ -104,26 +104,36 @@ def format_line(
     audit_rows: list[tuple[str, Optional[str], list[str]]],
     *,
     header: Optional[str] = None,
-    commands_summary: Optional[str] = None,
+    commands_summary: Optional[str] = None,  # accepted, ignored — see below
 ) -> str:
-    """Build the readiness card Thingy posts to #chatter on boot."""
-    bits: list[str] = []
-    any_issue = False
+    """Build the readiness card Thingy posts to #chatter on boot.
+
+    Clean case: ``✓ {Name} online`` — single line. The channels audit
+    only surfaces when something is broken (a missing env var, a
+    channel the bot can't see, a missing permission). A healthy boot
+    is one line of operator confirmation, nothing more.
+
+    ``header`` prepends a deployment line (the bridge's git hash) so
+    a restart is operator-visible.
+
+    ``commands_summary`` is accepted for backward compatibility but
+    no longer rendered — repeating the slash verb list on every boot
+    is operator noise; the channel itself documents available commands."""
+    issues_only: list[str] = []
     for env_key, name, issues in audit_rows:
+        if not issues:
+            continue
         label = f"#{name}" if name else env_key
-        if issues:
-            any_issue = True
-            bits.append(f"{label} ⚠️ ({'; '.join(issues)})")
-        else:
-            bits.append(label)
-    marker = "✓" if not any_issue else "⚠️"
-    line = f"{marker} **{bot.name}** online — " + " · ".join(bits)
+        issues_only.append(f"{label} ({'; '.join(issues)})")
+    marker = "✓" if not issues_only else "⚠️"
+    if issues_only:
+        line = f"{marker} **{bot.name}** online — " + " · ".join(issues_only)
+    else:
+        line = f"{marker} **{bot.name}** online"
     out: list[str] = []
     if header:
         out.append(header)
     out.append(line)
-    if commands_summary:
-        out.append(f"   ↳ {commands_summary}")
     return "\n".join(out)
 
 
@@ -168,6 +178,9 @@ async def post_startup_card(bot) -> None:
     dirty = " (dirty)" if git_dirty() else ""
     header = f"**thingy-bridge online** — `{hash_str}`{dirty}"
     rows = audit(bot)
-    message = format_line(bot, rows, header=header, commands_summary=COMMANDS_SUMMARY)
+    # Slim card: just `✓ Thingy online` (with the deployment header above
+    # it). Channels render only when there's an issue. The slash-verb
+    # list is no longer surfaced per boot — operator noise.
+    message = format_line(bot, rows, header=header)
     await announce(bot, message)
     bot._startup_announced = True  # type: ignore[attr-defined]
