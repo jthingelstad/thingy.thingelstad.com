@@ -48,6 +48,99 @@ def _parse_sqlite_utc(raw: Optional[str]) -> Optional[datetime]:
     except ValueError:
         return None
 
+
+# Status text Thingy shows next to the spinner. Indexed by the Lambda's
+# tool name (lowercased, underscores intact). Anything not in the table
+# falls back to a humanized form of the tool name. Keep the copy in
+# Thingy's voice — "looking at" rather than "checking", "scanning"
+# rather than "querying".
+_TOOL_STATUS_COPY: dict[str, str] = {
+    "search_archive": "Searching the archive…",
+    "search_faq": "Checking the FAQ…",
+    "quote_search": "Looking up the exact wording…",
+    "retrieve_archive": "Pulling semantic matches from the archive…",
+    "get_issue": "Loading the issue…",
+    "get_section": "Loading the section…",
+    "domain_history": "Tracing the domain's history…",
+    "find_links": "Walking the link graph…",
+    "list_issues": "Scanning issues for the pattern…",
+    "compare_eras": "Comparing across eras…",
+}
+
+
+def _humanize_status(raw: str) -> str:
+    """Turn a raw Lambda status line into Thingy-voice progress copy.
+
+    The Lambda emits things like ``"Checking search archive..."`` or
+    ``"Investigating the archive..."``. The "Investigating…" opener
+    arrives once before any tool fires; everything else is derived from
+    the tool name. We map the tool name to a curated phrase when we
+    have one; otherwise we humanize the raw verb.
+    """
+    text = (raw or "").strip()
+    if not text:
+        return "Working on it…"
+    if text.lower().startswith("checking "):
+        # "Checking search archive..." -> tool_name "search archive"
+        tool_phrase = text[len("Checking "):].rstrip(".").strip()
+        tool_key = tool_phrase.replace(" ", "_")
+        copy = _TOOL_STATUS_COPY.get(tool_key.lower())
+        if copy:
+            return copy
+        # Unknown tool — show the humanized name so we don't lie about
+        # what's happening, just dress it up a bit.
+        return f"Checking {tool_phrase}…"
+    # Non-tool status (opener "Investigating the archive...") — pass
+    # through but normalize the trailing ellipsis.
+    return text.rstrip(".") + "…"
+
+
+class _Progress:
+    """Single-message status display for a Thingy turn.
+
+    Mirrors the workshop_bot ``ProgressMessage`` pattern: send a reply
+    once, then edit-in-place on each status event. Failure is silent;
+    a Discord edit hiccup logs and keeps the turn moving.
+    """
+
+    def __init__(self, anchor: discord.Message):
+        self._anchor = anchor
+        self._msg: Optional[discord.Message] = None
+        self._last: str = ""
+
+    @property
+    def message(self) -> Optional[discord.Message]:
+        return self._msg
+
+    async def update(self, text: str) -> None:
+        text = (text or "").strip()
+        if not text or text == self._last:
+            return
+        self._last = text
+        body = text if len(text) <= 1990 else text[:1990].rstrip() + "…"
+        try:
+            if self._msg is None:
+                self._msg = await self._anchor.reply(
+                    body, mention_author=False, suppress_embeds=True,
+                )
+            else:
+                await self._msg.edit(content=body)
+        except discord.DiscordException:
+            logger.warning("thingy: progress update failed", exc_info=True)
+
+    async def delete(self) -> None:
+        """Remove the progress message before the real answer lands.
+        Best-effort — a delete failure leaves a stale spinner line above
+        the answer, which is preferable to losing the answer entirely."""
+        if self._msg is None:
+            return
+        try:
+            await self._msg.delete()
+        except discord.DiscordException:
+            logger.warning("thingy: progress delete failed", exc_info=True)
+        finally:
+            self._msg = None
+
 logger = logging.getLogger("workshop.thingy")
 
 FEEDBACK_EMOJI = {"👍": "up", "👎": "down"}
@@ -171,43 +264,48 @@ class ThingyBot(PersonaBot):
         citations: list[dict[str, Any]] = []
         request_id: Optional[str] = None
 
-        async with message.channel.typing():
-            try:
-                async for event_name, data in thingy_client.chat_stream(
-                    token=token, message=question, history=compact_history,
-                ):
-                    if event_name == "meta":
-                        request_id = str(data.get("request_id") or "") or None
-                    elif event_name == "answer_delta":
-                        delta = data.get("delta")
-                        if isinstance(delta, str):
-                            deltas.append(delta)
-                    elif event_name == "citations":
-                        items = data.get("citations")
-                        if isinstance(items, list):
-                            citations = items
-                    elif event_name == "status":
-                        # Status updates are intentionally not posted to
-                        # Discord — the channel would get noisy. Log only.
-                        msg = data.get("message")
-                        if msg:
-                            logger.info("thingy status: %s", msg)
-                    elif event_name == "done":
-                        break
-            except thingy_client.ThingyError as exc:
-                db.update_thingy_request(
-                    run_row,
-                    status="error",
-                    error=str(exc),
-                    duration_ms=int((time.monotonic() - t0) * 1000),
-                    request_id=request_id,
-                )
-                await message.reply(
-                    f"Thingy couldn't answer: `{exc}`",
-                    mention_author=False,
-                    suppress_embeds=True,
-                )
-                return
+        progress = _Progress(message)
+        # Show something immediately — the Lambda's first status event
+        # is "Investigating the archive..." but it doesn't land until
+        # after the SSE handshake, so seed the spinner ourselves.
+        await progress.update("🔎 Reaching the archive…")
+
+        try:
+            async for event_name, data in thingy_client.chat_stream(
+                token=token, message=question, history=compact_history,
+            ):
+                if event_name == "meta":
+                    request_id = str(data.get("request_id") or "") or None
+                elif event_name == "answer_delta":
+                    delta = data.get("delta")
+                    if isinstance(delta, str):
+                        deltas.append(delta)
+                        if len(deltas) == 1:
+                            # First delta means the agent is past tool use
+                            # and is writing — swap the spinner copy so the
+                            # reader knows the wait is almost over.
+                            await progress.update("✍️ Writing the answer…")
+                elif event_name == "citations":
+                    items = data.get("citations")
+                    if isinstance(items, list):
+                        citations = items
+                elif event_name == "status":
+                    msg = data.get("message")
+                    if msg:
+                        logger.info("thingy status: %s", msg)
+                        await progress.update(f"🔎 {_humanize_status(msg)}")
+                elif event_name == "done":
+                    break
+        except thingy_client.ThingyError as exc:
+            db.update_thingy_request(
+                run_row,
+                status="error",
+                error=str(exc),
+                duration_ms=int((time.monotonic() - t0) * 1000),
+                request_id=request_id,
+            )
+            await progress.update(f"❌ Thingy couldn't answer: `{exc}`")
+            return
 
         answer = thingy_render.format_for_discord(
             deltas, citations, site_url=site_url,
@@ -220,13 +318,12 @@ class ThingyBot(PersonaBot):
                 duration_ms=int((time.monotonic() - t0) * 1000),
                 request_id=request_id,
             )
-            await message.reply(
-                "Thingy didn't return anything. Try rephrasing?",
-                mention_author=False,
-                suppress_embeds=True,
-            )
+            await progress.update("Thingy didn't return anything. Try rephrasing?")
             return
 
+        # Real answer is ready — clear the spinner before posting so the
+        # final message chain reads as one cohesive reply.
+        await progress.delete()
         sent_last = await self._send_answer(message, answer)
 
         db.update_thingy_request(
