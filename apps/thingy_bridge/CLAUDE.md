@@ -14,6 +14,8 @@ has no agent_tools registry, no in-memory corpus, no per-persona team
 — Thingy is the only persona and the Q&A intelligence lives in the
 Lambda.
 
+**Sibling Lambda endpoint, not used here:** the Lambda also exposes `POST /retrieve` (semantic archive retrieval, bridge-secret auth, no chat framing). That's called by `workshop_bot` for its `archive__retrieve` tool and various pre-injection helpers — see [`../workshop_bot/tools/thingy_retrieve.py`](../workshop_bot/tools/thingy_retrieve.py). The bridge process doesn't need it; reader-facing answering goes through `/chat` directly.
+
 The bridge's two surfaces:
 
 - **Live answering** (`personas/thingy.py`) — on every message in
