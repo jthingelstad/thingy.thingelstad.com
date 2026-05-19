@@ -362,7 +362,7 @@ class WiringTests(unittest.TestCase):
         tree = register_thingy_commands(MagicMock())
         # The bridge tree holds `thingy` at the top level (no /workshop parent).
         thingy = next(c for c in tree.groups if getattr(c, "name", None) == "thingy")
-        self.assertEqual({getattr(c, "_cmd_name", None) for c in thingy.commands}, {"recent", "show", "sync"})
+        self.assertEqual({getattr(c, "_cmd_name", None) for c in thingy.commands}, {"recent", "show", "sync", "new"})
 
     def test_scheduler_has_thingy_watch(self):
         from apps.thingy_bridge.scheduler.jobs import by_id

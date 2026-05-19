@@ -14,7 +14,12 @@ CREATE TABLE IF NOT EXISTS thingy_tokens (
   profile TEXT,
   -- When we last greeted this user with a "welcome back" blurb. Lets
   -- the bridge avoid re-greeting on every fresh-token mint.
-  last_welcomed_at TEXT
+  last_welcomed_at TEXT,
+  -- When the user last fired `/thingy new`. The history walker stops
+  -- walking #ask-thingy backward as soon as it crosses this timestamp,
+  -- so a fresh question after a reset is not contaminated with the
+  -- prior session's context. NULL = never reset.
+  session_reset_at TEXT
 );
 
 -- One row per question forwarded to the Lambda. Lets the reaction

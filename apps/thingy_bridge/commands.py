@@ -1,21 +1,29 @@
-"""``/thingy …`` slash commands — the operator window into reader Q&A.
+"""``/thingy …`` slash commands.
 
-Three subcommands, all gated to ``DISCORD_OWNER_USER_ID`` (the bot
-``default_permissions`` is ``manage_guild`` like workshop_bot's
-``/workshop`` tree; Discord enforces the role check before the handler
-even fires):
+The operator window into reader Q&A plus a per-user session reset:
 
-- ``/thingy recent [count]`` — last N mirrored conversations, one line
-  each (DB read).
+- ``/thingy recent [count]`` — last N mirrored conversations
+  (operator-only — reads private reader content).
 - ``/thingy show <id>`` — one conversation: assessment card + the full
-  transcript attached as a ``.md`` file.
-- ``/thingy sync`` — manual re-fire of the hourly ``thingy-watch`` job.
+  transcript attached as a ``.md`` file (operator-only — same reason).
+- ``/thingy sync`` — manual re-fire of the hourly ``thingy-watch`` job
+  (operator-only — touches the conversation mirror).
+- ``/thingy new`` — clear this user's #ask-thingy session boundary so
+  their next question is not pulled into the prior conversation
+  (available to anyone — only affects the caller's own history).
+
+The three operator commands carry ``default_permissions(manage_guild)``
+plus an explicit handler check against ``DISCORD_OWNER_USER_ID`` so a
+moderator with elevated role permissions still can't see reader
+content; only the configured owner can. ``/thingy new`` has no admin
+gate.
 """
 
 from __future__ import annotations
 
 import io
 import logging
+import os
 from typing import TYPE_CHECKING
 
 import discord
@@ -23,6 +31,7 @@ from discord import app_commands
 
 from .jobs import _base as jobs_base
 from .jobs import watch as thingy_job
+from .tools import db
 
 if TYPE_CHECKING:
     from .personas.base import PersonaBot
@@ -39,6 +48,27 @@ def _ctx(bot) -> "jobs_base.JobContext":
 
 def _clip(text: str) -> str:
     return text if len(text) <= _MSG_CAP else text[: _MSG_CAP - 1] + "…"
+
+
+async def _require_owner(interaction: discord.Interaction) -> bool:
+    """Block the invocation unless the caller is ``DISCORD_OWNER_USER_ID``.
+
+    Sends an ephemeral refusal and returns ``False`` for anyone else.
+    A missing env var also denies — fail closed, since the operator
+    commands surface other readers' content. Discord's
+    ``default_permissions`` is the UI gate; this is the source-of-truth
+    check.
+    """
+    owner_id = (os.environ.get("DISCORD_OWNER_USER_ID") or "").strip()
+    if owner_id and str(interaction.user.id) == owner_id:
+        return True
+    try:
+        await interaction.response.send_message(
+            "🔒 This command is operator-only.", ephemeral=True,
+        )
+    except discord.HTTPException:
+        logger.warning("/thingy: couldn't post operator-only refusal")
+    return False
 
 
 def register_thingy_commands(bot: "PersonaBot") -> app_commands.CommandTree:
@@ -87,6 +117,8 @@ def register_thingy_commands(bot: "PersonaBot") -> app_commands.CommandTree:
     async def thingy_recent_cmd(  # type: ignore[misc]
         interaction: discord.Interaction, count: int = 8
     ) -> None:
+        if not await _require_owner(interaction):
+            return
         await _run_and_ack(interaction, lambda: thingy_job.recent(_ctx(bot), count=int(count)), "thingy recent")
 
     @thingy.command(
@@ -97,6 +129,8 @@ def register_thingy_commands(bot: "PersonaBot") -> app_commands.CommandTree:
     async def thingy_show_cmd(  # type: ignore[misc]
         interaction: discord.Interaction, id: int
     ) -> None:
+        if not await _require_owner(interaction):
+            return
         await interaction.response.defer(ephemeral=True, thinking=True)
         try:
             result = await thingy_job.show(_ctx(bot), conv_id=int(id))
@@ -117,7 +151,28 @@ def register_thingy_commands(bot: "PersonaBot") -> app_commands.CommandTree:
         description="Pull new Thingy conversations now (the hourly thingy-watch, on demand).",
     )
     async def thingy_sync_cmd(interaction: discord.Interaction) -> None:  # type: ignore[misc]
+        if not await _require_owner(interaction):
+            return
         await _run_and_ack(interaction, lambda: thingy_job.watch(_ctx(bot)), "thingy sync")
+
+    @thingy.command(
+        name="new",
+        description="Start a fresh Thingy session — your next question won't carry prior context.",
+    )
+    async def thingy_new_cmd(interaction: discord.Interaction) -> None:  # type: ignore[misc]
+        await interaction.response.defer(ephemeral=True, thinking=False)
+        ok = db.mark_session_reset(str(interaction.user.id))
+        if ok:
+            await _ack(
+                interaction,
+                "🆕 Started a fresh session. Your next question to Thingy starts clean.",
+            )
+        else:
+            await _ack(
+                interaction,
+                "There's nothing to reset yet — you haven't talked to Thingy in this server. "
+                "Ask anything in #ask-thingy and we'll start clean from there.",
+            )
 
     tree.add_command(thingy)
     return tree

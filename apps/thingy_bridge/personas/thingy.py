@@ -21,7 +21,7 @@ from __future__ import annotations
 import logging
 import os
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 import discord
@@ -34,6 +34,19 @@ from .base import PersonaBot
 # jobs/watch.py — a >30-min pause is treated as a fresh session, so
 # yesterday's CTO chat doesn't get dragged into today's RSS question.
 SESSION_GAP = timedelta(minutes=30)
+
+
+def _parse_sqlite_utc(raw: Optional[str]) -> Optional[datetime]:
+    """Parse the ``YYYY-MM-DD HH:MM:SS`` shape sqlite's ``datetime('now')``
+    produces (UTC, naive) into an aware UTC datetime. Returns ``None``
+    for ``None`` / empty / malformed inputs so callers can treat the
+    result as "no reset on file"."""
+    if not raw:
+        return None
+    try:
+        return datetime.strptime(raw, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
 
 logger = logging.getLogger("workshop.thingy")
 
@@ -260,15 +273,22 @@ class ThingyBot(PersonaBot):
     ) -> list[dict[str, str]]:
         """Reconstruct prior turns in this channel between the asking
         user and Thingy. Skips messages from any other user/bot so the
-        Lambda only sees a clean two-party conversation. Stops at the
-        first >30-min gap walking backward so a fresh question isn't
-        pulled into yesterday's session context.
+        Lambda only sees a clean two-party conversation. Two cutoffs
+        bound the walk so a fresh question isn't pulled into a stale
+        context:
+
+          - **Implicit:** any >30-min gap walking backward (``SESSION_GAP``).
+          - **Explicit:** the user's last ``/thingy new`` timestamp;
+            anything older than that is treated as a different session.
         """
         raw: list[dict[str, str]] = []
         last_ts = message.created_at
+        reset_at = _parse_sqlite_utc(db.get_session_reset_at(str(message.author.id)))
         try:
             async for prior in message.channel.history(limit=20, before=message):
                 if (last_ts - prior.created_at) > SESSION_GAP:
+                    break
+                if reset_at is not None and prior.created_at < reset_at:
                     break
                 if prior.author.id == message.author.id and not prior.author.bot:
                     raw.append({"role": "user", "content": prior.content or ""})

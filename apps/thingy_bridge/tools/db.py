@@ -67,6 +67,8 @@ _COLUMN_MIGRATIONS: tuple[tuple[str, str, str], ...] = (
     ("thingy_tokens", "profile", "ALTER TABLE thingy_tokens ADD COLUMN profile TEXT"),
     ("thingy_tokens", "last_welcomed_at",
      "ALTER TABLE thingy_tokens ADD COLUMN last_welcomed_at TEXT"),
+    ("thingy_tokens", "session_reset_at",
+     "ALTER TABLE thingy_tokens ADD COLUMN session_reset_at TEXT"),
 )
 
 
@@ -95,7 +97,7 @@ def get_thingy_token(discord_user_id: str) -> Optional[dict[str, Any]]:
     with connect() as conn:
         row = conn.execute(
             "SELECT discord_user_id, token, expires_at, issued_at, profile, "
-            "       last_welcomed_at "
+            "       last_welcomed_at, session_reset_at "
             "FROM thingy_tokens WHERE discord_user_id = ?",
             (discord_user_id,),
         ).fetchone()
@@ -133,6 +135,35 @@ def upsert_thingy_token(
             "  profile = COALESCE(excluded.profile, thingy_tokens.profile)",
             (discord_user_id, token, int(expires_at), profile_json),
         )
+
+
+def mark_session_reset(discord_user_id: str) -> bool:
+    """Stamp the user's row with `session_reset_at = now`. Returns True
+    if a row was updated. Returns False if the user has no cached token
+    yet — in which case there is no prior history to scope, so a reset
+    is a no-op from the caller's perspective.
+    """
+    with connect() as conn:
+        cur = conn.execute(
+            "UPDATE thingy_tokens SET session_reset_at = datetime('now') "
+            "WHERE discord_user_id = ?",
+            (discord_user_id,),
+        )
+        return cur.rowcount > 0
+
+
+def get_session_reset_at(discord_user_id: str) -> Optional[str]:
+    """Return the ISO timestamp of the user's last `/thingy new`, or
+    None if never reset. Cheap point read used by the history walker."""
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT session_reset_at FROM thingy_tokens WHERE discord_user_id = ?",
+            (discord_user_id,),
+        ).fetchone()
+    if row is None:
+        return None
+    value = row["session_reset_at"]
+    return value if value else None
 
 
 # ---------- Thingy requests (per-question mirror) ----------
