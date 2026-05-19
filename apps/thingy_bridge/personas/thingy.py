@@ -100,7 +100,9 @@ class _Progress:
 
     Mirrors the workshop_bot ``ProgressMessage`` pattern: send a reply
     once, then edit-in-place on each status event. Failure is silent;
-    a Discord edit hiccup logs and keeps the turn moving.
+    a Discord edit hiccup logs and keeps the turn moving. Hands its
+    message off to ``_StreamingAnswer`` once the first answer delta
+    arrives so the spinner naturally becomes the first chunk.
     """
 
     def __init__(self, anchor: discord.Message):
@@ -128,6 +130,14 @@ class _Progress:
         except discord.DiscordException:
             logger.warning("thingy: progress update failed", exc_info=True)
 
+    def hand_off(self) -> Optional[discord.Message]:
+        """Release ownership of the underlying message. The caller (the
+        streaming-answer object) takes over editing it; this object will
+        not touch it again, even on ``delete()``."""
+        msg = self._msg
+        self._msg = None
+        return msg
+
     async def delete(self) -> None:
         """Remove the progress message before the real answer lands.
         Best-effort — a delete failure leaves a stale spinner line above
@@ -140,6 +150,102 @@ class _Progress:
             logger.warning("thingy: progress delete failed", exc_info=True)
         finally:
             self._msg = None
+
+
+class _StreamingAnswer:
+    """Mirror the Lambda's streaming answer into a live-editing Discord
+    reply chain. Deltas accumulate into ``_full_text``; on a throttled
+    cadence we re-split the full text into Discord-sized chunks and
+    reconcile against the messages already posted (edit-in-place where
+    they differ, send a new reply for overflow).
+
+    Citation rewriting (``WT332`` → ``[WT332](…)``) only happens in
+    :meth:`finalize` since the citations array arrives after the body
+    is complete. The streaming pass uses a tighter chunk limit so the
+    expansion at finalize has headroom; the final pass uses the real
+    Discord limit.
+    """
+
+    # During streaming the model emits raw ``WT###`` references; on
+    # finalize they get rewritten to markdown links which expand the
+    # text. STREAM_LIMIT is conservative; FINAL_LIMIT is the real cap.
+    STREAM_LIMIT = 1700
+    FINAL_LIMIT = 1950
+    MIN_EDIT_INTERVAL = 1.0  # seconds — Discord edit rate is ~5/5s per channel
+
+    def __init__(
+        self,
+        anchor: discord.Message,
+        *,
+        initial_msg: Optional[discord.Message] = None,
+        site_url: str = "",
+    ):
+        self._anchor = anchor
+        self._site_url = site_url
+        self._msgs: list[discord.Message] = []
+        self._msg_texts: list[str] = []
+        if initial_msg is not None:
+            self._msgs.append(initial_msg)
+            self._msg_texts.append(initial_msg.content or "")
+        self._full_text: str = ""
+        self._dirty: bool = False
+        self._last_edit_ts: float = 0.0
+
+    async def append(self, delta: str) -> None:
+        if not delta:
+            return
+        self._full_text += delta
+        self._dirty = True
+        if time.monotonic() - self._last_edit_ts >= self.MIN_EDIT_INTERVAL:
+            await self._flush(self.STREAM_LIMIT)
+
+    async def _flush(self, limit: int, *, force: bool = False) -> None:
+        if not self._dirty and not force:
+            return
+        target = discord_io.split_for_discord(self._full_text, limit)
+        # Empty target while we still have a spinner message — just blank
+        # it out so the user isn't staring at a stale spinner during a
+        # zero-delta hiccup. This is unusual; deltas almost always arrive
+        # in non-empty chunks.
+        if not target and self._msgs:
+            target = [""]
+        for i, t in enumerate(target):
+            if i < len(self._msgs):
+                if self._msg_texts[i] != t and t.strip():
+                    try:
+                        await self._msgs[i].edit(content=t)
+                        self._msg_texts[i] = t
+                    except discord.DiscordException:
+                        logger.warning("thingy: streaming edit failed", exc_info=True)
+            else:
+                try:
+                    new_msg = await self._anchor.reply(
+                        t or "…", mention_author=False, suppress_embeds=True,
+                    )
+                    self._msgs.append(new_msg)
+                    self._msg_texts.append(t)
+                except discord.DiscordException:
+                    logger.warning("thingy: streaming reply failed", exc_info=True)
+        self._dirty = False
+        self._last_edit_ts = time.monotonic()
+
+    async def finalize(
+        self, citations: list[dict[str, Any]],
+    ) -> Optional[discord.Message]:
+        """Rewrite citations into the full text, re-split at the final
+        Discord limit, edit each message to its final content, and
+        return the last message (for feedback reactions)."""
+        if self._site_url and citations:
+            self._full_text = thingy_render.inject_citations(
+                self._full_text, citations, site_url=self._site_url,
+            )
+        self._dirty = True
+        await self._flush(self.FINAL_LIMIT, force=True)
+        return self._msgs[-1] if self._msgs else None
+
+    @property
+    def has_output(self) -> bool:
+        return bool(self._full_text.strip())
 
 logger = logging.getLogger("workshop.thingy")
 
@@ -260,11 +366,11 @@ class ThingyBot(PersonaBot):
 
         token = auth_result.token
 
-        deltas: list[str] = []
         citations: list[dict[str, Any]] = []
         request_id: Optional[str] = None
 
         progress = _Progress(message)
+        streamer: Optional[_StreamingAnswer] = None
         # Show something immediately — the Lambda's first status event
         # is "Investigating the archive..." but it doesn't land until
         # after the SSE handshake, so seed the spinner ourselves.
@@ -278,21 +384,29 @@ class ThingyBot(PersonaBot):
                     request_id = str(data.get("request_id") or "") or None
                 elif event_name == "answer_delta":
                     delta = data.get("delta")
-                    if isinstance(delta, str):
-                        deltas.append(delta)
-                        if len(deltas) == 1:
-                            # First delta means the agent is past tool use
-                            # and is writing — swap the spinner copy so the
-                            # reader knows the wait is almost over.
-                            await progress.update("✍️ Writing the answer…")
+                    if not isinstance(delta, str):
+                        continue
+                    if streamer is None:
+                        # First delta: the spinner becomes the streaming
+                        # answer's first message — no extra round trip.
+                        streamer = _StreamingAnswer(
+                            message,
+                            initial_msg=progress.hand_off(),
+                            site_url=site_url,
+                        )
+                    await streamer.append(delta)
                 elif event_name == "citations":
                     items = data.get("citations")
                     if isinstance(items, list):
                         citations = items
                 elif event_name == "status":
                     msg = data.get("message")
-                    if msg:
-                        logger.info("thingy status: %s", msg)
+                    if not msg:
+                        continue
+                    logger.info("thingy status: %s", msg)
+                    # Once we're streaming the answer, suppress further
+                    # spinner edits — would clobber the in-progress text.
+                    if streamer is None:
                         await progress.update(f"🔎 {_humanize_status(msg)}")
                 elif event_name == "done":
                     break
@@ -304,13 +418,23 @@ class ThingyBot(PersonaBot):
                 duration_ms=int((time.monotonic() - t0) * 1000),
                 request_id=request_id,
             )
-            await progress.update(f"❌ Thingy couldn't answer: `{exc}`")
+            # If streaming had started, fall back to a fresh error reply
+            # (the partial answer keeps its current text, and we don't
+            # overwrite it with the error). If the spinner is still up,
+            # edit it in place.
+            if streamer is None:
+                await progress.update(f"❌ Thingy couldn't answer: `{exc}`")
+            else:
+                try:
+                    await message.reply(
+                        f"❌ Thingy couldn't finish: `{exc}`",
+                        mention_author=False, suppress_embeds=True,
+                    )
+                except discord.DiscordException:
+                    logger.exception("thingy: failed to post stream-error reply")
             return
 
-        answer = thingy_render.format_for_discord(
-            deltas, citations, site_url=site_url,
-        )
-        if not answer:
+        if streamer is None or not streamer.has_output:
             db.update_thingy_request(
                 run_row,
                 status="error",
@@ -321,10 +445,7 @@ class ThingyBot(PersonaBot):
             await progress.update("Thingy didn't return anything. Try rephrasing?")
             return
 
-        # Real answer is ready — clear the spinner before posting so the
-        # final message chain reads as one cohesive reply.
-        await progress.delete()
-        sent_last = await self._send_answer(message, answer)
+        sent_last = await streamer.finalize(citations)
 
         db.update_thingy_request(
             run_row,
@@ -344,26 +465,6 @@ class ThingyBot(PersonaBot):
                     await sent_last.add_reaction(emoji)
                 except discord.DiscordException:
                     logger.exception("thingy: failed to add %s reaction", emoji)
-
-    async def _send_answer(
-        self, message: discord.Message, answer: str
-    ) -> Optional[discord.Message]:
-        """Send the answer chunked. Every chunk is a reply to the user's
-        original message so the chain visually holds together. Returns
-        the LAST chunk so the caller can attach feedback reactions
-        there — reactions land at the visual end of the response.
-
-        ``suppress_embeds=True`` keeps Discord from auto-previewing
-        archive URLs in the citations — those previews crowd the answer.
-        """
-        if not answer.strip():
-            return None
-        last_msg: Optional[discord.Message] = None
-        for chunk in discord_io.split_for_discord(answer):
-            last_msg = await message.reply(
-                chunk, mention_author=False, suppress_embeds=True,
-            )
-        return last_msg
 
     async def _build_thingy_history(
         self, message: discord.Message
