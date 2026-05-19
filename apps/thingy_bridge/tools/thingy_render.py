@@ -67,7 +67,13 @@ def inject_citations(
 ) -> str:
     """Rewrite `WTNNN` (or legacy `#NNN`) references that match a citation
     entry into Discord markdown links, always normalized to the `WT` prefix:
-    ``[WTNNN](https://weekly.thingelstad.com/archive/NNN/)``.
+    ``[WTNNN](<https://weekly.thingelstad.com/archive/NNN/>)``.
+
+    The URL is wrapped in ``<…>`` — Discord-specific syntax that
+    suppresses the auto-generated link preview for that specific link.
+    The message also carries ``suppress_embeds=True`` at the API
+    boundary, but the angle-bracket wrap guarantees no preview even if
+    that flag's behavior ever changes for markdown-style links.
 
     References without a matching citation are left exactly as written — we
     don't fabricate links, and we don't touch a bare ``#5`` that might be a
@@ -91,7 +97,7 @@ def inject_citations(
             href = path
         else:
             href = f"{base}{path if path.startswith('/') else '/' + path}"
-        return f"{prefix}[WT{number}]({href})"
+        return f"{prefix}[WT{number}](<{href}>)"
 
     return CITATION_RE.sub(_replace, answer)
 

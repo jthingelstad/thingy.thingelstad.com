@@ -99,7 +99,7 @@ class CitationInjectionTests(unittest.TestCase):
         )
         self.assertEqual(
             out,
-            "I wrote about RSS in [WT287](https://weekly.thingelstad.com/archive/287/) last year.",
+            "I wrote about RSS in [WT287](<https://weekly.thingelstad.com/archive/287/>) last year.",
         )
 
     def test_wt_prefix_replacement(self):
@@ -109,7 +109,7 @@ class CitationInjectionTests(unittest.TestCase):
         )
         self.assertEqual(
             out,
-            "I wrote about RSS in [WT287](https://weekly.thingelstad.com/archive/287/) last year.",
+            "I wrote about RSS in [WT287](<https://weekly.thingelstad.com/archive/287/>) last year.",
         )
 
     def test_wt_prefix_no_match_leaves_plain(self):
@@ -134,8 +134,8 @@ class CitationInjectionTests(unittest.TestCase):
                 {"issue_number": 301, "url": "/archive/301/"},
             ],
         )
-        self.assertIn("[WT287](https://weekly.thingelstad.com/archive/287/)", out)
-        self.assertIn("[WT301](https://weekly.thingelstad.com/archive/301/)", out)
+        self.assertIn("[WT287](<https://weekly.thingelstad.com/archive/287/>)", out)
+        self.assertIn("[WT301](<https://weekly.thingelstad.com/archive/301/>)", out)
 
     def test_word_boundary_preserved(self):
         # `#word` (non-numeric) should not be touched.
@@ -152,7 +152,7 @@ class CitationInjectionTests(unittest.TestCase):
         )
         self.assertEqual(
             out,
-            "From [WT287](https://example.com/issues/287) specifically.",
+            "From [WT287](<https://example.com/issues/287>) specifically.",
         )
 
     def test_custom_site_url(self):
@@ -161,7 +161,7 @@ class CitationInjectionTests(unittest.TestCase):
             [{"issue_number": 5, "url": "/archive/5/"}],
             site_url="https://staging.example.com/",
         )
-        self.assertEqual(out, "See [WT5](https://staging.example.com/archive/5/).")
+        self.assertEqual(out, "See [WT5](<https://staging.example.com/archive/5/>).")
 
     def test_empty_inputs_safe(self):
         self.assertEqual(thingy_render.inject_citations("", []), "")
@@ -183,7 +183,7 @@ class AssembleAndFormatTests(unittest.TestCase):
         )
         self.assertEqual(
             out,
-            "I wrote about RSS in [WT287](https://weekly.thingelstad.com/archive/287/) last year.",
+            "I wrote about RSS in [WT287](<https://weekly.thingelstad.com/archive/287/>) last year.",
         )
 
     def test_format_strips_outer_whitespace(self):
