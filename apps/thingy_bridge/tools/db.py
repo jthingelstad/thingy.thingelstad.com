@@ -135,15 +135,6 @@ def upsert_thingy_token(
         )
 
 
-def mark_thingy_welcomed(discord_user_id: str) -> None:
-    with connect() as conn:
-        conn.execute(
-            "UPDATE thingy_tokens SET last_welcomed_at = datetime('now') "
-            "WHERE discord_user_id = ?",
-            (discord_user_id,),
-        )
-
-
 # ---------- Thingy requests (per-question mirror) ----------
 
 def insert_thingy_request(

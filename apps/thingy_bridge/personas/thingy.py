@@ -21,6 +21,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+from datetime import timedelta
 from typing import Any, Optional
 
 import discord
@@ -28,45 +29,18 @@ import discord
 from ..tools import db, discord_io, thingy_client, thingy_render
 from .base import PersonaBot
 
+# Walking #ask-thingy history backward, stop once we hit a gap larger
+# than this. Matches the bridge's conversation-grouping heuristic in
+# jobs/watch.py — a >30-min pause is treated as a fresh session, so
+# yesterday's CTO chat doesn't get dragged into today's RSS question.
+SESSION_GAP = timedelta(minutes=30)
+
 logger = logging.getLogger("workshop.thingy")
 
 FEEDBACK_EMOJI = {"👍": "up", "👎": "down"}
 THUMBS_UP = "👍"
 THUMBS_DOWN = "👎"
 ACK_EMOJI = "✅"
-
-
-def _profile_is_returning(profile: dict[str, Any]) -> bool:
-    return bool(profile) and bool(profile.get("returning"))
-
-
-def _format_welcome_back(profile: dict[str, Any]) -> str:
-    """Compose a short welcome-back message for a returning user.
-
-    Pulls from the auth response's `profile` field. Mentions the most
-    recent Bedrock-synthesized session summary if there is one;
-    otherwise notes the recent question count and offers to pick up
-    from there. Always under 400 chars so it doesn't bury the answer.
-    """
-    summaries = profile.get("prior_session_summaries") or []
-    recent_qs = profile.get("current_session_questions") or []
-    if summaries:
-        last = summaries[-1].get("summary", "").strip()
-        if last:
-            preview = last if len(last) <= 220 else last[:217] + "…"
-            return (
-                f"👋 Welcome back. Last time we were on: _{preview}_\n"
-                "Want to keep going there, or something fresh?"
-            )
-    if recent_qs:
-        last_q = (recent_qs[-1].get("question") or "").strip()
-        if last_q:
-            preview = last_q if len(last_q) <= 180 else last_q[:177] + "…"
-            return (
-                "👋 Welcome back. The last thing you asked me was: "
-                f"_\"{preview}\"_  — want to pick up from there?"
-            )
-    return "👋 Welcome back. What can I dig up for you today?"
 
 
 class ThingyBot(PersonaBot):
@@ -179,19 +153,6 @@ class ThingyBot(PersonaBot):
             return
 
         token = auth_result.token
-        # Welcome-back applies only on fresh-token mints (token cache is
-        # ~12h, so this naturally rate-limits to once per session). Sent
-        # as a separate message before the answer so it reads as a
-        # personal "hey" rather than appearing inline with the response.
-        if auth_result.fresh and _profile_is_returning(auth_result.profile):
-            try:
-                await message.channel.send(
-                    _format_welcome_back(auth_result.profile),
-                    suppress_embeds=True,
-                )
-                db.mark_thingy_welcomed(discord_user_id)
-            except discord.DiscordException:
-                logger.exception("thingy: failed to post welcome-back")
 
         deltas: list[str] = []
         citations: list[dict[str, Any]] = []
@@ -299,17 +260,29 @@ class ThingyBot(PersonaBot):
     ) -> list[dict[str, str]]:
         """Reconstruct prior turns in this channel between the asking
         user and Thingy. Skips messages from any other user/bot so the
-        Lambda only sees a clean two-party conversation.
+        Lambda only sees a clean two-party conversation. Stops at the
+        first >30-min gap walking backward so a fresh question isn't
+        pulled into yesterday's session context.
         """
         raw: list[dict[str, str]] = []
+        last_ts = message.created_at
         try:
             async for prior in message.channel.history(limit=20, before=message):
+                if (last_ts - prior.created_at) > SESSION_GAP:
+                    break
                 if prior.author.id == message.author.id and not prior.author.bot:
                     raw.append({"role": "user", "content": prior.content or ""})
                 elif self.user is not None and prior.author.id == self.user.id:
                     raw.append({"role": "assistant", "content": prior.content or ""})
-                # Other users' messages (or other bots) are skipped — Thingy
-                # answers per-user, not channel-wide.
+                else:
+                    # Other users' messages (or other bots) are skipped —
+                    # Thingy answers per-user — but they still anchor the
+                    # session-gap clock so an active channel doesn't
+                    # artificially stretch the window. Update last_ts and
+                    # keep walking.
+                    last_ts = prior.created_at
+                    continue
+                last_ts = prior.created_at
         except discord.DiscordException:
             logger.exception("thingy: history fetch failed; continuing with no history")
             return []

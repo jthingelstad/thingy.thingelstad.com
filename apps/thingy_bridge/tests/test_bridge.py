@@ -418,25 +418,6 @@ class ProfileRoundtripTests(unittest.TestCase):
         assert row is not None
         self.assertEqual(row["profile"], profile)
 
-    def test_upsert_preserves_last_welcomed(self):
-        db.upsert_thingy_token(
-            discord_user_id="u3", token="t1", expires_at=1700000000,
-            profile={"returning": False},
-        )
-        db.mark_thingy_welcomed("u3")
-        row1 = db.get_thingy_token("u3")
-        assert row1 is not None
-        first = row1.get("last_welcomed_at")
-        self.assertIsNotNone(first)
-        # Re-mint should preserve last_welcomed_at.
-        db.upsert_thingy_token(
-            discord_user_id="u3", token="t2", expires_at=1800000000,
-            profile={"returning": True},
-        )
-        row2 = db.get_thingy_token("u3")
-        assert row2 is not None
-        self.assertEqual(row2.get("last_welcomed_at"), first)
-
     def test_run_migrations_idempotent(self):
         # Running migrations twice on the same DB shouldn't fail or
         # duplicate columns.
@@ -447,56 +428,6 @@ class ProfileRoundtripTests(unittest.TestCase):
             discord_user_id="u-migr", token="t", expires_at=1700000000,
         )
         self.assertIsNotNone(db.get_thingy_token("u-migr"))
-
-
-class WelcomeBackFormatTests(unittest.TestCase):
-    """Composing the welcome-back blurb from the Lambda's profile shape."""
-
-    def setUp(self):
-        # Defer import so the persona module loads under stubs.
-        from apps.thingy_bridge.personas import thingy
-        self.thingy = thingy
-
-    def test_returning_with_summary(self):
-        out = self.thingy._format_welcome_back({
-            "returning": True,
-            "prior_session_summaries": [
-                {"summary": "Reader was exploring how RSS endured."}
-            ],
-        })
-        self.assertIn("Welcome back", out)
-        self.assertIn("RSS endured", out)
-
-    def test_returning_with_only_questions(self):
-        out = self.thingy._format_welcome_back({
-            "returning": True,
-            "current_session_questions": [
-                {"question": "What did Jamie say about LLMs in 2024?"}
-            ],
-        })
-        self.assertIn("Welcome back", out)
-        self.assertIn("LLMs", out)
-
-    def test_returning_with_nothing_specific(self):
-        out = self.thingy._format_welcome_back({"returning": True})
-        self.assertIn("Welcome back", out)
-
-    def test_long_summary_truncated(self):
-        long_summary = "x" * 500
-        out = self.thingy._format_welcome_back({
-            "returning": True,
-            "prior_session_summaries": [{"summary": long_summary}],
-        })
-        # The truncated preview is wrapped in markdown; the message as a
-        # whole stays well under Discord's 2000-char limit.
-        self.assertLess(len(out), 400)
-        self.assertIn("…", out)
-
-    def test_profile_is_returning_helper(self):
-        self.assertTrue(self.thingy._profile_is_returning({"returning": True}))
-        self.assertFalse(self.thingy._profile_is_returning({"returning": False}))
-        self.assertFalse(self.thingy._profile_is_returning({}))
-        self.assertFalse(self.thingy._profile_is_returning(None))  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":
