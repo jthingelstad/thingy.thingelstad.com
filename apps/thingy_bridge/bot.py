@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 import os
 import signal
 import sys
@@ -42,15 +43,19 @@ READY_WAIT_SECONDS = 90.0
 
 # Gateway-watchdog thresholds. discord.py's KeepAlive should detect a
 # dead gateway and reconnect, but we've seen it fall into a silent-
-# zombie state (lib thinks WS is open, Discord disagrees, no events
-# arrive). The watchdog records the wall-clock of every dispatched
-# gateway event; if nothing fires for STALE_SECS, we exit so launchd's
-# KeepAlive respawns the process with a fresh session. A populated
-# Discord guild produces PRESENCE_UPDATE / TYPING_START / GUILD_*
-# events constantly, so even on a quiet night 10 min of total silence
-# means something is wrong.
-WATCHDOG_STALE_SECS = 600.0
-WATCHDOG_CHECK_SECS = 60.0
+# zombie state (lib thinks WS is open, Discord disagrees). The watchdog
+# tracks gateway-heartbeat health: ``bot.latency`` updates on every
+# HEARTBEAT_ACK (~every 41s for Discord). When ACKs stop, the value
+# stops changing — that's our signal the connection is dead regardless
+# of whether the guild has any activity. 120s = ~3× the heartbeat
+# interval, with margin for jitter. Activity-based watchdogs false-fire
+# on quiet private guilds; heartbeat-based does not.
+WATCHDOG_ACK_STALE_SECS = 120.0
+WATCHDOG_CHECK_SECS = 30.0
+# Grace period after on_ready before we start enforcing — first
+# heartbeat ACK can take a moment, and reconnects briefly show
+# latency=inf.
+WATCHDOG_GRACE_SECS = 90.0
 
 
 def configure_logging() -> None:
@@ -87,34 +92,35 @@ async def _gateway_watchdog(
     bot: ThingyBot,
     stop_event: asyncio.Event,
     *,
-    stale_secs: float = WATCHDOG_STALE_SECS,
+    ack_stale_secs: float = WATCHDOG_ACK_STALE_SECS,
+    grace_secs: float = WATCHDOG_GRACE_SECS,
     check_secs: float = WATCHDOG_CHECK_SECS,
 ) -> None:
-    """Detect a silent-zombie gateway and exit so launchd respawns.
+    """Detect a silent-zombie gateway via heartbeat-ACK staleness.
 
-    Hooks ``on_socket_event_type`` (fires on every dispatched gateway
-    event — READY, MESSAGE_CREATE, PRESENCE_UPDATE, TYPING_START, etc.)
-    and stamps a monotonic clock. Every ``check_secs`` we verify the
-    last event is within ``stale_secs``. On miss we ``os._exit(1)``
-    rather than ``sys.exit`` because the asyncio loop may itself be
-    wedged — we want the process gone immediately.
+    Discord's gateway sends our bot a HEARTBEAT every ~41s; discord.py
+    updates ``bot.latency`` on each HEARTBEAT_ACK. When ACKs stop, the
+    value stops changing — that's our signal the connection is
+    silently dead regardless of guild activity. We watch
+    ``bot.latency`` change-events and exit when no change has been
+    seen for ``ack_stale_secs`` (default 120s, ~3× Discord's heartbeat
+    interval).
+
+    Activity-based watchdogs (track on_socket_event_type) false-fire
+    on quiet private guilds, since PRESENCE_UPDATE requires the
+    privileged presences intent (which we don't request) and a small
+    guild may go many minutes with no TYPING_START or MESSAGE_CREATE.
+    Heartbeats fire regardless of activity.
+
+    We ``os._exit(1)`` rather than ``sys.exit`` because the asyncio
+    loop may itself be wedged — we want the process gone immediately
+    so launchd's KeepAlive respawns it.
     """
-    last_event_at = time.monotonic()
+    last_latency: float | None = None
+    last_change_at = time.monotonic()
 
-    # discord.Client (the base PersonaBot inherits) has no
-    # ``add_listener`` — that's a ``ext.commands.Bot`` method. The
-    # documented Client API is ``bot.event(coro)``, which registers
-    # the coroutine under its own ``__name__``. So the inner function
-    # is named ``on_socket_event_type`` to match.
-    async def on_socket_event_type(event_type: str) -> None:  # noqa: ARG001
-        nonlocal last_event_at
-        last_event_at = time.monotonic()
-
-    bot.event(on_socket_event_type)
-
-    # Don't start the staleness clock until we've actually connected.
-    # If we time out waiting for ready, arm anyway — that itself is a
-    # symptom worth catching.
+    # Don't enforce until the bot has had time to connect + receive a
+    # first ACK. Reconnect cycles briefly show latency=inf.
     try:
         await asyncio.wait_for(bot.ready_event.wait(), timeout=READY_WAIT_SECONDS)
     except asyncio.TimeoutError:
@@ -122,8 +128,12 @@ async def _gateway_watchdog(
             "watchdog: bot didn't become ready within %.0fs; arming anyway",
             READY_WAIT_SECONDS,
         )
-    last_event_at = time.monotonic()
-    logger.info("watchdog: armed (stale threshold %.0fs)", stale_secs)
+    armed_at = time.monotonic()
+    last_change_at = armed_at
+    logger.info(
+        "watchdog: armed (no-ack threshold %.0fs, grace %.0fs)",
+        ack_stale_secs, grace_secs,
+    )
 
     while not stop_event.is_set():
         try:
@@ -138,12 +148,33 @@ async def _gateway_watchdog(
             )
             os._exit(1)
 
-        idle = time.monotonic() - last_event_at
-        if idle > stale_secs:
+        current = bot.latency  # float seconds, or inf when no WS / no ACK yet
+        now = time.monotonic()
+        since_armed = now - armed_at
+        if not math.isfinite(current):
+            # No heartbeat yet (or mid-reconnect). Tolerate during the
+            # grace window. After that, treat it as a zombie signal.
+            if since_armed > grace_secs + ack_stale_secs:
+                logger.error(
+                    "watchdog: bot.latency has been non-finite for %.0fs "
+                    "(grace %.0fs + threshold %.0fs); exiting so launchd "
+                    "restarts us", since_armed, grace_secs, ack_stale_secs,
+                )
+                os._exit(1)
+            continue
+
+        if last_latency is None or current != last_latency:
+            last_latency = current
+            last_change_at = now
+            continue
+
+        stale = now - last_change_at
+        if since_armed > grace_secs and stale > ack_stale_secs:
             logger.error(
-                "watchdog: no gateway events for %.0fs (threshold %.0fs); "
+                "watchdog: bot.latency hasn't changed in %.0fs "
+                "(threshold %.0fs); HEARTBEAT_ACKs have stopped — "
                 "exiting so launchd restarts us",
-                idle, stale_secs,
+                stale, ack_stale_secs,
             )
             os._exit(1)
 
