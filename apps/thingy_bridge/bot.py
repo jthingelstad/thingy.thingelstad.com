@@ -21,6 +21,7 @@ import logging
 import os
 import signal
 import sys
+import time
 from pathlib import Path
 
 import discord
@@ -38,6 +39,18 @@ logger = logging.getLogger("thingy_bridge.bot")
 # missing. Discord login + gateway + READY typically lands in <60s; 90s is
 # slack so a transient blip doesn't cancel the scheduler.
 READY_WAIT_SECONDS = 90.0
+
+# Gateway-watchdog thresholds. discord.py's KeepAlive should detect a
+# dead gateway and reconnect, but we've seen it fall into a silent-
+# zombie state (lib thinks WS is open, Discord disagrees, no events
+# arrive). The watchdog records the wall-clock of every dispatched
+# gateway event; if nothing fires for STALE_SECS, we exit so launchd's
+# KeepAlive respawns the process with a fresh session. A populated
+# Discord guild produces PRESENCE_UPDATE / TYPING_START / GUILD_*
+# events constantly, so even on a quiet night 10 min of total silence
+# means something is wrong.
+WATCHDOG_STALE_SECS = 600.0
+WATCHDOG_CHECK_SECS = 60.0
 
 
 def configure_logging() -> None:
@@ -68,6 +81,71 @@ def configure_logging() -> None:
     # Quiet discord.py's gateway noise unless DEBUG is on.
     if level > logging.DEBUG:
         logging.getLogger("discord").setLevel(logging.WARNING)
+
+
+async def _gateway_watchdog(
+    bot: ThingyBot,
+    stop_event: asyncio.Event,
+    *,
+    stale_secs: float = WATCHDOG_STALE_SECS,
+    check_secs: float = WATCHDOG_CHECK_SECS,
+) -> None:
+    """Detect a silent-zombie gateway and exit so launchd respawns.
+
+    Hooks ``on_socket_event_type`` (fires on every dispatched gateway
+    event — READY, MESSAGE_CREATE, PRESENCE_UPDATE, TYPING_START, etc.)
+    and stamps a monotonic clock. Every ``check_secs`` we verify the
+    last event is within ``stale_secs``. On miss we ``os._exit(1)``
+    rather than ``sys.exit`` because the asyncio loop may itself be
+    wedged — we want the process gone immediately.
+    """
+    last_event_at = time.monotonic()
+
+    # discord.Client (the base PersonaBot inherits) has no
+    # ``add_listener`` — that's a ``ext.commands.Bot`` method. The
+    # documented Client API is ``bot.event(coro)``, which registers
+    # the coroutine under its own ``__name__``. So the inner function
+    # is named ``on_socket_event_type`` to match.
+    async def on_socket_event_type(event_type: str) -> None:  # noqa: ARG001
+        nonlocal last_event_at
+        last_event_at = time.monotonic()
+
+    bot.event(on_socket_event_type)
+
+    # Don't start the staleness clock until we've actually connected.
+    # If we time out waiting for ready, arm anyway — that itself is a
+    # symptom worth catching.
+    try:
+        await asyncio.wait_for(bot.ready_event.wait(), timeout=READY_WAIT_SECONDS)
+    except asyncio.TimeoutError:
+        logger.warning(
+            "watchdog: bot didn't become ready within %.0fs; arming anyway",
+            READY_WAIT_SECONDS,
+        )
+    last_event_at = time.monotonic()
+    logger.info("watchdog: armed (stale threshold %.0fs)", stale_secs)
+
+    while not stop_event.is_set():
+        try:
+            await asyncio.wait_for(stop_event.wait(), timeout=check_secs)
+            return  # stop requested — clean shutdown path
+        except asyncio.TimeoutError:
+            pass
+
+        if bot.is_closed():
+            logger.error(
+                "watchdog: bot.is_closed() is True; exiting so launchd restarts us"
+            )
+            os._exit(1)
+
+        idle = time.monotonic() - last_event_at
+        if idle > stale_secs:
+            logger.error(
+                "watchdog: no gateway events for %.0fs (threshold %.0fs); "
+                "exiting so launchd restarts us",
+                idle, stale_secs,
+            )
+            os._exit(1)
 
 
 async def run() -> int:
@@ -177,6 +255,10 @@ async def run() -> int:
                 logger.exception("scheduler: failed to start")
 
     ready_task = asyncio.create_task(_post_ready(), name="post-ready")
+    watchdog_task = asyncio.create_task(
+        _gateway_watchdog(bot, stop_event),
+        name="gateway-watchdog",
+    )
 
     try:
         await stop_event.wait()
@@ -190,9 +272,9 @@ async def run() -> int:
             await bot.close()
         except Exception:  # noqa: BLE001
             logger.exception("error while closing client")
-        for task in (persona_task, ready_task):
+        for task in (persona_task, ready_task, watchdog_task):
             task.cancel()
-        await asyncio.gather(persona_task, ready_task, return_exceptions=True)
+        await asyncio.gather(persona_task, ready_task, watchdog_task, return_exceptions=True)
     return 0
 
 
