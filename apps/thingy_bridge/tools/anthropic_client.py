@@ -44,10 +44,18 @@ _prompt_cache: dict[str, str] = {}
 _client: Optional[anthropic.Anthropic] = None
 
 
+# The bridge's Anthropic spend bills to its own key so the console attributes
+# Thingy's hourly assessment separately from the workshop personas.
+_KEY_ENV = "ANTHROPIC_THINGY_API_KEY"
+
+
 def client() -> anthropic.Anthropic:
     global _client
     if _client is None:
-        _client = anthropic.Anthropic(timeout=DEFAULT_API_TIMEOUT_SECS)
+        key = os.environ.get(_KEY_ENV)
+        if not key:
+            raise RuntimeError(f"{_KEY_ENV} is not set (required for thingy-watch assessment calls)")
+        _client = anthropic.Anthropic(api_key=key, timeout=DEFAULT_API_TIMEOUT_SECS)
     return _client
 
 

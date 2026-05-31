@@ -180,8 +180,8 @@ async def _gateway_watchdog(
 
 
 async def run() -> int:
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        logger.error("ANTHROPIC_API_KEY is not set (required for thingy-watch assessment calls)")
+    if not os.environ.get("ANTHROPIC_THINGY_API_KEY"):
+        logger.error("ANTHROPIC_THINGY_API_KEY is not set (required for thingy-watch assessment calls)")
         return 2
     token = os.environ.get("DISCORD_TOKEN_THINGY")
     if not token:
