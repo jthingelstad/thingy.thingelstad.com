@@ -33,9 +33,14 @@ The bridge's two surfaces:
   turn `request_id`; PASSes silently when nothing new; drains a
   backlog ≤25 convos/run, ≤6 cards/run (the rest land next run).
 
-The slash surface is small: `/thingy recent [count]` (last N mirrored
-convos), `/thingy show <id>` (full assessment + transcript attachment),
-`/thingy sync` (manual re-fire of the watch job).
+The slash surface is small. Operator-only (gated on `DISCORD_OWNER_USER_ID`):
+`/thingy recent [count]` (last N mirrored convos), `/thingy show <id>` (full
+assessment + transcript attachment), `/thingy sync` (manual re-fire of the
+watch job). Reader-facing (no gate, affects only the caller): `/thingy new`
+(clear the caller's session boundary) and `/thingy scope <weekly_thing|blog|both>`
+(pick which corpus Thingy searches for the caller — persisted in the
+`thingy_scopes` table, threaded into the `/chat` body, disclosed in a
+non-default answer footer).
 
 ## Storage
 

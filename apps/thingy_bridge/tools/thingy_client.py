@@ -151,6 +151,7 @@ async def chat_stream(
     token: str,
     message: str,
     history: Optional[list[dict[str, str]]] = None,
+    scope: Optional[str] = None,
 ) -> AsyncIterator[tuple[str, dict[str, Any]]]:
     """Yield ``(event_name, data_dict)`` tuples from the Lambda's SSE stream.
 
@@ -158,9 +159,15 @@ async def chat_stream(
     ``status`` updates, ``answer_delta`` chunks, ``citations`` once after
     the answer, ``done`` at the end. ``error`` is raised as a
     ``ThingyError``.
+
+    ``scope`` selects which corpus the Lambda searches
+    (``weekly_thing`` / ``blog`` / ``both``); omit it and the Lambda
+    defaults to the Weekly Thing archive.
     """
     url = f"{_stream_base()}/chat"
-    body = {"message": message, "history": history or []}
+    body: dict[str, Any] = {"message": message, "history": history or []}
+    if scope:
+        body["scope"] = scope
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "text/event-stream",

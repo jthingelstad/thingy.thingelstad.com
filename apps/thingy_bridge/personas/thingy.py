@@ -231,6 +231,7 @@ class ThingyBot(PersonaBot):
         compact_history = await self._build_thingy_history(message)
 
         discord_user_id = str(message.author.id)
+        scope = db.get_thingy_scope(discord_user_id)
         run_row = db.insert_thingy_request(
             discord_user_id=discord_user_id,
             discord_message_id=str(message.id),
@@ -273,6 +274,7 @@ class ThingyBot(PersonaBot):
         try:
             async for event_name, data in thingy_client.chat_stream(
                 token=token, message=question, history=compact_history,
+                scope=scope,
             ):
                 if event_name == "meta":
                     request_id = str(data.get("request_id") or "") or None
@@ -310,6 +312,13 @@ class ThingyBot(PersonaBot):
         answer = thingy_render.format_for_discord(
             deltas, citations, site_url=site_url,
         )
+        # Disclose a non-default scope on the public answer. The
+        # `/thingy scope` confirmation is ephemeral, so onlookers in
+        # #ask-thingy can't otherwise tell a blog/both answer apart from
+        # a Weekly-Thing one. Default (weekly_thing) stays footer-free.
+        if answer and scope != db.DEFAULT_SCOPE:
+            scope_label = db.SCOPE_LABELS.get(scope, scope)
+            answer = f"{answer}\n\n-# 🔭 Searched: {scope_label}"
         if not answer:
             db.update_thingy_request(
                 run_row,

@@ -430,5 +430,48 @@ class ProfileRoundtripTests(unittest.TestCase):
         self.assertIsNotNone(db.get_thingy_token("u-migr"))
 
 
+class ThingyScopeTests(unittest.TestCase):
+    """Per-reader source scope persists in its own table, decoupled from
+    the token row so it can be set before a reader's first question."""
+
+    def setUp(self):
+        self._tmpdir = tempfile.TemporaryDirectory()
+        self._orig_path = os.environ.get("THINGY_BRIDGE_DB_PATH")
+        os.environ["THINGY_BRIDGE_DB_PATH"] = str(Path(self._tmpdir.name) / "test.db")
+        db.run_migrations()
+
+    def tearDown(self):
+        if self._orig_path is None:
+            os.environ.pop("THINGY_BRIDGE_DB_PATH", None)
+        else:
+            os.environ["THINGY_BRIDGE_DB_PATH"] = self._orig_path
+        self._tmpdir.cleanup()
+
+    def test_default_when_unset(self):
+        self.assertEqual(db.get_thingy_scope("nobody"), db.DEFAULT_SCOPE)
+        self.assertEqual(db.DEFAULT_SCOPE, "weekly_thing")
+
+    def test_roundtrip_and_overwrite(self):
+        db.set_thingy_scope("u1", "blog")
+        self.assertEqual(db.get_thingy_scope("u1"), "blog")
+        db.set_thingy_scope("u1", "both")
+        self.assertEqual(db.get_thingy_scope("u1"), "both")
+
+    def test_set_before_token_exists(self):
+        # No token row for this user — scope must still persist (the
+        # whole reason scope lives in its own table).
+        self.assertIsNone(db.get_thingy_token("fresh"))
+        db.set_thingy_scope("fresh", "blog")
+        self.assertEqual(db.get_thingy_scope("fresh"), "blog")
+
+    def test_invalid_scope_falls_back_to_default(self):
+        db.set_thingy_scope("u2", "garbage")
+        self.assertEqual(db.get_thingy_scope("u2"), db.DEFAULT_SCOPE)
+
+    def test_labels_cover_every_valid_scope(self):
+        for scope in db.VALID_SCOPES:
+            self.assertIn(scope, db.SCOPE_LABELS)
+
+
 if __name__ == "__main__":
     unittest.main()

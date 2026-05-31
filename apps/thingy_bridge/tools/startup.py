@@ -42,7 +42,7 @@ CHANNELS: list[tuple[str, str]] = [
 
 REQUIRED_PERMS = ("view_channel", "send_messages", "read_message_history")
 
-COMMANDS_SUMMARY = "/thingy recent · /thingy show · /thingy sync · /thingy new"
+COMMANDS_SUMMARY = "/thingy recent · /thingy show · /thingy sync · /thingy new · /thingy scope"
 
 
 def git_hash() -> str:

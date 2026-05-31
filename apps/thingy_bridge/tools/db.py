@@ -166,6 +166,50 @@ def get_session_reset_at(discord_user_id: str) -> Optional[str]:
     return value if value else None
 
 
+# ---------- Thingy scope (per-reader source selection) ----------
+
+# The three corpora a reader can scope Thingy to. Mirrors the Lambda's
+# shared/scope.mjs SCOPES/DEFAULT_SCOPE — keep these in sync. SCOPE_LABELS
+# is the reader-facing name shown in the `/thingy scope` choices and the
+# answer footer.
+DEFAULT_SCOPE = "weekly_thing"
+VALID_SCOPES = ("weekly_thing", "blog", "both")
+SCOPE_LABELS = {
+    "weekly_thing": "Weekly Thing",
+    "blog": "Jamie's blog",
+    "both": "Weekly Thing + blog",
+}
+
+
+def set_thingy_scope(discord_user_id: str, scope: str) -> None:
+    """Persist a reader's active source scope. UPSERT keyed by Discord
+    user id and independent of token lifecycle, so a reader can set it
+    before their first question ever mints a token row."""
+    if scope not in VALID_SCOPES:
+        scope = DEFAULT_SCOPE
+    with connect() as conn:
+        conn.execute(
+            "INSERT INTO thingy_scopes (discord_user_id, scope) "
+            "VALUES (?, ?) "
+            "ON CONFLICT(discord_user_id) DO UPDATE SET "
+            "  scope = excluded.scope, updated_at = datetime('now')",
+            (discord_user_id, scope),
+        )
+
+
+def get_thingy_scope(discord_user_id: str) -> str:
+    """Return the reader's stored scope, or the default if unset/invalid."""
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT scope FROM thingy_scopes WHERE discord_user_id = ?",
+            (discord_user_id,),
+        ).fetchone()
+    if row is None:
+        return DEFAULT_SCOPE
+    value = row["scope"]
+    return value if value in VALID_SCOPES else DEFAULT_SCOPE
+
+
 # ---------- Thingy requests (per-question mirror) ----------
 
 def insert_thingy_request(

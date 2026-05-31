@@ -22,6 +22,17 @@ CREATE TABLE IF NOT EXISTS thingy_tokens (
   session_reset_at TEXT
 );
 
+-- Per-reader source scope for #ask-thingy. Which body of writing Thingy
+-- searches for this user: 'weekly_thing' (the issue archive, default),
+-- 'blog' (thingelstad.com), or 'both'. Kept in its own table rather than
+-- on thingy_tokens so a reader can set it via `/thingy scope` before ever
+-- asking a question (the token row only exists once a question mints one).
+CREATE TABLE IF NOT EXISTS thingy_scopes (
+  discord_user_id TEXT PRIMARY KEY,
+  scope TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- One row per question forwarded to the Lambda. Lets the reaction
 -- handler look up which Lambda request_id corresponds to a given
 -- Discord bot reply when the reader reacts 👍/👎 to it.

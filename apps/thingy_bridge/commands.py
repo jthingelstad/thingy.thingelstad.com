@@ -174,5 +174,28 @@ def register_thingy_commands(bot: "PersonaBot") -> app_commands.CommandTree:
                 "Ask anything in #ask-thingy and we'll start clean from there.",
             )
 
+    @thingy.command(
+        name="scope",
+        description="Choose which sources Thingy searches for your questions.",
+    )
+    @app_commands.describe(source="Weekly Thing issues, Jamie's blog, or both")
+    @app_commands.choices(source=[
+        app_commands.Choice(name="Weekly Thing", value="weekly_thing"),
+        app_commands.Choice(name="Jamie's blog", value="blog"),
+        app_commands.Choice(name="Both", value="both"),
+    ])
+    async def thingy_scope_cmd(  # type: ignore[misc]
+        interaction: discord.Interaction,
+        source: app_commands.Choice[str],
+    ) -> None:
+        await interaction.response.defer(ephemeral=True, thinking=False)
+        db.set_thingy_scope(str(interaction.user.id), source.value)
+        label = db.SCOPE_LABELS.get(source.value, source.value)
+        await _ack(
+            interaction,
+            f"🔭 Thingy will now search **{label}** for your questions. "
+            "Run `/thingy scope` again any time to change it.",
+        )
+
     tree.add_command(thingy)
     return tree
