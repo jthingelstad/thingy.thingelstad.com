@@ -6,6 +6,14 @@
 > asked. Reader-facing only; everything author-facing lives in the
 > `studio-thing` repo.
 
+> **Status: transitional.** The current shape (reader Q&A bot +
+> operator-side conversation mirror) is **Phase 1** in
+> [`../../THINGY_ROADMAP.md`](../../THINGY_ROADMAP.md). Phase A3 plans
+> to **retire the request/response relay + mirror** and repurpose this
+> process as a one-way members broadcast that deep-links to authenticated
+> web Thingy. Read the roadmap before investing in extensions to the
+> current shape.
+
 ## Quick start
 
 ```bash

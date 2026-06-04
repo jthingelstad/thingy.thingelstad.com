@@ -6,6 +6,15 @@
 > single Discord client, single APScheduler instance.
 > See [`README.md`](README.md) for the user-facing overview.
 
+> **Status: transitional design.** Both the reader-answering bot and the
+> conversation mirror described below are the **Phase 1 / A1** shape from
+> [`../../THINGY_ROADMAP.md`](../../THINGY_ROADMAP.md). Phase **A3**
+> deliberately retires this shape and turns the process into a one-way
+> members broadcast tied to the temporal layer, with each share deep-
+> linking to authenticated web Thingy. When planning bridge changes,
+> treat the current surfaces as transitional — small fixes are fine, but
+> larger investments should weigh whether the work survives A3.
+
 ## Architecture: one process, two surfaces
 
 The bridge runs **one** discord.py Client (the Thingy bot) on its own

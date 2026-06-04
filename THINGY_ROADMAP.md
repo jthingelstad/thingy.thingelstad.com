@@ -70,7 +70,7 @@ in the index, the asker sets scope" pattern as corpus distinction, applied to pr
 leak to public Thingy by construction.
 
 ### Phase A1 — Standalone web Thingy (foundation)
-Port Thingy to `thingy.thingelstad.com` at parity with the *current* auth. See `STANDALONE_BUILD.md`.
+Port Thingy to `thingy.thingelstad.com` at parity with the *current* auth. See `docs/history/STANDALONE_BUILD.md` (preserved as the original build brief; the port has shipped).
 Don't over-polish the subscriber-check auth UI or the scope checkboxes — both get replaced later. DNS is
 already set (CNAME → GitHub).
 
