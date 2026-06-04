@@ -343,27 +343,7 @@ th {
   width: 100%;
 }
 
-/* --- Form notes/messages (style.css 3878-3895) --- */
-.form-note {
-  margin-top: var(--space-sm);
-  color: var(--color-text-muted);
-  font-size: var(--size-sm);
-}
-
-.form-message {
-  min-height: 1.4em;
-  margin-top: var(--space-sm);
-  color: var(--color-accent);
-  font-size: var(--size-sm);
-  font-weight: 700;
-}
-
-.librarian-messages {
-  display: grid;
-  gap: var(--space-md);
-  margin-bottom: var(--space-lg);
-
-/* --- Thingy + Librarian UI (style.css 3614-4323) --- */
+/* --- Thingy + Librarian UI, incl. form-note/message (style.css 3614-4323) --- */
 .thingy-page { padding: 0 0 80px; }
 
 .thingy-hero {
