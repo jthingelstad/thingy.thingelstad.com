@@ -161,7 +161,7 @@ async def chat_stream(
     ``ThingyError``.
 
     ``scope`` selects which corpus the Lambda searches
-    (``weekly_thing`` / ``blog`` / ``both``); omit it and the Lambda
+    (``weekly_thing`` / ``blog`` / ``podcast`` / ``both`` / ``all``); omit it and the Lambda
     defaults to the Weekly Thing archive.
     """
     url = f"{_stream_base()}/chat"

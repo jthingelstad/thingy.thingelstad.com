@@ -178,11 +178,13 @@ def register_thingy_commands(bot: "PersonaBot") -> app_commands.CommandTree:
         name="scope",
         description="Choose which sources Thingy searches for your questions.",
     )
-    @app_commands.describe(source="Weekly Thing issues, Jamie's blog, or both")
+    @app_commands.describe(source="Weekly Thing issues, Jamie's blog, Another Thing, or all sources")
     @app_commands.choices(source=[
         app_commands.Choice(name="Weekly Thing", value="weekly_thing"),
         app_commands.Choice(name="Jamie's blog", value="blog"),
+        app_commands.Choice(name="Another Thing", value="podcast"),
         app_commands.Choice(name="Both", value="both"),
+        app_commands.Choice(name="All sources", value="all"),
     ])
     async def thingy_scope_cmd(  # type: ignore[misc]
         interaction: discord.Interaction,

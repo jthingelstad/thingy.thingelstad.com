@@ -3,8 +3,8 @@
 > The public Q&A surface for *The Weekly Thing* archive. Runs the Thingy
 > Discord bot in `#ask-thingy` and mirrors reader conversations from the
 > Librarian Lambda into a local SQLite so Jamie can see what's being
-> asked. Reader-facing only; everything author-facing lives in
-> [`../workshop_bot/`](../workshop_bot/).
+> asked. Reader-facing only; everything author-facing lives in the
+> `studio-thing` repo.
 
 ## Quick start
 
@@ -38,11 +38,13 @@ Two surfaces, one process:
    into the local `thingy_conversations` SQLite table (a stable local
    id that outlives the Lambda's ~60-day DynamoDB TTL), and posts a
    card to `#chatter`. Operator commands `/thingy {recent,show,sync}`
-   browse the mirror.
+   browse the mirror; reader commands `/thingy {new,scope}` manage the
+   caller's session boundary and corpus scope (Weekly Thing, blog, Another
+   Thing, or all sources).
 
 ## Architecture
 
-Why this lives in its own process (separate from `workshop_bot`):
+Why this lives in its own repo/process (separate from Studio's `workshop_bot`):
 
 - The reader-facing answering bot has different availability needs from
   the author-facing personas. A workshop_bot restart (Marky/Patty/Eddy
@@ -54,9 +56,8 @@ Why this lives in its own process (separate from `workshop_bot`):
   reader-facing availability matters; workshop_bot is local-by-design.
 
 The actual Q&A intelligence (corpus retrieval, Bedrock embeddings,
-Claude tool-use loop) lives in the [Librarian
-Lambda](../librarian/) — this bridge is the thin connector between
-Discord and the Lambda's HTTP API.
+Claude tool-use loop) lives in the Librarian Lambda in `studio-thing` —
+this bridge is the thin connector between Discord and the Lambda's HTTP API.
 
 ## Environment
 

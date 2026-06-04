@@ -454,8 +454,12 @@ class ThingyScopeTests(unittest.TestCase):
     def test_roundtrip_and_overwrite(self):
         db.set_thingy_scope("u1", "blog")
         self.assertEqual(db.get_thingy_scope("u1"), "blog")
+        db.set_thingy_scope("u1", "podcast")
+        self.assertEqual(db.get_thingy_scope("u1"), "podcast")
         db.set_thingy_scope("u1", "both")
         self.assertEqual(db.get_thingy_scope("u1"), "both")
+        db.set_thingy_scope("u1", "all")
+        self.assertEqual(db.get_thingy_scope("u1"), "all")
 
     def test_set_before_token_exists(self):
         # No token row for this user — scope must still persist (the

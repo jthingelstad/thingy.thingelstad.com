@@ -12,7 +12,7 @@ permalink: "/"
       </div>
       <p class="eyebrow">Members &middot; Beta</p>
       <h1 class="thingy-h1">Meet <em>Thingy</em>.</h1>
-      <p class="thingy-lede">Thingy is your guide to everything I&rsquo;ve published&mdash;the entire Weekly Thing archive and years of writing on my blog. Every idea, link, and rabbit hole I&rsquo;ve ever shared. Ask about a past issue, chase down a half-remembered thought, or trace how an idea evolved across both. It&rsquo;s playful, a little weird, and very good at connecting dots. Start anywhere.</p>
+      <p class="thingy-lede">Thingy is your guide to everything I&rsquo;ve published&mdash;the entire Weekly Thing archive, years of writing on my blog, and Another Thing podcast transcripts. Every idea, link, and rabbit hole I&rsquo;ve shared. Ask about a past issue, chase down a half-remembered thought, or trace how an idea evolved across sources. It&rsquo;s playful, a little weird, and very good at connecting dots. Start anywhere.</p>
     </div>
   </header>
 
@@ -60,6 +60,7 @@ permalink: "/"
               <legend class="sr-only">Which sources should Thingy search?</legend>
               <label><input type="checkbox" id="librarian-scope-wt" value="weekly_thing" checked> Weekly Thing</label>
               <label><input type="checkbox" id="librarian-scope-blog" value="blog"> Jamie&rsquo;s blog</label>
+              <label><input type="checkbox" id="librarian-scope-podcast" value="podcast"> Another Thing</label>
             </fieldset>
             <div class="librarian-question-meta">
               <span id="librarian-question-count">0 / 1200</span>
@@ -118,6 +119,7 @@ permalink: "/"
     const questionInput = document.getElementById('librarian-question');
     const scopeWtBox = document.getElementById('librarian-scope-wt');
     const scopeBlogBox = document.getElementById('librarian-scope-blog');
+    const scopePodcastBox = document.getElementById('librarian-scope-podcast');
     const questionButton = questionForm.querySelector('button[type="submit"]');
     const questionCount = document.getElementById('librarian-question-count');
     const messages = document.getElementById('librarian-messages');
@@ -172,6 +174,7 @@ permalink: "/"
         'Find references to Cory Doctorow.',
         'Which podcasters get mentioned most?',
         "Whose blogs does Jamie read?",
+        'What did Jamie say on Another Thing about starting a podcast?',
         'Find indie developers featured here.',
         "Who are Jamie's favorite thinkers?",
         'Which CEOs come up most?',
@@ -266,12 +269,14 @@ permalink: "/"
       return String(value || '').trim().slice(0, maxQuestionChars);
     }
 
-    // Map a ?scope= URL value to one of the three canonical scopes, or '' when
+    // Map a ?scope= URL value to one of the canonical scopes, or '' when
     // absent/unrecognized so it doesn't clobber the reader's saved scope.
     function normalizeScopeParam(value) {
       const raw = String(value || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
       if (raw === 'blog' || raw === 'thingelstad' || raw === 'thingelstad_com') return 'blog';
-      if (raw === 'both' || raw === 'all' || raw === 'everything') return 'both';
+      if (raw === 'podcast' || raw === 'podcasts' || raw === 'another_thing' || raw === 'anotherthing' || raw === 'another') return 'podcast';
+      if (raw === 'both') return 'both';
+      if (raw === 'all' || raw === 'everything') return 'all';
       if (raw === 'weekly_thing' || raw === 'wt' || raw === 'weeklything' || raw === 'issues' || raw === 'archive') return 'weekly_thing';
       return '';
     }
@@ -300,13 +305,16 @@ permalink: "/"
       return window.localStorage.getItem(storageKey);
     }
 
-    // Two checkboxes encode three scopes: both checked = "both", blog only =
-    // "blog", otherwise (WT only, or neither) = "weekly_thing". The Lambda
-    // defaults to weekly_thing too, so "neither" degrades safely.
+    // Three checkboxes encode the scope. `both` is kept as the old
+    // WT+blog value; `all` means WT+blog+podcast.
     function currentScope() {
       const wt = scopeWtBox && scopeWtBox.checked;
       const blog = scopeBlogBox && scopeBlogBox.checked;
+      const podcast = scopePodcastBox && scopePodcastBox.checked;
+      if (wt && blog && podcast) return 'all';
       if (wt && blog) return 'both';
+      if (podcast && !wt && !blog) return 'podcast';
+      if (podcast) return 'all';
       if (blog) return 'blog';
       return 'weekly_thing';
     }
@@ -315,27 +323,37 @@ permalink: "/"
       try { window.localStorage.setItem(scopeStorageKey, currentScope()); } catch (error) { /* ignore */ }
     }
 
-    // Set the checkbox pair from a scope string. Inverse of currentScope():
-    // blog → blog only, both → both checked, anything else → WT only.
+    // Set the checkbox group from a scope string. Inverse of currentScope().
     function applyScope(scope) {
-      if (!scopeWtBox || !scopeBlogBox) return;
+      if (!scopeWtBox || !scopeBlogBox || !scopePodcastBox) return;
       if (scope === 'blog') {
         scopeWtBox.checked = false;
         scopeBlogBox.checked = true;
+        scopePodcastBox.checked = false;
+      } else if (scope === 'podcast') {
+        scopeWtBox.checked = false;
+        scopeBlogBox.checked = false;
+        scopePodcastBox.checked = true;
       } else if (scope === 'both') {
         scopeWtBox.checked = true;
         scopeBlogBox.checked = true;
+        scopePodcastBox.checked = false;
+      } else if (scope === 'all') {
+        scopeWtBox.checked = true;
+        scopeBlogBox.checked = true;
+        scopePodcastBox.checked = true;
       } else {
         scopeWtBox.checked = true;
         scopeBlogBox.checked = false;
+        scopePodcastBox.checked = false;
       }
     }
 
     function restoreScope() {
-      if (!scopeWtBox || !scopeBlogBox) return;
+      if (!scopeWtBox || !scopeBlogBox || !scopePodcastBox) return;
       let saved = '';
       try { saved = window.localStorage.getItem(scopeStorageKey) || ''; } catch (error) { saved = ''; }
-      applyScope(saved);
+      applyScope(normalizeScopeParam(saved) || saved);
     }
 
     function showBetaNotice() {
@@ -1121,6 +1139,7 @@ permalink: "/"
     }
     if (scopeWtBox) scopeWtBox.addEventListener('change', persistScope);
     if (scopeBlogBox) scopeBlogBox.addEventListener('change', persistScope);
+    if (scopePodcastBox) scopePodcastBox.addEventListener('change', persistScope);
 
     prompts.addEventListener('click', (event) => {
       const target = event.target instanceof Element ? event.target : event.target.parentElement;

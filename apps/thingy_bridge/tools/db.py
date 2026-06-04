@@ -168,16 +168,18 @@ def get_session_reset_at(discord_user_id: str) -> Optional[str]:
 
 # ---------- Thingy scope (per-reader source selection) ----------
 
-# The three corpora a reader can scope Thingy to. Mirrors the Lambda's
+# The source scopes a reader can set for Thingy. Mirrors the Lambda's
 # shared/scope.mjs SCOPES/DEFAULT_SCOPE — keep these in sync. SCOPE_LABELS
 # is the reader-facing name shown in the `/thingy scope` choices and the
 # answer footer.
 DEFAULT_SCOPE = "weekly_thing"
-VALID_SCOPES = ("weekly_thing", "blog", "both")
+VALID_SCOPES = ("weekly_thing", "blog", "podcast", "both", "all")
 SCOPE_LABELS = {
     "weekly_thing": "Weekly Thing",
     "blog": "Jamie's blog",
+    "podcast": "Another Thing",
     "both": "Weekly Thing + blog",
+    "all": "Weekly Thing + blog + Another Thing",
 }
 
 

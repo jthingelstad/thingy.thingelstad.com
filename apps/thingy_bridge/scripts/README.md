@@ -1,9 +1,9 @@
 # scripts/
 
-Operational utilities for `apps/thingy_bridge/`. Mirrors the layout under
-`apps/workshop_bot/scripts/` — same shapes, separate launchd label,
-separate database, separate backup directory, so a workshop_bot restart
-doesn't drop `#ask-thingy` and vice versa.
+Operational utilities for `apps/thingy_bridge/`. The author-facing
+`workshop_bot` now lives in `studio-thing`; this bridge keeps its own launchd
+label, database, and backup directory so Studio bot restarts don't drop
+`#ask-thingy` and vice versa.
 
 ## `admin.sh`
 
@@ -60,7 +60,7 @@ python3 -m venv venv
 venv/bin/pip install -r requirements.txt
 
 # apps/thingy_bridge/.env should already carry the Thingy Discord token
-# (DISCORD_BOT_TOKEN_THINGY) and Lambda credentials before starting.
+# (DISCORD_TOKEN_THINGY) and Lambda credentials before starting.
 apps/thingy_bridge/scripts/admin.sh install
 apps/thingy_bridge/scripts/admin.sh start
 apps/thingy_bridge/scripts/admin.sh status

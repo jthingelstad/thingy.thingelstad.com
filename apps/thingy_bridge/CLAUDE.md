@@ -14,7 +14,7 @@ has no agent_tools registry, no in-memory corpus, no per-persona team
 — Thingy is the only persona and the Q&A intelligence lives in the
 Lambda.
 
-**Sibling Lambda endpoint, not used here:** the Lambda also exposes `POST /retrieve` (semantic archive retrieval, bridge-secret auth, no chat framing). That's called by `workshop_bot` for its `archive__retrieve` tool and various pre-injection helpers — see [`../workshop_bot/tools/thingy_retrieve.py`](../workshop_bot/tools/thingy_retrieve.py). The bridge process doesn't need it; reader-facing answering goes through `/chat` directly.
+**Sibling Lambda endpoint, not used here:** the Lambda also exposes `POST /retrieve` (semantic archive retrieval, bridge-secret auth, no chat framing). That's called by Studio's `workshop_bot` for its `archive__retrieve` tool and various pre-injection helpers — see `studio-thing/apps/workshop_bot/tools/thingy_retrieve.py`. The bridge process doesn't need it; reader-facing answering goes through `/chat` directly.
 
 The bridge's two surfaces:
 
@@ -37,7 +37,7 @@ The slash surface is small. Operator-only (gated on `DISCORD_OWNER_USER_ID`):
 `/thingy recent [count]` (last N mirrored convos), `/thingy show <id>` (full
 assessment + transcript attachment), `/thingy sync` (manual re-fire of the
 watch job). Reader-facing (no gate, affects only the caller): `/thingy new`
-(clear the caller's session boundary) and `/thingy scope <weekly_thing|blog|both>`
+(clear the caller's session boundary) and `/thingy scope <weekly_thing|blog|podcast|both|all>`
 (pick which corpus Thingy searches for the caller — persisted in the
 `thingy_scopes` table, threaded into the `/chat` body, disclosed in a
 non-default answer footer).
@@ -60,15 +60,15 @@ from `db/schema.sql` on every boot:
 ## Relationship to other apps
 
 ```
-                    apps/librarian/  ← serverless Q&A intelligence
+               studio-thing/apps/librarian/  ← serverless Q&A intelligence
                           ↑↓ HTTP/SSE
                    apps/thingy_bridge/  ← THIS APP (reader bridge + mirror)
                           ↕ Discord
                        #ask-thingy
                        #chatter (cards posted here, read by everyone)
 
-                   apps/workshop_bot/  ← author-facing personas (Eddy/Linky/Marky/Patty)
-                                          (no Thingy code, no bridge code)
+          studio-thing/apps/workshop_bot/  ← author-facing personas (Eddy/Linky/Marky/Patty)
+                                             (no Thingy code, no bridge code)
 ```
 
 `workshop_bot` and `thingy_bridge` are independent processes — they
