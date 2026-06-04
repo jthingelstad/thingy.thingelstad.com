@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ pageTitle or site.title }}{% if pageTitle and pageTitle != site.title %} — {{ site.title }}{% endif %}</title>
+  <meta name="description" content="{{ description or site.description }}">
+
+  {# Open Graph #}
+  <meta property="og:title" content="{{ pageTitle or site.title }}">
+  <meta property="og:description" content="{{ description or site.description }}">
+  <meta property="og:url" content="{{ site.url }}{{ page.url }}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{{ site.title }}">
+  <meta property="og:image" content="{{ site.url }}/img/thingy.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="{{ pageTitle or site.title }}">
+  <meta name="twitter:description" content="{{ description or site.description }}">
+  <meta name="twitter:image" content="{{ site.url }}/img/thingy.png">
+
+  <link rel="canonical" href="{{ site.url }}{{ page.url }}">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+  {# Web fonts — same families as the source page, for visual parity #}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400..600&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+
+  <link rel="stylesheet" href="/css/thingy.css">
+  {% if site.tinylyticsId %}
+  <link rel="preconnect" href="https://tinylytics.app">
+  {% endif %}
+</head>
+<body>
+  <main id="main-content">
+    {{ content | safe }}
+  </main>
+
+  {% if site.tinylyticsId %}
+  <script>
+    (function() {
+      if (['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)) return;
+      var s = document.createElement('script');
+      s.defer = true;
+      s.src = 'https://tinylytics.app/embed/{{ site.tinylyticsId }}.js?hits&countries&events';
+      document.body.appendChild(s);
+    })();
+  </script>
+  {% endif %}
+</body>
+</html>

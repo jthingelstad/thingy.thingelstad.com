@@ -1,0 +1,1139 @@
+---
+layout: layouts/base.njk
+pageTitle: Thingy
+description: Ask Thingy to find and synthesize writing from across Jamie Thingelstad's archive.
+permalink: "/"
+---
+<section class="thingy-page">
+  <header class="thingy-hero">
+    <div class="container-narrow">
+      <div class="thingy-hero-art">
+        <img src="/img/thingy.png" alt="" class="thingy-hero-thingy" width="1022" height="1022" loading="eager">
+      </div>
+      <p class="eyebrow">Members &middot; Beta</p>
+      <h1 class="thingy-h1">Meet <em>Thingy</em>.</h1>
+      <p class="thingy-lede">Thingy is your guide to everything I&rsquo;ve published&mdash;the entire Weekly Thing archive and years of writing on my blog. Every idea, link, and rabbit hole I&rsquo;ve ever shared. Ask about a past issue, chase down a half-remembered thought, or trace how an idea evolved across both. It&rsquo;s playful, a little weird, and very good at connecting dots. Start anywhere.</p>
+    </div>
+  </header>
+
+  <div class="thingy-shell">
+    <div class="container-narrow">
+      <div class="thingy-card">
+        <div class="thingy-card-head">
+          <div class="thingy-card-avatar" aria-hidden="true">T</div>
+          <div class="thingy-card-id">
+            <p class="thingy-card-name">Thingy</p>
+          </div>
+          <div class="thingy-card-tools">
+            <button type="button" id="librarian-clear-chat" class="thingy-card-tool" data-tinylytics-event="librarian.clear">Start over</button>
+            <button type="button" id="librarian-logout" class="thingy-card-tool">Forget me</button>
+          </div>
+        </div>
+
+        <div class="librarian-auth thingy-auth" id="librarian-auth">
+          <form class="librarian-form" id="librarian-auth-form">
+            <label for="librarian-email">Subscriber email</label>
+            <div class="librarian-auth-row">
+              <input id="librarian-email" name="email" type="email" autocomplete="email" required class="subscribe-input">
+              <button type="submit" id="librarian-auth-submit" data-tinylytics-event="librarian.auth_submit">Enter</button>
+            </div>
+            <span class="subscribe-error librarian-email-error" id="librarian-email-error" aria-live="polite"></span>
+            <p class="form-message" id="librarian-auth-message" aria-live="polite"></p>
+            <div class="librarian-auth-actions" id="librarian-auth-actions" hidden>
+              <button type="button" id="librarian-add-subscriber" hidden>Add me</button>
+              <button type="button" id="librarian-resend-confirmation" hidden>Resend confirmation email</button>
+            </div>
+            <p class="form-note">Access is available to Weekly Thing subscribers. Newsletter links may prefill this field.</p>
+          </form>
+        </div>
+
+        <div class="librarian-chat thingy-chat" id="librarian-chat" hidden>
+          <div class="librarian-messages" id="librarian-messages" aria-live="polite"></div>
+
+          <div class="librarian-prompts" id="librarian-prompts" aria-label="Suggested questions" hidden>
+          </div>
+
+          <form class="librarian-form librarian-question-form thingy-input" id="librarian-question-form">
+            <label for="librarian-question" class="sr-only">Ask Thingy</label>
+            <textarea id="librarian-question" name="message" rows="3" required maxlength="1200" placeholder="Ask Thingy anything about the archive&hellip;" aria-describedby="librarian-question-count"></textarea>
+            <fieldset class="librarian-scope" id="librarian-scope">
+              <legend class="sr-only">Which sources should Thingy search?</legend>
+              <label><input type="checkbox" id="librarian-scope-wt" value="weekly_thing" checked> Weekly Thing</label>
+              <label><input type="checkbox" id="librarian-scope-blog" value="blog"> Jamie&rsquo;s blog</label>
+            </fieldset>
+            <div class="librarian-question-meta">
+              <span id="librarian-question-count">0 / 1200</span>
+            </div>
+            <div class="librarian-question-actions">
+              <button type="submit" data-tinylytics-event="librarian.question_submit">Ask &rarr;</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <p class="thingy-foot-note">Thingy quotes from real issues. Always verify before quoting elsewhere.</p>
+    </div>
+  </div>
+
+  <div class="librarian-beta-overlay" id="librarian-beta-overlay" hidden>
+    <div class="librarian-beta-modal" role="dialog" aria-modal="true" aria-labelledby="librarian-beta-title" aria-describedby="librarian-beta-description">
+      <p class="eyebrow">Private Beta</p>
+      <h2 id="librarian-beta-title">Thingy is experimental</h2>
+      <p id="librarian-beta-description">Thingy can search and synthesize the Weekly Thing archive, but it may miss things, read the archive too narrowly, or cite an imperfect set of issues. It only uses archive sources and should show issue references when it can.</p>
+      <p>Beta conversations may be logged and reviewed to improve Thingy. Please treat this as an early preview and send along answers that feel especially useful, vague, weird, or wrong.</p>
+      <button type="button" id="librarian-beta-close">I understand</button>
+    </div>
+  </div>
+</section>
+
+<script>
+  (() => {
+    const apiBaseSource = window.WEEKLY_THING_LIBRARIAN_API === undefined ? '{{ site.librarianApiUrl }}' : window.WEEKLY_THING_LIBRARIAN_API;
+    const streamBaseSource = window.WEEKLY_THING_LIBRARIAN_STREAM_API === undefined ? '{{ site.librarianStreamUrl }}' : window.WEEKLY_THING_LIBRARIAN_STREAM_API;
+    const apiBase = String(apiBaseSource || '').replace(/\/$/, '');
+    const streamBase = String(streamBaseSource || '').replace(/\/$/, '');
+    const authPanel = document.getElementById('librarian-auth');
+    const chatPanel = document.getElementById('librarian-chat');
+    const authForm = document.getElementById('librarian-auth-form');
+    const questionForm = document.getElementById('librarian-question-form');
+    const emailInput = document.getElementById('librarian-email');
+    const emailError = document.getElementById('librarian-email-error');
+    const authButton = document.getElementById('librarian-auth-submit');
+    const authMessage = document.getElementById('librarian-auth-message');
+    const authActions = document.getElementById('librarian-auth-actions');
+    const addSubscriberButton = document.getElementById('librarian-add-subscriber');
+    const resendConfirmationButton = document.getElementById('librarian-resend-confirmation');
+    const logoutButton = document.getElementById('librarian-logout');
+    const clearChatButton = document.getElementById('librarian-clear-chat');
+    const questionInput = document.getElementById('librarian-question');
+    const scopeWtBox = document.getElementById('librarian-scope-wt');
+    const scopeBlogBox = document.getElementById('librarian-scope-blog');
+    const questionButton = questionForm.querySelector('button[type="submit"]');
+    const questionCount = document.getElementById('librarian-question-count');
+    const messages = document.getElementById('librarian-messages');
+    const prompts = document.getElementById('librarian-prompts');
+    const betaOverlay = document.getElementById('librarian-beta-overlay');
+    const betaCloseButton = document.getElementById('librarian-beta-close');
+    const storageKey = 'weeklyThingLibrarianToken';
+    const betaNoticeStorageKey = 'weeklyThingLibrarianBetaNotice';
+    const scopeStorageKey = 'weeklyThingLibrarianScope';
+    const maxHistoryMessages = 8;
+    const maxHistoryChars = 4000;
+    const maxQuestionChars = Number(questionInput.getAttribute('maxlength') || '1200');
+    const starterMessageHtml = '';
+    const starterQuestions = {
+      discovery: [
+        "What's the most recent issue about?",
+        'Show me the very first issue.',
+        'Pick a random issue for me.',
+        'What was Jamie writing about a year ago?',
+        'Find an issue from summer 2020.',
+        "What's a good issue to start with?",
+        'Show me a fan-favorite issue.',
+        'What did the 100th issue cover?',
+        'Surprise me with something from the archive.',
+        "What's the longest issue ever?",
+        'How do I subscribe?',
+        'How does the membership work?',
+        'When is the next issue coming?',
+        'How do I find a link I half-remember?',
+        'How can I share an issue?',
+        'Is there a way to follow without email?',
+        'How do I suggest a link to Jamie?',
+        "Where's the discussion community?",
+        'Can I read everything offline?',
+        'How do I unsubscribe?'
+      ],
+      topical: [
+        'What does Jamie write about most?',
+        'Find issues about the IndieWeb.',
+        'Show me everything about RSS.',
+        'What has Jamie said about AI?',
+        'Find issues mentioning POAPs.',
+        "What's been written about Minneapolis?",
+        'Show me issues about EDI or retail.',
+        'Find anything about ENS or Web3.',
+        "What's been said about newsletters?",
+        'Show me posts about owning your content.',
+        'Who does Jamie quote most often?',
+        'Find issues featuring Manton Reece.',
+        'What writers show up repeatedly?',
+        "Who's been linked from Daring Fireball?",
+        'Find references to Cory Doctorow.',
+        'Which podcasters get mentioned most?',
+        "Whose blogs does Jamie read?",
+        'Find indie developers featured here.',
+        "Who are Jamie's favorite thinkers?",
+        'Which CEOs come up most?',
+        'What tools has Jamie recommended?',
+        'Find issues about OmniFocus.',
+        "What's been said about Fastmail?",
+        'Show me posts about static site generators.',
+        'Find references to 11ty or Hugo.',
+        'What apps does Jamie use daily?',
+        'Show me anything about 3D printing.',
+        'Find posts about home automation.',
+        "What's Jamie said about password managers?",
+        'Show me issues about terminal tools.',
+        'Find the most thought-provoking issue.',
+        "What's a great essay Jamie linked to?",
+        'Show me a piece about long-term thinking.',
+        'Find writing about craft and quality.',
+        "What's been linked about leadership?",
+        'Show me essays on remote work.',
+        'Find posts about parenting and tech.',
+        "What's been said about attention?",
+        'Show me anything on systems thinking.',
+        'Find a piece worth re-reading.',
+        'What books has Jamie recommended?',
+        'Find book reviews in the archive.',
+        "What's the most-mentioned book?",
+        'Show me reading lists from the newsletter.',
+        'Find issues about libraries or reading.',
+        'What sci-fi has Jamie written about?',
+        'Show me business books worth reading.',
+        'Find recommendations for non-fiction.',
+        'What did Jamie read in 2023?',
+        'Surprise me with a book pick.',
+        'Find the weirdest link in the archive.',
+        'Show me a great rabbit hole.',
+        'What food or cooking links are here?',
+        'Find anything about music.',
+        'Show me posts about photography.',
+        "What's been said about Minnesota?",
+        'Find travel-related issues.',
+        'Show me posts about typography or design.',
+        "What's the strangest thing ever featured?",
+        'Find a delightful issue to lift my mood.',
+        'What has Jamie written about family?',
+        'Find posts about milestones or anniversaries.',
+        "Show me Jamie's year-in-review issues.",
+        'What does Jamie say about his blog?',
+        'Find issues about the Olson Family Vacation.',
+        'Show me posts about escape rooms.',
+        "What's been written about Things 4 Good?",
+        'Find personal projects Jamie has shared.',
+        'What does Jamie celebrate each year?',
+        'Show me a heartfelt issue.'
+      ],
+      playful: [
+        'What would Jamie say about my week?',
+        'Quote me something from the archive.',
+        "What's a hot take from Jamie?",
+        'Give me three links worth my time.',
+        "What's been linked twice?",
+        "Find something I've probably missed.",
+        "What's the most-clicked link ever?",
+        'Build me a reading list for tonight.',
+        'What would Jamie put in a "best of" issue?',
+        "Tell me something I'd find interesting."
+      ]
+    };
+    const eventSink = document.createElement('button');
+    eventSink.type = 'button';
+    eventSink.hidden = true;
+    eventSink.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(eventSink);
+    const pendingTinylyticsEvents = [];
+    let tinylyticsReady = document.readyState === 'complete';
+    let answerInFlight = false;
+    let conversationHistory = [];
+    let feedbackStatusTimer = 0;
+    const emailRe = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+
+    const params = new URLSearchParams(window.location.search);
+    const email = normalizeEmail(params.get('email'));
+    const initialPrompt = normalizeInitialPrompt(params.get('prompt'));
+    const initialScope = normalizeScopeParam(params.get('scope'));
+    let initialPromptSubmitted = false;
+    if (email) emailInput.value = email;
+
+    function normalizeEmail(value) {
+      return String(value || '').trim();
+    }
+
+    function normalizeInitialPrompt(value) {
+      return String(value || '').trim().slice(0, maxQuestionChars);
+    }
+
+    // Map a ?scope= URL value to one of the three canonical scopes, or '' when
+    // absent/unrecognized so it doesn't clobber the reader's saved scope.
+    function normalizeScopeParam(value) {
+      const raw = String(value || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+      if (raw === 'blog' || raw === 'thingelstad' || raw === 'thingelstad_com') return 'blog';
+      if (raw === 'both' || raw === 'all' || raw === 'everything') return 'both';
+      if (raw === 'weekly_thing' || raw === 'wt' || raw === 'weeklything' || raw === 'issues' || raw === 'archive') return 'weekly_thing';
+      return '';
+    }
+
+    function validateEmail() {
+      const value = emailInput.value.trim();
+      if (!value) {
+        emailError.textContent = '';
+        emailInput.classList.remove('invalid');
+        authButton.disabled = false;
+        return true;
+      }
+      if (emailRe.test(value)) {
+        emailError.textContent = '';
+        emailInput.classList.remove('invalid');
+        authButton.disabled = false;
+        return true;
+      }
+      emailError.textContent = 'Please enter a valid email address';
+      emailInput.classList.add('invalid');
+      authButton.disabled = true;
+      return false;
+    }
+
+    function token() {
+      return window.localStorage.getItem(storageKey);
+    }
+
+    // Two checkboxes encode three scopes: both checked = "both", blog only =
+    // "blog", otherwise (WT only, or neither) = "weekly_thing". The Lambda
+    // defaults to weekly_thing too, so "neither" degrades safely.
+    function currentScope() {
+      const wt = scopeWtBox && scopeWtBox.checked;
+      const blog = scopeBlogBox && scopeBlogBox.checked;
+      if (wt && blog) return 'both';
+      if (blog) return 'blog';
+      return 'weekly_thing';
+    }
+
+    function persistScope() {
+      try { window.localStorage.setItem(scopeStorageKey, currentScope()); } catch (error) { /* ignore */ }
+    }
+
+    // Set the checkbox pair from a scope string. Inverse of currentScope():
+    // blog → blog only, both → both checked, anything else → WT only.
+    function applyScope(scope) {
+      if (!scopeWtBox || !scopeBlogBox) return;
+      if (scope === 'blog') {
+        scopeWtBox.checked = false;
+        scopeBlogBox.checked = true;
+      } else if (scope === 'both') {
+        scopeWtBox.checked = true;
+        scopeBlogBox.checked = true;
+      } else {
+        scopeWtBox.checked = true;
+        scopeBlogBox.checked = false;
+      }
+    }
+
+    function restoreScope() {
+      if (!scopeWtBox || !scopeBlogBox) return;
+      let saved = '';
+      try { saved = window.localStorage.getItem(scopeStorageKey) || ''; } catch (error) { saved = ''; }
+      applyScope(saved);
+    }
+
+    function showBetaNotice() {
+      if (window.sessionStorage.getItem(betaNoticeStorageKey) === 'dismissed') return;
+      betaOverlay.hidden = false;
+      document.body.classList.add('librarian-beta-open');
+      betaCloseButton.focus();
+      trackTinylyticsEvent('librarian.beta_notice_shown');
+    }
+
+    function hideBetaNotice(options = {}) {
+      const remember = options.remember !== false;
+      const focusQuestion = options.focusQuestion !== false;
+      betaOverlay.hidden = true;
+      document.body.classList.remove('librarian-beta-open');
+      if (remember) window.sessionStorage.setItem(betaNoticeStorageKey, 'dismissed');
+      if (focusQuestion) questionInput.focus();
+      if (remember) trackTinylyticsEvent('librarian.beta_notice_dismissed');
+      maybeSubmitInitialPrompt();
+    }
+
+    function setToken(value, message, options = {}) {
+      window.localStorage.setItem(storageKey, value);
+      authPanel.hidden = true;
+      chatPanel.hidden = false;
+      hideAuthActions();
+      if (message) addMessage('system', `<p>${escapeHtml(message)}</p>`);
+      loadPrompts();
+      if (options.skipBetaNotice) {
+        hideBetaNotice({ remember: false, focusQuestion: false });
+      } else {
+        showBetaNotice();
+      }
+      if (betaOverlay.hidden) questionInput.focus();
+      maybeSubmitInitialPrompt();
+    }
+
+    function clearToken() {
+      window.localStorage.removeItem(storageKey);
+      hideBetaNotice({ remember: false, focusQuestion: false });
+      conversationHistory = [];
+      chatPanel.hidden = true;
+      authPanel.hidden = false;
+      prompts.hidden = true;
+      prompts.innerHTML = '';
+      hideAuthActions();
+      setAuthMessage('');
+      emailInput.focus();
+    }
+
+    function addMessage(kind, html) {
+      const item = document.createElement('div');
+      item.className = `librarian-message librarian-message-${kind}`;
+      item.innerHTML = html;
+      messages.appendChild(item);
+      item.scrollIntoView({ block: 'end', behavior: 'smooth' });
+      return item;
+    }
+
+    function autoSizeQuestionInput() {
+      questionInput.style.height = 'auto';
+      questionInput.style.height = `${Math.min(questionInput.scrollHeight, 240)}px`;
+    }
+
+    function updateQuestionState() {
+      const length = questionInput.value.length;
+      questionCount.textContent = `${length} / ${maxQuestionChars}`;
+      questionCount.classList.toggle('warning', length > maxQuestionChars * 0.9);
+      questionForm.classList.toggle('is-busy', answerInFlight);
+      questionButton.disabled = answerInFlight || !questionInput.value.trim() || length > maxQuestionChars;
+      questionButton.textContent = answerInFlight ? 'Asking...' : 'Ask';
+      clearChatButton.disabled = answerInFlight;
+      autoSizeQuestionInput();
+    }
+
+    function setAuthMessage(message) {
+      authMessage.textContent = message || '';
+    }
+
+    function hideAuthActions() {
+      authActions.hidden = true;
+      addSubscriberButton.hidden = true;
+      resendConfirmationButton.hidden = true;
+    }
+
+    function showAuthAction(action) {
+      authActions.hidden = false;
+      addSubscriberButton.hidden = action !== 'subscribe';
+      resendConfirmationButton.hidden = action !== 'resend_confirmation';
+    }
+
+    function sendTinylyticsEvent(name, value) {
+      if (!name || !('{{ site.tinylyticsId }}')) return;
+      eventSink.setAttribute('data-tinylytics-event', name);
+      if (value) {
+        eventSink.setAttribute('data-tinylytics-event-value', value);
+      } else {
+        eventSink.removeAttribute('data-tinylytics-event-value');
+      }
+      eventSink.click();
+    }
+
+    function flushTinylyticsEvents() {
+      tinylyticsReady = true;
+      while (pendingTinylyticsEvents.length) {
+        const event = pendingTinylyticsEvents.shift();
+        sendTinylyticsEvent(event.name, event.value);
+      }
+    }
+
+    function trackTinylyticsEvent(name, value) {
+      if (tinylyticsReady) {
+        sendTinylyticsEvent(name, value);
+      } else {
+        pendingTinylyticsEvents.push({ name, value });
+      }
+    }
+
+    if (!tinylyticsReady) {
+      window.addEventListener('load', flushTinylyticsEvents, { once: true });
+    }
+
+    function escapeHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      })[char]);
+    }
+
+    function safeMarkdownUrl(url) {
+      const value = String(url || '').trim();
+      if (/^(https?:|mailto:|\/)/i.test(value)) return escapeHtml(value);
+      return '#';
+    }
+
+    function citationMap(citations) {
+      const map = new Map();
+      (citations || []).forEach((citation) => {
+        const issue = String(citation.issue_number || '').trim();
+        if (issue && citation.url && !map.has(issue)) map.set(issue, citation);
+      });
+      return map;
+    }
+
+    function citationTitle(citation) {
+      const parts = [`WT${citation.issue_number}: ${citation.subject || 'Weekly Thing'}`];
+      if (citation.publish_date) parts.push(String(citation.publish_date).slice(0, 10));
+      if (citation.section) parts.push(citation.section);
+      return parts.join(' | ');
+    }
+
+    function linkIssueReferences(html, citationsByIssue) {
+      if (!citationsByIssue || citationsByIssue.size === 0) return html;
+      return html.split(/(<[^>]+>)/g).map((part) => {
+        if (part.startsWith('<')) return part;
+        return part.replace(/(^|[^\w&])(?:WT|#)(\d{1,4})\b/g, (match, prefix, issue) => {
+          const citation = citationsByIssue.get(issue);
+          if (!citation) return match;
+          return `${prefix}<a href="${safeMarkdownUrl(citation.url)}" title="${escapeHtml(citationTitle(citation))}" data-tinylytics-event="librarian.source_click" data-tinylytics-event-value="${escapeHtml(issue)}">WT${escapeHtml(issue)}</a>`;
+        });
+      }).join('');
+    }
+
+    function renderInlineMarkdown(text, citationsByIssue) {
+      let html = escapeHtml(text);
+      const code = [];
+      html = html.replace(/`([^`]+)`/g, (_, value) => {
+        const token = `@@CODE${code.length}@@`;
+        code.push(`<code>${value}</code>`);
+        return token;
+      });
+      html = html.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, label, url) => `<a href="${safeMarkdownUrl(url)}">${label}</a>`);
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+      html = html.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+      html = html.replace(/(^|[^_])_([^_\n]+)_/g, '$1<em>$2</em>');
+      html = linkIssueReferences(html, citationsByIssue);
+      code.forEach((value, index) => {
+        html = html.replace(`@@CODE${index}@@`, value);
+      });
+      return html;
+    }
+
+    function renderMarkdown(markdown, citations = []) {
+      const text = String(markdown || '').trim();
+      if (!text) return '<p>Thingy is looking through the archive...</p>';
+      const citationsByIssue = citationMap(citations);
+      const lines = text.split(/\r?\n/);
+      const html = [];
+      let paragraph = [];
+      let listType = null;
+      let blockquote = [];
+
+      function flushParagraph() {
+        if (!paragraph.length) return;
+        html.push(`<p>${renderInlineMarkdown(paragraph.join(' '), citationsByIssue)}</p>`);
+        paragraph = [];
+      }
+
+      function flushList() {
+        if (!listType) return;
+        html.push(`</${listType}>`);
+        listType = null;
+      }
+
+      function flushBlockquote() {
+        if (!blockquote.length) return;
+        html.push(`<blockquote>${renderMarkdown(blockquote.join('\n'), citations)}</blockquote>`);
+        blockquote = [];
+      }
+
+      function openList(type) {
+        if (listType === type) return;
+        flushParagraph();
+        flushBlockquote();
+        flushList();
+        listType = type;
+        html.push(`<${type}>`);
+      }
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          flushParagraph();
+          flushBlockquote();
+          flushList();
+          continue;
+        }
+
+        const heading = /^(#{2,4})\s+(.+)$/.exec(trimmed);
+        if (heading) {
+          flushParagraph();
+          flushBlockquote();
+          flushList();
+          const level = heading[1].length;
+          html.push(`<h${level}>${renderInlineMarkdown(heading[2], citationsByIssue)}</h${level}>`);
+          continue;
+        }
+
+        const unordered = /^[-*]\s+(.+)$/.exec(trimmed);
+        if (unordered) {
+          openList('ul');
+          html.push(`<li>${renderInlineMarkdown(unordered[1], citationsByIssue)}</li>`);
+          continue;
+        }
+
+        const ordered = /^\d+\.\s+(.+)$/.exec(trimmed);
+        if (ordered) {
+          openList('ol');
+          html.push(`<li>${renderInlineMarkdown(ordered[1], citationsByIssue)}</li>`);
+          continue;
+        }
+
+        const quote = /^>\s?(.+)$/.exec(trimmed);
+        if (quote) {
+          flushParagraph();
+          flushList();
+          blockquote.push(quote[1]);
+          continue;
+        }
+
+        flushList();
+        flushBlockquote();
+        paragraph.push(trimmed);
+      }
+
+      flushParagraph();
+      flushBlockquote();
+      flushList();
+      return html.join('');
+    }
+
+    function renderAnswer(answer, citations = []) {
+      return renderMarkdown(answer, citations);
+    }
+
+    function setFeedbackState(container, reaction) {
+      container.querySelectorAll('button[data-reaction]').forEach((button) => {
+        const selected = button.dataset.reaction === reaction;
+        button.classList.toggle('selected', selected);
+        button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+      });
+    }
+
+    async function submitFeedback(requestId, reaction, container) {
+      const status = container.querySelector('.librarian-feedback-status');
+      container.querySelectorAll('button[data-reaction]').forEach((button) => {
+        button.disabled = true;
+      });
+      if (status) status.textContent = 'Saving...';
+      try {
+        const data = await postStreamJson('/feedback', {
+          request_id: requestId,
+          reaction
+        }, { authorization: `Bearer ${token()}` });
+        setFeedbackState(container, data.reaction || reaction);
+        if (status) status.textContent = 'Saved';
+        window.clearTimeout(feedbackStatusTimer);
+        feedbackStatusTimer = window.setTimeout(() => {
+          if (status && status.textContent === 'Saved') status.textContent = '';
+        }, 1800);
+        trackTinylyticsEvent('librarian.feedback_submit', data.reaction || reaction);
+      } catch (error) {
+        if (status) status.textContent = 'Could not save';
+        trackTinylyticsEvent('librarian.feedback_error', error.requestId ? 'server' : 'client');
+      } finally {
+        container.querySelectorAll('button[data-reaction]').forEach((button) => {
+          button.disabled = false;
+        });
+      }
+    }
+
+    function buildSharePromptUrl(prompt, scope) {
+      const url = new URL('/thingy/', window.location.origin);
+      url.searchParams.set('prompt', prompt);
+      // Always encode the scope so the link reproduces the exact scope used
+      // for this turn, regardless of the recipient's saved preference.
+      url.searchParams.set('scope', scope || 'weekly_thing');
+      return url.toString();
+    }
+
+    function addShareControls(messageElement, prompt, scope) {
+      if (!prompt) return;
+      const para = messageElement.querySelector('p');
+      if (!para) return;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'librarian-share-anchor';
+      button.setAttribute('aria-label', 'Copy a sharable link to this prompt');
+      button.setAttribute('title', 'Share this prompt');
+      button.textContent = '#';
+      para.appendChild(document.createTextNode(' '));
+      para.appendChild(button);
+      let resetTimer = 0;
+      function flash(text, kind) {
+        button.textContent = text;
+        button.dataset.kind = kind || '';
+        window.clearTimeout(resetTimer);
+        resetTimer = window.setTimeout(() => {
+          button.textContent = '#';
+          button.dataset.kind = '';
+        }, 1500);
+      }
+      button.addEventListener('click', async (event) => {
+        event.preventDefault();
+        const shareUrl = buildSharePromptUrl(prompt, scope);
+        if (typeof navigator.share === 'function') {
+          try {
+            await navigator.share({ title: 'Ask Thingy', text: prompt, url: shareUrl });
+            trackTinylyticsEvent('librarian.share_native');
+            return;
+          } catch (error) {
+            if (error && error.name === 'AbortError') return;
+            // fall through to clipboard
+          }
+        }
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+          try {
+            await navigator.clipboard.writeText(shareUrl);
+            flash('✓', 'success');
+            trackTinylyticsEvent('librarian.share_copy');
+            return;
+          } catch (error) { /* fall through */ }
+        }
+        flash('!', 'error');
+      });
+    }
+
+    function addFeedbackControls(messageElement, requestId) {
+      if (!requestId) return;
+      const controls = document.createElement('div');
+      controls.className = 'librarian-feedback';
+      controls.innerHTML = `
+        <span class="librarian-feedback-label">Was this useful?</span>
+        <button type="button" data-reaction="up" aria-label="Thumbs up" aria-pressed="false" title="Thumbs up">&#128077;</button>
+        <button type="button" data-reaction="down" aria-label="Thumbs down" aria-pressed="false" title="Thumbs down">&#128078;</button>
+        <span class="librarian-feedback-status" aria-live="polite"></span>
+      `;
+      controls.addEventListener('click', (event) => {
+        const target = event.target instanceof Element ? event.target : event.target.parentElement;
+        const button = target ? target.closest('button[data-reaction]') : null;
+        if (!button || !controls.contains(button)) return;
+        if (button.classList.contains('selected')) return;
+        submitFeedback(requestId, button.dataset.reaction, controls);
+      });
+      messageElement.appendChild(controls);
+    }
+
+    async function postJson(path, payload, headers = {}) {
+      if (!apiBase) throw new Error('Thingy has not been connected to the archive API yet.');
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 60000);
+      const response = await fetch(`${apiBase}${path}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...headers },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      }).catch((error) => {
+        if (error.name === 'AbortError') {
+          throw new Error('Thingy took too long to respond. Please try again.');
+        }
+        throw error;
+      }).finally(() => {
+        window.clearTimeout(timeout);
+      });
+      const requestId = response.headers.get('x-request-id');
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const message = data.error || 'Thingy is unavailable.';
+        const error = new Error(requestId ? `${message} Reference: ${requestId}` : message);
+        error.requestId = requestId;
+        throw error;
+      }
+      return data;
+    }
+
+    async function postStreamJson(path, payload, headers = {}) {
+      if (!streamBase) throw new Error('Thingy has not been connected to the archive stream API yet.');
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 60000);
+      const response = await fetch(`${streamBase}${path}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...headers },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      }).catch((error) => {
+        if (error.name === 'AbortError') {
+          throw new Error('Thingy took too long to respond. Please try again.');
+        }
+        throw error;
+      }).finally(() => {
+        window.clearTimeout(timeout);
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const message = data.error || 'Thingy is unavailable.';
+        const error = new Error(data.request_id ? `${message} Reference: ${data.request_id}` : message);
+        error.requestId = data.request_id;
+        throw error;
+      }
+      return data;
+    }
+
+    function compactHistory(history) {
+      let chars = 0;
+      const result = [];
+      for (const item of history.slice(-maxHistoryMessages).reverse()) {
+        const role = item.role === 'assistant' ? 'assistant' : item.role === 'user' ? 'user' : '';
+        const content = String(item.content || '').trim().replace(/\s+/g, ' ').slice(0, 700);
+        if (!role || !content) continue;
+        chars += content.length;
+        if (chars > maxHistoryChars) break;
+        result.unshift({ role, content });
+      }
+      return result;
+    }
+
+    function rememberTurn(question, answer) {
+      conversationHistory.push({ role: 'user', content: question });
+      conversationHistory.push({ role: 'assistant', content: answer });
+      conversationHistory = compactHistory(conversationHistory);
+    }
+
+    function clearConversation() {
+      if (answerInFlight) return;
+      conversationHistory = [];
+      questionInput.value = '';
+      messages.innerHTML = starterMessageHtml;
+      updateQuestionState();
+      loadPrompts();
+      questionInput.focus();
+      trackTinylyticsEvent('librarian.clear');
+    }
+
+    function hidePrompts() {
+      prompts.classList.remove('librarian-prompts-loading');
+      prompts.hidden = true;
+      prompts.innerHTML = '';
+    }
+
+    function randomItem(items) {
+      return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function starterPromptSet() {
+      return [
+        randomItem(starterQuestions.discovery),
+        randomItem(starterQuestions.topical),
+        randomItem(starterQuestions.playful)
+      ].map((question) => ({ label: question, question }));
+    }
+
+    function renderPrompts(promptItems) {
+      if (!promptItems || !promptItems.length || answerInFlight) return;
+      prompts.classList.remove('librarian-prompts-loading');
+      prompts.innerHTML = promptItems.map((item, index) => {
+        const question = escapeHtml(item.question || item.label || '');
+        const label = escapeHtml(item.label || `Question ${index + 1}`);
+        return `<button type="button" data-question="${question}" title="${question}" data-tinylytics-event="librarian.prompt_select" data-tinylytics-event-value="${index + 1}">${label}</button>`;
+      }).join('');
+      prompts.hidden = false;
+    }
+
+    function loadPrompts() {
+      if (!token() || answerInFlight || (initialPrompt && !initialPromptSubmitted)) return;
+      renderPrompts(starterPromptSet());
+      trackTinylyticsEvent('librarian.prompts_loaded', 'static');
+    }
+
+    function maybeSubmitInitialPrompt() {
+      if (!initialPrompt || initialPromptSubmitted || answerInFlight || !token()) return;
+      if (!betaOverlay.hidden) return;
+      initialPromptSubmitted = true;
+      questionInput.value = initialPrompt;
+      updateQuestionState();
+      questionForm.requestSubmit();
+    }
+
+    function handleAuthResponse(data, options = {}) {
+      if (data.token) {
+        setToken(data.token, data.message, options);
+        setAuthMessage('');
+        trackTinylyticsEvent('librarian.auth_success', data.status || 'active');
+        return;
+      }
+      if (data.status === 'not_found') {
+        setAuthMessage(data.message || 'That email is not subscribed. Would you like to be added?');
+        showAuthAction('subscribe');
+        trackTinylyticsEvent('librarian.auth_not_found');
+        return;
+      }
+      if (data.status === 'unconfirmed') {
+        setAuthMessage(data.message || 'Please confirm your email before using Thingy.');
+        showAuthAction('resend_confirmation');
+        trackTinylyticsEvent('librarian.auth_unconfirmed');
+        return;
+      }
+      if (data.status === 'subscribed') {
+        setAuthMessage(data.message || 'Check your inbox to confirm your subscription before using Thingy.');
+        hideAuthActions();
+        trackTinylyticsEvent('librarian.auth_subscribe_success');
+        return;
+      }
+      if (data.status === 'reminder_sent') {
+        setAuthMessage(data.message || 'Confirmation email sent. Check your inbox.');
+        hideAuthActions();
+        trackTinylyticsEvent('librarian.auth_reminder_success');
+        return;
+      }
+      setAuthMessage(data.message || 'I could not verify active subscriber access for that email.');
+      hideAuthActions();
+      trackTinylyticsEvent('librarian.auth_inactive');
+    }
+
+    function readAttribution() {
+      try {
+        if (typeof window.weeklyThingAttribution === 'function') {
+          return window.weeklyThingAttribution() || undefined;
+        }
+      } catch (err) { /* ignore */ }
+      return undefined;
+    }
+
+    async function submitAuthAction(action, button) {
+      if (!validateEmail()) return;
+      button.disabled = true;
+      hideAuthActions();
+      setAuthMessage(action === 'subscribe' ? 'Adding you to the Weekly Thing...' : 'Sending the confirmation email...');
+      try {
+        const payload = { email: emailInput.value, action, source: 'thingy' };
+        if (action === 'subscribe' || action === 'resend_confirmation') {
+          const attribution = readAttribution();
+          if (attribution) payload.attribution = attribution;
+        }
+        const data = await postJson('/auth', payload);
+        handleAuthResponse(data);
+      } catch (error) {
+        setAuthMessage(error.message);
+        trackTinylyticsEvent('librarian.auth_error', error.requestId ? 'server' : 'client');
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function submitAuthCheck(options = {}) {
+      if (!validateEmail()) return false;
+      authButton.disabled = true;
+      hideAuthActions();
+      setAuthMessage('Checking subscriber access...');
+      try {
+        const data = await postJson('/auth', { email: emailInput.value.trim(), action: 'check', source: 'thingy' });
+        handleAuthResponse(data, options);
+        return true;
+      } catch (error) {
+        setAuthMessage(error.message);
+        trackTinylyticsEvent('librarian.auth_error', error.requestId ? 'server' : 'client');
+        return false;
+      } finally {
+        authButton.disabled = false;
+        validateEmail();
+      }
+    }
+
+    async function postStreamingChat(message, pending, history, scope) {
+      if (!streamBase) {
+        throw new Error('Thingy has not been connected to the archive stream API yet.');
+      }
+
+      let answer = '';
+      let citations = [];
+      let requestId = '';
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 85000);
+      const response = await fetch(`${streamBase}/chat`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token()}`
+        },
+        body: JSON.stringify({ message, history, scope }),
+        signal: controller.signal
+      }).catch((error) => {
+        if (error.name === 'AbortError') {
+          throw new Error('Thingy took too long to respond. Please try again.');
+        }
+        throw error;
+      }).finally(() => {
+        window.clearTimeout(timeout);
+      });
+      if (!response.ok || !response.body) {
+        throw new Error('Thingy is unavailable.');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      function applyEvent(eventName, data) {
+        if (eventName === 'meta') {
+          requestId = data.request_id || requestId;
+        } else if (eventName === 'status') {
+          answer = '';
+          pending.classList.add('librarian-message-pending');
+          pending.innerHTML = `<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>${escapeHtml(data.message || 'Thingy is working...')}</p>`;
+        } else if (eventName === 'answer_delta') {
+          const wasEmpty = answer === '';
+          answer += data.delta || '';
+          if (wasEmpty) {
+            answer = answer.replace(/^\s+/, '');
+            while (pending.firstChild) pending.removeChild(pending.firstChild);
+          }
+          pending.classList.remove('librarian-message-pending');
+          pending.innerHTML = renderAnswer(answer, citations);
+          pending.scrollIntoView({ block: 'end', behavior: 'smooth' });
+        } else if (eventName === 'citations') {
+          citations = data.citations || [];
+          pending.innerHTML = renderAnswer(answer, citations);
+        } else if (eventName === 'error') {
+          const error = new Error(data.error || 'Thingy is unavailable.');
+          error.requestId = data.request_id || requestId;
+          throw error;
+        }
+      }
+
+      function consumeEvent(rawEvent) {
+        const lines = rawEvent.split('\n');
+        let eventName = 'message';
+        const data = [];
+        for (const line of lines) {
+          if (line.startsWith('event:')) eventName = line.slice(6).trim();
+          if (line.startsWith('data:')) data.push(line.slice(5).trimStart());
+        }
+        if (!data.length) return;
+        applyEvent(eventName, JSON.parse(data.join('\n')));
+      }
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split(/\n\n/);
+        buffer = events.pop() || '';
+        events.filter(Boolean).forEach(consumeEvent);
+      }
+      buffer += decoder.decode();
+      if (buffer.trim()) consumeEvent(buffer);
+      return { answer, citations, request_id: requestId };
+    }
+
+    authForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      await submitAuthCheck();
+    });
+
+    emailInput.addEventListener('input', () => {
+      validateEmail();
+      hideAuthActions();
+    });
+
+    addSubscriberButton.addEventListener('click', () => {
+      submitAuthAction('subscribe', addSubscriberButton);
+    });
+
+    resendConfirmationButton.addEventListener('click', () => {
+      submitAuthAction('resend_confirmation', resendConfirmationButton);
+    });
+
+    logoutButton.addEventListener('click', () => {
+      clearToken();
+      trackTinylyticsEvent('librarian.logout');
+    });
+
+    clearChatButton.addEventListener('click', clearConversation);
+
+    betaCloseButton.addEventListener('click', hideBetaNotice);
+
+    betaOverlay.addEventListener('click', (event) => {
+      if (event.target === betaOverlay) hideBetaNotice();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !betaOverlay.hidden) hideBetaNotice();
+    });
+
+    async function submitQuestion() {
+      if (answerInFlight) return;
+      const message = questionInput.value.trim();
+      if (!message) return;
+      if (message.length > maxQuestionChars) return;
+      answerInFlight = true;
+      updateQuestionState();
+      hidePrompts();
+      const questionWordCount = message.split(/\s+/).filter(Boolean).length;
+      const questionSize = questionWordCount < 6 ? 'short' : questionWordCount < 18 ? 'medium' : 'long';
+      const history = compactHistory(conversationHistory);
+      const scope = currentScope();
+      const userMessage = addMessage('user', `<p>${escapeHtml(message)}</p>`);
+      addShareControls(userMessage, message, scope);
+      questionInput.value = '';
+      updateQuestionState();
+      const pending = addMessage('assistant', '<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>Thingy is looking through the archive...</p>');
+      pending.classList.add('librarian-message-pending');
+      try {
+        const data = await postStreamingChat(message, pending, history, scope);
+        pending.classList.remove('librarian-message-pending');
+        rememberTurn(message, data.answer || '');
+        addFeedbackControls(pending, data.request_id);
+        trackTinylyticsEvent('librarian.answer_success', `${questionSize}.${(data.citations || []).length}`);
+      } catch (error) {
+        pending.innerHTML = `<p>${escapeHtml(error.message)}</p>`;
+        trackTinylyticsEvent('librarian.answer_error', error.requestId ? 'server' : 'client');
+        if (/validate|subscriber/i.test(error.message)) {
+          clearToken();
+        }
+      } finally {
+        answerInFlight = false;
+        updateQuestionState();
+      }
+    }
+
+    questionForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      await submitQuestion();
+    });
+
+    questionInput.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
+      event.preventDefault();
+      questionForm.requestSubmit();
+    });
+
+    questionInput.addEventListener('input', updateQuestionState);
+
+    restoreScope();
+    // A ?scope= in the URL (e.g. from a shared prompt link) wins over the
+    // reader's saved scope, and is applied before any initial prompt submits.
+    if (initialScope) {
+      applyScope(initialScope);
+      persistScope();
+    }
+    if (scopeWtBox) scopeWtBox.addEventListener('change', persistScope);
+    if (scopeBlogBox) scopeBlogBox.addEventListener('change', persistScope);
+
+    prompts.addEventListener('click', (event) => {
+      const target = event.target instanceof Element ? event.target : event.target.parentElement;
+      const button = target ? target.closest('button[data-question]') : null;
+      if (button) {
+        questionInput.value = button.dataset.question;
+        updateQuestionState();
+        questionForm.requestSubmit();
+      }
+    });
+
+    updateQuestionState();
+
+    if (email) {
+      window.localStorage.removeItem(storageKey);
+      submitAuthCheck({ skipBetaNotice: Boolean(initialPrompt) });
+      trackTinylyticsEvent('librarian.auth_auto_start');
+    } else if (token()) {
+      authPanel.hidden = true;
+      chatPanel.hidden = false;
+      loadPrompts();
+      trackTinylyticsEvent('librarian.session_resume');
+      maybeSubmitInitialPrompt();
+    }
+  })();
+</script>
