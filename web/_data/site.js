@@ -16,8 +16,13 @@ module.exports = {
     "Ask Thingy to find and synthesize writing from across Jamie Thingelstad's archive.",
   url: "https://thingy.thingelstad.com",
   author: "Jamie Thingelstad",
+  networkLinks: [
+    { label: "thingelstad.com", href: "https://www.thingelstad.com/" },
+    { label: "Weekly Thing", href: "https://weekly.thingelstad.com/" },
+    { label: "Another Thing", href: "https://another.thingelstad.com/" },
+  ],
 
-  // Librarian API endpoints (same backend as weekly.thingelstad.com/thingy/).
+  // Librarian API endpoints owned by Studio.
   librarianApiUrl: env(
     "LIBRARIAN_API_URL",
     "https://k0yklt9vg3.execute-api.us-east-1.amazonaws.com"

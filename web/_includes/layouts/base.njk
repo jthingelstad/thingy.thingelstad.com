@@ -32,6 +32,16 @@
   {% endif %}
 </head>
 <body>
+  <header class="thingy-site-head">
+    <div class="thingy-site-head-inner">
+      <a class="thingy-site-home" href="/" aria-label="Thingy home">Thingy</a>
+      <nav class="thingy-network-nav" aria-label="Jamie Thingelstad sites">
+        {% for link in site.networkLinks %}
+        <a href="{{ link.href }}">{{ link.label }}</a>
+        {% endfor %}
+      </nav>
+    </div>
+  </header>
   <main id="main-content">
     {{ content | safe }}
   </main>

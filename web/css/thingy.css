@@ -146,6 +146,67 @@ a {
 
 a:hover { color: var(--color-accent-hover); }
 
+.thingy-site-head {
+  border-bottom: 1px solid var(--line-soft);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+}
+
+.thingy-site-head-inner {
+  width: min(100% - 32px, var(--container-wide));
+  margin: 0 auto;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.thingy-site-home {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.thingy-network-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.thingy-network-nav a {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.thingy-site-home:hover,
+.thingy-network-nav a:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 560px) {
+  .thingy-site-head-inner {
+    min-height: 72px;
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 0;
+  }
+
+  .thingy-network-nav {
+    justify-content: flex-start;
+  }
+}
+
 blockquote {
   border-left: 3px solid var(--color-accent);
   padding-left: var(--space-lg);
