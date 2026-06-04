@@ -1,4 +1,9 @@
-# Standalone Thingy — build brief
+# Standalone Thingy — Historical Build Brief
+
+> Status: completed. Thingy now runs as its own surface at
+> `thingy.thingelstad.com`. This file is retained as the original build brief;
+> current operating notes live in `apps/thingy_bridge/README.md` and
+> `apps/thingy_bridge/CLAUDE.md`.
 
 Promote Thingy from a page on the newsletter site (`weekly.thingelstad.com/thingy/`) to a
 complete standalone app at **thingy.thingelstad.com**. Strangler approach: build to parity, run
@@ -108,7 +113,7 @@ Work in small steps; ask before anything that touches weekly or redeploys the ba
 - [ ] Standalone loads at the Pages URL with Thingy's own identity (no newsletter chrome).
 - [ ] Subscriber-email auth completes; session token stored client-side.
 - [ ] A question returns a streamed answer with citations against the live archive.
-- [ ] Scope selector (WT / blog / both) and feedback reactions work.
+- [x] Scope selector (WT / blog / podcast / both / all) and feedback reactions work.
 - [ ] CORS: requests from thingy.thingelstad.com succeed; weekly's /thingy/ still works too.
 - [ ] DNS + CNAME resolve; HTTPS valid.
 - [ ] Only after all green: redirect weekly's /thingy/ → thingy.thingelstad.com.

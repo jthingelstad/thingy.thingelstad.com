@@ -24,9 +24,10 @@ CREATE TABLE IF NOT EXISTS thingy_tokens (
 
 -- Per-reader source scope for #ask-thingy. Which body of writing Thingy
 -- searches for this user: 'weekly_thing' (the issue archive, default),
--- 'blog' (thingelstad.com), or 'both'. Kept in its own table rather than
--- on thingy_tokens so a reader can set it via `/thingy scope` before ever
--- asking a question (the token row only exists once a question mints one).
+-- 'blog' (thingelstad.com), 'podcast' (Another Thing), 'both'
+-- (weekly_thing + blog), or 'all'. Kept in its own table rather than on
+-- thingy_tokens so a reader can set it via `/thingy scope` before ever asking
+-- a question (the token row only exists once a question mints one).
 CREATE TABLE IF NOT EXISTS thingy_scopes (
   discord_user_id TEXT PRIMARY KEY,
   scope TEXT NOT NULL,

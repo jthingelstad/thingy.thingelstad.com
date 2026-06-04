@@ -103,15 +103,16 @@ already set (CNAME → GitHub).
 
 ## Track B — Intelligence
 
-A richer semantic index spanning both corpuses powers all of this. It makes both the public docent and
-the private sparring partner sharper.
+A richer semantic index spanning the published corpora powers all of this. It makes both the public
+docent and the private sparring partner sharper.
 
 ### Cross-corpus thematic threading
-Thingy navigates two distinct corpuses — the Weekly Thing newsletter (curated, subscriber-facing) and
-the thingelstad.com blog (exploratory). **Keep them distinct** — different voices, rhythms, purposes;
-don't blend them in a way that makes either worse. Threading **connects without merging**: surface how
-an idea explored on the blog in 2019 resurfaces in a newsletter essay in 2024 — tracing the arc of the
-thinking across both without flattening them into one thing.
+Thingy navigates distinct corpora — the Weekly Thing newsletter (curated, subscriber-facing), the
+thingelstad.com blog (exploratory), and Another Thing podcast transcripts (spoken/audio-native).
+**Keep them distinct** — different voices, rhythms, purposes; don't blend them in a way that makes any
+source worse. Threading **connects without merging**: surface how an idea explored on the blog in 2019
+resurfaces in a newsletter essay in 2024, or gets talked through in Another Thing — tracing the arc of
+the thinking across sources without flattening them into one thing.
 
 ### Semantic clustering around persistent themes
 Same underlying index. Map the throughlines (Web3, IndieWeb values, agentic systems, the book-club lens)
@@ -134,9 +135,9 @@ A layer that knows not just *when* something was written, but *what was happenin
 work, and the world at that moment — so when Thingy surfaces a piece it can color it with context
 ("written during the Agentic Transformation ramp-up at SPS", "the week you got back from Switzerland").
 
-**How it exists.** It lives across both corpuses but is **anchored to time, not to either corpus**. You
-mark a moment; any piece from either corpus written in that window gets enriched by it. The corpuses
-don't cross-reference each other — they both just get richer from understanding the moment.
+**How it exists.** It lives across the corpora but is **anchored to time, not to any one corpus**. You
+mark a moment; any piece from any corpus written in that window gets enriched by it. The corpora don't
+cross-reference each other — they all just get richer from understanding the moment.
 
 **Granularity.** Big life events (marriages, births, board appointments), annual rhythms (Olson Family
 Vacation, book-club cadence, escape-room spurts), and professional cycles (SPS initiatives, Minnebar,
