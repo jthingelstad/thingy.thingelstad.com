@@ -1054,3 +1054,41 @@ th {
     flex: 1 1 0;
   }
 }
+
+/* --- Standalone footer: Tinylytics hit counter + visitor countries.
+   Not in the source page; specific to thingy.thingelstad.com. --- */
+.thingy-site-foot {
+  margin-top: 56px;
+  padding: 22px 0 4px;
+  border-top: 1px solid var(--line-soft);
+}
+/* Only reveal the footer once Tinylytics has populated the hit count — keeps
+   it hidden on localhost (script self-disables) and if the script is blocked,
+   instead of showing a bare "views ·". Degrades safely where :has is absent. */
+.thingy-site-foot:has(.tinylytics_hits:empty) {
+  display: none;
+}
+.thingy-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+.thingy-stats .tinylytics_hits {
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.thingy-stats-sep {
+  opacity: 0.45;
+}
+.thingy-stats .tinylytics_countries {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}

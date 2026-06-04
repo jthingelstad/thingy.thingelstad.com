@@ -27,7 +27,9 @@ module.exports = {
     "https://jcvud66qqpq53frvno5stoqntm0zqntw.lambda-url.us-east-1.on.aws/"
   ),
 
-  // Analytics off by default for the standalone port (Phase A1). Set
-  // TINYLYTICS_SITE_UID to enable; the client's event hooks no-op when empty.
-  tinylyticsId: env("TINYLYTICS_SITE_UID", ""),
+  // Tinylytics site profile for standalone Thingy (separate from weekly's
+  // /thingy/ profile during parallel-run). Override with TINYLYTICS_SITE_UID;
+  // the client's event hooks no-op when empty. The embed loader (base.njk)
+  // adds ?events&beacon so the data-tinylytics-event hooks record.
+  tinylyticsId: env("TINYLYTICS_SITE_UID", "u5bRAyyJvMXUrz6zbTz5"),
 };

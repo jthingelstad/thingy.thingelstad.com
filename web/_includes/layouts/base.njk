@@ -42,7 +42,7 @@
       if (['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)) return;
       var s = document.createElement('script');
       s.defer = true;
-      s.src = 'https://tinylytics.app/embed/{{ site.tinylyticsId }}.js?hits&countries&events';
+      s.src = 'https://tinylytics.app/embed/{{ site.tinylyticsId }}.js?events&beacon&hits&countries';
       document.body.appendChild(s);
     })();
   </script>
