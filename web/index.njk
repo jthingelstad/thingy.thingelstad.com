@@ -919,20 +919,37 @@ permalink: "/"
       return 'Could not copy';
     }
 
+    async function copyPrompt(prompt) {
+      const copied = await copyToClipboard(prompt);
+      if (copied) {
+        trackTinylyticsEvent('librarian.prompt_copy');
+        return 'Prompt copied';
+      }
+      return 'Could not copy';
+    }
+
     function addPromptActions(messageElement, prompt, scope) {
       if (!prompt) return;
       const controls = document.createElement('div');
       controls.className = 'librarian-prompt-actions';
       controls.innerHTML = `
+        <button type="button" data-action="copy" aria-label="Copy prompt" title="Copy prompt">${actionIcon('copy')}</button>
         <button type="button" data-action="share" aria-label="Share prompt" title="Share prompt">${actionIcon('share')}</button>
         <span class="librarian-feedback-status" aria-live="polite"></span>
       `;
       controls.addEventListener('click', async (event) => {
         const target = event.target instanceof Element ? event.target : event.target.parentElement;
-        const button = target ? target.closest('button[data-action="share"]') : null;
+        const button = target ? target.closest('button[data-action]') : null;
         if (!button || !controls.contains(button)) return;
-        const message = await sharePrompt(prompt, scope);
-        if (message) flashActionStatus(controls, message);
+        if (button.dataset.action === 'copy') {
+          const message = await copyPrompt(prompt);
+          flashActionStatus(controls, message);
+          return;
+        }
+        if (button.dataset.action === 'share') {
+          const message = await sharePrompt(prompt, scope);
+          if (message) flashActionStatus(controls, message);
+        }
       });
       messageElement.appendChild(controls);
     }
