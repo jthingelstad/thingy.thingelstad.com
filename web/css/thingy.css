@@ -1102,6 +1102,47 @@ th {
 }
 .librarian-feedback-status:empty { display: none; }
 
+.librarian-prompt-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.librarian-prompt-actions button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.librarian-prompt-actions button:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.librarian-prompt-actions svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.librarian-prompt-actions .librarian-feedback-status {
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .librarian-prompts {
   display: flex;
   flex-wrap: wrap;

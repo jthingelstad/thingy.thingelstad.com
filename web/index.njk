@@ -161,6 +161,7 @@ permalink: "/"
     const sourceError = document.getElementById('librarian-source-error');
     const questionCount = document.getElementById('librarian-question-count');
     const messages = document.getElementById('librarian-messages');
+    const chatScroll = document.querySelector('.thingy-chat-scroll');
     const prompts = document.getElementById('librarian-prompts');
     const betaOverlay = document.getElementById('librarian-beta-overlay');
     const betaCloseButton = document.getElementById('librarian-beta-close');
@@ -228,6 +229,8 @@ permalink: "/"
     const pendingTinylyticsEvents = [];
     let tinylyticsReady = false;
     let answerInFlight = false;
+    let autoFollowChat = true;
+    let scrollFrame = 0;
     let conversationHistory = [];
     let feedbackStatusTimer = 0;
     const emailRe = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
@@ -401,13 +404,44 @@ permalink: "/"
       emailInput.focus();
     }
 
+    function nearChatBottom() {
+      if (!chatScroll) return true;
+      return chatScroll.scrollHeight - chatScroll.scrollTop - chatScroll.clientHeight < 180;
+    }
+
+    function scrollChatToBottom(options = {}) {
+      if (!chatScroll) return;
+      if (!options.force && !autoFollowChat && !nearChatBottom()) return;
+      chatScroll.scrollTop = chatScroll.scrollHeight;
+    }
+
+    function scheduleChatScroll(options = {}) {
+      if (!chatScroll) return;
+      if (!options.force && !nearChatBottom()) {
+        autoFollowChat = false;
+        return;
+      }
+      autoFollowChat = true;
+      if (scrollFrame) return;
+      scrollFrame = window.requestAnimationFrame(() => {
+        scrollFrame = 0;
+        scrollChatToBottom(options);
+      });
+    }
+
     function addMessage(kind, html) {
       const item = document.createElement('div');
       item.className = `librarian-message librarian-message-${kind}`;
       item.innerHTML = html;
       messages.appendChild(item);
-      item.scrollIntoView({ block: 'end', behavior: 'smooth' });
+      scheduleChatScroll({ force: true });
       return item;
+    }
+
+    if (chatScroll) {
+      chatScroll.addEventListener('scroll', () => {
+        autoFollowChat = nearChatBottom();
+      }, { passive: true });
     }
 
     function autoSizeQuestionInput() {
@@ -750,6 +784,26 @@ permalink: "/"
       }, 1800);
     }
 
+    async function shareText(title, text) {
+      const value = String(text || '').trim();
+      if (!value) return 'Nothing to share';
+      if (typeof navigator.share === 'function') {
+        try {
+          await navigator.share({ title, text: value });
+          trackTinylyticsEvent('librarian.share_native');
+          return 'Shared';
+        } catch (error) {
+          if (error && error.name === 'AbortError') return '';
+        }
+      }
+      const copied = await copyToClipboard(value);
+      if (copied) {
+        trackTinylyticsEvent('librarian.share_copy');
+        return 'Copied';
+      }
+      return 'Could not copy';
+    }
+
     async function sharePrompt(prompt, scope) {
       const shareUrl = buildSharePromptUrl(prompt, scope);
       if (typeof navigator.share === 'function') {
@@ -769,7 +823,25 @@ permalink: "/"
       return 'Could not copy';
     }
 
-    function addResponseActions(messageElement, requestId, answer, prompt, scope) {
+    function addPromptActions(messageElement, prompt, scope) {
+      if (!prompt) return;
+      const controls = document.createElement('div');
+      controls.className = 'librarian-prompt-actions';
+      controls.innerHTML = `
+        <button type="button" data-action="share" aria-label="Share prompt" title="Share prompt">${actionIcon('share')}</button>
+        <span class="librarian-feedback-status" aria-live="polite"></span>
+      `;
+      controls.addEventListener('click', async (event) => {
+        const target = event.target instanceof Element ? event.target : event.target.parentElement;
+        const button = target ? target.closest('button[data-action="share"]') : null;
+        if (!button || !controls.contains(button)) return;
+        const message = await sharePrompt(prompt, scope);
+        if (message) flashActionStatus(controls, message);
+      });
+      messageElement.appendChild(controls);
+    }
+
+    function addResponseActions(messageElement, requestId, answer) {
       if (!requestId) return;
       const controls = document.createElement('div');
       controls.className = 'librarian-feedback';
@@ -777,7 +849,7 @@ permalink: "/"
         <button type="button" data-action="copy" aria-label="Copy answer" title="Copy answer">${actionIcon('copy')}</button>
         <button type="button" data-reaction="up" aria-label="Good response" aria-pressed="false" title="Good response">${actionIcon('up')}</button>
         <button type="button" data-reaction="down" aria-label="Bad response" aria-pressed="false" title="Bad response">${actionIcon('down')}</button>
-        <button type="button" data-action="share" aria-label="Share prompt" title="Share prompt">${actionIcon('share')}</button>
+        <button type="button" data-action="share" aria-label="Share answer" title="Share answer">${actionIcon('share')}</button>
         <span class="librarian-feedback-status" aria-live="polite"></span>
       `;
       controls.addEventListener('click', async (event) => {
@@ -796,7 +868,7 @@ permalink: "/"
           return;
         }
         if (button.dataset.action === 'share') {
-          const message = await sharePrompt(prompt, scope);
+          const message = await shareText('Thingy answer', answer || messageElement.innerText || '');
           if (message) flashActionStatus(controls, message);
         }
       });
@@ -1051,6 +1123,19 @@ permalink: "/"
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
+      let renderFrame = 0;
+
+      function renderPendingAnswer() {
+        renderFrame = 0;
+        pending.classList.remove('librarian-message-pending');
+        pending.innerHTML = renderAnswer(answer, citations);
+        scheduleChatScroll();
+      }
+
+      function schedulePendingRender() {
+        if (renderFrame) return;
+        renderFrame = window.requestAnimationFrame(renderPendingAnswer);
+      }
 
       function applyEvent(eventName, data) {
         if (eventName === 'meta') {
@@ -1059,6 +1144,7 @@ permalink: "/"
           answer = '';
           pending.classList.add('librarian-message-pending');
           pending.innerHTML = `<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>${escapeHtml(data.message || 'Thingy is working...')}</p>`;
+          scheduleChatScroll({ force: true });
         } else if (eventName === 'answer_delta') {
           const wasEmpty = answer === '';
           answer += data.delta || '';
@@ -1066,12 +1152,10 @@ permalink: "/"
             answer = answer.replace(/^\s+/, '');
             while (pending.firstChild) pending.removeChild(pending.firstChild);
           }
-          pending.classList.remove('librarian-message-pending');
-          pending.innerHTML = renderAnswer(answer, citations);
-          pending.scrollIntoView({ block: 'end', behavior: 'smooth' });
+          schedulePendingRender();
         } else if (eventName === 'citations') {
           citations = data.citations || [];
-          pending.innerHTML = renderAnswer(answer, citations);
+          schedulePendingRender();
         } else if (eventName === 'error') {
           const error = new Error(data.error || 'Thingy is unavailable.');
           error.requestId = data.request_id || requestId;
@@ -1101,6 +1185,10 @@ permalink: "/"
       }
       buffer += decoder.decode();
       if (buffer.trim()) consumeEvent(buffer);
+      if (renderFrame) {
+        window.cancelAnimationFrame(renderFrame);
+        renderPendingAnswer();
+      }
       return { answer, citations, request_id: requestId };
     }
 
@@ -1155,7 +1243,9 @@ permalink: "/"
       const questionWordCount = message.split(/\s+/).filter(Boolean).length;
       const questionSize = questionWordCount < 6 ? 'short' : questionWordCount < 18 ? 'medium' : 'long';
       const history = compactHistory(conversationHistory);
-      addMessage('user', `<p>${escapeHtml(message)}</p>`);
+      autoFollowChat = true;
+      const userMessage = addMessage('user', `<p>${escapeHtml(message)}</p>`);
+      addPromptActions(userMessage, message, scope);
       questionInput.value = '';
       updateQuestionState();
       const pending = addMessage('assistant', '<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>Thingy is looking through the archive...</p>');
@@ -1164,7 +1254,7 @@ permalink: "/"
         const data = await postStreamingChat(message, pending, history, scope);
         pending.classList.remove('librarian-message-pending');
         rememberTurn(message, data.answer || '');
-        addResponseActions(pending, data.request_id, data.answer || '', message, scope);
+        addResponseActions(pending, data.request_id, data.answer || '');
         trackTinylyticsEvent('librarian.answer_success', `${questionSize}.${(data.citations || []).length}`);
       } catch (error) {
         pending.innerHTML = `<p>${escapeHtml(error.message)}</p>`;
