@@ -1487,69 +1487,6 @@ th {
   }
 }
 
-/* --- Standalone footer: Tinylytics hit counter + visitor countries.
-   Not in the source page; specific to thingy.thingelstad.com. --- */
-.thingy-site-foot {
-  margin-top: 56px;
-  padding: 22px 0 4px;
-  border-top: 1px solid var(--line-soft);
-  text-align: center;
-}
-/* Only reveal the footer once Tinylytics has populated the hit count — keeps
-   it hidden on localhost (script self-disables) and if the script is blocked,
-   instead of showing a bare "views ·". Degrades safely where :has is absent. */
-.thingy-site-foot:has(.tinylytics_hits:empty):has(.tinylytics_kudos:empty) {
-  display: none;
-}
-.thingy-stats {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  margin: 0;
-  font-family: var(--mono);
-  font-size: 12px;
-  letter-spacing: 0.02em;
-  color: var(--muted);
-}
-.thingy-stats-label {
-  color: var(--ink-soft);
-  font-weight: 700;
-}
-.thingy-stats .tinylytics_hits {
-  font-weight: 600;
-  color: var(--ink-soft);
-}
-.thingy-stats-sep {
-  opacity: 0.45;
-}
-.thingy-stats .tinylytics_countries {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-.thingy-kudos {
-  margin-top: 12px;
-  min-width: 3.25rem;
-  min-height: 2rem;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: color-mix(in srgb, var(--surface) 88%, var(--accent-soft));
-  color: var(--ink-soft);
-  font: 700 12px / 1 var(--sans);
-  cursor: pointer;
-}
-.thingy-kudos:hover,
-.thingy-kudos.did_select {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  color: var(--accent-deep);
-}
-.thingy-kudos:empty {
-  display: none;
-}
-
 /* --- Chat-client app shell --- */
 .thingy-site-head {
   display: none;
@@ -1685,28 +1622,6 @@ th {
   display: grid;
   gap: 10px;
   color: rgba(234, 240, 237, 0.7);
-}
-
-.thingy-rail-foot .thingy-stats {
-  justify-content: flex-start;
-  margin: 0;
-  color: rgba(234, 240, 237, 0.62);
-}
-
-.thingy-rail-foot .thingy-stats:has(.tinylytics_hits:empty) {
-  display: none;
-}
-
-.thingy-rail-foot .thingy-stats-label,
-.thingy-rail-foot .thingy-stats .tinylytics_hits {
-  color: rgba(234, 240, 237, 0.78);
-}
-
-.thingy-rail-foot .thingy-kudos {
-  justify-self: start;
-  color: rgba(234, 240, 237, 0.7);
-  border-color: rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.04);
 }
 
 .thingy-conversation {

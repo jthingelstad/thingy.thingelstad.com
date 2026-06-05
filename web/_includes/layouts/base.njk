@@ -160,7 +160,7 @@
 
       var s = document.createElement('script');
       s.defer = true;
-      s.src = 'https://tinylytics.app/embed/{{ site.tinylyticsId }}/min.js?events&beacon&hits&countries&kudos=%F0%9F%A4%96';
+      s.src = 'https://tinylytics.app/embed/{{ site.tinylyticsId }}/min.js?events&beacon';
       s.addEventListener('load', function() {
         window.dispatchEvent(new Event('tinylytics:loaded'));
       });
