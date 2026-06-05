@@ -22,7 +22,7 @@ permalink: "/"
         <p>Ask across the newsletter, blog, and podcast. Thingy will only use the sources that are switched on.</p>
       </div>
 
-      <fieldset class="librarian-scope-control thingy-source-rack" aria-label="Source scope">
+      <fieldset class="thingy-source-rack" aria-label="Source scope">
         <legend>Sources</legend>
         <label class="thingy-source-switch thingy-source-wt">
           <input type="checkbox" name="scope" value="weekly_thing" checked>
@@ -62,10 +62,6 @@ permalink: "/"
         <button type="button" id="librarian-clear-chat" class="thingy-card-tool" data-tinylytics-event="librarian.clear">New chat</button>
         <button type="button" id="librarian-logout" class="thingy-card-tool">Forget me</button>
       </div>
-
-      <div class="thingy-rail-foot">
-        <p>Thingy quotes from real sources. Verify before quoting elsewhere.</p>
-      </div>
     </aside>
 
     <section class="thingy-conversation" aria-label="Thingy chat">
@@ -104,14 +100,20 @@ permalink: "/"
           <div class="librarian-prompts" id="librarian-prompts" aria-label="Suggested questions" hidden></div>
           <form class="librarian-form librarian-question-form thingy-input" id="librarian-question-form">
             <label for="librarian-question" class="sr-only">Ask Thingy</label>
-            <textarea id="librarian-question" name="message" rows="2" required maxlength="1200" placeholder="Ask Thingy anything about the archive&hellip;" aria-describedby="librarian-question-count librarian-source-error"></textarea>
+            <textarea id="librarian-question" name="message" rows="2" required maxlength="1200" placeholder="Ask Thingy anything about the archive&hellip;" aria-describedby="librarian-question-count librarian-source-error thingy-ai-note"></textarea>
             <div class="librarian-question-meta">
               <span id="librarian-question-count">0 / 1200</span>
             </div>
             <div class="librarian-question-actions">
-              <button type="submit" data-tinylytics-event="librarian.question_submit">Ask</button>
+              <button type="submit" aria-label="Ask Thingy" title="Ask Thingy" data-tinylytics-event="librarian.question_submit">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 19V5"></path>
+                  <path d="m5 12 7-7 7 7"></path>
+                </svg>
+              </button>
             </div>
           </form>
+          <p class="thingy-ai-note" id="thingy-ai-note">Thingy is AI and can make mistakes. Please double-check responses.</p>
         </div>
       </div>
     </section>
@@ -450,7 +452,8 @@ permalink: "/"
       if (sourceError) sourceError.textContent = hasSources ? '' : 'Switch on at least one source.';
       questionForm.classList.toggle('is-busy', answerInFlight);
       questionButton.disabled = answerInFlight || !hasSources || !questionInput.value.trim() || length > maxQuestionChars;
-      questionButton.textContent = answerInFlight ? 'Asking...' : 'Ask';
+      questionButton.setAttribute('aria-label', answerInFlight ? 'Thingy is answering' : 'Ask Thingy');
+      questionButton.title = answerInFlight ? 'Thingy is answering' : 'Ask Thingy';
       clearChatButton.disabled = answerInFlight;
       scopeInputs.forEach((input) => { input.disabled = answerInFlight; });
       autoSizeQuestionInput();
@@ -784,8 +787,17 @@ permalink: "/"
           link.setAttribute('href', new URL(link.getAttribute('href'), window.location.origin).toString());
         } catch (error) { /* leave original href */ }
       });
+      const scratch = document.createElement('div');
+      scratch.setAttribute('aria-hidden', 'true');
+      scratch.style.position = 'fixed';
+      scratch.style.left = '-9999px';
+      scratch.style.top = '0';
+      scratch.style.width = '720px';
+      scratch.appendChild(clone);
+      document.body.appendChild(scratch);
       const html = clone.innerHTML.trim();
-      const text = clone.innerText.trim();
+      const text = (clone.innerText || clone.textContent || '').trim();
+      scratch.remove();
       return { html, text };
     }
 
@@ -867,6 +879,24 @@ permalink: "/"
       return 'Could not copy';
     }
 
+    async function shareAnswer(messageElement) {
+      const payload = answerClipboardPayload(messageElement);
+      if (!payload.text && !payload.html) return 'Nothing to share';
+      if (typeof navigator.share === 'function') {
+        try {
+          await navigator.share({ title: 'Thingy answer', text: payload.text });
+          trackTinylyticsEvent('librarian.answer_share_native');
+          return 'Shared';
+        } catch (error) {
+          if (error && error.name === 'AbortError') return '';
+        }
+      }
+      const result = await copyRichHtmlToClipboard(payload.html, payload.text);
+      if (result === 'rich') return 'Rich text copied';
+      if (result === 'plain') return 'Text copied';
+      return 'Could not share';
+    }
+
     async function sharePrompt(prompt, scope) {
       const shareUrl = buildSharePromptUrl(prompt, scope);
       if (typeof navigator.share === 'function') {
@@ -931,9 +961,9 @@ permalink: "/"
           return;
         }
         if (button.dataset.action === 'share') {
-          const message = await copyAnswerRichText(messageElement);
+          const message = await shareAnswer(messageElement);
           if (message) flashActionStatus(controls, message);
-          trackTinylyticsEvent('librarian.answer_share', message === 'Rich text copied' ? 'rich' : message === 'Text copied' ? 'plain' : 'error');
+          trackTinylyticsEvent('librarian.answer_share', message === 'Shared' ? 'native' : message === 'Rich text copied' ? 'rich' : message === 'Text copied' ? 'plain' : message ? 'error' : 'cancel');
         }
       });
       messageElement.appendChild(controls);
@@ -1216,6 +1246,9 @@ permalink: "/"
             answer = answer.replace(/^\s+/, '');
             while (pending.firstChild) pending.removeChild(pending.firstChild);
           }
+          schedulePendingRender();
+        } else if (eventName === 'answer') {
+          answer = data.answer || '';
           schedulePendingRender();
         } else if (eventName === 'citations') {
           citations = data.citations || [];

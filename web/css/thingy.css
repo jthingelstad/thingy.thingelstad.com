@@ -488,21 +488,6 @@ th {
 /* --- Thingy + Librarian UI, incl. form-note/message (style.css 3614-4323) --- */
 .thingy-page { padding: 0 0 80px; }
 
-.thingy-hero {
-  padding: 26px 0 12px;
-  text-align: center;
-}
-.thingy-hero-art {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 10px;
-}
-.thingy-hero-thingy {
-  width: 68px;
-  height: 68px;
-  object-fit: contain;
-  filter: drop-shadow(0 8px 22px rgba(20, 119, 111, 0.2));
-}
 .thingy-h1 {
   font-family: var(--sans);
   font-size: 50px;
@@ -517,125 +502,7 @@ th {
   color: var(--accent);
   font-weight: 800;
 }
-.thingy-lede {
-  font-size: 16px;
-  color: var(--ink-soft);
-  max-width: 62ch;
-  margin: 0 auto;
-  line-height: 1.55;
-}
 
-.thingy-knowledge-section {
-  padding-top: 26px;
-}
-
-.thingy-page:has(.librarian-chat:not([hidden])) .thingy-hero {
-  padding: 18px 0 8px;
-}
-
-.thingy-page:has(.librarian-chat:not([hidden])) .thingy-hero-art,
-.thingy-page:has(.librarian-chat:not([hidden])) .thingy-lede {
-  display: none;
-}
-
-.thingy-page:has(.librarian-chat:not([hidden])) .eyebrow {
-  margin-bottom: 5px;
-}
-
-.thingy-page:has(.librarian-chat:not([hidden])) .thingy-h1 {
-  margin: 0;
-  font-size: 28px;
-  line-height: 1.08;
-}
-
-.thingy-page:has(.librarian-chat:not([hidden])) .thingy-shell {
-  padding-top: 8px;
-}
-
-.thingy-knowledge {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin: 0 auto;
-  text-align: left;
-}
-
-.thingy-knowledge-card {
-  position: relative;
-  min-height: 144px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  padding: 15px 15px 15px 18px;
-  background: color-mix(in srgb, var(--surface) 92%, var(--bg));
-  box-shadow: var(--shadow-subtle);
-}
-
-.thingy-knowledge-card::before {
-  content: "";
-  position: absolute;
-  top: 16px;
-  left: 0;
-  width: 4px;
-  height: 28px;
-  border-radius: 0 3px 3px 0;
-  background: var(--accent);
-}
-
-.thingy-knowledge-card-wt::before {
-  background: var(--source-newsletter);
-}
-
-.thingy-knowledge-card-blog::before {
-  background: var(--source-blog);
-}
-
-.thingy-knowledge-card-podcast::before {
-  background: var(--source-podcast);
-}
-
-.thingy-knowledge-kicker {
-  margin: 0 0 7px;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.thingy-knowledge-card h2 {
-  margin: 0 0 8px;
-  font-family: var(--sans);
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: 0;
-  color: var(--ink);
-}
-
-.thingy-knowledge-card p:last-child {
-  margin: 0;
-  font-size: 13.5px;
-  line-height: 1.45;
-  color: var(--ink-soft);
-}
-
-.thingy-shell { padding-top: 12px; }
-.thingy-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: var(--shadow-agent);
-}
-.thingy-card-head {
-  display: grid;
-  grid-template-columns: 46px 1fr auto;
-  gap: 12px;
-  align-items: center;
-  padding: 13px 18px;
-  border-bottom: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
-  background: #17211f;
-}
 .thingy-card-avatar {
   width: 46px;
   height: 46px;
@@ -677,15 +544,6 @@ th {
   box-shadow: 0 0 0 3px rgba(101, 200, 188, 0.16);
   display: inline-block;
 }
-.thingy-card-tools {
-  display: none;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-.thingy-card:has(.librarian-chat:not([hidden])) .thingy-card-tools {
-  display: inline-flex;
-}
 .thingy-card-tool {
   font-family: var(--sans);
   font-size: 12px;
@@ -700,17 +558,7 @@ th {
   border-color: rgba(255, 255, 255, 0.38);
   color: #fff;
 }
-.thingy-foot-note {
-  text-align: center;
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 14px;
-  letter-spacing: 0.04em;
-}
 
-/* Inner panel adjustments — strip the old border-top/padding now that
-   the card supplies its own chrome. */
 .librarian-auth.thingy-auth,
 .librarian-chat.thingy-chat {
   border-top: none;
@@ -1020,15 +868,6 @@ th {
   font-family: var(--sans);
 }
 
-.librarian-feedback-label {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-right: 4px;
-}
-
 .librarian-feedback button {
   width: 2.15rem;
   height: 2.15rem;
@@ -1059,45 +898,6 @@ th {
 .librarian-feedback button:disabled {
   opacity: 0.65;
   cursor: wait;
-}
-
-.librarian-share-anchor {
-  display: inline-block;
-  margin-left: 0.4rem;
-  padding: 0;
-  background: none;
-  border: 0;
-  font-family: var(--sans);
-  font-size: 0.7em;
-  line-height: 1;
-  color: rgba(255, 255, 255, 0.55);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 140ms ease, color 140ms ease;
-  vertical-align: baseline;
-}
-@media (hover: none) {
-  .librarian-share-anchor { opacity: 0.55; }
-}
-.librarian-message-user:hover .librarian-share-anchor,
-.librarian-message-user:focus-within .librarian-share-anchor {
-  opacity: 1;
-}
-.librarian-share-anchor:hover {
-  color: #fff;
-}
-.librarian-share-anchor:focus-visible {
-  outline: 1px solid rgba(255, 255, 255, 0.7);
-  outline-offset: 2px;
-  opacity: 1;
-}
-.librarian-share-anchor[data-kind="success"] {
-  color: #fff;
-  opacity: 1;
-}
-.librarian-share-anchor[data-kind="error"] {
-  color: #ffd7d2;
-  opacity: 1;
 }
 
 .librarian-feedback-status {
@@ -1285,61 +1085,6 @@ th {
   background: var(--surface);
 }
 
-.librarian-scope-control {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0;
-  padding: 0 0 2px;
-  border: 0;
-}
-
-.librarian-scope-control legend {
-  margin-right: 2px;
-  padding: 0;
-  color: var(--color-text-muted);
-  font: 800 var(--size-xs) / 1 var(--font-ui);
-}
-
-.librarian-scope-control label {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  min-height: 2rem;
-  padding: 0 0.7rem;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--color-text-muted);
-  cursor: pointer;
-  font: 800 var(--size-xs) / 1 var(--font-ui);
-  white-space: nowrap;
-}
-
-.librarian-scope-control input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.librarian-scope-control label:has(input:checked) {
-  border-color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 12%, var(--surface));
-  color: var(--color-accent);
-}
-
-.librarian-scope-control label:has(input:focus-visible) {
-  outline: 3px solid color-mix(in srgb, var(--color-accent) 24%, transparent);
-  outline-offset: 2px;
-}
-
-.librarian-scope-control label:has(input:disabled) {
-  cursor: wait;
-  opacity: 0.62;
-}
-
 .librarian-question-actions {
   grid-column: 2;
   grid-row: 2;
@@ -1407,54 +1152,8 @@ th {
 }
 
 @media (max-width: 640px) {
-  .thingy-hero {
-    padding-top: 32px;
-  }
-
   .thingy-h1 {
     font-size: 42px;
-  }
-
-  .thingy-page:has(.librarian-chat:not([hidden])) .thingy-hero {
-    padding-top: 16px;
-  }
-
-  .thingy-page:has(.librarian-chat:not([hidden])) .thingy-h1 {
-    font-size: 28px;
-  }
-
-  .thingy-knowledge {
-    grid-template-columns: 1fr;
-  }
-
-  .thingy-knowledge-card {
-    min-height: 0;
-  }
-
-  .librarian-header {
-    grid-template-columns: 1fr;
-    gap: var(--space-lg);
-    text-align: center;
-  }
-
-  .librarian-header-copy {
-    max-width: none;
-  }
-
-  .librarian-persona {
-    justify-self: center;
-    width: min(15rem, 72vw);
-  }
-
-  .thingy-card-head {
-    grid-template-columns: 46px minmax(0, 1fr);
-    align-items: center;
-  }
-
-  .thingy-card-tools {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
-    padding-left: 58px;
   }
 
   .thingy-card-status {
@@ -1548,8 +1247,7 @@ th {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.thingy-rail-intro p:last-child,
-.thingy-rail-foot p {
+.thingy-rail-intro p:last-child {
   margin: 0;
   color: rgba(234, 240, 237, 0.72);
   font-size: 13px;
@@ -1616,12 +1314,6 @@ th {
   color: rgba(234, 240, 237, 0.84);
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.14);
-}
-
-.thingy-rail-foot {
-  display: grid;
-  gap: 10px;
-  color: rgba(234, 240, 237, 0.7);
 }
 
 .thingy-conversation {
@@ -1812,45 +1504,125 @@ th {
 
 .thingy-input {
   position: static;
-  width: min(calc(100% - 36px), 54rem);
+  width: min(calc(100% - 36px), 50rem);
   max-width: 100%;
   margin: 0 auto;
-  padding: 10px;
-  border-color: color-mix(in srgb, var(--line) 80%, var(--surface));
-  border-radius: 14px;
+  padding: 12px;
+  border-color: color-mix(in srgb, var(--line) 74%, var(--surface));
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--surface) 96%, var(--bg));
+  box-shadow:
+    0 18px 44px rgba(23, 33, 31, 0.10),
+    0 2px 8px rgba(23, 33, 31, 0.05);
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.thingy-input:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--line));
   background: var(--surface);
   box-shadow:
-    0 16px 42px rgba(23, 33, 31, 0.13),
-    0 2px 10px rgba(23, 33, 31, 0.06);
+    0 20px 48px rgba(23, 33, 31, 0.12),
+    0 0 0 3px color-mix(in srgb, var(--accent-soft) 54%, transparent);
+}
+
+.thingy-ai-note {
+  width: min(calc(100% - 36px), 50rem);
+  max-width: 100%;
+  margin: 8px auto 0;
+  color: color-mix(in srgb, var(--muted) 86%, var(--ink-soft));
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: center;
 }
 
 .librarian-question-form {
   grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(2.7rem, auto) 2.3rem;
+  column-gap: 10px;
+  row-gap: 2px;
   align-items: end;
 }
 
 .librarian-question-form textarea {
   grid-column: 1;
   grid-row: 1;
-  min-height: 3.2rem;
+  min-height: 2.7rem;
   max-height: 14rem;
+  padding: 8px 4px 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   resize: none;
+  line-height: 1.45;
+}
+
+.librarian-question-form textarea:focus {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.librarian-question-form textarea::placeholder {
+  color: color-mix(in srgb, var(--muted) 76%, var(--surface));
 }
 
 .librarian-question-actions {
   grid-column: 2;
-  grid-row: 1;
+  grid-row: 2;
+  align-self: center;
 }
 
 .librarian-question-actions button {
-  min-width: 4.25rem;
-  min-height: 3.2rem;
-  border-radius: 7px;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.librarian-question-actions button:hover:not(:disabled) {
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
+}
+
+.librarian-question-actions button:disabled {
+  border-color: color-mix(in srgb, var(--muted) 28%, var(--surface-2));
+  background: color-mix(in srgb, var(--muted) 28%, var(--surface-2));
+  color: color-mix(in srgb, var(--muted) 72%, var(--surface));
+}
+
+.librarian-question-actions button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .librarian-question-meta {
-  grid-column: 1 / -1;
+  grid-column: 1;
   grid-row: 2;
+  align-self: center;
+  justify-content: flex-start;
+  padding: 0 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.thingy-input:focus-within .librarian-question-meta,
+.librarian-question-meta:has(.warning) {
+  opacity: 0.68;
 }
 
 .librarian-message-assistant .librarian-feedback {
@@ -2038,8 +1810,7 @@ th {
   }
 
   .thingy-rail-intro,
-  .thingy-rail-links,
-  .thingy-rail-foot {
+  .thingy-rail-links {
     display: none;
   }
 
@@ -2133,18 +1904,24 @@ th {
 
   .thingy-input {
     width: 100%;
+    border-radius: 22px;
   }
 
   .librarian-question-form {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .librarian-question-actions {
-    grid-column: 1;
+    grid-column: 2;
     grid-row: 2;
   }
 
   .librarian-question-meta {
-    grid-row: 3;
+    grid-row: 2;
+  }
+
+  .thingy-ai-note {
+    width: 100%;
+    font-size: 11px;
   }
 }
