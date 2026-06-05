@@ -519,12 +519,54 @@ permalink: "/"
         html.push(`<${type}>`);
       }
 
-      for (const line of lines) {
+      function isTableRow(value) {
+        const trimmed = String(value || '').trim();
+        return trimmed.startsWith('|') && trimmed.endsWith('|') && trimmed.slice(1, -1).includes('|');
+      }
+
+      function isTableSeparator(value) {
+        if (!isTableRow(value)) return false;
+        return tableCells(value).every((cell) => /^:?-{3,}:?$/.test(cell));
+      }
+
+      function tableCells(value) {
+        return String(value || '').trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim());
+      }
+
+      function renderTableCell(tag, value) {
+        return `<${tag}>${renderInlineMarkdown(value, citationsByIssue)}</${tag}>`;
+      }
+
+      for (let index = 0; index < lines.length; index += 1) {
+        const line = lines[index];
         const trimmed = line.trim();
         if (!trimmed) {
           flushParagraph();
           flushBlockquote();
           flushList();
+          continue;
+        }
+
+        if (isTableRow(trimmed) && isTableSeparator(lines[index + 1])) {
+          flushParagraph();
+          flushBlockquote();
+          flushList();
+          const headers = tableCells(trimmed);
+          index += 2;
+          const rows = [];
+          while (index < lines.length && isTableRow(lines[index])) {
+            rows.push(tableCells(lines[index]));
+            index += 1;
+          }
+          index -= 1;
+          html.push('<div class="librarian-table-wrap"><table>');
+          html.push(`<thead><tr>${headers.map((cell) => renderTableCell('th', cell)).join('')}</tr></thead>`);
+          html.push('<tbody>');
+          for (const row of rows) {
+            const normalized = headers.map((_, cellIndex) => row[cellIndex] || '');
+            html.push(`<tr>${normalized.map((cell) => renderTableCell('td', cell)).join('')}</tr>`);
+          }
+          html.push('</tbody></table></div>');
           continue;
         }
 

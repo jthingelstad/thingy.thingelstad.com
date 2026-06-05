@@ -899,6 +899,46 @@ th {
   color: var(--color-text-muted);
 }
 
+.librarian-table-wrap {
+  max-width: 100%;
+  margin: 0 0 var(--space-sm);
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+
+.librarian-message table {
+  width: 100%;
+  min-width: 26rem;
+  border-collapse: collapse;
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 0.94rem;
+  line-height: 1.35;
+  background: var(--surface);
+}
+
+.librarian-message th,
+.librarian-message td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line-soft);
+  text-align: left;
+  vertical-align: top;
+}
+
+.librarian-message th {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  background: color-mix(in srgb, var(--surface-2) 78%, var(--surface));
+}
+
+.librarian-message tr:last-child td {
+  border-bottom: 0;
+}
+
 .librarian-message code {
   padding: 0.1em 0.3em;
   border-radius: 4px;
