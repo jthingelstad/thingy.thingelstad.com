@@ -10,9 +10,9 @@ permalink: "/"
       <div class="thingy-hero-art">
         <img src="/img/thingy.png" alt="" class="thingy-hero-thingy" width="1022" height="1022" loading="eager">
       </div>
-      <p class="eyebrow">Members &middot; Beta</p>
+      <p class="eyebrow">Public Archive &middot; Beta</p>
       <h1 class="thingy-h1">Meet <em>Thingy</em>.</h1>
-      <p class="thingy-lede">Thingy is your guide to everything I&rsquo;ve published&mdash;the entire Weekly Thing archive, years of writing on my blog, and Another Thing podcast transcripts. Every idea, link, and rabbit hole I&rsquo;ve shared. Ask about a past issue, chase down a half-remembered thought, or trace how an idea evolved across sources. It&rsquo;s playful, a little weird, and very good at connecting dots. Start anywhere.</p>
+      <p class="thingy-lede">Thingy reads across Jamie Thingelstad&rsquo;s public archive and decides where to look based on what you ask. It can pull a newsletter thread, check the blog for the more durable version, bring in podcast transcripts when the conversation matters, and connect the pieces without making you pick a shelf first.</p>
     </div>
   </header>
 
@@ -20,9 +20,12 @@ permalink: "/"
     <div class="container-narrow">
       <div class="thingy-card">
         <div class="thingy-card-head">
-          <div class="thingy-card-avatar" aria-hidden="true">T</div>
+          <div class="thingy-card-avatar" aria-hidden="true">
+            <img src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager">
+          </div>
           <div class="thingy-card-id">
             <p class="thingy-card-name">Thingy</p>
+            <p class="thingy-card-status"><span class="thingy-dot" aria-hidden="true"></span>Connected to Jamie&rsquo;s public archive</p>
           </div>
           <div class="thingy-card-tools">
             <button type="button" id="librarian-clear-chat" class="thingy-card-tool" data-tinylytics-event="librarian.clear">Start over</button>
@@ -32,7 +35,7 @@ permalink: "/"
 
         <div class="librarian-auth thingy-auth" id="librarian-auth">
           <form class="librarian-form" id="librarian-auth-form">
-            <label for="librarian-email">Subscriber email</label>
+            <label for="librarian-email">Enter your email address</label>
             <div class="librarian-auth-row">
               <input id="librarian-email" name="email" type="email" autocomplete="email" required class="subscribe-input">
               <button type="submit" id="librarian-auth-submit" data-tinylytics-event="librarian.auth_submit">Enter</button>
@@ -43,7 +46,7 @@ permalink: "/"
               <button type="button" id="librarian-add-subscriber" hidden>Add me</button>
               <button type="button" id="librarian-resend-confirmation" hidden>Resend confirmation email</button>
             </div>
-            <p class="form-note">Access is available to Weekly Thing subscribers. Newsletter links may prefill this field.</p>
+            <p class="form-note">Thingy is available to Weekly Thing readers. Enter your email above and Thingy will help you subscribe if needed.</p>
           </form>
         </div>
 
@@ -56,12 +59,6 @@ permalink: "/"
           <form class="librarian-form librarian-question-form thingy-input" id="librarian-question-form">
             <label for="librarian-question" class="sr-only">Ask Thingy</label>
             <textarea id="librarian-question" name="message" rows="3" required maxlength="1200" placeholder="Ask Thingy anything about the archive&hellip;" aria-describedby="librarian-question-count"></textarea>
-            <fieldset class="librarian-scope" id="librarian-scope">
-              <legend class="sr-only">Which sources should Thingy search?</legend>
-              <label><input type="checkbox" id="librarian-scope-wt" value="weekly_thing" checked> Weekly Thing</label>
-              <label><input type="checkbox" id="librarian-scope-blog" value="blog"> Jamie&rsquo;s blog</label>
-              <label><input type="checkbox" id="librarian-scope-podcast" value="podcast"> Another Thing</label>
-            </fieldset>
             <div class="librarian-question-meta">
               <span id="librarian-question-count">0 / 1200</span>
             </div>
@@ -76,6 +73,28 @@ permalink: "/"
     </div>
   </div>
 
+  <section class="thingy-knowledge-section">
+    <div class="container-narrow">
+      <div class="thingy-knowledge" aria-label="Thingy's knowledge base">
+        <article class="thingy-knowledge-card thingy-knowledge-card-wt">
+          <p class="thingy-knowledge-kicker">Newsletter</p>
+          <h2>Weekly Thing</h2>
+          <p>The long-running issue archive: links, notes, recommendations, recurring themes, and week-by-week context.</p>
+        </article>
+        <article class="thingy-knowledge-card thingy-knowledge-card-blog">
+          <p class="thingy-knowledge-kicker">Blog</p>
+          <h2>thingelstad.com</h2>
+          <p>Jamie&rsquo;s personal writing: essays, projects, systems, milestones, family stories, and durable thinking.</p>
+        </article>
+        <article class="thingy-knowledge-card thingy-knowledge-card-podcast">
+          <p class="thingy-knowledge-kicker">Podcast</p>
+          <h2>Another Thing</h2>
+          <p>Transcript-level search across spoken conversations, side quests, explanations, and audio-native reflections.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
   <div class="librarian-beta-overlay" id="librarian-beta-overlay" hidden>
     <div class="librarian-beta-modal" role="dialog" aria-modal="true" aria-labelledby="librarian-beta-title" aria-describedby="librarian-beta-description">
       <p class="eyebrow">Private Beta</p>
@@ -89,10 +108,12 @@ permalink: "/"
   <footer class="thingy-site-foot">
     <div class="container-narrow">
       <p class="thingy-stats">
+        <span class="thingy-stats-label">Public traffic</span>
         <span class="tinylytics_hits"></span> views
         <span class="thingy-stats-sep" aria-hidden="true">&middot;</span>
         <span class="tinylytics_countries"></span>
       </p>
+      <button type="button" class="thingy-kudos tinylytics_kudos" data-path="/" aria-label="Send kudos to Thingy"></button>
     </div>
   </footer>
 </section>
@@ -117,9 +138,6 @@ permalink: "/"
     const logoutButton = document.getElementById('librarian-logout');
     const clearChatButton = document.getElementById('librarian-clear-chat');
     const questionInput = document.getElementById('librarian-question');
-    const scopeWtBox = document.getElementById('librarian-scope-wt');
-    const scopeBlogBox = document.getElementById('librarian-scope-blog');
-    const scopePodcastBox = document.getElementById('librarian-scope-podcast');
     const questionButton = questionForm.querySelector('button[type="submit"]');
     const questionCount = document.getElementById('librarian-question-count');
     const messages = document.getElementById('librarian-messages');
@@ -128,117 +146,56 @@ permalink: "/"
     const betaCloseButton = document.getElementById('librarian-beta-close');
     const storageKey = 'weeklyThingLibrarianToken';
     const betaNoticeStorageKey = 'weeklyThingLibrarianBetaNotice';
-    const scopeStorageKey = 'weeklyThingLibrarianScope';
     const maxHistoryMessages = 8;
     const maxHistoryChars = 4000;
     const maxQuestionChars = Number(questionInput.getAttribute('maxlength') || '1200');
     const starterMessageHtml = '';
     const starterQuestions = {
       discovery: [
-        "What's the most recent issue about?",
-        'Show me the very first issue.',
-        'Pick a random issue for me.',
-        'What was Jamie writing about a year ago?',
-        'Find an issue from summer 2020.',
-        "What's a good issue to start with?",
-        'Show me a fan-favorite issue.',
-        'What did the 100th issue cover?',
-        'Surprise me with something from the archive.',
-        "What's the longest issue ever?",
-        'How do I subscribe?',
-        'How does the membership work?',
-        'When is the next issue coming?',
-        'How do I find a link I half-remember?',
-        'How can I share an issue?',
-        'Is there a way to follow without email?',
-        'How do I suggest a link to Jamie?',
-        "Where's the discussion community?",
-        'Can I read everything offline?',
-        'How do I unsubscribe?'
+        'Give me a tour of what Jamie publishes across the archive.',
+        'What are the big themes that connect the blog, newsletter, and podcast?',
+        'Find a good place to start if I care about personal knowledge systems.',
+        'What has Jamie returned to again and again over the years?',
+        'Show me something recent and something older on the same idea.',
+        'Pick a surprising thread that crosses more than one source.',
+        'What parts of the archive feel most personal?',
+        'Where does Jamie explain how he works?',
+        'Find a useful answer hiding in an old post or issue.',
+        'What should I read first if I am new here?'
       ],
       topical: [
-        'What does Jamie write about most?',
-        'Find issues about the IndieWeb.',
-        'Show me everything about RSS.',
-        'What has Jamie said about AI?',
-        'Find issues mentioning POAPs.',
-        "What's been written about Minneapolis?",
-        'Show me issues about EDI or retail.',
-        'Find anything about ENS or Web3.',
-        "What's been said about newsletters?",
-        'Show me posts about owning your content.',
-        'Who does Jamie quote most often?',
-        'Find issues featuring Manton Reece.',
-        'What writers show up repeatedly?',
-        "Who's been linked from Daring Fireball?",
-        'Find references to Cory Doctorow.',
-        'Which podcasters get mentioned most?',
-        "Whose blogs does Jamie read?",
-        'What did Jamie say on Another Thing about starting a podcast?',
-        'Find indie developers featured here.',
-        "Who are Jamie's favorite thinkers?",
-        'Which CEOs come up most?',
-        'What tools has Jamie recommended?',
-        'Find issues about OmniFocus.',
-        "What's been said about Fastmail?",
-        'Show me posts about static site generators.',
-        'Find references to 11ty or Hugo.',
-        'What apps does Jamie use daily?',
-        'Show me anything about 3D printing.',
-        'Find posts about home automation.',
-        "What's Jamie said about password managers?",
-        'Show me issues about terminal tools.',
-        'Find the most thought-provoking issue.',
-        "What's a great essay Jamie linked to?",
-        'Show me a piece about long-term thinking.',
-        'Find writing about craft and quality.',
-        "What's been linked about leadership?",
-        'Show me essays on remote work.',
-        'Find posts about parenting and tech.',
-        "What's been said about attention?",
-        'Show me anything on systems thinking.',
-        'Find a piece worth re-reading.',
-        'What books has Jamie recommended?',
-        'Find book reviews in the archive.',
-        "What's the most-mentioned book?",
-        'Show me reading lists from the newsletter.',
-        'Find issues about libraries or reading.',
-        'What sci-fi has Jamie written about?',
-        'Show me business books worth reading.',
-        'Find recommendations for non-fiction.',
-        'What did Jamie read in 2023?',
-        'Surprise me with a book pick.',
-        'Find the weirdest link in the archive.',
-        'Show me a great rabbit hole.',
-        'What food or cooking links are here?',
-        'Find anything about music.',
-        'Show me posts about photography.',
-        "What's been said about Minnesota?",
-        'Find travel-related issues.',
-        'Show me posts about typography or design.',
-        "What's the strangest thing ever featured?",
-        'Find a delightful issue to lift my mood.',
-        'What has Jamie written about family?',
-        'Find posts about milestones or anniversaries.',
-        "Show me Jamie's year-in-review issues.",
-        'What does Jamie say about his blog?',
-        'Find issues about the Olson Family Vacation.',
-        'Show me posts about escape rooms.',
-        "What's been written about Things 4 Good?",
-        'Find personal projects Jamie has shared.',
-        'What does Jamie celebrate each year?',
-        'Show me a heartfelt issue.'
+        'What has Jamie said about AI, and how has it changed?',
+        'Find writing about owning your content and the IndieWeb.',
+        'What does the archive say about newsletters as a medium?',
+        'Show me Jamie on leadership, teams, and operating systems.',
+        'Find posts and issues about Minneapolis or Minnesota.',
+        'What tools does Jamie keep recommending?',
+        "Trace Jamie's thinking about automation.",
+        'Find writing about family rituals and annual traditions.',
+        'What has Jamie written about RSS and open web plumbing?',
+        'Show me the thread on attention, focus, and intentional technology.',
+        "Find recommendations for books that shaped Jamie's thinking.",
+        'What personal projects show up repeatedly?',
+        'Where does Jamie talk about community and belonging?',
+        'Find anything about static sites, Eleventy, or publishing workflows.',
+        'What does Jamie say about craft, quality, and maintenance?',
+        'Show me examples of long-term thinking in the archive.',
+        'Find travel writing or trip notes.',
+        'What does the podcast add that the written archive does not?',
+        'Find the best context for Things 4 Good.',
+        'Where has Jamie contradicted or revised himself?'
       ],
       playful: [
-        'What would Jamie say about my week?',
-        'Quote me something from the archive.',
-        "What's a hot take from Jamie?",
-        'Give me three links worth my time.',
-        "What's been linked twice?",
-        "Find something I've probably missed.",
-        "What's the most-clicked link ever?",
         'Build me a reading list for tonight.',
-        'What would Jamie put in a "best of" issue?',
+        'Give me three links worth my time.',
+        'Surprise me with a connection I would not expect.',
+        'What would Jamie put in a starter pack for this archive?',
+        'Find a delightful rabbit hole.',
+        'Quote me something useful from the archive.',
+        'What is the most Jamie-shaped idea in here?',
+        'Give me one practical takeaway and one weird one.',
+        'What should I ask Thingy next?',
+        'Quote me something from the archive.',
         "Tell me something I'd find interesting."
       ]
     };
@@ -248,7 +205,7 @@ permalink: "/"
     eventSink.setAttribute('aria-hidden', 'true');
     document.body.appendChild(eventSink);
     const pendingTinylyticsEvents = [];
-    let tinylyticsReady = document.readyState === 'complete';
+    let tinylyticsReady = false;
     let answerInFlight = false;
     let conversationHistory = [];
     let feedbackStatusTimer = 0;
@@ -257,7 +214,8 @@ permalink: "/"
     const params = new URLSearchParams(window.location.search);
     const email = normalizeEmail(params.get('email'));
     const initialPrompt = normalizeInitialPrompt(params.get('prompt'));
-    const initialScope = normalizeScopeParam(params.get('scope'));
+    const initialScope = normalizeScopeParam(params.get('scope')) || normalizeScopeParam(params.get('corpus'));
+    const activeScope = initialScope || 'all';
     let initialPromptSubmitted = false;
     if (email) emailInput.value = email;
 
@@ -269,15 +227,27 @@ permalink: "/"
       return String(value || '').trim().slice(0, maxQuestionChars);
     }
 
-    // Map a ?scope= URL value to one of the canonical scopes, or '' when
-    // absent/unrecognized so it doesn't clobber the reader's saved scope.
+    // Hidden URL scoping for edge cases. The public UI lets Thingy search
+    // across everything, but ?scope= or ?corpus= can narrow shared links.
     function normalizeScopeParam(value) {
-      const raw = String(value || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
-      if (raw === 'blog' || raw === 'thingelstad' || raw === 'thingelstad_com') return 'blog';
-      if (raw === 'podcast' || raw === 'podcasts' || raw === 'another_thing' || raw === 'anotherthing' || raw === 'another') return 'podcast';
-      if (raw === 'both') return 'both';
-      if (raw === 'all' || raw === 'everything') return 'all';
-      if (raw === 'weekly_thing' || raw === 'wt' || raw === 'weeklything' || raw === 'issues' || raw === 'archive') return 'weekly_thing';
+      const raw = String(value || '').trim().toLowerCase();
+      if (!raw) return '';
+      const normalized = raw.replace(/[\s-]+/g, '_').replace(/^_+|_+$/g, '');
+      if (normalized === 'all' || normalized === 'everything') return 'all';
+      if (normalized === 'both') return 'both';
+
+      const tokens = raw.split(/[,+|]/)
+        .map((part) => part.trim().replace(/[\s-]+/g, '_').replace(/^_+|_+$/g, ''))
+        .filter(Boolean);
+      const mapped = new Set();
+      for (const token of tokens.length ? tokens : [normalized]) {
+        if (token === 'blog' || token === 'thingelstad' || token === 'thingelstad_com') mapped.add('blog');
+        if (token === 'podcast' || token === 'podcasts' || token === 'another_thing' || token === 'anotherthing' || token === 'another') mapped.add('podcast');
+        if (token === 'weekly_thing' || token === 'wt' || token === 'weeklything' || token === 'issues' || token === 'archive' || token === 'newsletter') mapped.add('weekly_thing');
+      }
+      if (mapped.size === 3) return 'all';
+      if (mapped.has('weekly_thing') && mapped.has('blog') && mapped.size === 2) return 'both';
+      if (mapped.size === 1) return Array.from(mapped)[0];
       return '';
     }
 
@@ -305,55 +275,8 @@ permalink: "/"
       return window.localStorage.getItem(storageKey);
     }
 
-    // Three checkboxes encode the scope. `both` is kept as the old
-    // WT+blog value; `all` means WT+blog+podcast.
     function currentScope() {
-      const wt = scopeWtBox && scopeWtBox.checked;
-      const blog = scopeBlogBox && scopeBlogBox.checked;
-      const podcast = scopePodcastBox && scopePodcastBox.checked;
-      if (wt && blog && podcast) return 'all';
-      if (wt && blog) return 'both';
-      if (podcast && !wt && !blog) return 'podcast';
-      if (podcast) return 'all';
-      if (blog) return 'blog';
-      return 'weekly_thing';
-    }
-
-    function persistScope() {
-      try { window.localStorage.setItem(scopeStorageKey, currentScope()); } catch (error) { /* ignore */ }
-    }
-
-    // Set the checkbox group from a scope string. Inverse of currentScope().
-    function applyScope(scope) {
-      if (!scopeWtBox || !scopeBlogBox || !scopePodcastBox) return;
-      if (scope === 'blog') {
-        scopeWtBox.checked = false;
-        scopeBlogBox.checked = true;
-        scopePodcastBox.checked = false;
-      } else if (scope === 'podcast') {
-        scopeWtBox.checked = false;
-        scopeBlogBox.checked = false;
-        scopePodcastBox.checked = true;
-      } else if (scope === 'both') {
-        scopeWtBox.checked = true;
-        scopeBlogBox.checked = true;
-        scopePodcastBox.checked = false;
-      } else if (scope === 'all') {
-        scopeWtBox.checked = true;
-        scopeBlogBox.checked = true;
-        scopePodcastBox.checked = true;
-      } else {
-        scopeWtBox.checked = true;
-        scopeBlogBox.checked = false;
-        scopePodcastBox.checked = false;
-      }
-    }
-
-    function restoreScope() {
-      if (!scopeWtBox || !scopeBlogBox || !scopePodcastBox) return;
-      let saved = '';
-      try { saved = window.localStorage.getItem(scopeStorageKey) || ''; } catch (error) { saved = ''; }
-      applyScope(normalizeScopeParam(saved) || saved);
+      return activeScope;
     }
 
     function showBetaNotice() {
@@ -472,9 +395,7 @@ permalink: "/"
       }
     }
 
-    if (!tinylyticsReady) {
-      window.addEventListener('load', flushTinylyticsEvents, { once: true });
-    }
+    window.addEventListener('tinylytics:loaded', flushTinylyticsEvents, { once: true });
 
     function escapeHtml(value) {
       return String(value || '').replace(/[&<>"']/g, (char) => ({
@@ -488,7 +409,9 @@ permalink: "/"
 
     function safeMarkdownUrl(url) {
       const value = String(url || '').trim();
-      if (/^(https?:|mailto:|\/)/i.test(value)) return escapeHtml(value);
+      if (/^https?:/i.test(value) || /^mailto:/i.test(value)) return escapeHtml(value);
+      if (/^\/archive\//i.test(value)) return escapeHtml(`https://weekly.thingelstad.com${value}`);
+      if (/^\//.test(value)) return escapeHtml(value);
       return '#';
     }
 
@@ -670,11 +593,11 @@ permalink: "/"
     }
 
     function buildSharePromptUrl(prompt, scope) {
-      const url = new URL('/thingy/', window.location.origin);
+      const url = new URL('/', window.location.origin);
       url.searchParams.set('prompt', prompt);
-      // Always encode the scope so the link reproduces the exact scope used
-      // for this turn, regardless of the recipient's saved preference.
-      url.searchParams.set('scope', scope || 'weekly_thing');
+      // Always encode the scope so a shared link reproduces the exact corpus
+      // boundary used for this turn.
+      url.searchParams.set('scope', scope || 'all');
       return url.toString();
     }
 
@@ -1129,17 +1052,6 @@ permalink: "/"
     });
 
     questionInput.addEventListener('input', updateQuestionState);
-
-    restoreScope();
-    // A ?scope= in the URL (e.g. from a shared prompt link) wins over the
-    // reader's saved scope, and is applied before any initial prompt submits.
-    if (initialScope) {
-      applyScope(initialScope);
-      persistScope();
-    }
-    if (scopeWtBox) scopeWtBox.addEventListener('change', persistScope);
-    if (scopeBlogBox) scopeBlogBox.addEventListener('change', persistScope);
-    if (scopePodcastBox) scopePodcastBox.addEventListener('change', persistScope);
 
     prompts.addEventListener('click', (event) => {
       const target = event.target instanceof Element ? event.target : event.target.parentElement;

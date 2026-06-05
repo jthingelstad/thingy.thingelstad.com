@@ -16,10 +16,27 @@ module.exports = {
     "Ask Thingy to find and synthesize writing from across Jamie Thingelstad's archive.",
   url: "https://thingy.thingelstad.com",
   author: "Jamie Thingelstad",
+  locale: "en_US",
+  socialImage: "/img/thingy.png",
   networkLinks: [
-    { label: "thingelstad.com", href: "https://www.thingelstad.com/" },
-    { label: "Weekly Thing", href: "https://weekly.thingelstad.com/" },
-    { label: "Another Thing", href: "https://another.thingelstad.com/" },
+    {
+      label: "thingelstad.com",
+      href: "https://www.thingelstad.com/",
+      key: "thingelstad",
+      aliases: ["thingelstad.com", "www.thingelstad.com", "blog", "jamie"],
+    },
+    {
+      label: "Weekly Thing",
+      href: "https://weekly.thingelstad.com/",
+      key: "weekly-thing",
+      aliases: ["weekly thing", "weekly.thingelstad.com", "newsletter"],
+    },
+    {
+      label: "Another Thing",
+      href: "https://another.thingelstad.com/",
+      key: "another-thing",
+      aliases: ["another thing", "another.thingelstad.com", "podcast"],
+    },
   ],
 
   // Librarian API endpoints owned by Studio.

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ pageTitle or site.title }}{% if pageTitle and pageTitle != site.title %} — {{ site.title }}{% endif %}</title>
   <meta name="description" content="{{ description or site.description }}">
+  <meta name="robots" content="index, follow, max-image-preview:large">
 
   {# Open Graph #}
   <meta property="og:title" content="{{ pageTitle or site.title }}">
@@ -12,14 +13,21 @@
   <meta property="og:url" content="{{ site.url }}{{ page.url }}">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="{{ site.title }}">
-  <meta property="og:image" content="{{ site.url }}/img/thingy.png">
+  <meta property="og:locale" content="{{ site.locale }}">
+  <meta property="og:image" content="{{ site.url }}{{ site.socialImage }}">
+  <meta property="og:image:alt" content="Thingy, Jamie Thingelstad's archive agent">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="{{ pageTitle or site.title }}">
   <meta name="twitter:description" content="{{ description or site.description }}">
-  <meta name="twitter:image" content="{{ site.url }}/img/thingy.png">
+  <meta name="twitter:image" content="{{ site.url }}{{ site.socialImage }}">
+  <meta name="twitter:image:alt" content="Thingy, Jamie Thingelstad's archive agent">
 
   <link rel="canonical" href="{{ site.url }}{{ page.url }}">
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  {% if site.tinylyticsId %}
+  <link rel="webmention" href="https://tinylytics.app/webmention/{{ site.tinylyticsId }}">
+  {% endif %}
 
   {# Web fonts — same families as the source page, for visual parity #}
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,25 +42,128 @@
 <body>
   <header class="thingy-site-head">
     <div class="thingy-site-head-inner">
-      <a class="thingy-site-home" href="/" aria-label="Thingy home">Thingy</a>
-      <nav class="thingy-network-nav" aria-label="Jamie Thingelstad sites">
-        {% for link in site.networkLinks %}
-        <a href="{{ link.href }}">{{ link.label }}</a>
-        {% endfor %}
-      </nav>
+      <a class="thingy-site-home" href="/" aria-label="Thingy home" data-tinylytics-event="network.home" data-tinylytics-event-value="thingy">
+        <span class="thingy-site-wordmark">Thingy</span>
+        <span class="thingy-site-context">Jamie&rsquo;s archive agent</span>
+      </a>
+      <div class="thingy-network">
+        <nav class="thingy-network-nav" aria-label="Jamie Thingelstad network">
+          {% for link in site.networkLinks %}
+          <a href="{{ link.href }}" data-network-key="{{ link.key }}" data-network-label="{{ link.label }}" data-network-aliases="{{ link.aliases | join('|') }}" data-tinylytics-event="network.visit" data-tinylytics-event-value="{{ link.key }}">
+            <span>{{ link.label }}</span>
+            <small>Visit</small>
+          </a>
+          {% endfor %}
+        </nav>
+      </div>
     </div>
   </header>
   <main id="main-content">
     {{ content | safe }}
   </main>
 
+  <script>
+    (() => {
+      const params = new URLSearchParams(window.location.search);
+      const from = String(params.get('from') || '').trim();
+      if (!from) return;
+
+      const links = Array.from(document.querySelectorAll('.thingy-network-nav a[data-network-label]'));
+
+      function normalize(value) {
+        return String(value || '')
+          .toLowerCase()
+          .replace(/^https?:\/\//, '')
+          .replace(/^www\./, '')
+          .replace(/\/+$/, '')
+          .replace(/&/g, ' and ')
+          .replace(/[^a-z0-9]+/g, ' ')
+          .trim();
+      }
+
+      function normalizeHost(value) {
+        return String(value || '').toLowerCase().replace(/^www\./, '').replace(/\.$/, '');
+      }
+
+      function fromUrl(value) {
+        try {
+          const parsed = new URL(value);
+          if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return parsed;
+        } catch (error) { /* try host-like values below */ }
+
+        if (/^[a-z0-9.-]+\.[a-z]{2,}(?:[/:?#]|$)/i.test(value)) {
+          try {
+            return new URL(`https://${value}`);
+          } catch (error) { /* ignore */ }
+        }
+        return null;
+      }
+
+      function linkHosts(link) {
+        const hosts = new Set();
+        try {
+          hosts.add(normalizeHost(new URL(link.href).hostname));
+        } catch (error) { /* ignore */ }
+
+        const aliases = [
+          link.dataset.networkKey,
+          link.dataset.networkLabel,
+          ...(link.dataset.networkAliases || '').split('|')
+        ];
+        aliases.forEach((alias) => {
+          const parsed = fromUrl(alias);
+          if (parsed) hosts.add(normalizeHost(parsed.hostname));
+        });
+        return hosts;
+      }
+
+      const normalizedFrom = normalize(from);
+      const parsedFrom = fromUrl(from);
+      const parsedFromHost = parsedFrom ? normalizeHost(parsedFrom.hostname) : '';
+      let matchedLink = null;
+      for (const link of links) {
+        const aliases = [
+          link.dataset.networkKey,
+          link.dataset.networkLabel,
+          ...(link.dataset.networkAliases || '').split('|')
+        ].map(normalize).filter(Boolean);
+        const hosts = linkHosts(link);
+        if ((parsedFromHost && hosts.has(parsedFromHost)) || aliases.includes(normalizedFrom)) {
+          matchedLink = link;
+          break;
+        }
+      }
+
+      if (matchedLink) {
+        matchedLink.classList.add('is-origin');
+        matchedLink.setAttribute('aria-current', 'location');
+        const action = matchedLink.querySelector('small');
+        if (action) action.textContent = 'Return';
+        if (parsedFrom) matchedLink.href = parsedFrom.href;
+      }
+    })();
+  </script>
   {% if site.tinylyticsId %}
   <script>
     (function() {
       if (['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)) return;
+
+      try {
+        var url = new URL(window.location.href);
+        ['email', 'prompt', 'from', 'scope', 'corpus'].forEach(function(name) {
+          url.searchParams.delete(name);
+        });
+        if (url.href !== window.location.href) {
+          window.history.replaceState(window.history.state, document.title, url.pathname + url.search + url.hash);
+        }
+      } catch (error) { /* leave the URL alone */ }
+
       var s = document.createElement('script');
       s.defer = true;
-      s.src = 'https://tinylytics.app/embed/{{ site.tinylyticsId }}.js?events&beacon&hits&countries';
+      s.src = 'https://tinylytics.app/embed/{{ site.tinylyticsId }}/min.js?events&beacon&hits&countries&kudos=%F0%9F%A4%96';
+      s.addEventListener('load', function() {
+        window.dispatchEvent(new Event('tinylytics:loaded'));
+      });
       document.body.appendChild(s);
     })();
   </script>
