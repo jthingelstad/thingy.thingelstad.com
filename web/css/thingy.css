@@ -1745,6 +1745,10 @@ th {
   min-width: 0;
 }
 
+.thingy-source-mobile-label {
+  display: none;
+}
+
 .thingy-source-text strong {
   color: rgba(234, 240, 237, 0.86);
   font-family: var(--sans);
@@ -1855,6 +1859,11 @@ th {
 }
 
 @media (max-width: 640px) {
+  .thingy-rail {
+    padding: 10px;
+    gap: 8px;
+  }
+
   .thingy-rail-brand {
     grid-template-columns: 42px minmax(0, 1fr);
   }
@@ -1865,7 +1874,73 @@ th {
   }
 
   .thingy-source-rack {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px 0 0;
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .thingy-source-rack legend {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .thingy-source-rack .thingy-source-switch {
+    grid-template-columns: minmax(0, 1fr) 15px;
+    min-height: 34px;
+    gap: 6px;
+    padding: 7px 8px;
+    border-radius: 999px;
+    align-items: center;
+  }
+
+  .thingy-source-check {
+    grid-column: 2;
+    grid-row: 1;
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+  }
+
+  .thingy-source-check::after {
+    width: 6px;
+    height: 3px;
+    margin: 4px 0 0 3px;
+    border-left-width: 1.8px;
+    border-bottom-width: 1.8px;
+  }
+
+  .thingy-source-text {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .thingy-source-text strong,
+  .thingy-source-text small {
+    display: none;
+  }
+
+  .thingy-source-mobile-label {
+    display: block;
+    overflow: hidden;
+    color: rgba(234, 240, 237, 0.84);
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .thingy-source-error {
+    grid-column: 1 / -1;
+    min-height: 1em;
+    margin: 0;
+    font-size: 10px;
   }
 
   .thingy-chat-scroll {
@@ -1923,5 +1998,10 @@ th {
   .thingy-ai-note {
     width: 100%;
     font-size: 11px;
+  }
+
+  .librarian-chat.thingy-chat,
+  .thingy-conversation {
+    min-height: calc(100dvh - 162px);
   }
 }
