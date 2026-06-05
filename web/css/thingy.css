@@ -1189,16 +1189,71 @@ th {
 
 .librarian-question-form textarea {
   grid-column: 1;
-  grid-row: 1;
+  grid-row: 2;
   overflow-y: auto;
   min-height: 5.75rem;
   border-color: color-mix(in srgb, var(--line) 88%, var(--surface));
   background: var(--surface);
 }
 
+.librarian-scope-control {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0 0 2px;
+  border: 0;
+}
+
+.librarian-scope-control legend {
+  margin-right: 2px;
+  padding: 0;
+  color: var(--color-text-muted);
+  font: 800 var(--size-xs) / 1 var(--font-ui);
+}
+
+.librarian-scope-control label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font: 800 var(--size-xs) / 1 var(--font-ui);
+  white-space: nowrap;
+}
+
+.librarian-scope-control input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.librarian-scope-control label:has(input:checked) {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--surface));
+  color: var(--color-accent);
+}
+
+.librarian-scope-control label:has(input:focus-visible) {
+  outline: 3px solid color-mix(in srgb, var(--color-accent) 24%, transparent);
+  outline-offset: 2px;
+}
+
+.librarian-scope-control label:has(input:disabled) {
+  cursor: wait;
+  opacity: 0.62;
+}
+
 .librarian-question-actions {
   grid-column: 2;
-  grid-row: 1;
+  grid-row: 2;
   display: flex;
   gap: var(--space-xs);
 }
@@ -1224,7 +1279,7 @@ th {
 
 .librarian-question-meta {
   grid-column: 1 / -1;
-  grid-row: 2;
+  grid-row: 3;
   display: flex;
   justify-content: flex-end;
   min-height: 1.2rem;

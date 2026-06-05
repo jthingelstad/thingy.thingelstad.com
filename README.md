@@ -32,9 +32,10 @@ back to that exact URL. Unknown values are ignored.
 
 ### `scope` / `corpus`
 
-Hidden corpus narrowing for edge cases. The public UI does not show corpus
-controls; Thingy searches across everything by default and should choose the
-right sources based on the question.
+Corpus narrowing for edge cases and power use. Thingy searches across
+everything by default and should choose the right sources based on the
+question, but the chat UI also exposes a small source selector for direct
+Weekly Thing, blog, podcast, or WT+blog testing.
 
 Use either `scope` or `corpus`; `scope` wins when both are valid.
 

@@ -58,6 +58,14 @@ permalink: "/"
 
           <form class="librarian-form librarian-question-form thingy-input" id="librarian-question-form">
             <label for="librarian-question" class="sr-only">Ask Thingy</label>
+            <fieldset class="librarian-scope-control" aria-label="Source scope">
+              <legend>Source</legend>
+              <label><input type="radio" name="scope" value="all"> All</label>
+              <label><input type="radio" name="scope" value="weekly_thing"> Weekly Thing</label>
+              <label><input type="radio" name="scope" value="blog"> Blog</label>
+              <label><input type="radio" name="scope" value="podcast"> Podcast</label>
+              <label><input type="radio" name="scope" value="both"> WT + Blog</label>
+            </fieldset>
             <textarea id="librarian-question" name="message" rows="3" required maxlength="1200" placeholder="Ask Thingy anything about the archive&hellip;" aria-describedby="librarian-question-count"></textarea>
             <div class="librarian-question-meta">
               <span id="librarian-question-count">0 / 1200</span>
@@ -139,6 +147,7 @@ permalink: "/"
     const clearChatButton = document.getElementById('librarian-clear-chat');
     const questionInput = document.getElementById('librarian-question');
     const questionButton = questionForm.querySelector('button[type="submit"]');
+    const scopeInputs = Array.from(questionForm.querySelectorAll('input[name="scope"]'));
     const questionCount = document.getElementById('librarian-question-count');
     const messages = document.getElementById('librarian-messages');
     const prompts = document.getElementById('librarian-prompts');
@@ -215,9 +224,11 @@ permalink: "/"
     const email = normalizeEmail(params.get('email'));
     const initialPrompt = normalizeInitialPrompt(params.get('prompt'));
     const initialScope = normalizeScopeParam(params.get('scope')) || normalizeScopeParam(params.get('corpus'));
-    const activeScope = initialScope || 'all';
+    let activeScope = initialScope || 'all';
     let initialPromptSubmitted = false;
     if (email) emailInput.value = email;
+    const initialScopeInput = scopeInputs.find((input) => input.value === activeScope) || scopeInputs.find((input) => input.value === 'all');
+    if (initialScopeInput) initialScopeInput.checked = true;
 
     function normalizeEmail(value) {
       return String(value || '').trim();
@@ -227,8 +238,7 @@ permalink: "/"
       return String(value || '').trim().slice(0, maxQuestionChars);
     }
 
-    // Hidden URL scoping for edge cases. The public UI lets Thingy search
-    // across everything, but ?scope= or ?corpus= can narrow shared links.
+    // URL scoping narrows shared links; the visible selector uses the same values.
     function normalizeScopeParam(value) {
       const raw = String(value || '').trim().toLowerCase();
       if (!raw) return '';
@@ -276,7 +286,15 @@ permalink: "/"
     }
 
     function currentScope() {
-      return activeScope;
+      const checked = scopeInputs.find((input) => input.checked);
+      return normalizeScopeParam(checked?.value) || activeScope || 'all';
+    }
+
+    function setActiveScope(value, options = {}) {
+      activeScope = normalizeScopeParam(value) || 'all';
+      const selected = scopeInputs.find((input) => input.value === activeScope);
+      if (selected) selected.checked = true;
+      if (options.track !== false) trackTinylyticsEvent('librarian.scope_change', activeScope);
     }
 
     function showBetaNotice() {
@@ -349,6 +367,7 @@ permalink: "/"
       questionButton.disabled = answerInFlight || !questionInput.value.trim() || length > maxQuestionChars;
       questionButton.textContent = answerInFlight ? 'Asking...' : 'Ask';
       clearChatButton.disabled = answerInFlight;
+      scopeInputs.forEach((input) => { input.disabled = answerInFlight; });
       autoSizeQuestionInput();
     }
 
@@ -1052,6 +1071,12 @@ permalink: "/"
     });
 
     questionInput.addEventListener('input', updateQuestionState);
+
+    scopeInputs.forEach((input) => {
+      input.addEventListener('change', () => {
+        if (input.checked) setActiveScope(input.value);
+      });
+    });
 
     prompts.addEventListener('click', (event) => {
       const target = event.target instanceof Element ? event.target : event.target.parentElement;
