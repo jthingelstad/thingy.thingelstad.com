@@ -639,6 +639,14 @@ permalink: "/"
           continue;
         }
 
+        if (/^(?:-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+          flushParagraph();
+          flushBlockquote();
+          flushList();
+          html.push('<hr>');
+          continue;
+        }
+
         if (isTableRow(trimmed) && isTableSeparator(lines[index + 1])) {
           flushParagraph();
           flushBlockquote();
