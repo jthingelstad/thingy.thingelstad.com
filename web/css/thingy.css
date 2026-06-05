@@ -1500,3 +1500,512 @@ th {
 .thingy-kudos:empty {
   display: none;
 }
+
+/* --- Chat-client app shell --- */
+.thingy-site-head {
+  display: none;
+}
+
+.thingy-page {
+  min-height: 100dvh;
+  padding: 0;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--bg) 86%, var(--surface)), var(--bg));
+}
+
+.thingy-app-shell {
+  display: grid;
+  grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+.thingy-rail {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px;
+  overflow-y: auto;
+  color: #eaf0ed;
+  background:
+    linear-gradient(180deg, #16211f, #0f1716 58%, #121816);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.thingy-rail-brand {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.thingy-rail .thingy-card-avatar {
+  width: 48px;
+  height: 48px;
+  background: #fff;
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.thingy-rail .thingy-card-name {
+  font-size: 19px;
+  line-height: 1.05;
+}
+
+.thingy-rail .thingy-card-status {
+  color: rgba(234, 240, 237, 0.7);
+}
+
+.thingy-rail-section {
+  padding: 14px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.thingy-rail-intro p:last-child,
+.thingy-rail-foot p {
+  margin: 0;
+  color: rgba(234, 240, 237, 0.72);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.thingy-rail-kicker {
+  margin: 0 0 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(234, 240, 237, 0.48);
+}
+
+.thingy-rail-links {
+  display: grid;
+  gap: 8px;
+}
+
+.thingy-rail-links a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 34px;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: rgba(234, 240, 237, 0.82);
+  background: rgba(255, 255, 255, 0.04);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.thingy-rail-links a::after {
+  content: "Visit";
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(234, 240, 237, 0.42);
+}
+
+.thingy-rail-links a:hover {
+  border-color: rgba(101, 200, 188, 0.5);
+  color: #fff;
+  background: rgba(101, 200, 188, 0.12);
+}
+
+.thingy-rail-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.thingy-card-tool {
+  min-height: 36px;
+  color: rgba(234, 240, 237, 0.84);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.thingy-rail-foot {
+  display: grid;
+  gap: 10px;
+  color: rgba(234, 240, 237, 0.7);
+}
+
+.thingy-rail-foot .thingy-stats {
+  justify-content: flex-start;
+  margin: 0;
+  color: rgba(234, 240, 237, 0.62);
+}
+
+.thingy-rail-foot .thingy-stats:has(.tinylytics_hits:empty) {
+  display: none;
+}
+
+.thingy-rail-foot .thingy-stats-label,
+.thingy-rail-foot .thingy-stats .tinylytics_hits {
+  color: rgba(234, 240, 237, 0.78);
+}
+
+.thingy-rail-foot .thingy-kudos {
+  justify-self: start;
+  color: rgba(234, 240, 237, 0.7);
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.thingy-conversation {
+  min-width: 0;
+  min-height: 100dvh;
+  display: grid;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(20, 119, 111, 0.08), transparent 30%),
+    var(--bg);
+}
+
+.librarian-auth.thingy-auth {
+  align-self: center;
+  justify-self: center;
+  width: min(100% - 32px, 34rem);
+  padding: 0;
+  background: transparent;
+}
+
+.thingy-auth .librarian-form {
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow-agent);
+}
+
+.thingy-auth-title {
+  margin: 0 0 14px;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.librarian-chat.thingy-chat {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border: 0;
+}
+
+.librarian-chat.thingy-chat[hidden] {
+  display: none;
+}
+
+.thingy-chat-scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 34px clamp(18px, 5vw, 72px) 18px;
+  scroll-behavior: smooth;
+}
+
+.thingy-chat-welcome {
+  width: min(100%, 48rem);
+  margin: 0 auto 24px;
+}
+
+.thingy-chat-welcome .eyebrow {
+  margin: 0 0 8px;
+}
+
+.thingy-h1 {
+  margin: 0;
+  font-size: clamp(36px, 6vw, 66px);
+  line-height: 0.98;
+}
+
+.librarian-messages {
+  width: min(100%, 54rem);
+  margin: 0 auto;
+  gap: 18px;
+}
+
+.librarian-message {
+  box-shadow: none;
+}
+
+.librarian-message-assistant {
+  justify-self: start;
+  max-width: min(48rem, 100%);
+  padding: 2px 0 6px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+.librarian-message-user {
+  max-width: min(39rem, 88%);
+  padding: 12px 14px;
+  border-radius: 8px;
+  border-bottom-right-radius: 3px;
+  background: #17211f;
+  border-color: #17211f;
+}
+
+.librarian-message-system {
+  justify-self: center;
+  max-width: min(38rem, 100%);
+  border-color: var(--line-soft);
+  background: color-mix(in srgb, var(--surface) 86%, var(--surface-2));
+}
+
+.librarian-prompts {
+  width: min(100%, 54rem);
+  margin: 22px auto 0;
+}
+
+.thingy-input {
+  position: sticky;
+  bottom: 0;
+  width: min(calc(100% - 36px), 54rem);
+  margin: 0 auto;
+  padding: 10px;
+  border-color: color-mix(in srgb, var(--line) 80%, var(--surface));
+  border-radius: 8px 8px 0 0;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, transparent), var(--surface));
+  box-shadow:
+    0 -18px 34px rgba(246, 248, 245, 0.86),
+    0 10px 34px rgba(23, 33, 31, 0.08);
+}
+
+.librarian-question-form {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.librarian-question-form textarea {
+  grid-column: 1;
+  grid-row: 1;
+  min-height: 3.2rem;
+  max-height: 14rem;
+  resize: none;
+}
+
+.librarian-question-actions {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.librarian-question-actions button {
+  min-width: 4.25rem;
+  min-height: 3.2rem;
+  border-radius: 7px;
+}
+
+.librarian-question-meta {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.thingy-source-rack {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 14px 0;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.thingy-source-rack legend {
+  margin: 0 0 8px;
+  padding: 0;
+  color: rgba(234, 240, 237, 0.48);
+  font: 700 10px / 1 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.thingy-source-rack .thingy-source-switch {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 10px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.18)),
+    #1a2422;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  user-select: none;
+  color: inherit;
+  white-space: normal;
+}
+
+.thingy-source-rack .thingy-source-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.thingy-led {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #2d1e1d;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.8),
+    0 0 0 4px rgba(0, 0, 0, 0.18);
+}
+
+.thingy-source-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.thingy-source-text strong {
+  color: rgba(234, 240, 237, 0.86);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.thingy-source-text small {
+  color: rgba(234, 240, 237, 0.48);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.1;
+}
+
+.thingy-source-rack .thingy-source-switch:has(input:checked) {
+  border-color: rgba(255, 112, 94, 0.42);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.12)),
+    #26302d;
+}
+
+.thingy-source-rack .thingy-source-switch:has(input:checked) .thingy-led {
+  background: #ff3b30;
+  border-color: #ff8b82;
+  box-shadow:
+    0 0 7px rgba(255, 59, 48, 0.92),
+    0 0 18px rgba(255, 59, 48, 0.54),
+    0 0 0 4px rgba(255, 59, 48, 0.12);
+}
+
+.thingy-source-rack .thingy-source-switch:has(input:focus-visible) {
+  outline: 3px solid rgba(101, 200, 188, 0.28);
+  outline-offset: 2px;
+}
+
+.thingy-source-rack .thingy-source-switch:has(input:disabled) {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.thingy-source-error {
+  min-height: 1.2em;
+  margin: -2px 0 0;
+  color: #ffb0a9;
+  font: 700 11px / 1.2 var(--mono);
+}
+
+@media (max-width: 860px) {
+  .thingy-app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .thingy-rail {
+    position: static;
+    height: auto;
+    min-height: 0;
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .thingy-rail-intro,
+  .thingy-rail-links,
+  .thingy-rail-foot {
+    display: none;
+  }
+
+  .thingy-source-rack {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: 10px 0 0;
+  }
+
+  .thingy-source-rack legend,
+  .thingy-source-error {
+    grid-column: 1 / -1;
+  }
+
+  .thingy-source-rack .thingy-source-switch {
+    grid-template-columns: 16px minmax(0, 1fr);
+    min-height: 50px;
+    padding: 9px;
+  }
+
+  .thingy-source-text small {
+    display: none;
+  }
+
+  .thingy-rail-actions {
+    grid-template-columns: 1fr 1fr;
+    margin-top: 0;
+  }
+
+  .librarian-chat.thingy-chat,
+  .thingy-conversation {
+    min-height: calc(100dvh - 206px);
+  }
+}
+
+@media (max-width: 640px) {
+  .thingy-rail-brand {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .thingy-rail .thingy-card-avatar {
+    width: 42px;
+    height: 42px;
+  }
+
+  .thingy-source-rack {
+    grid-template-columns: 1fr;
+  }
+
+  .thingy-chat-scroll {
+    padding: 24px 14px 14px;
+  }
+
+  .thingy-input {
+    width: calc(100% - 20px);
+  }
+
+  .librarian-question-form {
+    grid-template-columns: 1fr;
+  }
+
+  .librarian-question-actions {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .librarian-question-meta {
+    grid-row: 3;
+  }
+}

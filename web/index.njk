@@ -5,103 +5,118 @@ description: Ask Thingy to find and synthesize writing from across Jamie Thingel
 permalink: "/"
 ---
 <section class="thingy-page">
-  <header class="thingy-hero">
-    <div class="container-narrow">
-      <div class="thingy-hero-art">
-        <img src="/img/thingy.png" alt="" class="thingy-hero-thingy" width="1022" height="1022" loading="eager">
+  <div class="thingy-app-shell">
+    <aside class="thingy-rail" aria-label="Thingy controls">
+      <div class="thingy-rail-brand">
+        <div class="thingy-card-avatar" aria-hidden="true">
+          <img src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager">
+        </div>
+        <div>
+          <p class="thingy-card-name">Thingy</p>
+          <p class="thingy-card-status"><span class="thingy-dot" aria-hidden="true"></span>Archive online</p>
+        </div>
       </div>
-      <p class="eyebrow">Public Archive &middot; Beta</p>
-      <h1 class="thingy-h1">Meet <em>Thingy</em>.</h1>
-      <p class="thingy-lede">Thingy reads across Jamie Thingelstad&rsquo;s public archive and decides where to look based on what you ask. It can pull a newsletter thread, check the blog for the more durable version, bring in podcast transcripts when the conversation matters, and connect the pieces without making you pick a shelf first.</p>
-    </div>
-  </header>
 
-  <div class="thingy-shell">
-    <div class="container-narrow">
-      <div class="thingy-card">
-        <div class="thingy-card-head">
-          <div class="thingy-card-avatar" aria-hidden="true">
-            <img src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager">
-          </div>
-          <div class="thingy-card-id">
-            <p class="thingy-card-name">Thingy</p>
-            <p class="thingy-card-status"><span class="thingy-dot" aria-hidden="true"></span>Connected to Jamie&rsquo;s public archive</p>
-          </div>
-          <div class="thingy-card-tools">
-            <button type="button" id="librarian-clear-chat" class="thingy-card-tool" data-tinylytics-event="librarian.clear">Start over</button>
-            <button type="button" id="librarian-logout" class="thingy-card-tool">Forget me</button>
-          </div>
-        </div>
+      <div class="thingy-rail-section thingy-rail-intro">
+        <p class="thingy-rail-kicker">Jamie&rsquo;s archive agent</p>
+        <p>Ask across the newsletter, blog, and podcast. Thingy will only use the sources that are switched on.</p>
+      </div>
 
-        <div class="librarian-auth thingy-auth" id="librarian-auth">
-          <form class="librarian-form" id="librarian-auth-form">
-            <label for="librarian-email">Enter your email address</label>
-            <div class="librarian-auth-row">
-              <input id="librarian-email" name="email" type="email" autocomplete="email" required class="subscribe-input">
-              <button type="submit" id="librarian-auth-submit" data-tinylytics-event="librarian.auth_submit">Enter</button>
-            </div>
-            <span class="subscribe-error librarian-email-error" id="librarian-email-error" aria-live="polite"></span>
-            <p class="form-message" id="librarian-auth-message" aria-live="polite"></p>
-            <div class="librarian-auth-actions" id="librarian-auth-actions" hidden>
-              <button type="button" id="librarian-add-subscriber" hidden>Add me</button>
-              <button type="button" id="librarian-resend-confirmation" hidden>Resend confirmation email</button>
-            </div>
-            <p class="form-note">Thingy is available to Weekly Thing readers. Enter your email above and Thingy will help you subscribe if needed.</p>
-          </form>
-        </div>
+      <fieldset class="librarian-scope-control thingy-source-rack" aria-label="Source scope">
+        <legend>Sources</legend>
+        <label class="thingy-source-switch thingy-source-wt">
+          <input type="checkbox" name="scope" value="weekly_thing" checked>
+          <span class="thingy-led" aria-hidden="true"></span>
+          <span class="thingy-source-text">
+            <strong>Weekly Thing</strong>
+            <small>Issues, links, FAQ</small>
+          </span>
+        </label>
+        <label class="thingy-source-switch thingy-source-blog">
+          <input type="checkbox" name="scope" value="blog" checked>
+          <span class="thingy-led" aria-hidden="true"></span>
+          <span class="thingy-source-text">
+            <strong>Blog</strong>
+            <small>thingelstad.com</small>
+          </span>
+        </label>
+        <label class="thingy-source-switch thingy-source-podcast">
+          <input type="checkbox" name="scope" value="podcast" checked>
+          <span class="thingy-led" aria-hidden="true"></span>
+          <span class="thingy-source-text">
+            <strong>Another Thing</strong>
+            <small>Podcast transcripts</small>
+          </span>
+        </label>
+        <p class="thingy-source-error" id="librarian-source-error" aria-live="polite"></p>
+      </fieldset>
 
-        <div class="librarian-chat thingy-chat" id="librarian-chat" hidden>
+      <div class="thingy-rail-section thingy-rail-links">
+        <p class="thingy-rail-kicker">Network</p>
+        <a href="https://www.thingelstad.com/" data-tinylytics-event="network.visit" data-tinylytics-event-value="thingelstad">thingelstad.com</a>
+        <a href="https://weekly.thingelstad.com/" data-tinylytics-event="network.visit" data-tinylytics-event-value="weekly">Weekly Thing</a>
+        <a href="https://another.thingelstad.com/" data-tinylytics-event="network.visit" data-tinylytics-event-value="another">Another Thing</a>
+      </div>
+
+      <div class="thingy-rail-actions">
+        <button type="button" id="librarian-clear-chat" class="thingy-card-tool" data-tinylytics-event="librarian.clear">New chat</button>
+        <button type="button" id="librarian-logout" class="thingy-card-tool">Forget me</button>
+      </div>
+
+      <div class="thingy-rail-foot">
+        <p>Thingy quotes from real sources. Verify before quoting elsewhere.</p>
+        <p class="thingy-stats">
+          <span class="thingy-stats-label">Public traffic</span>
+          <span class="tinylytics_hits"></span> views
+          <span class="thingy-stats-sep" aria-hidden="true">&middot;</span>
+          <span class="tinylytics_countries"></span>
+        </p>
+        <button type="button" class="thingy-kudos tinylytics_kudos" data-path="/" aria-label="Send kudos to Thingy"></button>
+      </div>
+    </aside>
+
+    <section class="thingy-conversation" aria-label="Thingy chat">
+      <div class="librarian-auth thingy-auth" id="librarian-auth">
+        <form class="librarian-form" id="librarian-auth-form">
+          <p class="thingy-auth-title">Enter Thingy</p>
+          <label for="librarian-email">Email address</label>
+          <div class="librarian-auth-row">
+            <input id="librarian-email" name="email" type="email" autocomplete="email" required class="subscribe-input">
+            <button type="submit" id="librarian-auth-submit" data-tinylytics-event="librarian.auth_submit">Enter</button>
+          </div>
+          <span class="subscribe-error librarian-email-error" id="librarian-email-error" aria-live="polite"></span>
+          <p class="form-message" id="librarian-auth-message" aria-live="polite"></p>
+          <div class="librarian-auth-actions" id="librarian-auth-actions" hidden>
+            <button type="button" id="librarian-add-subscriber" hidden>Add me</button>
+            <button type="button" id="librarian-resend-confirmation" hidden>Resend confirmation email</button>
+          </div>
+          <p class="form-note">Thingy is available to Weekly Thing readers. Enter your email above and Thingy will help you subscribe if needed.</p>
+        </form>
+      </div>
+
+      <div class="librarian-chat thingy-chat" id="librarian-chat" hidden>
+        <div class="thingy-chat-scroll">
+          <div class="thingy-chat-welcome" aria-hidden="true">
+            <p class="eyebrow">Public Archive &middot; Beta</p>
+            <h1 class="thingy-h1">Ask <em>Thingy</em>.</h1>
+          </div>
           <div class="librarian-messages" id="librarian-messages" aria-live="polite"></div>
-
-          <div class="librarian-prompts" id="librarian-prompts" aria-label="Suggested questions" hidden>
-          </div>
-
-          <form class="librarian-form librarian-question-form thingy-input" id="librarian-question-form">
-            <label for="librarian-question" class="sr-only">Ask Thingy</label>
-            <fieldset class="librarian-scope-control" aria-label="Source scope">
-              <legend>Source</legend>
-              <label><input type="radio" name="scope" value="all"> All</label>
-              <label><input type="radio" name="scope" value="weekly_thing"> Weekly Thing</label>
-              <label><input type="radio" name="scope" value="blog"> Blog</label>
-              <label><input type="radio" name="scope" value="podcast"> Podcast</label>
-              <label><input type="radio" name="scope" value="both"> WT + Blog</label>
-            </fieldset>
-            <textarea id="librarian-question" name="message" rows="3" required maxlength="1200" placeholder="Ask Thingy anything about the archive&hellip;" aria-describedby="librarian-question-count"></textarea>
-            <div class="librarian-question-meta">
-              <span id="librarian-question-count">0 / 1200</span>
-            </div>
-            <div class="librarian-question-actions">
-              <button type="submit" data-tinylytics-event="librarian.question_submit">Ask &rarr;</button>
-            </div>
-          </form>
+          <div class="librarian-prompts" id="librarian-prompts" aria-label="Suggested questions" hidden></div>
         </div>
-      </div>
 
-      <p class="thingy-foot-note">Thingy quotes from real issues. Always verify before quoting elsewhere.</p>
-    </div>
+        <form class="librarian-form librarian-question-form thingy-input" id="librarian-question-form">
+          <label for="librarian-question" class="sr-only">Ask Thingy</label>
+          <textarea id="librarian-question" name="message" rows="2" required maxlength="1200" placeholder="Ask Thingy anything about the archive&hellip;" aria-describedby="librarian-question-count librarian-source-error"></textarea>
+          <div class="librarian-question-meta">
+            <span id="librarian-question-count">0 / 1200</span>
+          </div>
+          <div class="librarian-question-actions">
+            <button type="submit" data-tinylytics-event="librarian.question_submit">Ask</button>
+          </div>
+        </form>
+      </div>
+    </section>
   </div>
-
-  <section class="thingy-knowledge-section">
-    <div class="container-narrow">
-      <div class="thingy-knowledge" aria-label="Thingy's knowledge base">
-        <article class="thingy-knowledge-card thingy-knowledge-card-wt">
-          <p class="thingy-knowledge-kicker">Newsletter</p>
-          <h2>Weekly Thing</h2>
-          <p>The long-running issue archive: links, notes, recommendations, recurring themes, and week-by-week context.</p>
-        </article>
-        <article class="thingy-knowledge-card thingy-knowledge-card-blog">
-          <p class="thingy-knowledge-kicker">Blog</p>
-          <h2>thingelstad.com</h2>
-          <p>Jamie&rsquo;s personal writing: essays, projects, systems, milestones, family stories, and durable thinking.</p>
-        </article>
-        <article class="thingy-knowledge-card thingy-knowledge-card-podcast">
-          <p class="thingy-knowledge-kicker">Podcast</p>
-          <h2>Another Thing</h2>
-          <p>Transcript-level search across spoken conversations, side quests, explanations, and audio-native reflections.</p>
-        </article>
-      </div>
-    </div>
-  </section>
 
   <div class="librarian-beta-overlay" id="librarian-beta-overlay" hidden>
     <div class="librarian-beta-modal" role="dialog" aria-modal="true" aria-labelledby="librarian-beta-title" aria-describedby="librarian-beta-description">
@@ -113,17 +128,6 @@ permalink: "/"
     </div>
   </div>
 
-  <footer class="thingy-site-foot">
-    <div class="container-narrow">
-      <p class="thingy-stats">
-        <span class="thingy-stats-label">Public traffic</span>
-        <span class="tinylytics_hits"></span> views
-        <span class="thingy-stats-sep" aria-hidden="true">&middot;</span>
-        <span class="tinylytics_countries"></span>
-      </p>
-      <button type="button" class="thingy-kudos tinylytics_kudos" data-path="/" aria-label="Send kudos to Thingy"></button>
-    </div>
-  </footer>
 </section>
 
 <script>
@@ -147,7 +151,8 @@ permalink: "/"
     const clearChatButton = document.getElementById('librarian-clear-chat');
     const questionInput = document.getElementById('librarian-question');
     const questionButton = questionForm.querySelector('button[type="submit"]');
-    const scopeInputs = Array.from(questionForm.querySelectorAll('input[name="scope"]'));
+    const scopeInputs = Array.from(document.querySelectorAll('input[name="scope"]'));
+    const sourceError = document.getElementById('librarian-source-error');
     const questionCount = document.getElementById('librarian-question-count');
     const messages = document.getElementById('librarian-messages');
     const prompts = document.getElementById('librarian-prompts');
@@ -159,6 +164,7 @@ permalink: "/"
     const maxHistoryChars = 4000;
     const maxQuestionChars = Number(questionInput.getAttribute('maxlength') || '1200');
     const starterMessageHtml = '';
+    const sourceOrder = ['weekly_thing', 'blog', 'podcast'];
     const starterQuestions = {
       discovery: [
         'Give me a tour of what Jamie publishes across the archive.',
@@ -227,8 +233,6 @@ permalink: "/"
     let activeScope = initialScope || 'all';
     let initialPromptSubmitted = false;
     if (email) emailInput.value = email;
-    const initialScopeInput = scopeInputs.find((input) => input.value === activeScope) || scopeInputs.find((input) => input.value === 'all');
-    if (initialScopeInput) initialScopeInput.checked = true;
 
     function normalizeEmail(value) {
       return String(value || '').trim();
@@ -245,6 +249,8 @@ permalink: "/"
       const normalized = raw.replace(/[\s-]+/g, '_').replace(/^_+|_+$/g, '');
       if (normalized === 'all' || normalized === 'everything') return 'all';
       if (normalized === 'both') return 'both';
+      if (normalized === 'weekly_thing_podcast' || normalized === 'wt_podcast') return 'weekly_thing_podcast';
+      if (normalized === 'blog_podcast' || normalized === 'podcast_blog') return 'blog_podcast';
 
       const tokens = raw.split(/[,+|]/)
         .map((part) => part.trim().replace(/[\s-]+/g, '_').replace(/^_+|_+$/g, ''))
@@ -257,6 +263,8 @@ permalink: "/"
       }
       if (mapped.size === 3) return 'all';
       if (mapped.has('weekly_thing') && mapped.has('blog') && mapped.size === 2) return 'both';
+      if (mapped.has('weekly_thing') && mapped.has('podcast') && mapped.size === 2) return 'weekly_thing_podcast';
+      if (mapped.has('blog') && mapped.has('podcast') && mapped.size === 2) return 'blog_podcast';
       if (mapped.size === 1) return Array.from(mapped)[0];
       return '';
     }
@@ -286,16 +294,58 @@ permalink: "/"
     }
 
     function currentScope() {
-      const checked = scopeInputs.find((input) => input.checked);
-      return normalizeScopeParam(checked?.value) || activeScope || 'all';
+      return scopeForSources(selectedSources());
+    }
+
+    function selectedSources() {
+      return scopeInputs.filter((input) => input.checked).map((input) => input.value);
+    }
+
+    function scopeForSources(sources) {
+      const selected = sourceOrder.filter((source) => sources.includes(source));
+      if (selected.length === 3) return 'all';
+      if (selected.length === 1) return selected[0];
+      if (selected.includes('weekly_thing') && selected.includes('blog') && selected.length === 2) return 'both';
+      if (selected.includes('weekly_thing') && selected.includes('podcast') && selected.length === 2) return 'weekly_thing_podcast';
+      if (selected.includes('blog') && selected.includes('podcast') && selected.length === 2) return 'blog_podcast';
+      return '';
+    }
+
+    function sourcesForScope(scope) {
+      switch (normalizeScopeParam(scope) || 'all') {
+        case 'weekly_thing':
+          return ['weekly_thing'];
+        case 'blog':
+          return ['blog'];
+        case 'podcast':
+          return ['podcast'];
+        case 'both':
+          return ['weekly_thing', 'blog'];
+        case 'weekly_thing_podcast':
+          return ['weekly_thing', 'podcast'];
+        case 'blog_podcast':
+          return ['blog', 'podcast'];
+        case 'all':
+        default:
+          return [...sourceOrder];
+      }
+    }
+
+    function sourceCount() {
+      return selectedSources().length;
     }
 
     function setActiveScope(value, options = {}) {
-      activeScope = normalizeScopeParam(value) || 'all';
-      const selected = scopeInputs.find((input) => input.value === activeScope);
-      if (selected) selected.checked = true;
+      const sources = sourcesForScope(value);
+      scopeInputs.forEach((input) => {
+        input.checked = sources.includes(input.value);
+      });
+      activeScope = scopeForSources(sources);
       if (options.track !== false) trackTinylyticsEvent('librarian.scope_change', activeScope);
+      updateQuestionState();
     }
+
+    setActiveScope(activeScope, { track: false });
 
     function showBetaNotice() {
       if (window.sessionStorage.getItem(betaNoticeStorageKey) === 'dismissed') return;
@@ -361,10 +411,12 @@ permalink: "/"
 
     function updateQuestionState() {
       const length = questionInput.value.length;
+      const hasSources = sourceCount() > 0;
       questionCount.textContent = `${length} / ${maxQuestionChars}`;
       questionCount.classList.toggle('warning', length > maxQuestionChars * 0.9);
+      if (sourceError) sourceError.textContent = hasSources ? '' : 'Switch on at least one source.';
       questionForm.classList.toggle('is-busy', answerInFlight);
-      questionButton.disabled = answerInFlight || !questionInput.value.trim() || length > maxQuestionChars;
+      questionButton.disabled = answerInFlight || !hasSources || !questionInput.value.trim() || length > maxQuestionChars;
       questionButton.textContent = answerInFlight ? 'Asking...' : 'Ask';
       clearChatButton.disabled = answerInFlight;
       scopeInputs.forEach((input) => { input.disabled = answerInFlight; });
@@ -1070,13 +1122,17 @@ permalink: "/"
       const message = questionInput.value.trim();
       if (!message) return;
       if (message.length > maxQuestionChars) return;
+      const scope = currentScope();
+      if (!scope) {
+        updateQuestionState();
+        return;
+      }
       answerInFlight = true;
       updateQuestionState();
       hidePrompts();
       const questionWordCount = message.split(/\s+/).filter(Boolean).length;
       const questionSize = questionWordCount < 6 ? 'short' : questionWordCount < 18 ? 'medium' : 'long';
       const history = compactHistory(conversationHistory);
-      const scope = currentScope();
       const userMessage = addMessage('user', `<p>${escapeHtml(message)}</p>`);
       addShareControls(userMessage, message, scope);
       questionInput.value = '';
@@ -1116,7 +1172,9 @@ permalink: "/"
 
     scopeInputs.forEach((input) => {
       input.addEventListener('change', () => {
-        if (input.checked) setActiveScope(input.value);
+        activeScope = currentScope();
+        trackTinylyticsEvent('librarian.scope_change', activeScope || 'none');
+        updateQuestionState();
       });
     });
 
