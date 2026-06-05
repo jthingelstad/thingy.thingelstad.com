@@ -1,7 +1,8 @@
 # CLAUDE.md — thingy.thingelstad.com
 
 Orientation for Claude Code working in this repo. Human overview lives in
-`README.md` (when present); the strategic roadmap is in `THINGY_ROADMAP.md`.
+`README.md` (when present); general agent instructions live in `AGENTS.md`;
+the strategic roadmap is in `THINGY_ROADMAP.md`.
 
 ## What this repo is
 
