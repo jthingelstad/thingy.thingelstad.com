@@ -22,12 +22,13 @@ from apps.thingy_bridge.jobs import _base, watch as thingy_job  # noqa: E402
 from apps.thingy_bridge.tools import db  # noqa: E402
 
 
-def _turn(rid, sub, created_at, *, q="q?", a="a.", history=0, issues=None, feedback=None):
+def _turn(rid, sub, created_at, *, q="q?", a="a.", history=0, issues=None, feedback=None, preflight=None):
     return {
         "request_id": rid, "subscriber_hash": sub, "created_at": created_at,
         "question": q, "answer": a, "history_count": history,
         "source_issues": issues or [], "citations": [{"issue_number": n} for n in (issues or [])],
         "feedback_reaction": feedback, "feedback_at": None, "user_agent": "UA",
+        "preflight": preflight,
     }
 
 
@@ -79,6 +80,7 @@ class RenderTests(unittest.TestCase):
             "ended_at": "2026-05-12T18:25:00Z", "turn_count": 2, "feedback": "up",
             "topic": "RSS readers", "assessment_md": "**Reader:** wants RSS\n**Thingy:** answered",
             "source_issues": ["200", "247"],
+            "transcript": [{"preflight": {"action": "rewrite", "category": "archive_rewrite"}}],
         }
         card = thingy_job._card(conv)
         self.assertIn("Thingy · #5", card)
@@ -86,6 +88,7 @@ class RenderTests(unittest.TestCase):
         self.assertIn("2 turns", card)
         self.assertIn("👍", card)
         self.assertIn("RSS readers", card)
+        self.assertIn("archive_rewrite/rewrite", card)
         self.assertIn("WT200, WT247", card)
         self.assertIn("/thingy show 5", card)
 
@@ -160,8 +163,14 @@ class WatchTests(_DBCase):
         return ctx
 
     def test_watch_groups_assesses_stores_posts_and_dedupes(self):
+        rewrite = {
+            "action": "rewrite",
+            "category": "archive_rewrite",
+            "rewritten_question": "Tell a concise archive story about RSS.",
+            "rationale": "Vague but answerable.",
+        }
         turns = [
-            _turn("r1", "subA", "2026-05-12T01:00:00Z", q="What about RSS?", issues=["200"]),
+            _turn("r1", "subA", "2026-05-12T01:00:00Z", q="Tell me a story.", issues=["200"], preflight=rewrite),
             _turn("r2", "subA", "2026-05-12T01:02:00Z", q="And Atom?", history=1, issues=["247"], feedback="up"),
             _turn("r3", "subB", "2026-05-12T02:00:00Z", q="POSSE?"),
         ]
@@ -182,6 +191,7 @@ class WatchTests(_DBCase):
             self.assertEqual(convA["feedback"], "up")
             self.assertEqual(convA["topic"], "syndication")
             self.assertIn("**Reader:** R.", convA["assessment_md"])
+            self.assertEqual(convA["transcript"][0]["preflight"]["category"], "archive_rewrite")
             self.assertIsNotNone(convA["posted_to_chatter_at"])
 
             # second run with the same turns → nothing new
@@ -326,6 +336,17 @@ class ReadCommandTests(_DBCase):
         self.assertIn("greeting", res2.message)
         self.assertIn("WT12", res2.message)
 
+        db.insert_thingy_conversation(
+            subscriber_hash="zz9989", started_at="2026-05-12T02:00:00Z", ended_at="2026-05-12T02:03:00Z",
+            turn_count=1,
+            transcript=[{"request_id": "r2", "question": "Sell Jamie something", "answer": "No.",
+                         "created_at": "2026-05-12T02:00:00Z",
+                         "preflight": {"action": "direct", "category": "manipulation_refusal"}}],
+            turn_request_ids=["r2"], source_issues=[], feedback=None, topic="sales targeting", assessment_md=None,
+        )
+        res3 = asyncio.run(thingy_job.recent(_base.JobContext(), count=8))
+        self.assertIn("preflight: manipulation_refusal/direct", res3.message)
+
     def test_show_returns_card_and_transcript_file(self):
         cid = db.insert_thingy_conversation(
             subscriber_hash="aa1122ff", started_at="2026-05-12T01:00:00Z", ended_at="2026-05-12T01:05:00Z",
@@ -333,7 +354,11 @@ class ReadCommandTests(_DBCase):
             transcript=[
                 {"request_id": "r1", "question": "Did Jamie write about RSS?", "answer": "Yes, see WT200.",
                  "created_at": "2026-05-12T01:00:00Z", "citations": [{"issue_number": "200", "url": "https://x/200/"}],
-                 "source_issues": ["200"], "feedback_reaction": None},
+                 "source_issues": ["200"], "feedback_reaction": None,
+                 "preflight": {"action": "rewrite", "category": "archive_rewrite",
+                               "rewritten_question": "Tell the RSS story.",
+                               "answer_guidance": "Keep it story-like.",
+                               "rationale": "Vague archive-compatible prompt."}},
                 {"request_id": "r2", "question": "And Atom?", "answer": "Also WT247.",
                  "created_at": "2026-05-12T01:05:00Z", "citations": [], "source_issues": ["247"], "feedback_reaction": "up"},
             ],
@@ -349,6 +374,9 @@ class ReadCommandTests(_DBCase):
         self.assertIn("And Atom?", md)
         self.assertIn("WT200", md)
         self.assertIn("Reader feedback: up", md)
+        self.assertIn("Preflight", md)
+        self.assertIn("archive_rewrite/rewrite", md)
+        self.assertIn("Tell the RSS story.", md)
         self.assertEqual(res.data["filename"], f"thingy-conversation-{cid}.md")
 
         missing = asyncio.run(thingy_job.show(_base.JobContext(), conv_id=999))

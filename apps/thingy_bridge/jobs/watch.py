@@ -107,9 +107,36 @@ def _wt_list(issues: list[str]) -> str:
     return ", ".join(f"WT{n}" for n in issues) if issues else "—"
 
 
+def _turn_preflight(t: dict) -> dict:
+    value = t.get("preflight")
+    return value if isinstance(value, dict) else {}
+
+
+def _preflight_label(preflight: dict) -> str:
+    action = str(preflight.get("action") or "").strip()
+    category = str(preflight.get("category") or "").strip()
+    if not action and not category:
+        return ""
+    if action == "pass" and category in {"", "archive_answer"}:
+        return ""
+    if action and category:
+        return f"{category}/{action}"
+    return category or action
+
+
+def _preflight_rollup(turns: list[dict]) -> list[str]:
+    out: list[str] = []
+    for t in turns:
+        label = _preflight_label(_turn_preflight(t))
+        if label and label not in out:
+            out.append(label)
+    return out
+
+
 def _build_transcript(turns: list[dict]) -> list[dict]:
     keep = ("request_id", "created_at", "question", "answer", "citations",
-            "source_issues", "feedback_reaction", "feedback_at", "history_count")
+            "source_issues", "feedback_reaction", "feedback_at", "history_count",
+            "preflight")
     return [{k: t.get(k) for k in keep} for t in turns]
 
 
@@ -152,7 +179,17 @@ def _transcript_for_prompt(turns: list[dict]) -> str:
         q = str(t.get("question") or "").strip()
         a = str(t.get("answer") or "").strip()
         cites = ", ".join(f"WT{c.get('issue_number')}" for c in (t.get("citations") or []) if c.get("issue_number"))
-        lines.append(f"### Turn {i}\nReader: {q}\n\nThingy: {a}" + (f"\n\n(Thingy cited: {cites})" if cites else ""))
+        preflight = _turn_preflight(t)
+        preflight_line = ""
+        label = _preflight_label(preflight)
+        if label:
+            bits = [label]
+            if preflight.get("rewritten_question"):
+                bits.append(f"rewrote to: {preflight['rewritten_question']}")
+            if preflight.get("rationale"):
+                bits.append(f"reason: {preflight['rationale']}")
+            preflight_line = "\n\n(Preflight: " + " · ".join(bits) + ")"
+        lines.append(f"### Turn {i}\nReader: {q}\n\nThingy: {a}" + preflight_line + (f"\n\n(Thingy cited: {cites})" if cites else ""))
     return "\n\n".join(lines)
 
 
@@ -248,6 +285,7 @@ def _assessment_md(a: dict[str, str]) -> str:
 
 def _card(conv: dict, *, for_show: bool = False) -> str:
     fb = _FEEDBACK_EMOJI.get(conv.get("feedback") or "", "")
+    preflight_labels = conv.get("preflight_labels") or _preflight_rollup(conv.get("transcript") or [])
     head = (
         f"**Thingy · #{conv['id']}** · {_when(conv.get('started_at'))} · {_anon(conv.get('subscriber_hash'))}"
         f" · {conv.get('turn_count')} turn{'s' if conv.get('turn_count') != 1 else ''}"
@@ -258,6 +296,8 @@ def _card(conv: dict, *, for_show: bool = False) -> str:
         parts.append(f"**Topic:** {conv['topic']}")
     if conv.get("assessment_md"):
         parts.append(conv["assessment_md"])
+    if preflight_labels:
+        parts.append(f"**Preflight:** {', '.join(preflight_labels)}")
     issues = conv.get("source_issues") or []
     tail = f"Sources: {_wt_list(issues)}"
     if for_show:
@@ -280,6 +320,9 @@ def _transcript_md(conv: dict) -> str:
     ]
     if conv.get("topic"):
         lines.append(f"- Topic: {conv['topic']}")
+    preflight_labels = conv.get("preflight_labels") or _preflight_rollup(conv.get("transcript") or [])
+    if preflight_labels:
+        lines.append(f"- Preflight: {', '.join(preflight_labels)}")
     lines.append("")
     if conv.get("assessment_md"):
         lines += ["## Assessment (Eddy)", "", conv["assessment_md"].replace("**", "**"), ""]
@@ -293,6 +336,18 @@ def _transcript_md(conv: dict) -> str:
         lines.append(f"**Reader:** {str(t.get('question') or '').strip()}")
         lines.append("")
         lines.append(f"**Thingy:** {str(t.get('answer') or '').strip()}")
+        preflight = _turn_preflight(t)
+        label = _preflight_label(preflight)
+        if label:
+            lines.append("")
+            lines.append("**Preflight:**")
+            lines.append(f"- Classification: {label}")
+            if preflight.get("rewritten_question"):
+                lines.append(f"- Rewritten question: {preflight['rewritten_question']}")
+            if preflight.get("answer_guidance"):
+                lines.append(f"- Answer guidance: {preflight['answer_guidance']}")
+            if preflight.get("rationale"):
+                lines.append(f"- Rationale: {preflight['rationale']}")
         if cites:
             lines.append("")
             cite_strs = []
@@ -407,6 +462,7 @@ async def _watch_locked(ctx: "_base.JobContext") -> "_base.JobResult":
             assess = await _assess(turns_in_convo)
             transcript = _build_transcript(turns_in_convo)
             issues = _source_issues(turns_in_convo)
+            preflight_labels = _preflight_rollup(turns_in_convo)
             feedback = _feedback_rollup(turns_in_convo)
             conv_id = db.insert_thingy_conversation(
                 subscriber_hash=str(turns_in_convo[0].get("subscriber_hash") or ""),
@@ -428,7 +484,7 @@ async def _watch_locked(ctx: "_base.JobContext") -> "_base.JobResult":
                     "ended_at": turns_in_convo[-1].get("created_at"),
                     "turn_count": len(turns_in_convo), "feedback": feedback,
                     "topic": assess.get("topic"), "assessment_md": _assessment_md(assess),
-                    "source_issues": issues,
+                    "source_issues": issues, "preflight_labels": preflight_labels,
                 }
                 if await _try_post_card(ctx, conv_row):
                     db.mark_thingy_conversation_posted(conv_id)
@@ -475,10 +531,12 @@ async def _watch_locked(ctx: "_base.JobContext") -> "_base.JobResult":
 def _recent_line(c: dict) -> str:
     fb = _FEEDBACK_EMOJI.get(c.get("feedback") or "", "")
     topic = (c.get("topic") or "—").strip()
+    preflight = _preflight_rollup(c.get("transcript") or [])
     return (
         f"`#{c['id']}` · {_when(c.get('started_at'))} · {_anon(c.get('subscriber_hash'))}"
         f" · {c.get('turn_count')}t" + (f" {fb}" if fb else "")
         + f" · \"{topic}\"" + (f" · {_wt_list(c.get('source_issues') or [])}" if c.get('source_issues') else "")
+        + (f" · preflight: {', '.join(preflight)}" if preflight else "")
     )
 
 
