@@ -26,7 +26,7 @@ permalink: "/"
         <legend>Sources</legend>
         <label class="thingy-source-switch thingy-source-wt">
           <input type="checkbox" name="scope" value="weekly_thing" checked>
-          <span class="thingy-led" aria-hidden="true"></span>
+          <span class="thingy-source-check" aria-hidden="true"></span>
           <span class="thingy-source-text">
             <strong>Weekly Thing</strong>
             <small>Issues, links, FAQ</small>
@@ -34,7 +34,7 @@ permalink: "/"
         </label>
         <label class="thingy-source-switch thingy-source-blog">
           <input type="checkbox" name="scope" value="blog" checked>
-          <span class="thingy-led" aria-hidden="true"></span>
+          <span class="thingy-source-check" aria-hidden="true"></span>
           <span class="thingy-source-text">
             <strong>Blog</strong>
             <small>thingelstad.com</small>
@@ -42,7 +42,7 @@ permalink: "/"
         </label>
         <label class="thingy-source-switch thingy-source-podcast">
           <input type="checkbox" name="scope" value="podcast" checked>
-          <span class="thingy-led" aria-hidden="true"></span>
+          <span class="thingy-source-check" aria-hidden="true"></span>
           <span class="thingy-source-text">
             <strong>Another Thing</strong>
             <small>Podcast transcripts</small>
@@ -96,24 +96,30 @@ permalink: "/"
 
       <div class="librarian-chat thingy-chat" id="librarian-chat" hidden>
         <div class="thingy-chat-scroll">
-          <div class="thingy-chat-welcome" aria-hidden="true">
-            <p class="eyebrow">Public Archive &middot; Beta</p>
-            <h1 class="thingy-h1">Ask <em>Thingy</em>.</h1>
+          <div class="thingy-chat-welcome">
+            <img src="/img/thingy.png" alt="" class="thingy-chat-welcome-image" width="1022" height="1022" loading="eager">
+            <div class="thingy-chat-welcome-copy">
+              <p class="eyebrow">Thingy</p>
+              <h1 class="thingy-h1">Search Jamie&rsquo;s public archive.</h1>
+              <p>Ask across the Weekly Thing newsletter, thingelstad.com blog, and Another Thing podcast. Switch sources on or off in the rail to choose where Thingy looks.</p>
+            </div>
           </div>
           <div class="librarian-messages" id="librarian-messages" aria-live="polite"></div>
-          <div class="librarian-prompts" id="librarian-prompts" aria-label="Suggested questions" hidden></div>
         </div>
 
-        <form class="librarian-form librarian-question-form thingy-input" id="librarian-question-form">
-          <label for="librarian-question" class="sr-only">Ask Thingy</label>
-          <textarea id="librarian-question" name="message" rows="2" required maxlength="1200" placeholder="Ask Thingy anything about the archive&hellip;" aria-describedby="librarian-question-count librarian-source-error"></textarea>
-          <div class="librarian-question-meta">
-            <span id="librarian-question-count">0 / 1200</span>
-          </div>
-          <div class="librarian-question-actions">
-            <button type="submit" data-tinylytics-event="librarian.question_submit">Ask</button>
-          </div>
-        </form>
+        <div class="thingy-composer-zone">
+          <div class="librarian-prompts" id="librarian-prompts" aria-label="Suggested questions" hidden></div>
+          <form class="librarian-form librarian-question-form thingy-input" id="librarian-question-form">
+            <label for="librarian-question" class="sr-only">Ask Thingy</label>
+            <textarea id="librarian-question" name="message" rows="2" required maxlength="1200" placeholder="Ask Thingy anything about the archive&hellip;" aria-describedby="librarian-question-count librarian-source-error"></textarea>
+            <div class="librarian-question-meta">
+              <span id="librarian-question-count">0 / 1200</span>
+            </div>
+            <div class="librarian-question-actions">
+              <button type="submit" data-tinylytics-event="librarian.question_submit">Ask</button>
+            </div>
+          </form>
+        </div>
       </div>
     </section>
   </div>
@@ -714,69 +720,85 @@ permalink: "/"
       return url.toString();
     }
 
-    function addShareControls(messageElement, prompt, scope) {
-      if (!prompt) return;
-      const para = messageElement.querySelector('p');
-      if (!para) return;
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'librarian-share-anchor';
-      button.setAttribute('aria-label', 'Copy a sharable link to this prompt');
-      button.setAttribute('title', 'Share this prompt');
-      button.textContent = '#';
-      para.appendChild(document.createTextNode(' '));
-      para.appendChild(button);
-      let resetTimer = 0;
-      function flash(text, kind) {
-        button.textContent = text;
-        button.dataset.kind = kind || '';
-        window.clearTimeout(resetTimer);
-        resetTimer = window.setTimeout(() => {
-          button.textContent = '#';
-          button.dataset.kind = '';
-        }, 1500);
-      }
-      button.addEventListener('click', async (event) => {
-        event.preventDefault();
-        const shareUrl = buildSharePromptUrl(prompt, scope);
-        if (typeof navigator.share === 'function') {
-          try {
-            await navigator.share({ title: 'Ask Thingy', text: prompt, url: shareUrl });
-            trackTinylyticsEvent('librarian.share_native');
-            return;
-          } catch (error) {
-            if (error && error.name === 'AbortError') return;
-            // fall through to clipboard
-          }
-        }
-        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-          try {
-            await navigator.clipboard.writeText(shareUrl);
-            flash('✓', 'success');
-            trackTinylyticsEvent('librarian.share_copy');
-            return;
-          } catch (error) { /* fall through */ }
-        }
-        flash('!', 'error');
-      });
+    function actionIcon(name) {
+      const icons = {
+        copy: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
+        up: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10v11"></path><path d="M15 5.5 14 10h5.7a2 2 0 0 1 2 2.3l-1.2 7a2 2 0 0 1-2 1.7H7"></path><path d="M7 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"></path><path d="M14 10V5.5a2.5 2.5 0 0 0-5 0L7 10"></path></svg>',
+        down: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14V3"></path><path d="M15 18.5 14 14h5.7a2 2 0 0 0 2-2.3l-1.2-7A2 2 0 0 0 18.5 3H7"></path><path d="M7 14H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3"></path><path d="M14 14v4.5a2.5 2.5 0 0 1-5 0L7 14"></path></svg>',
+        share: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"></path><path d="M12 16V3"></path><path d="m7 8 5-5 5 5"></path></svg>'
+      };
+      return icons[name] || '';
     }
 
-    function addFeedbackControls(messageElement, requestId) {
+    async function copyToClipboard(value) {
+      if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') return false;
+      try {
+        await navigator.clipboard.writeText(value);
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function flashActionStatus(container, message) {
+      const status = container.querySelector('.librarian-feedback-status');
+      if (!status) return;
+      status.textContent = message;
+      window.clearTimeout(feedbackStatusTimer);
+      feedbackStatusTimer = window.setTimeout(() => {
+        if (status.textContent === message) status.textContent = '';
+      }, 1800);
+    }
+
+    async function sharePrompt(prompt, scope) {
+      const shareUrl = buildSharePromptUrl(prompt, scope);
+      if (typeof navigator.share === 'function') {
+        try {
+          await navigator.share({ title: 'Ask Thingy', text: prompt, url: shareUrl });
+          trackTinylyticsEvent('librarian.share_native');
+          return 'Shared';
+        } catch (error) {
+          if (error && error.name === 'AbortError') return '';
+        }
+      }
+      const copied = await copyToClipboard(shareUrl);
+      if (copied) {
+        trackTinylyticsEvent('librarian.share_copy');
+        return 'Link copied';
+      }
+      return 'Could not copy';
+    }
+
+    function addResponseActions(messageElement, requestId, answer, prompt, scope) {
       if (!requestId) return;
       const controls = document.createElement('div');
       controls.className = 'librarian-feedback';
       controls.innerHTML = `
-        <span class="librarian-feedback-label">Was this useful?</span>
-        <button type="button" data-reaction="up" aria-label="Thumbs up" aria-pressed="false" title="Thumbs up">&#128077;</button>
-        <button type="button" data-reaction="down" aria-label="Thumbs down" aria-pressed="false" title="Thumbs down">&#128078;</button>
+        <button type="button" data-action="copy" aria-label="Copy answer" title="Copy answer">${actionIcon('copy')}</button>
+        <button type="button" data-reaction="up" aria-label="Good response" aria-pressed="false" title="Good response">${actionIcon('up')}</button>
+        <button type="button" data-reaction="down" aria-label="Bad response" aria-pressed="false" title="Bad response">${actionIcon('down')}</button>
+        <button type="button" data-action="share" aria-label="Share prompt" title="Share prompt">${actionIcon('share')}</button>
         <span class="librarian-feedback-status" aria-live="polite"></span>
       `;
-      controls.addEventListener('click', (event) => {
+      controls.addEventListener('click', async (event) => {
         const target = event.target instanceof Element ? event.target : event.target.parentElement;
-        const button = target ? target.closest('button[data-reaction]') : null;
+        const button = target ? target.closest('button') : null;
         if (!button || !controls.contains(button)) return;
-        if (button.classList.contains('selected')) return;
-        submitFeedback(requestId, button.dataset.reaction, controls);
+        if (button.dataset.reaction) {
+          if (button.classList.contains('selected')) return;
+          submitFeedback(requestId, button.dataset.reaction, controls);
+          return;
+        }
+        if (button.dataset.action === 'copy') {
+          const copied = await copyToClipboard(answer || messageElement.innerText || '');
+          flashActionStatus(controls, copied ? 'Copied' : 'Could not copy');
+          trackTinylyticsEvent('librarian.answer_copy', copied ? 'success' : 'error');
+          return;
+        }
+        if (button.dataset.action === 'share') {
+          const message = await sharePrompt(prompt, scope);
+          if (message) flashActionStatus(controls, message);
+        }
       });
       messageElement.appendChild(controls);
     }
@@ -1133,8 +1155,7 @@ permalink: "/"
       const questionWordCount = message.split(/\s+/).filter(Boolean).length;
       const questionSize = questionWordCount < 6 ? 'short' : questionWordCount < 18 ? 'medium' : 'long';
       const history = compactHistory(conversationHistory);
-      const userMessage = addMessage('user', `<p>${escapeHtml(message)}</p>`);
-      addShareControls(userMessage, message, scope);
+      addMessage('user', `<p>${escapeHtml(message)}</p>`);
       questionInput.value = '';
       updateQuestionState();
       const pending = addMessage('assistant', '<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>Thingy is looking through the archive...</p>');
@@ -1143,7 +1164,7 @@ permalink: "/"
         const data = await postStreamingChat(message, pending, history, scope);
         pending.classList.remove('librarian-message-pending');
         rememberTurn(message, data.answer || '');
-        addFeedbackControls(pending, data.request_id);
+        addResponseActions(pending, data.request_id, data.answer || '', message, scope);
         trackTinylyticsEvent('librarian.answer_success', `${questionSize}.${(data.citations || []).length}`);
       } catch (error) {
         pending.innerHTML = `<p>${escapeHtml(error.message)}</p>`;
