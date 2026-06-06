@@ -2111,7 +2111,10 @@ permalink: "/"
       trackTinylyticsEvent('librarian.logout');
     });
 
-    clearChatButton.addEventListener('click', clearConversation);
+    clearChatButton.addEventListener('click', () => {
+      clearConversation();
+      if (window.matchMedia('(max-width: 640px)').matches) setMobileRailOpen(false);
+    });
     if (curiosityMapButton) {
       curiosityMapButton.addEventListener('click', () => {
         showCuriosityMap('', { attachToCurrent: false });
