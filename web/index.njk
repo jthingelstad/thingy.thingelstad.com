@@ -1690,16 +1690,40 @@ permalink: "/"
     const srcpickLabelEl = document.getElementById('srcpick-label');
     const srcpickDotsEl = document.getElementById('srcpick-dots');
     const srcpickNoteEl = document.getElementById('srcpick-note');
+    let srcpickPositionFrame = 0;
     const SRC_META = {
       weekly_thing: { name: 'Weekly Thing', cls: 'dot-wt' },
       blog: { name: 'Blog', cls: 'dot-blog' },
       podcast: { name: 'Another Thing', cls: 'dot-podcast' }
     };
+    function positionSrcPick() {
+      srcpickPositionFrame = 0;
+      if (!srcpickPop || !srcpickBtn || srcpickPop.hidden) return;
+      const margin = 12;
+      const gap = 8;
+      const buttonRect = srcpickBtn.getBoundingClientRect();
+      const popRect = srcpickPop.getBoundingClientRect();
+      const width = Math.min(296, Math.max(220, window.innerWidth - margin * 2));
+      const left = Math.min(Math.max(buttonRect.left, margin), window.innerWidth - width - margin);
+      const openAboveTop = buttonRect.top - popRect.height - gap;
+      const openBelowTop = buttonRect.bottom + gap;
+      const top = openAboveTop >= margin
+        ? openAboveTop
+        : Math.min(openBelowTop, window.innerHeight - popRect.height - margin);
+      srcpickPop.style.setProperty('--srcpick-pop-width', `${width}px`);
+      srcpickPop.style.setProperty('--srcpick-pop-left', `${Math.round(left)}px`);
+      srcpickPop.style.setProperty('--srcpick-pop-top', `${Math.round(Math.max(margin, top))}px`);
+    }
+    function scheduleSrcPickPosition() {
+      if (srcpickPositionFrame) return;
+      srcpickPositionFrame = window.requestAnimationFrame(positionSrcPick);
+    }
     function toggleSrcPick(force) {
       if (!srcpickPop || !srcpickBtn) return;
       const open = force === undefined ? srcpickPop.hasAttribute('hidden') : force;
       srcpickPop.toggleAttribute('hidden', !open);
       srcpickBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) scheduleSrcPickPosition();
     }
     function refreshSrcPick() {
       if (!srcpickLabelEl || !srcpickDotsEl || !srcpickNoteEl) return;
@@ -1718,6 +1742,7 @@ permalink: "/"
         srcpickLabelEl.textContent = on.map((value) => SRC_META[value].name).join(' + ');
         srcpickNoteEl.textContent = `Thingy is searching ${on.length} of ${scopeInputs.length} sources.`;
       }
+      scheduleSrcPickPosition();
     }
     if (srcpickBtn) srcpickBtn.addEventListener('click', (event) => {
       event.stopPropagation();
@@ -1726,6 +1751,8 @@ permalink: "/"
     if (srcpickPop) srcpickPop.addEventListener('click', (event) => event.stopPropagation());
     scopeInputs.forEach((input) => input.addEventListener('change', refreshSrcPick));
     refreshSrcPick();
+    window.addEventListener('resize', scheduleSrcPickPosition);
+    if (chatScroll) chatScroll.addEventListener('scroll', scheduleSrcPickPosition, { passive: true });
 
     document.addEventListener('click', () => {
       toggleSrcPick(false);
