@@ -231,6 +231,7 @@ permalink: "/"
     let composerReserveFrame = 0;
     let feedbackStatusTimer = 0;
     let welcomeInFlight = false;
+    let welcomeShownThisVisit = false;
     let mapInFlight = false;
     let speechRecognition = null;
     let speechListening = false;
@@ -590,6 +591,7 @@ permalink: "/"
       try { window.localStorage.removeItem(userProfileKey); } catch (error) { /* ignore */ }
       conversations = [];
       setActiveConversation('');
+      welcomeShownThisVisit = false;
       chatPanel.hidden = true;
       authPanel.hidden = false;
       prompts.hidden = true;
@@ -1576,9 +1578,9 @@ permalink: "/"
       if (answerInFlight) return;
       stopSpeaking();
       if (speechListening) stopDictation();
+      welcomeShownThisVisit = true;
       startBlankConversationView();
       questionInput.focus();
-      startAgentWelcome();
       trackTinylyticsEvent('librarian.clear');
     }
 
@@ -1591,6 +1593,7 @@ permalink: "/"
       }
       const attachToCurrent = Boolean(options.attachToCurrent && activeConversationId);
       const existingConversationId = attachToCurrent ? activeConversationId : '';
+      if (!attachToCurrent) welcomeShownThisVisit = true;
       hidePrompts();
       if (window.matchMedia('(max-width: 640px)').matches) setMobileRailOpen(false);
       stopSpeaking();
@@ -2065,9 +2068,10 @@ permalink: "/"
     }
 
     async function startAgentWelcome() {
-      if (!token() || answerInFlight || welcomeInFlight || hasInitialPrompt) return;
+      if (!token() || answerInFlight || welcomeInFlight || welcomeShownThisVisit || hasInitialPrompt) return;
       hidePrompts();
       awaitingName = !preferredName;
+      welcomeShownThisVisit = true;
       welcomeInFlight = true;
       updateQuestionState();
       const pending = addMessage('assistant', '<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>Thingy is getting oriented...</p>');
