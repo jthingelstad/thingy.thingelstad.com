@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-LABEL="com.weeklything.thingy-bridge"
+LABEL="com.thingelstad.thingy-bridge"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -29,7 +29,7 @@ require_venv() {
     if ! VENV="$(resolve_venv)"; then
         echo "Error: no Python venv found." >&2
         echo "  Looked in: \$THINGY_BRIDGE_VENV, $REPO_ROOT/venv, $BRIDGE_DIR/venv" >&2
-        echo "  Create one with:  python3 -m venv $REPO_ROOT/venv && $REPO_ROOT/venv/bin/pip install -r $REPO_ROOT/requirements.txt" >&2
+        echo "  Create one with:  python3 -m venv $REPO_ROOT/venv && $REPO_ROOT/venv/bin/pip install -r $BRIDGE_DIR/requirements.txt" >&2
         exit 1
     fi
     echo "$VENV"
@@ -122,7 +122,7 @@ upgrade_bot() {
     (cd "$REPO_ROOT" && git pull origin main)
 
     echo "==> Updating dependencies..."
-    "$VENV/bin/pip" install -q -r "$REPO_ROOT/requirements.txt"
+    "$VENV/bin/pip" install -q -r "$BRIDGE_DIR/requirements.txt"
 
     start_bot
 }
