@@ -58,9 +58,18 @@ permalink: "/"
           <span id="mobile-conversation-title">New chat</span>
           <small>Thingy</small>
         </div>
-        <button class="mobile-chatbar-action" id="mobile-new-chat" type="button" aria-label="New chat" title="New chat">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
-        </button>
+        <div class="mobile-chatbar-actions">
+          <button class="mobile-chatbar-action" id="mobile-new-chat" type="button" aria-label="New chat" title="New chat">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
+          </button>
+          <button class="mobile-chatbar-menu-button" id="mobile-conversation-menu-button" type="button" aria-label="Conversation actions" aria-expanded="false" aria-controls="mobile-conversation-menu" title="Conversation actions" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle></svg>
+          </button>
+          <div class="mobile-conversation-menu" id="mobile-conversation-menu" hidden role="menu">
+            <button type="button" id="mobile-rename-conversation" role="menuitem">Rename</button>
+            <button type="button" id="mobile-delete-conversation" role="menuitem" class="danger">Delete</button>
+          </div>
+        </div>
       </div>
       <a class="return-chip" id="return-chip" href="#" hidden data-tinylytics-event="network.return">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
@@ -204,6 +213,10 @@ permalink: "/"
     const mobileConversationTitle = document.getElementById('mobile-conversation-title');
     const mobileConversationsToggle = document.getElementById('mobile-conversations-toggle');
     const mobileNewChatButton = document.getElementById('mobile-new-chat');
+    const mobileConversationMenuButton = document.getElementById('mobile-conversation-menu-button');
+    const mobileConversationMenu = document.getElementById('mobile-conversation-menu');
+    const mobileRenameConversation = document.getElementById('mobile-rename-conversation');
+    const mobileDeleteConversation = document.getElementById('mobile-delete-conversation');
     const railScrim = document.getElementById('rail-scrim');
     const maxRecents = 20;
     let activeConversationId = null;
@@ -551,6 +564,7 @@ permalink: "/"
       questionButton.title = answerInFlight ? 'Thingy is answering' : 'Ask Thingy';
       clearChatButton.disabled = answerInFlight;
       scopeInputs.forEach((input) => { input.disabled = answerInFlight; });
+      updateMobileConversationTitle();
       autoSizeQuestionInput();
     }
 
@@ -1144,14 +1158,32 @@ permalink: "/"
       return postJson('/conversations', payload, authHeaders());
     }
 
+    function activeConversation() {
+      if (!activeConversationId) return null;
+      return conversations.find((entry) => entry.id === activeConversationId || entry.conversation_id === activeConversationId) || null;
+    }
+
     function currentConversationTitle() {
       if (!activeConversationId) return 'New chat';
-      const active = conversations.find((entry) => entry.id === activeConversationId || entry.conversation_id === activeConversationId);
+      const active = activeConversation();
       return active?.title || 'Current chat';
+    }
+
+    function toggleMobileConversationMenu(force) {
+      if (!mobileConversationMenu || !mobileConversationMenuButton) return;
+      const open = force === undefined ? mobileConversationMenu.hasAttribute('hidden') : force;
+      mobileConversationMenu.toggleAttribute('hidden', !open);
+      mobileConversationMenuButton.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
 
     function updateMobileConversationTitle() {
       if (mobileConversationTitle) mobileConversationTitle.textContent = currentConversationTitle();
+      const hasActive = Boolean(activeConversationId && activeConversation());
+      if (mobileConversationMenuButton) {
+        mobileConversationMenuButton.disabled = !hasActive || answerInFlight;
+        mobileConversationMenuButton.title = hasActive ? 'Conversation actions' : 'No conversation actions';
+      }
+      if (!hasActive) toggleMobileConversationMenu(false);
     }
 
     function setMobileRailOpen(open) {
@@ -1163,6 +1195,40 @@ permalink: "/"
         mobileConversationsToggle.title = open ? 'Hide conversations' : 'Show conversations';
       }
       if (railScrim) railScrim.hidden = !open;
+    }
+
+    async function renameActiveConversation() {
+      const active = activeConversation();
+      if (!active || answerInFlight) return;
+      toggleMobileConversationMenu(false);
+      const current = active.title || 'Untitled chat';
+      const title = window.prompt('Rename conversation', current);
+      if (title == null) return;
+      const trimmed = title.trim();
+      if (!trimmed || trimmed === current) return;
+      try {
+        const data = await conversationAction({ action: 'rename', conversation_id: active.id, title: trimmed });
+        if (data.conversation) upsertConversationSummary(data.conversation);
+        trackTinylyticsEvent('librarian.conversation_rename');
+      } catch (error) {
+        trackTinylyticsEvent('librarian.conversations_error', 'rename');
+      }
+    }
+
+    async function deleteActiveConversation() {
+      const active = activeConversation();
+      if (!active || answerInFlight) return;
+      toggleMobileConversationMenu(false);
+      if (!window.confirm('Delete this conversation?')) return;
+      try {
+        await conversationAction({ action: 'delete', conversation_id: active.id });
+        conversations = conversations.filter((entry) => entry.id !== active.id);
+        clearConversation();
+        setMobileRailOpen(false);
+        trackTinylyticsEvent('librarian.conversation_delete');
+      } catch (error) {
+        trackTinylyticsEvent('librarian.conversations_error', 'delete');
+      }
     }
 
     function clearConversation() {
@@ -1675,9 +1741,26 @@ permalink: "/"
     if (mobileNewChatButton) {
       mobileNewChatButton.addEventListener('click', (event) => {
         event.stopPropagation();
+        toggleMobileConversationMenu(false);
         clearConversation();
         setMobileRailOpen(false);
       });
+    }
+    if (mobileConversationMenuButton) {
+      mobileConversationMenuButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (mobileConversationMenuButton.disabled) return;
+        toggleMobileConversationMenu();
+      });
+    }
+    if (mobileConversationMenu) {
+      mobileConversationMenu.addEventListener('click', (event) => event.stopPropagation());
+    }
+    if (mobileRenameConversation) {
+      mobileRenameConversation.addEventListener('click', renameActiveConversation);
+    }
+    if (mobileDeleteConversation) {
+      mobileDeleteConversation.addEventListener('click', deleteActiveConversation);
     }
     if (railScrim) {
       railScrim.addEventListener('click', () => setMobileRailOpen(false));
@@ -1782,11 +1865,13 @@ permalink: "/"
     document.addEventListener('click', () => {
       toggleSrcPick(false);
       toggleAccountMenu(false);
+      toggleMobileConversationMenu(false);
     });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
         toggleSrcPick(false);
         toggleAccountMenu(false);
+        toggleMobileConversationMenu(false);
         setMobileRailOpen(false);
       }
     });
@@ -1818,8 +1903,11 @@ permalink: "/"
           return;
         }
         const openBtn = event.target instanceof Element ? event.target.closest('button[data-id]') : null;
-        if (openBtn) await loadConversationIntoChat(openBtn.dataset.id);
-        if (openBtn) setMobileRailOpen(false);
+        if (openBtn) {
+          toggleMobileConversationMenu(false);
+          await loadConversationIntoChat(openBtn.dataset.id);
+          setMobileRailOpen(false);
+        }
       });
     }
 
