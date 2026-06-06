@@ -113,6 +113,9 @@ permalink: "/"
               <button class="composer-voice" id="composer-voice" type="button" aria-label="Dictate prompt" title="Dictate prompt">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><path d="M12 19v3"></path></svg>
               </button>
+              <button class="composer-map" id="composer-map" type="button" aria-label="Map current prompt" title="Map current prompt">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><circle cx="5" cy="7" r="2"></circle><circle cx="19" cy="6" r="2"></circle><circle cx="18" cy="18" r="2"></circle><path d="M7 8l3.5 2.5M14.2 9.8L17.4 7.2M14.5 14.3l2.2 2.2"></path></svg>
+              </button>
               <span class="composer-voice-status" id="composer-voice-status" aria-live="polite"></span>
               <div class="srcpick" id="srcpick">
                 <button class="srcpick-btn" id="srcpick-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="srcpick-pop">
@@ -188,6 +191,7 @@ permalink: "/"
     const questionInput = document.getElementById('librarian-question');
     const questionButton = questionForm.querySelector('button[type="submit"]');
     const voiceButton = document.getElementById('composer-voice');
+    const composerMapButton = document.getElementById('composer-map');
     const voiceStatus = document.getElementById('composer-voice-status');
     const scopeInputs = Array.from(document.querySelectorAll('input[name="scope"]'));
     const sourceError = document.getElementById('librarian-source-error');
@@ -705,6 +709,12 @@ permalink: "/"
       questionButton.disabled = busy || !hasSources || !questionInput.value.trim() || length > maxQuestionChars;
       questionButton.setAttribute('aria-label', busy ? 'Thingy is answering' : 'Ask Thingy');
       questionButton.title = busy ? 'Thingy is answering' : 'Ask Thingy';
+      if (composerMapButton) {
+        const canMapDraft = Boolean(questionInput.value.trim()) && length <= maxQuestionChars && hasSources && token();
+        composerMapButton.disabled = busy || !canMapDraft;
+        composerMapButton.title = canMapDraft ? 'Map current prompt' : 'Type a seed to map';
+        composerMapButton.setAttribute('aria-label', canMapDraft ? 'Map current prompt' : 'Type a seed to map');
+      }
       clearChatButton.disabled = busy;
       if (curiosityMapButton) curiosityMapButton.disabled = busy || !token() || !hasSources;
       scopeInputs.forEach((input) => { input.disabled = busy; });
@@ -1579,6 +1589,12 @@ permalink: "/"
       hidePrompts();
       if (window.matchMedia('(max-width: 640px)').matches) setMobileRailOpen(false);
       stopSpeaking();
+      activeConversationId = null;
+      try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
+      messages.innerHTML = '';
+      questionInput.value = '';
+      renderRecents();
+      updateMobileConversationTitle();
       mapInFlight = true;
       updateQuestionState();
       autoFollowChat = true;
@@ -1591,8 +1607,14 @@ permalink: "/"
           user_profile: readerProfileContext()
         }, authHeaders());
         pending.classList.remove('librarian-message-pending');
+        if (map.conversation_id) {
+          activeConversationId = map.conversation_id;
+          try { window.localStorage.setItem(activeConvKey, activeConversationId); } catch (error) { /* ignore */ }
+        }
+        if (map.conversation) upsertConversationSummary(map.conversation);
         pending.innerHTML = renderCuriosityMap(map) || '<p>Thingy could not find enough connected threads to draw a map yet.</p>';
         scheduleChatScroll({ force: true });
+        await refreshConversations();
         trackTinylyticsEvent('librarian.curiosity_map_success', `${(map.nodes || []).length}.${(map.sources || []).length}`);
       } catch (error) {
         pending.innerHTML = `<p>${escapeHtml(error.message)}</p>`;
@@ -1683,8 +1705,9 @@ permalink: "/"
             const el = addMessage('user', `<p>${escapeHtml(msg.content || '')}</p>`);
             addPromptActions(el, msg.content || '', msg.scope || scopeFallback);
           } else if (msg.role === 'assistant') {
-            const el = addMessage('assistant', renderAnswer(msg.content || '', msg.citations || []));
-            if (msg.request_id || msg.requestId) addResponseActions(el, msg.request_id || msg.requestId);
+            const artifactHtml = msg.artifact?.kind === 'curiosity_map' ? renderCuriosityMap(msg.artifact) : '';
+            const el = addMessage('assistant', artifactHtml || renderAnswer(msg.content || '', msg.citations || []));
+            if (!artifactHtml && (msg.request_id || msg.requestId)) addResponseActions(el, msg.request_id || msg.requestId);
           }
         }
         questionInput.value = '';
@@ -2104,6 +2127,14 @@ permalink: "/"
         showCuriosityMap();
       });
     }
+    if (composerMapButton) {
+      composerMapButton.addEventListener('click', () => {
+        const seed = questionInput.value.trim();
+        if (!seed || composerMapButton.disabled) return;
+        showCuriosityMap(seed);
+        trackTinylyticsEvent('librarian.curiosity_map_seed', seed.length < 20 ? 'short' : seed.length < 80 ? 'medium' : 'long');
+      });
+    }
 
     async function submitQuestion() {
       if (answerInFlight) return;
@@ -2201,10 +2232,15 @@ permalink: "/"
       if (!button || answerInFlight || welcomeInFlight || mapInFlight) return;
       questionInput.value = button.dataset.experiencePrompt || button.dataset.mapPrompt || '';
       updateQuestionState();
+      if (button.dataset.mapPrompt) {
+        trackTinylyticsEvent('librarian.curiosity_map_prompt', 'map');
+        questionForm.requestSubmit();
+        return;
+      }
       questionInput.focus();
       trackTinylyticsEvent(
-        button.dataset.mapPrompt ? 'librarian.curiosity_map_prompt' : 'librarian.experience_prompt',
-        button.dataset.mapPrompt ? 'map' : button.closest('.thingy-experience-spark') ? 'spark' : 'trail'
+        'librarian.experience_prompt',
+        button.closest('.thingy-experience-spark') ? 'spark' : 'trail'
       );
     });
 

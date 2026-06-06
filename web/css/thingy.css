@@ -2363,7 +2363,8 @@ a.thingy-exp-source:hover {
   flex: 1 1 auto;
 }
 
-.composer-voice {
+.composer-voice,
+.composer-map {
   width: 36px;
   height: 36px;
   min-width: 36px;
@@ -2383,7 +2384,8 @@ a.thingy-exp-source:hover {
   transition: background 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
 }
 
-.librarian-form button.composer-voice {
+.librarian-form button.composer-voice,
+.librarian-form button.composer-map {
   width: 36px;
   height: 36px;
   min-width: 36px;
@@ -2397,7 +2399,9 @@ a.thingy-exp-source:hover {
 }
 
 .composer-voice:hover:not(:disabled),
-.librarian-form button.composer-voice:hover:not(:disabled) {
+.composer-map:hover:not(:disabled),
+.librarian-form button.composer-voice:hover:not(:disabled),
+.librarian-form button.composer-map:hover:not(:disabled) {
   color: var(--ink);
   background: color-mix(in srgb, var(--ink) 7%, transparent);
 }
@@ -2410,14 +2414,17 @@ a.thingy-exp-source:hover {
 }
 
 .composer-voice:disabled,
-.librarian-form button.composer-voice:disabled {
+.composer-map:disabled,
+.librarian-form button.composer-voice:disabled,
+.librarian-form button.composer-map:disabled {
   color: color-mix(in srgb, var(--muted) 64%, var(--surface));
   background: transparent;
   cursor: not-allowed;
   opacity: 0.62;
 }
 
-.composer-voice svg {
+.composer-voice svg,
+.composer-map svg {
   width: 20px;
   height: 20px;
   fill: none;
