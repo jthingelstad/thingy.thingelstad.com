@@ -97,14 +97,6 @@ permalink: "/"
 
       <div class="librarian-chat thingy-chat" id="librarian-chat" hidden>
         <div class="thingy-chat-scroll">
-          <div class="thingy-chat-welcome">
-            <img src="/img/thingy.png?v={{ site.assetVersion }}" alt="" class="thingy-chat-welcome-image" width="1022" height="1022" loading="eager">
-            <div class="thingy-chat-welcome-copy">
-              <p class="eyebrow">Thingy</p>
-              <h1 class="thingy-h1">Search Jamie&rsquo;s public archive.</h1>
-              <p>Ask across the Weekly Thing newsletter, thingelstad.com blog, and Another Thing podcast. Switch sources on or off in the rail to choose where Thingy looks.</p>
-            </div>
-          </div>
           <div class="librarian-messages" id="librarian-messages" aria-live="polite"></div>
         </div>
 
@@ -112,7 +104,7 @@ permalink: "/"
           <div class="librarian-prompts" id="librarian-prompts" aria-label="Suggested questions" hidden></div>
           <form class="librarian-form librarian-question-form thingy-input composer-box" id="librarian-question-form">
             <label for="librarian-question" class="sr-only">Ask Thingy</label>
-            <textarea id="librarian-question" name="message" rows="1" required maxlength="1200" placeholder="Ask Thingy anything about the archive&hellip;" aria-describedby="librarian-question-count librarian-source-error thingy-ai-note"></textarea>
+            <textarea id="librarian-question" name="message" rows="1" required maxlength="1200" placeholder="Message Thingy&hellip;" aria-describedby="librarian-question-count librarian-source-error thingy-ai-note"></textarea>
             <div class="composer-toolbar">
               <div class="srcpick" id="srcpick">
                 <button class="srcpick-btn" id="srcpick-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="srcpick-pop">
@@ -121,9 +113,9 @@ permalink: "/"
                   <span class="srcpick-dots" id="srcpick-dots" aria-hidden="true"><i class="dot-wt"></i><i class="dot-blog"></i><i class="dot-podcast"></i></span>
                   <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
                 </button>
-                <div class="srcpick-pop" id="srcpick-pop" hidden role="dialog" aria-label="Search across">
+                <div class="srcpick-pop" id="srcpick-pop" hidden role="dialog" aria-label="Active sources">
                   <div class="srcpick-pop-head">
-                    <span class="srcpick-pop-title">Search across</span>
+                    <span class="srcpick-pop-title">Active sources</span>
                   </div>
                   <label class="srcpick-row">
                     <input type="checkbox" name="scope" value="weekly_thing" checked>
@@ -143,7 +135,7 @@ permalink: "/"
                     <span class="meta"><strong>Another Thing</strong><small>Podcast transcripts</small></span>
                     <span class="tick" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 13l4 4 10-10"></path></svg></span>
                   </label>
-                  <p class="srcpick-pop-note" id="srcpick-note">Thingy is searching all three sources.</p>
+                  <p class="srcpick-pop-note" id="srcpick-note">Thingy can draw from all three sources.</p>
                 </div>
               </div>
               <span class="composer-spacer"></span>
@@ -208,6 +200,7 @@ permalink: "/"
     const storageKey = 'weeklyThingLibrarianToken';
     const betaNoticeStorageKey = 'weeklyThingLibrarianBetaNotice';
     const userEmailKey = 'thingyUserEmail';
+    const userProfileKey = 'thingyUserProfile';
     const railCollapsedKey = 'thingyRailCollapsed';
     const activeConvKey = 'thingyActiveConversation';
     const mobileConversationTitle = document.getElementById('mobile-conversation-title');
@@ -221,58 +214,10 @@ permalink: "/"
     const maxRecents = 20;
     let activeConversationId = null;
     let conversations = [];
+    let preferredName = '';
+    let awaitingName = false;
     const maxQuestionChars = Number(questionInput.getAttribute('maxlength') || '1200');
-    const starterMessageHtml = '';
     const sourceOrder = ['weekly_thing', 'blog', 'podcast'];
-    const starterQuestions = {
-      discovery: [
-        'Give me a tour of what Jamie publishes across the archive.',
-        'What are the big themes that connect the blog, newsletter, and podcast?',
-        'Find a good place to start if I care about personal knowledge systems.',
-        'What has Jamie returned to again and again over the years?',
-        'Show me something recent and something older on the same idea.',
-        'Pick a surprising thread that crosses more than one source.',
-        'What parts of the archive feel most personal?',
-        'Where does Jamie explain how he works?',
-        'Find a useful answer hiding in an old post or issue.',
-        'What should I read first if I am new here?'
-      ],
-      topical: [
-        'What has Jamie said about AI, and how has it changed?',
-        'Find writing about owning your content and the IndieWeb.',
-        'What does the archive say about newsletters as a medium?',
-        'Show me Jamie on leadership, teams, and operating systems.',
-        'Find posts and issues about Minneapolis or Minnesota.',
-        'What tools does Jamie keep recommending?',
-        "Trace Jamie's thinking about automation.",
-        'Find writing about family rituals and annual traditions.',
-        'What has Jamie written about RSS and open web plumbing?',
-        'Show me the thread on attention, focus, and intentional technology.',
-        "Find recommendations for books that shaped Jamie's thinking.",
-        'What personal projects show up repeatedly?',
-        'Where does Jamie talk about community and belonging?',
-        'Find anything about static sites, Eleventy, or publishing workflows.',
-        'What does Jamie say about craft, quality, and maintenance?',
-        'Show me examples of long-term thinking in the archive.',
-        'Find travel writing or trip notes.',
-        'What does the podcast add that the written archive does not?',
-        'Find the best context for Things 4 Good.',
-        'Where has Jamie contradicted or revised himself?'
-      ],
-      playful: [
-        'Build me a reading list for tonight.',
-        'Give me three links worth my time.',
-        'Surprise me with a connection I would not expect.',
-        'What would Jamie put in a starter pack for this archive?',
-        'Find a delightful rabbit hole.',
-        'Quote me something useful from the archive.',
-        'What is the most Jamie-shaped idea in here?',
-        'Give me one practical takeaway and one weird one.',
-        'What should I ask Thingy next?',
-        'Quote me something from the archive.',
-        "Tell me something I'd find interesting."
-      ]
-    };
     const eventSink = document.createElement('button');
     eventSink.type = 'button';
     eventSink.hidden = true;
@@ -285,6 +230,7 @@ permalink: "/"
     let scrollFrame = 0;
     let composerReserveFrame = 0;
     let feedbackStatusTimer = 0;
+    let welcomeInFlight = false;
     const emailRe = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
     const params = new URLSearchParams(window.location.search);
@@ -294,6 +240,48 @@ permalink: "/"
     let activeScope = initialScope || 'all';
     let initialPromptSubmitted = false;
     if (email) emailInput.value = email;
+
+    function userLocalContext() {
+      const now = new Date();
+      const locale = navigator.language || 'en-US';
+      let timeZone = '';
+      try {
+        timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      } catch (error) {
+        timeZone = '';
+      }
+      const offsetMinutes = -now.getTimezoneOffset();
+      const offsetSign = offsetMinutes >= 0 ? '+' : '-';
+      const offsetAbs = Math.abs(offsetMinutes);
+      const offset = `${offsetSign}${String(Math.floor(offsetAbs / 60)).padStart(2, '0')}:${String(offsetAbs % 60).padStart(2, '0')}`;
+      const localIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}${offset}`;
+      const hour = now.getHours();
+      const dayPeriod = hour < 5 ? 'night' : hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : hour < 21 ? 'evening' : 'night';
+      const localDate = new Intl.DateTimeFormat(locale, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      }).format(now);
+      const localTime = new Intl.DateTimeFormat(locale, {
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZoneName: 'short'
+      }).format(now);
+      return {
+        locale,
+        time_zone: timeZone,
+        utc_offset_minutes: offsetMinutes,
+        local_iso: localIso,
+        local_date: localDate,
+        local_time: localTime,
+        day_period: dayPeriod
+      };
+    }
+
+    function resetMessages() {
+      messages.innerHTML = '';
+    }
 
     function normalizeEmail(value) {
       return String(value || '').trim();
@@ -352,6 +340,53 @@ permalink: "/"
 
     function token() {
       return window.localStorage.getItem(storageKey);
+    }
+
+    function setUserProfile(data) {
+      const profile = {
+        status: data?.status || '',
+        supporting_member: data?.status === 'premium',
+        ...(data?.profile && typeof data.profile === 'object' ? data.profile : {})
+      };
+      preferredName = String(profile.preferred_name || '').trim();
+      try { window.localStorage.setItem(userProfileKey, JSON.stringify(profile)); } catch (error) { /* ignore */ }
+      return profile;
+    }
+
+    function userProfile() {
+      try {
+        const parsed = JSON.parse(window.localStorage.getItem(userProfileKey) || '{}');
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function extractPreferredName(message) {
+      const text = String(message || '').trim();
+      if (!text || text.length > 60 || /[?]/.test(text)) return '';
+      const direct = text.match(/^(?:my name is|i am|i'm|call me)\s+([a-z][a-z .'’-]{0,38})[.!]?$/i);
+      const candidate = (direct ? direct[1] : text).trim().replace(/[.!]+$/, '');
+      if (!/^[a-z][a-z .'’-]{0,38}$/i.test(candidate)) return '';
+      const words = candidate.split(/\s+/).filter(Boolean);
+      if (words.length < 1 || words.length > 3) return '';
+      return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    }
+
+    function rememberPreferredName(name) {
+      const cleanName = String(name || '').trim();
+      if (!cleanName) return;
+      preferredName = cleanName;
+      const profile = { ...userProfile(), preferred_name: cleanName };
+      try { window.localStorage.setItem(userProfileKey, JSON.stringify(profile)); } catch (error) { /* ignore */ }
+    }
+
+    function readerProfileContext() {
+      return {
+        ...userProfile(),
+        preferred_name: preferredName,
+        awaiting_name: awaitingName
+      };
     }
 
     function currentScope() {
@@ -427,8 +462,9 @@ permalink: "/"
       maybeSubmitInitialPrompt();
     }
 
-    function setToken(value, message, options = {}) {
+    function setToken(value, data = {}, options = {}) {
       window.localStorage.setItem(storageKey, value);
+      setUserProfile(data);
       const enteredEmail = emailInput && emailInput.value ? emailInput.value.trim() : '';
       if (enteredEmail) {
         try { window.localStorage.setItem(userEmailKey, enteredEmail); } catch (error) { /* ignore */ }
@@ -437,9 +473,10 @@ permalink: "/"
       authPanel.hidden = true;
       chatPanel.hidden = false;
       hideAuthActions();
-      if (message) addMessage('system', `<p>${escapeHtml(message)}</p>`);
-      loadPrompts();
-      refreshConversations();
+      resetMessages();
+      refreshConversations().then(() => {
+        if (!activeConversationId) startAgentWelcome();
+      });
       scheduleComposerReserveUpdate();
       if (options.skipBetaNotice) {
         hideBetaNotice({ remember: false, focusQuestion: false });
@@ -453,6 +490,7 @@ permalink: "/"
     function clearToken() {
       window.localStorage.removeItem(storageKey);
       try { window.localStorage.removeItem(userEmailKey); } catch (error) { /* ignore */ }
+      try { window.localStorage.removeItem(userProfileKey); } catch (error) { /* ignore */ }
       hideBetaNotice({ remember: false, focusQuestion: false });
       conversations = [];
       activeConversationId = null;
@@ -555,15 +593,16 @@ permalink: "/"
     function updateQuestionState() {
       const length = questionInput.value.length;
       const hasSources = sourceCount() > 0;
+      const busy = answerInFlight || welcomeInFlight;
       questionCount.textContent = `${length} / ${maxQuestionChars}`;
       questionCount.classList.toggle('warning', length > maxQuestionChars * 0.9);
       if (sourceError) sourceError.textContent = hasSources ? '' : 'Switch on at least one source.';
-      questionForm.classList.toggle('is-busy', answerInFlight);
-      questionButton.disabled = answerInFlight || !hasSources || !questionInput.value.trim() || length > maxQuestionChars;
-      questionButton.setAttribute('aria-label', answerInFlight ? 'Thingy is answering' : 'Ask Thingy');
-      questionButton.title = answerInFlight ? 'Thingy is answering' : 'Ask Thingy';
-      clearChatButton.disabled = answerInFlight;
-      scopeInputs.forEach((input) => { input.disabled = answerInFlight; });
+      questionForm.classList.toggle('is-busy', busy);
+      questionButton.disabled = busy || !hasSources || !questionInput.value.trim() || length > maxQuestionChars;
+      questionButton.setAttribute('aria-label', busy ? 'Thingy is answering' : 'Ask Thingy');
+      questionButton.title = busy ? 'Thingy is answering' : 'Ask Thingy';
+      clearChatButton.disabled = busy;
+      scopeInputs.forEach((input) => { input.disabled = busy; });
       updateMobileConversationTitle();
       autoSizeQuestionInput();
     }
@@ -681,7 +720,7 @@ permalink: "/"
 
     function renderMarkdown(markdown, citations = []) {
       const text = String(markdown || '').trim();
-      if (!text) return '<p>Thingy is looking through the archive...</p>';
+      if (!text) return '<p>Thingy is thinking...</p>';
       const citationsByIssue = citationMap(citations);
       const lines = text.split(/\r?\n/);
       const html = [];
@@ -1236,12 +1275,12 @@ permalink: "/"
       activeConversationId = null;
       try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
       questionInput.value = '';
-      messages.innerHTML = starterMessageHtml;
+      resetMessages();
       updateQuestionState();
-      loadPrompts();
       renderRecents();
       updateMobileConversationTitle();
       questionInput.focus();
+      startAgentWelcome();
       trackTinylyticsEvent('librarian.clear');
     }
 
@@ -1316,7 +1355,7 @@ permalink: "/"
         activeConversationId = conversationId;
         try { window.localStorage.setItem(activeConvKey, conversationId); } catch (error) { /* ignore */ }
         if (data.conversation) upsertConversationSummary(data.conversation);
-        messages.innerHTML = starterMessageHtml;
+        messages.innerHTML = '';
         hidePrompts();
         const scopeFallback = currentScope();
         for (const msg of data.messages || []) {
@@ -1356,34 +1395,8 @@ permalink: "/"
       scheduleComposerReserveUpdate();
     }
 
-    function randomItem(items) {
-      return items[Math.floor(Math.random() * items.length)];
-    }
-
-    function starterPromptSet() {
-      return [
-        randomItem(starterQuestions.discovery),
-        randomItem(starterQuestions.topical),
-        randomItem(starterQuestions.playful)
-      ].map((question) => ({ label: question, question }));
-    }
-
-    function renderPrompts(promptItems) {
-      if (!promptItems || !promptItems.length || answerInFlight) return;
-      prompts.classList.remove('librarian-prompts-loading');
-      prompts.innerHTML = promptItems.map((item, index) => {
-        const question = escapeHtml(item.question || item.label || '');
-        const label = escapeHtml(item.label || `Question ${index + 1}`);
-        return `<button type="button" data-question="${question}" title="${question}" data-tinylytics-event="librarian.prompt_select" data-tinylytics-event-value="${index + 1}">${label}</button>`;
-      }).join('');
-      prompts.hidden = false;
-      scheduleComposerReserveUpdate();
-    }
-
     function loadPrompts() {
-      if (!token() || answerInFlight || (initialPrompt && !initialPromptSubmitted)) return;
-      renderPrompts(starterPromptSet());
-      trackTinylyticsEvent('librarian.prompts_loaded', 'static');
+      hidePrompts();
     }
 
     function maybeSubmitInitialPrompt() {
@@ -1397,7 +1410,7 @@ permalink: "/"
 
     function handleAuthResponse(data, options = {}) {
       if (data.token) {
-        setToken(data.token, data.message, options);
+        setToken(data.token, data, options);
         setAuthMessage('');
         trackTinylyticsEvent('librarian.auth_success', data.status || 'active');
         return;
@@ -1501,7 +1514,9 @@ permalink: "/"
         body: JSON.stringify({
           message,
           scope,
-          conversation_id: conversationId || undefined
+          conversation_id: conversationId || undefined,
+          client_context: userLocalContext(),
+          user_profile: readerProfileContext()
         }),
         signal: controller.signal
       }).catch((error) => {
@@ -1604,6 +1619,134 @@ permalink: "/"
       return { answer, citations, request_id: requestId, conversation_id: conversationId, conversation };
     }
 
+    async function postStreamingWelcome(pending, scope) {
+      if (!streamBase) {
+        throw new Error('Thingy has not been connected to the archive stream API yet.');
+      }
+
+      let answer = '';
+      let requestId = '';
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 45000);
+      const response = await fetch(`${streamBase}/welcome`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token()}`
+        },
+        body: JSON.stringify({
+          scope,
+          client_context: userLocalContext(),
+          user_profile: readerProfileContext()
+        }),
+        signal: controller.signal
+      }).catch((error) => {
+        if (error.name === 'AbortError') {
+          throw new Error('Thingy took too long to get oriented. Please try asking a question.');
+        }
+        throw error;
+      }).finally(() => {
+        window.clearTimeout(timeout);
+      });
+      if (!response.ok || !response.body) {
+        throw new Error('Thingy is unavailable.');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let renderFrame = 0;
+
+      function renderPendingWelcome() {
+        renderFrame = 0;
+        pending.classList.remove('librarian-message-pending');
+        pending.innerHTML = renderAnswer(answer, []);
+        scheduleChatScroll();
+      }
+
+      function scheduleWelcomeRender() {
+        if (renderFrame) return;
+        renderFrame = window.requestAnimationFrame(renderPendingWelcome);
+      }
+
+      function applyEvent(eventName, data) {
+        if (eventName === 'meta') {
+          requestId = data.request_id || requestId;
+        } else if (eventName === 'status') {
+          answer = '';
+          pending.classList.add('librarian-message-pending');
+          pending.innerHTML = `<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>${escapeHtml(data.message || 'Thingy is getting oriented...')}</p>`;
+          scheduleChatScroll({ force: true });
+        } else if (eventName === 'answer_delta') {
+          const wasEmpty = answer === '';
+          answer += data.delta || '';
+          if (wasEmpty) {
+            answer = answer.replace(/^\s+/, '');
+            while (pending.firstChild) pending.removeChild(pending.firstChild);
+          }
+          scheduleWelcomeRender();
+        } else if (eventName === 'answer') {
+          answer = data.answer || '';
+          scheduleWelcomeRender();
+        } else if (eventName === 'done') {
+          requestId = data.request_id || requestId;
+        } else if (eventName === 'error') {
+          const error = new Error(data.error || 'Thingy is unavailable.');
+          error.requestId = data.request_id || requestId;
+          throw error;
+        }
+      }
+
+      function consumeEvent(rawEvent) {
+        const lines = rawEvent.split('\n');
+        let eventName = 'message';
+        const data = [];
+        for (const line of lines) {
+          if (line.startsWith('event:')) eventName = line.slice(6).trim();
+          if (line.startsWith('data:')) data.push(line.slice(5).trimStart());
+        }
+        if (!data.length) return;
+        applyEvent(eventName, JSON.parse(data.join('\n')));
+      }
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split(/\n\n/);
+        buffer = events.pop() || '';
+        events.filter(Boolean).forEach(consumeEvent);
+      }
+      buffer += decoder.decode();
+      if (buffer.trim()) consumeEvent(buffer);
+      if (renderFrame) {
+        window.cancelAnimationFrame(renderFrame);
+        renderPendingWelcome();
+      }
+      return { answer, request_id: requestId };
+    }
+
+    async function startAgentWelcome() {
+      if (!token() || answerInFlight || welcomeInFlight || (initialPrompt && !initialPromptSubmitted)) return;
+      hidePrompts();
+      awaitingName = !preferredName;
+      welcomeInFlight = true;
+      updateQuestionState();
+      const pending = addMessage('assistant', '<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>Thingy is getting oriented...</p>');
+      pending.classList.add('librarian-message-pending');
+      try {
+        await postStreamingWelcome(pending, currentScope());
+        trackTinylyticsEvent('librarian.welcome_success');
+      } catch (error) {
+        pending.innerHTML = '<p>Hi. I&rsquo;m Thingy. Ask me what you&rsquo;re curious about and I&rsquo;ll help you explore the archive.</p>';
+        trackTinylyticsEvent('librarian.welcome_error', error.requestId ? 'server' : 'client');
+      } finally {
+        welcomeInFlight = false;
+        updateQuestionState();
+        loadPrompts();
+      }
+    }
+
     authForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       await submitAuthCheck();
@@ -1654,12 +1797,17 @@ permalink: "/"
       hidePrompts();
       const questionWordCount = message.split(/\s+/).filter(Boolean).length;
       const questionSize = questionWordCount < 6 ? 'short' : questionWordCount < 18 ? 'medium' : 'long';
+      if (awaitingName && !preferredName) {
+        const suppliedName = extractPreferredName(message);
+        if (suppliedName) rememberPreferredName(suppliedName);
+        awaitingName = false;
+      }
       autoFollowChat = true;
       const userMessage = addMessage('user', `<p>${escapeHtml(message)}</p>`);
       addPromptActions(userMessage, message, scope);
       questionInput.value = '';
       updateQuestionState();
-      const pending = addMessage('assistant', '<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>Thingy is looking through the archive...</p>');
+      const pending = addMessage('assistant', '<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>Thingy is thinking...</p>');
       pending.classList.add('librarian-message-pending');
       try {
         const data = await postStreamingChat(message, pending, scope);
@@ -1839,16 +1987,16 @@ permalink: "/"
       srcpickDotsEl.innerHTML = on.map((value) => `<i class="${SRC_META[value].cls}"></i>`).join('');
       if (on.length === 0) {
         srcpickLabelEl.textContent = 'No sources';
-        srcpickNoteEl.textContent = 'Switch on at least one source for Thingy to search.';
+        srcpickNoteEl.textContent = 'Switch on at least one source for Thingy to use.';
       } else if (on.length === scopeInputs.length) {
         srcpickLabelEl.textContent = 'All sources';
-        srcpickNoteEl.textContent = 'Thingy is searching all three sources.';
+        srcpickNoteEl.textContent = 'Thingy can draw from all three sources.';
       } else if (on.length === 1) {
         srcpickLabelEl.textContent = SRC_META[on[0]].name;
-        srcpickNoteEl.textContent = `Thingy is only searching ${SRC_META[on[0]].name}.`;
+        srcpickNoteEl.textContent = `Thingy will only draw from ${SRC_META[on[0]].name}.`;
       } else {
         srcpickLabelEl.textContent = on.map((value) => SRC_META[value].name).join(' + ');
-        srcpickNoteEl.textContent = `Thingy is searching ${on.length} of ${scopeInputs.length} sources.`;
+        srcpickNoteEl.textContent = `Thingy can draw from ${on.length} of ${scopeInputs.length} sources.`;
       }
       scheduleSrcPickPosition();
     }
@@ -1960,6 +2108,8 @@ permalink: "/"
     }
 
     /* ---- Conversation bootstrap ---- */
+    resetMessages();
+    preferredName = String(userProfile().preferred_name || '').trim();
     refreshAccountIdentity();
     renderRecents();
 
@@ -1977,7 +2127,7 @@ permalink: "/"
         if (active) {
           loadConversationIntoChat(active);
         } else {
-          loadPrompts();
+          startAgentWelcome();
         }
       });
       trackTinylyticsEvent('librarian.session_resume');
