@@ -5,71 +5,59 @@ description: Ask Thingy to find and synthesize writing from across Jamie Thingel
 permalink: "/"
 ---
 <section class="thingy-page">
-  <div class="thingy-app-shell">
-    <aside class="thingy-rail" aria-label="Thingy controls">
-      <div class="thingy-rail-brand">
-        <div class="thingy-card-avatar" aria-hidden="true">
-          <img src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager">
+  <div class="thingy-app-shell" id="thingy-app-shell">
+    <aside class="rail" aria-label="Thingy">
+      <div class="rail-top">
+        <a class="rail-brand" href="/" aria-label="Thingy home" data-tinylytics-event="network.home" data-tinylytics-event-value="thingy">
+          <span class="rail-mark"><img src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager"></span>
+          <span class="rail-brand-text">
+            <span class="rail-wordmark">Thingy</span>
+            <span class="rail-status" id="rail-status"><span class="dot" aria-hidden="true"></span>Not signed in</span>
+          </span>
+        </a>
+        <button class="rail-iconbtn rail-collapse" id="rail-collapse" type="button" aria-label="Collapse sidebar" title="Collapse sidebar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"></rect><path d="M9 4v16"></path></svg>
+        </button>
+      </div>
+
+      <button class="rail-newchat" type="button" id="librarian-clear-chat" data-tinylytics-event="librarian.clear" title="New chat">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+        <span class="label">New chat</span>
+        <span class="kbd">⌘K</span>
+      </button>
+
+      <div class="rail-body">
+        <p class="rail-recents-label">Recents</p>
+        <div class="rail-recents" id="rail-recents" role="list" hidden></div>
+        <p class="rail-empty" id="rail-recents-empty">Your conversations stay on this device. Start one and it&rsquo;ll show up here.</p>
+      </div>
+
+      <div class="rail-account">
+        <button class="rail-account-btn" id="account-btn" type="button" aria-haspopup="true" aria-expanded="false">
+          <span class="rail-avatar" id="account-avatar" aria-hidden="true">T</span>
+          <span class="rail-account-meta">
+            <span class="rail-account-email" id="account-email">Sign in</span>
+            <span class="rail-account-sub" id="account-sub">Weekly Thing readers</span>
+          </span>
+          <span class="rail-account-caret" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"></path></svg></span>
+        </button>
+        <div class="rail-menu" id="account-menu" hidden role="menu">
+          <button type="button" role="menuitem" class="danger" id="librarian-logout">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path><path d="M9 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3"></path></svg>Forget me
+          </button>
         </div>
-        <div>
-          <p class="thingy-card-name">Thingy</p>
-          <p class="thingy-card-status"><span class="thingy-dot" aria-hidden="true"></span>Archive online</p>
-        </div>
-      </div>
-
-      <div class="thingy-rail-section thingy-rail-intro">
-        <p class="thingy-rail-kicker">Jamie&rsquo;s archive agent</p>
-        <p>Ask across the newsletter, blog, and podcast. Thingy will only use the sources that are switched on.</p>
-      </div>
-
-      <fieldset class="thingy-source-rack" aria-label="Source scope">
-        <legend>Sources</legend>
-        <label class="thingy-source-switch thingy-source-wt">
-          <input type="checkbox" name="scope" value="weekly_thing" checked>
-          <span class="thingy-source-check" aria-hidden="true"></span>
-          <span class="thingy-source-text">
-            <strong>Weekly Thing</strong>
-            <span class="thingy-source-mobile-label">Weekly</span>
-            <small>Issues, links, FAQ</small>
-          </span>
-        </label>
-        <label class="thingy-source-switch thingy-source-blog">
-          <input type="checkbox" name="scope" value="blog" checked>
-          <span class="thingy-source-check" aria-hidden="true"></span>
-          <span class="thingy-source-text">
-            <strong>Blog</strong>
-            <span class="thingy-source-mobile-label">Blog</span>
-            <small>thingelstad.com</small>
-          </span>
-        </label>
-        <label class="thingy-source-switch thingy-source-podcast">
-          <input type="checkbox" name="scope" value="podcast" checked>
-          <span class="thingy-source-check" aria-hidden="true"></span>
-          <span class="thingy-source-text">
-            <strong>Another Thing</strong>
-            <span class="thingy-source-mobile-label">Podcast</span>
-            <small>Podcast transcripts</small>
-          </span>
-        </label>
-        <p class="thingy-source-error" id="librarian-source-error" aria-live="polite"></p>
-      </fieldset>
-
-      <div class="thingy-rail-section thingy-rail-links">
-        <p class="thingy-rail-kicker">Network</p>
-        <a href="https://www.thingelstad.com/" data-tinylytics-event="network.visit" data-tinylytics-event-value="thingelstad">thingelstad.com</a>
-        <a href="https://weekly.thingelstad.com/" data-tinylytics-event="network.visit" data-tinylytics-event-value="weekly">Weekly Thing</a>
-        <a href="https://another.thingelstad.com/" data-tinylytics-event="network.visit" data-tinylytics-event-value="another">Another Thing</a>
-      </div>
-
-      <div class="thingy-rail-actions">
-        <button type="button" id="librarian-clear-chat" class="thingy-card-tool" data-tinylytics-event="librarian.clear">New chat</button>
-        <button type="button" id="librarian-logout" class="thingy-card-tool">Forget me</button>
       </div>
     </aside>
 
     <section class="thingy-conversation" aria-label="Thingy chat">
+      <a class="return-chip" id="return-chip" href="#" hidden data-tinylytics-event="network.return">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
+        <span>Return to <strong id="return-chip-label">site</strong></span>
+      </a>
+
       <div class="librarian-auth thingy-auth" id="librarian-auth">
         <form class="librarian-form" id="librarian-auth-form">
+          <span class="thingy-auth-mark" aria-hidden="true"><img src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager"></span>
           <p class="thingy-auth-title">Enter Thingy</p>
           <label for="librarian-email">Email address</label>
           <div class="librarian-auth-row">
@@ -101,20 +89,52 @@ permalink: "/"
 
         <div class="thingy-composer-zone">
           <div class="librarian-prompts" id="librarian-prompts" aria-label="Suggested questions" hidden></div>
-          <form class="librarian-form librarian-question-form thingy-input" id="librarian-question-form">
+          <form class="librarian-form librarian-question-form thingy-input composer-box" id="librarian-question-form">
             <label for="librarian-question" class="sr-only">Ask Thingy</label>
-            <textarea id="librarian-question" name="message" rows="2" required maxlength="1200" placeholder="Ask Thingy anything about the archive&hellip;" aria-describedby="librarian-question-count librarian-source-error thingy-ai-note"></textarea>
-            <div class="librarian-question-meta">
-              <span id="librarian-question-count">0 / 1200</span>
-            </div>
-            <div class="librarian-question-actions">
-              <button type="submit" aria-label="Ask Thingy" title="Ask Thingy" data-tinylytics-event="librarian.question_submit">
+            <textarea id="librarian-question" name="message" rows="1" required maxlength="1200" placeholder="Ask Thingy anything about the archive&hellip;" aria-describedby="librarian-question-count librarian-source-error thingy-ai-note"></textarea>
+            <div class="composer-toolbar">
+              <div class="srcpick" id="srcpick">
+                <button class="srcpick-btn" id="srcpick-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="srcpick-pop">
+                  <svg class="layers" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"></path><path d="M3 13l9 5 9-5"></path></svg>
+                  <span class="srcpick-label" id="srcpick-label">All sources</span>
+                  <span class="srcpick-dots" id="srcpick-dots" aria-hidden="true"><i class="dot-wt"></i><i class="dot-blog"></i><i class="dot-podcast"></i></span>
+                  <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+                </button>
+                <div class="srcpick-pop" id="srcpick-pop" hidden role="dialog" aria-label="Search across">
+                  <div class="srcpick-pop-head">
+                    <span class="srcpick-pop-title">Search across</span>
+                  </div>
+                  <label class="srcpick-row">
+                    <input type="checkbox" name="scope" value="weekly_thing" checked>
+                    <span class="rdot dot-wt" aria-hidden="true"></span>
+                    <span class="meta"><strong>Weekly Thing</strong><small>Issues, links, FAQ</small></span>
+                    <span class="tick" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 13l4 4 10-10"></path></svg></span>
+                  </label>
+                  <label class="srcpick-row">
+                    <input type="checkbox" name="scope" value="blog" checked>
+                    <span class="rdot dot-blog" aria-hidden="true"></span>
+                    <span class="meta"><strong>Blog</strong><small>thingelstad.com</small></span>
+                    <span class="tick" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 13l4 4 10-10"></path></svg></span>
+                  </label>
+                  <label class="srcpick-row">
+                    <input type="checkbox" name="scope" value="podcast" checked>
+                    <span class="rdot dot-podcast" aria-hidden="true"></span>
+                    <span class="meta"><strong>Another Thing</strong><small>Podcast transcripts</small></span>
+                    <span class="tick" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 13l4 4 10-10"></path></svg></span>
+                  </label>
+                  <p class="srcpick-pop-note" id="srcpick-note">Thingy is searching all three sources.</p>
+                </div>
+              </div>
+              <span class="composer-spacer"></span>
+              <span class="composer-count" id="librarian-question-count">0 / 1200</span>
+              <button type="submit" class="composer-send" aria-label="Ask Thingy" title="Ask Thingy" data-tinylytics-event="librarian.question_submit">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 19V5"></path>
                   <path d="m5 12 7-7 7 7"></path>
                 </svg>
               </button>
             </div>
+            <span class="sr-only" id="librarian-source-error" aria-live="polite"></span>
           </form>
           <p class="thingy-ai-note" id="thingy-ai-note">Thingy is AI and can make mistakes. Please double-check responses.</p>
         </div>
@@ -165,6 +185,14 @@ permalink: "/"
     const betaCloseButton = document.getElementById('librarian-beta-close');
     const storageKey = 'weeklyThingLibrarianToken';
     const betaNoticeStorageKey = 'weeklyThingLibrarianBetaNotice';
+    const userEmailKey = 'thingyUserEmail';
+    const railCollapsedKey = 'thingyRailCollapsed';
+    const convListKey = 'thingyConversations';
+    const activeConvKey = 'thingyActiveConversation';
+    const convPrefix = 'thingyConversation:';
+    const maxRecents = 20;
+    const maxStoredConversations = 100;
+    let activeConversationId = null;
     const maxHistoryMessages = 8;
     const maxHistoryChars = 4000;
     const maxQuestionChars = Number(questionInput.getAttribute('maxlength') || '1200');
@@ -375,6 +403,11 @@ permalink: "/"
 
     function setToken(value, message, options = {}) {
       window.localStorage.setItem(storageKey, value);
+      const enteredEmail = emailInput && emailInput.value ? emailInput.value.trim() : '';
+      if (enteredEmail) {
+        try { window.localStorage.setItem(userEmailKey, enteredEmail); } catch (error) { /* ignore */ }
+      }
+      refreshAccountIdentity();
       authPanel.hidden = true;
       chatPanel.hidden = false;
       hideAuthActions();
@@ -391,6 +424,7 @@ permalink: "/"
 
     function clearToken() {
       window.localStorage.removeItem(storageKey);
+      try { window.localStorage.removeItem(userEmailKey); } catch (error) { /* ignore */ }
       hideBetaNotice({ remember: false, focusQuestion: false });
       conversationHistory = [];
       chatPanel.hidden = true;
@@ -399,7 +433,30 @@ permalink: "/"
       prompts.innerHTML = '';
       hideAuthActions();
       setAuthMessage('');
+      refreshAccountIdentity();
       emailInput.focus();
+    }
+
+    function refreshAccountIdentity() {
+      const accountEmailEl = document.getElementById('account-email');
+      const accountAvatarEl = document.getElementById('account-avatar');
+      const accountSubEl = document.getElementById('account-sub');
+      const accountBtnEl = document.getElementById('account-btn');
+      const accountCaretEl = document.querySelector('.rail-account-caret');
+      const railStatusEl = document.getElementById('rail-status');
+      const stored = window.localStorage.getItem(userEmailKey) || '';
+      const value = (emailInput && emailInput.value ? emailInput.value.trim() : '') || stored;
+      const signedIn = Boolean(token());
+      if (accountEmailEl) accountEmailEl.textContent = signedIn ? (value || 'Signed in') : 'Sign in';
+      if (accountSubEl) accountSubEl.textContent = signedIn ? 'Weekly Thing reader' : 'Weekly Thing readers';
+      if (accountAvatarEl) accountAvatarEl.textContent = signedIn && value ? value[0].toUpperCase() : 'T';
+      if (accountCaretEl) accountCaretEl.hidden = !signedIn;
+      if (railStatusEl) railStatusEl.lastChild.textContent = signedIn ? 'Archive online' : 'Not signed in';
+      if (accountBtnEl) {
+        accountBtnEl.setAttribute('aria-haspopup', signedIn ? 'true' : 'false');
+        accountBtnEl.setAttribute('aria-expanded', 'false');
+        accountBtnEl.title = signedIn ? 'Account' : 'Sign in';
+      }
     }
 
     function nearChatBottom() {
@@ -1069,10 +1126,153 @@ permalink: "/"
       conversationHistory = [];
       questionInput.value = '';
       messages.innerHTML = starterMessageHtml;
+      startNewConversation();
       updateQuestionState();
       loadPrompts();
+      renderRecents();
       questionInput.focus();
       trackTinylyticsEvent('librarian.clear');
+    }
+
+    function newConversationId() {
+      return 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+    }
+
+    function safeLocalGet(key, fallback) {
+      try {
+        const raw = window.localStorage.getItem(key);
+        if (raw == null) return fallback;
+        return JSON.parse(raw);
+      } catch (error) { return fallback; }
+    }
+
+    function safeLocalSet(key, value) {
+      try { window.localStorage.setItem(key, JSON.stringify(value)); } catch (error) { /* quota or disabled */ }
+    }
+
+    function loadConv(id) { return id ? safeLocalGet(convPrefix + id, null) : null; }
+    function saveConv(conv) { if (conv && conv.id) safeLocalSet(convPrefix + conv.id, conv); }
+    function deleteConvStorage(id) {
+      if (!id) return;
+      try { window.localStorage.removeItem(convPrefix + id); } catch (error) { /* ignore */ }
+    }
+    function loadConvList() { return safeLocalGet(convListKey, []) || []; }
+    function saveConvList(list) { safeLocalSet(convListKey, list); }
+
+    function startNewConversation() {
+      activeConversationId = newConversationId();
+      try { window.localStorage.setItem(activeConvKey, activeConversationId); } catch (error) { /* ignore */ }
+    }
+
+    function ensureActiveConversation() {
+      if (activeConversationId) return activeConversationId;
+      const saved = window.localStorage.getItem(activeConvKey);
+      if (saved && loadConv(saved)) {
+        activeConversationId = saved;
+      } else {
+        startNewConversation();
+      }
+      return activeConversationId;
+    }
+
+    function upsertConvListEntry(conv) {
+      const list = loadConvList().filter((entry) => entry && entry.id !== conv.id);
+      list.unshift({ id: conv.id, title: conv.title || 'Untitled chat', updatedAt: conv.updatedAt });
+      if (list.length > maxStoredConversations) {
+        const removed = list.splice(maxStoredConversations);
+        removed.forEach((entry) => deleteConvStorage(entry.id));
+      }
+      saveConvList(list);
+    }
+
+    function removeConvListEntry(id) {
+      saveConvList(loadConvList().filter((entry) => entry && entry.id !== id));
+    }
+
+    function persistTurn(userText, assistantAnswer, scope, citations, requestId) {
+      const id = ensureActiveConversation();
+      const conv = loadConv(id) || { id, title: '', createdAt: Date.now(), updatedAt: Date.now(), messages: [] };
+      conv.messages.push({ role: 'user', content: userText, scope });
+      conv.messages.push({
+        role: 'assistant',
+        content: assistantAnswer || '',
+        citations: citations || [],
+        requestId: requestId || ''
+      });
+      conv.updatedAt = Date.now();
+      if (!conv.title) conv.title = userText.replace(/\s+/g, ' ').slice(0, 80);
+      saveConv(conv);
+      upsertConvListEntry(conv);
+      renderRecents();
+    }
+
+    function renderRecents() {
+      const railRecents = document.getElementById('rail-recents');
+      const railRecentsEmpty = document.getElementById('rail-recents-empty');
+      if (!railRecents || !railRecentsEmpty) return;
+      const savedList = loadConvList().filter((entry) => entry && entry.id);
+      const validList = savedList.filter((entry) => {
+        const conv = loadConv(entry.id);
+        return conv && Array.isArray(conv.messages) && conv.messages.length > 0;
+      });
+      if (validList.length !== savedList.length) saveConvList(validList);
+      const list = validList.slice(0, maxRecents);
+      if (!list.length) {
+        railRecents.innerHTML = '';
+        railRecents.hidden = true;
+        railRecentsEmpty.hidden = false;
+        return;
+      }
+      railRecentsEmpty.hidden = true;
+      railRecents.hidden = false;
+      railRecents.innerHTML = list.map((entry) => {
+        const title = escapeHtml(entry.title || 'Untitled chat');
+        const id = escapeHtml(entry.id);
+        const active = entry.id === activeConversationId ? ' is-active' : '';
+        return `<div class="rail-recent${active}" role="listitem">`
+          + `<button type="button" class="rail-recent-open" data-id="${id}" title="${title}"><span class="rail-recent-title">${title}</span></button>`
+          + `<button type="button" class="rail-recent-del" data-action="delete-conv" data-id="${id}" aria-label="Delete conversation" title="Delete conversation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>`
+          + `</div>`;
+      }).join('');
+    }
+
+    function loadConversationIntoChat(id) {
+      if (answerInFlight) return;
+      const conv = loadConv(id);
+      if (!conv) return;
+      activeConversationId = id;
+      try { window.localStorage.setItem(activeConvKey, id); } catch (error) { /* ignore */ }
+      conversationHistory = [];
+      messages.innerHTML = starterMessageHtml;
+      hidePrompts();
+      const scopeFallback = currentScope();
+      for (const msg of conv.messages || []) {
+        if (msg.role === 'user') {
+          const el = addMessage('user', `<p>${escapeHtml(msg.content || '')}</p>`);
+          addPromptActions(el, msg.content || '', msg.scope || scopeFallback);
+          conversationHistory.push({ role: 'user', content: msg.content || '' });
+        } else if (msg.role === 'assistant') {
+          const el = addMessage('assistant', renderAnswer(msg.content || '', msg.citations || []));
+          if (msg.requestId) addResponseActions(el, msg.requestId);
+          conversationHistory.push({ role: 'assistant', content: msg.content || '' });
+        }
+      }
+      conversationHistory = compactHistory(conversationHistory);
+      questionInput.value = '';
+      updateQuestionState();
+      renderRecents();
+      scrollChatToBottom({ force: true });
+      questionInput.focus();
+    }
+
+    function clearAllConversations() {
+      if (answerInFlight) return;
+      const list = loadConvList();
+      list.forEach((entry) => deleteConvStorage(entry.id));
+      saveConvList([]);
+      try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
+      activeConversationId = null;
+      clearConversation();
     }
 
     function hidePrompts() {
@@ -1372,6 +1572,7 @@ permalink: "/"
         pending.classList.remove('librarian-message-pending');
         rememberTurn(message, data.answer || '');
         addResponseActions(pending, data.request_id);
+        persistTurn(message, data.answer || '', scope, data.citations || [], data.request_id || '');
         trackTinylyticsEvent('librarian.answer_success', `${questionSize}.${(data.citations || []).length}`);
       } catch (error) {
         pending.innerHTML = `<p>${escapeHtml(error.message)}</p>`;
@@ -1418,6 +1619,174 @@ permalink: "/"
 
     updateQuestionState();
 
+    /* ---- Rail collapse ---- */
+    const appShell = document.getElementById('thingy-app-shell');
+    const railCollapseBtn = document.getElementById('rail-collapse');
+    if (appShell && window.localStorage.getItem(railCollapsedKey) === '1') {
+      appShell.classList.add('is-collapsed');
+      if (railCollapseBtn) railCollapseBtn.setAttribute('aria-label', 'Expand sidebar');
+    }
+    if (railCollapseBtn && appShell) {
+      railCollapseBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const collapsed = appShell.classList.toggle('is-collapsed');
+        try { window.localStorage.setItem(railCollapsedKey, collapsed ? '1' : '0'); } catch (error) { /* ignore */ }
+        railCollapseBtn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+      });
+    }
+
+    /* ---- Account menu ---- */
+    const accountBtn = document.getElementById('account-btn');
+    const accountMenu = document.getElementById('account-menu');
+    function toggleAccountMenu(force) {
+      if (!accountMenu) return;
+      const open = force === undefined ? accountMenu.hasAttribute('hidden') : force;
+      accountMenu.toggleAttribute('hidden', !open);
+      if (accountBtn) accountBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    if (accountBtn) accountBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (!token()) {
+        toggleAccountMenu(false);
+        if (emailInput) emailInput.focus();
+        return;
+      }
+      toggleAccountMenu();
+    });
+
+    /* ---- Source picker popover ---- */
+    const srcpickBtn = document.getElementById('srcpick-btn');
+    const srcpickPop = document.getElementById('srcpick-pop');
+    const srcpickLabelEl = document.getElementById('srcpick-label');
+    const srcpickDotsEl = document.getElementById('srcpick-dots');
+    const srcpickNoteEl = document.getElementById('srcpick-note');
+    const SRC_META = {
+      weekly_thing: { name: 'Weekly Thing', cls: 'dot-wt' },
+      blog: { name: 'Blog', cls: 'dot-blog' },
+      podcast: { name: 'Another Thing', cls: 'dot-podcast' }
+    };
+    function toggleSrcPick(force) {
+      if (!srcpickPop || !srcpickBtn) return;
+      const open = force === undefined ? srcpickPop.hasAttribute('hidden') : force;
+      srcpickPop.toggleAttribute('hidden', !open);
+      srcpickBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    function refreshSrcPick() {
+      if (!srcpickLabelEl || !srcpickDotsEl || !srcpickNoteEl) return;
+      const on = scopeInputs.filter((input) => input.checked).map((input) => input.value);
+      srcpickDotsEl.innerHTML = on.map((value) => `<i class="${SRC_META[value].cls}"></i>`).join('');
+      if (on.length === 0) {
+        srcpickLabelEl.textContent = 'No sources';
+        srcpickNoteEl.textContent = 'Switch on at least one source for Thingy to search.';
+      } else if (on.length === scopeInputs.length) {
+        srcpickLabelEl.textContent = 'All sources';
+        srcpickNoteEl.textContent = 'Thingy is searching all three sources.';
+      } else if (on.length === 1) {
+        srcpickLabelEl.textContent = SRC_META[on[0]].name;
+        srcpickNoteEl.textContent = `Thingy is only searching ${SRC_META[on[0]].name}.`;
+      } else {
+        srcpickLabelEl.textContent = on.map((value) => SRC_META[value].name).join(' + ');
+        srcpickNoteEl.textContent = `Thingy is searching ${on.length} of ${scopeInputs.length} sources.`;
+      }
+    }
+    if (srcpickBtn) srcpickBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      toggleSrcPick();
+    });
+    if (srcpickPop) srcpickPop.addEventListener('click', (event) => event.stopPropagation());
+    scopeInputs.forEach((input) => input.addEventListener('change', refreshSrcPick));
+    refreshSrcPick();
+
+    document.addEventListener('click', () => {
+      toggleSrcPick(false);
+      toggleAccountMenu(false);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        toggleSrcPick(false);
+        toggleAccountMenu(false);
+      }
+    });
+
+    /* ---- Recents list interactions ---- */
+    const railRecentsEl = document.getElementById('rail-recents');
+    if (railRecentsEl) {
+      railRecentsEl.addEventListener('click', (event) => {
+        const deleteBtn = event.target instanceof Element ? event.target.closest('[data-action="delete-conv"]') : null;
+        if (deleteBtn) {
+          event.preventDefault();
+          event.stopPropagation();
+          const id = deleteBtn.dataset.id;
+          if (!id) return;
+          deleteConvStorage(id);
+          removeConvListEntry(id);
+          if (id === activeConversationId) {
+            activeConversationId = null;
+            try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
+            clearConversation();
+          } else {
+            renderRecents();
+          }
+          return;
+        }
+        const openBtn = event.target instanceof Element ? event.target.closest('button[data-id]') : null;
+        if (openBtn) loadConversationIntoChat(openBtn.dataset.id);
+      });
+    }
+
+    /* ---- Return chip (?from=) ---- */
+    const NETWORK_LINKS = {{ site.networkLinks | dump | safe }};
+    function buildFromMap() {
+      const map = new Map();
+      for (const link of NETWORK_LINKS) {
+        try {
+          const host = new URL(link.href).hostname.toLowerCase().replace(/^www\./, '');
+          map.set(host, { name: link.label, href: link.href });
+          map.set(`www.${host}`, { name: link.label, href: link.href });
+        } catch (error) { /* ignore */ }
+        (link.aliases || []).forEach((alias) => {
+          const key = String(alias || '').toLowerCase().trim();
+          if (key) map.set(key, { name: link.label, href: link.href });
+        });
+        if (link.key) map.set(String(link.key).toLowerCase(), { name: link.label, href: link.href });
+      }
+      return map;
+    }
+    function resolveFromValue(value) {
+      if (!value) return null;
+      const raw = String(value).trim();
+      if (!raw) return null;
+      const map = buildFromMap();
+      let host = raw.toLowerCase();
+      let href = '';
+      try {
+        if (/^https?:/i.test(raw)) {
+          const parsed = new URL(raw);
+          host = parsed.hostname.toLowerCase().replace(/^www\./, '');
+          href = parsed.href;
+        }
+      } catch (error) { /* ignore */ }
+      const match = map.get(host) || map.get(raw.toLowerCase());
+      if (!match) return null;
+      return { name: match.name, href: href || match.href };
+    }
+    const returnChip = document.getElementById('return-chip');
+    const returnChipLabel = document.getElementById('return-chip-label');
+    const fromParam = params.get('from');
+    if (returnChip && returnChipLabel) {
+      const resolved = resolveFromValue(fromParam);
+      if (resolved) {
+        returnChipLabel.textContent = resolved.name;
+        returnChip.href = resolved.href;
+        returnChip.hidden = false;
+      }
+    }
+
+    /* ---- Conversation bootstrap ---- */
+    refreshAccountIdentity();
+    ensureActiveConversation();
+    renderRecents();
+
     if (email) {
       window.localStorage.removeItem(storageKey);
       submitAuthCheck({ skipBetaNotice: Boolean(initialPrompt) });
@@ -1425,7 +1794,13 @@ permalink: "/"
     } else if (token()) {
       authPanel.hidden = true;
       chatPanel.hidden = false;
-      loadPrompts();
+      const activeId = ensureActiveConversation();
+      const conv = loadConv(activeId);
+      if (conv && conv.messages && conv.messages.length) {
+        loadConversationIntoChat(activeId);
+      } else {
+        loadPrompts();
+      }
       trackTinylyticsEvent('librarian.session_resume');
       maybeSubmitInitialPrompt();
     }
