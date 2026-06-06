@@ -28,7 +28,7 @@ permalink: "/"
       <div class="rail-body">
         <p class="rail-recents-label">Recents</p>
         <div class="rail-recents" id="rail-recents" role="list" hidden></div>
-        <p class="rail-empty" id="rail-recents-empty">Your conversations stay on this device. Start one and it&rsquo;ll show up here.</p>
+        <p class="rail-empty" id="rail-recents-empty">Your conversations sync with Thingy. Start one and it&rsquo;ll show up here.</p>
       </div>
 
       <div class="rail-account">
@@ -187,14 +187,10 @@ permalink: "/"
     const betaNoticeStorageKey = 'weeklyThingLibrarianBetaNotice';
     const userEmailKey = 'thingyUserEmail';
     const railCollapsedKey = 'thingyRailCollapsed';
-    const convListKey = 'thingyConversations';
     const activeConvKey = 'thingyActiveConversation';
-    const convPrefix = 'thingyConversation:';
     const maxRecents = 20;
-    const maxStoredConversations = 100;
     let activeConversationId = null;
-    const maxHistoryMessages = 8;
-    const maxHistoryChars = 4000;
+    let conversations = [];
     const maxQuestionChars = Number(questionInput.getAttribute('maxlength') || '1200');
     const starterMessageHtml = '';
     const sourceOrder = ['weekly_thing', 'blog', 'podcast'];
@@ -258,7 +254,6 @@ permalink: "/"
     let autoFollowChat = true;
     let scrollFrame = 0;
     let composerReserveFrame = 0;
-    let conversationHistory = [];
     let feedbackStatusTimer = 0;
     const emailRe = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
@@ -414,6 +409,7 @@ permalink: "/"
       hideAuthActions();
       if (message) addMessage('system', `<p>${escapeHtml(message)}</p>`);
       loadPrompts();
+      refreshConversations();
       scheduleComposerReserveUpdate();
       if (options.skipBetaNotice) {
         hideBetaNotice({ remember: false, focusQuestion: false });
@@ -428,7 +424,9 @@ permalink: "/"
       window.localStorage.removeItem(storageKey);
       try { window.localStorage.removeItem(userEmailKey); } catch (error) { /* ignore */ }
       hideBetaNotice({ remember: false, focusQuestion: false });
-      conversationHistory = [];
+      conversations = [];
+      activeConversationId = null;
+      try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
       chatPanel.hidden = true;
       authPanel.hidden = false;
       prompts.hidden = true;
@@ -436,6 +434,7 @@ permalink: "/"
       hideAuthActions();
       setAuthMessage('');
       refreshAccountIdentity();
+      renderRecents();
       emailInput.focus();
     }
 
@@ -1120,40 +1119,20 @@ permalink: "/"
       return data;
     }
 
-    function compactHistory(history) {
-      let chars = 0;
-      const result = [];
-      for (const item of history.slice(-maxHistoryMessages).reverse()) {
-        const role = item.role === 'assistant' ? 'assistant' : item.role === 'user' ? 'user' : '';
-        const content = String(item.content || '').trim().replace(/\s+/g, ' ').slice(0, 700);
-        if (!role || !content) continue;
-        chars += content.length;
-        if (chars > maxHistoryChars) break;
-        result.unshift({ role, content });
-      }
-      return result;
+    function authHeaders() {
+      return token() ? { authorization: `Bearer ${token()}` } : {};
     }
 
-    function rememberTurn(question, answer) {
-      conversationHistory.push({ role: 'user', content: question });
-      conversationHistory.push({ role: 'assistant', content: answer });
-      conversationHistory = compactHistory(conversationHistory);
-    }
-
-    function currentHistoryForRequest() {
-      const stored = loadConv(activeConversationId);
-      if (stored && Array.isArray(stored.messages) && stored.messages.length) {
-        return compactHistory(stored.messages);
-      }
-      return compactHistory(conversationHistory);
+    async function conversationAction(payload) {
+      return postJson('/conversations', payload, authHeaders());
     }
 
     function clearConversation() {
       if (answerInFlight) return;
-      conversationHistory = [];
+      activeConversationId = null;
+      try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
       questionInput.value = '';
       messages.innerHTML = starterMessageHtml;
-      startNewConversation();
       updateQuestionState();
       loadPrompts();
       renderRecents();
@@ -1161,89 +1140,46 @@ permalink: "/"
       trackTinylyticsEvent('librarian.clear');
     }
 
-    function newConversationId() {
-      return 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
-    }
-
-    function safeLocalGet(key, fallback) {
-      try {
-        const raw = window.localStorage.getItem(key);
-        if (raw == null) return fallback;
-        return JSON.parse(raw);
-      } catch (error) { return fallback; }
-    }
-
-    function safeLocalSet(key, value) {
-      try { window.localStorage.setItem(key, JSON.stringify(value)); } catch (error) { /* quota or disabled */ }
-    }
-
-    function loadConv(id) { return id ? safeLocalGet(convPrefix + id, null) : null; }
-    function saveConv(conv) { if (conv && conv.id) safeLocalSet(convPrefix + conv.id, conv); }
-    function deleteConvStorage(id) {
-      if (!id) return;
-      try { window.localStorage.removeItem(convPrefix + id); } catch (error) { /* ignore */ }
-    }
-    function loadConvList() { return safeLocalGet(convListKey, []) || []; }
-    function saveConvList(list) { safeLocalSet(convListKey, list); }
-
-    function startNewConversation() {
-      activeConversationId = newConversationId();
-      try { window.localStorage.setItem(activeConvKey, activeConversationId); } catch (error) { /* ignore */ }
-    }
-
-    function ensureActiveConversation() {
-      if (activeConversationId) return activeConversationId;
-      const saved = window.localStorage.getItem(activeConvKey);
-      if (saved && loadConv(saved)) {
-        activeConversationId = saved;
-      } else {
-        startNewConversation();
-      }
-      return activeConversationId;
-    }
-
-    function upsertConvListEntry(conv) {
-      const list = loadConvList().filter((entry) => entry && entry.id !== conv.id);
-      list.unshift({ id: conv.id, title: conv.title || 'Untitled chat', updatedAt: conv.updatedAt });
-      if (list.length > maxStoredConversations) {
-        const removed = list.splice(maxStoredConversations);
-        removed.forEach((entry) => deleteConvStorage(entry.id));
-      }
-      saveConvList(list);
-    }
-
-    function removeConvListEntry(id) {
-      saveConvList(loadConvList().filter((entry) => entry && entry.id !== id));
-    }
-
-    function persistTurn(userText, assistantAnswer, scope, citations, requestId) {
-      const id = ensureActiveConversation();
-      const conv = loadConv(id) || { id, title: '', createdAt: Date.now(), updatedAt: Date.now(), messages: [] };
-      conv.messages.push({ role: 'user', content: userText, scope });
-      conv.messages.push({
-        role: 'assistant',
-        content: assistantAnswer || '',
-        citations: citations || [],
-        requestId: requestId || ''
-      });
-      conv.updatedAt = Date.now();
-      if (!conv.title) conv.title = userText.replace(/\s+/g, ' ').slice(0, 80);
-      saveConv(conv);
-      upsertConvListEntry(conv);
+    function upsertConversationSummary(conversation) {
+      if (!conversation || !(conversation.id || conversation.conversation_id)) return;
+      const id = conversation.id || conversation.conversation_id;
+      conversations = conversations.filter((entry) => (entry.id || entry.conversation_id) !== id);
+      conversations.unshift({ ...conversation, id, conversation_id: id });
+      conversations.sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')));
+      conversations = conversations.slice(0, maxRecents);
       renderRecents();
+    }
+
+    async function refreshConversations() {
+      if (!token()) {
+        conversations = [];
+        renderRecents();
+        return [];
+      }
+      try {
+        const data = await conversationAction({ action: 'list', limit: maxRecents });
+        conversations = (data.conversations || []).map((entry) => ({
+          ...entry,
+          id: entry.id || entry.conversation_id
+        })).filter((entry) => entry.id);
+        if (activeConversationId && !conversations.some((entry) => entry.id === activeConversationId)) {
+          activeConversationId = null;
+          try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
+        }
+        renderRecents();
+        return conversations;
+      } catch (error) {
+        trackTinylyticsEvent('librarian.conversations_error', 'list');
+        renderRecents();
+        return conversations;
+      }
     }
 
     function renderRecents() {
       const railRecents = document.getElementById('rail-recents');
       const railRecentsEmpty = document.getElementById('rail-recents-empty');
       if (!railRecents || !railRecentsEmpty) return;
-      const savedList = loadConvList().filter((entry) => entry && entry.id);
-      const validList = savedList.filter((entry) => {
-        const conv = loadConv(entry.id);
-        return conv && Array.isArray(conv.messages) && conv.messages.length > 0;
-      });
-      if (validList.length !== savedList.length) saveConvList(validList);
-      const list = validList.slice(0, maxRecents);
+      const list = conversations.filter((entry) => entry && entry.id).slice(0, maxRecents);
       if (!list.length) {
         railRecents.innerHTML = '';
         railRecents.hidden = true;
@@ -1263,43 +1199,44 @@ permalink: "/"
       }).join('');
     }
 
-    function loadConversationIntoChat(id) {
+    async function loadConversationIntoChat(id) {
       if (answerInFlight) return;
-      const conv = loadConv(id);
-      if (!conv) return;
-      activeConversationId = id;
-      try { window.localStorage.setItem(activeConvKey, id); } catch (error) { /* ignore */ }
-      conversationHistory = [];
-      messages.innerHTML = starterMessageHtml;
-      hidePrompts();
-      const scopeFallback = currentScope();
-      for (const msg of conv.messages || []) {
-        if (msg.role === 'user') {
-          const el = addMessage('user', `<p>${escapeHtml(msg.content || '')}</p>`);
-          addPromptActions(el, msg.content || '', msg.scope || scopeFallback);
-          conversationHistory.push({ role: 'user', content: msg.content || '' });
-        } else if (msg.role === 'assistant') {
-          const el = addMessage('assistant', renderAnswer(msg.content || '', msg.citations || []));
-          if (msg.requestId) addResponseActions(el, msg.requestId);
-          conversationHistory.push({ role: 'assistant', content: msg.content || '' });
+      const conversationId = String(id || '').trim();
+      if (!conversationId) return;
+      try {
+        const data = await conversationAction({ action: 'get', conversation_id: conversationId });
+        activeConversationId = conversationId;
+        try { window.localStorage.setItem(activeConvKey, conversationId); } catch (error) { /* ignore */ }
+        if (data.conversation) upsertConversationSummary(data.conversation);
+        messages.innerHTML = starterMessageHtml;
+        hidePrompts();
+        const scopeFallback = currentScope();
+        for (const msg of data.messages || []) {
+          if (msg.role === 'user') {
+            const el = addMessage('user', `<p>${escapeHtml(msg.content || '')}</p>`);
+            addPromptActions(el, msg.content || '', msg.scope || scopeFallback);
+          } else if (msg.role === 'assistant') {
+            const el = addMessage('assistant', renderAnswer(msg.content || '', msg.citations || []));
+            if (msg.request_id || msg.requestId) addResponseActions(el, msg.request_id || msg.requestId);
+          }
         }
+        questionInput.value = '';
+        updateQuestionState();
+        renderRecents();
+        scheduleComposerReserveUpdate();
+        scrollChatToBottom({ force: true });
+        questionInput.focus();
+      } catch (error) {
+        trackTinylyticsEvent('librarian.conversations_error', 'get');
       }
-      conversationHistory = compactHistory(conversationHistory);
-      questionInput.value = '';
-      updateQuestionState();
-      renderRecents();
-      scheduleComposerReserveUpdate();
-      scrollChatToBottom({ force: true });
-      questionInput.focus();
     }
 
-    function clearAllConversations() {
+    async function clearAllConversations() {
       if (answerInFlight) return;
-      const list = loadConvList();
-      list.forEach((entry) => deleteConvStorage(entry.id));
-      saveConvList([]);
-      try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
-      activeConversationId = null;
+      for (const entry of [...conversations]) {
+        if (entry.id) await conversationAction({ action: 'delete', conversation_id: entry.id }).catch(() => null);
+      }
+      conversations = [];
       clearConversation();
     }
 
@@ -1434,7 +1371,7 @@ permalink: "/"
       }
     }
 
-    async function postStreamingChat(message, pending, history, scope) {
+    async function postStreamingChat(message, pending, scope) {
       if (!streamBase) {
         throw new Error('Thingy has not been connected to the archive stream API yet.');
       }
@@ -1442,6 +1379,8 @@ permalink: "/"
       let answer = '';
       let citations = [];
       let requestId = '';
+      let conversationId = activeConversationId || '';
+      let conversation = null;
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 85000);
       const response = await fetch(`${streamBase}/chat`, {
@@ -1450,7 +1389,11 @@ permalink: "/"
           'content-type': 'application/json',
           authorization: `Bearer ${token()}`
         },
-        body: JSON.stringify({ message, history, scope }),
+        body: JSON.stringify({
+          message,
+          scope,
+          conversation_id: conversationId || undefined
+        }),
         signal: controller.signal
       }).catch((error) => {
         if (error.name === 'AbortError') {
@@ -1484,6 +1427,11 @@ permalink: "/"
       function applyEvent(eventName, data) {
         if (eventName === 'meta') {
           requestId = data.request_id || requestId;
+          if (data.conversation_id) {
+            conversationId = data.conversation_id;
+            activeConversationId = conversationId;
+            try { window.localStorage.setItem(activeConvKey, conversationId); } catch (error) { /* ignore */ }
+          }
         } else if (eventName === 'status') {
           answer = '';
           pending.classList.add('librarian-message-pending');
@@ -1503,6 +1451,14 @@ permalink: "/"
         } else if (eventName === 'citations') {
           citations = data.citations || [];
           schedulePendingRender();
+        } else if (eventName === 'done') {
+          requestId = data.request_id || requestId;
+          if (data.conversation_id) {
+            conversationId = data.conversation_id;
+            activeConversationId = conversationId;
+            try { window.localStorage.setItem(activeConvKey, conversationId); } catch (error) { /* ignore */ }
+          }
+          if (data.conversation) conversation = data.conversation;
         } else if (eventName === 'error') {
           const error = new Error(data.error || 'Thingy is unavailable.');
           error.requestId = data.request_id || requestId;
@@ -1536,7 +1492,7 @@ permalink: "/"
         window.cancelAnimationFrame(renderFrame);
         renderPendingAnswer();
       }
-      return { answer, citations, request_id: requestId };
+      return { answer, citations, request_id: requestId, conversation_id: conversationId, conversation };
     }
 
     authForm.addEventListener('submit', async (event) => {
@@ -1589,7 +1545,6 @@ permalink: "/"
       hidePrompts();
       const questionWordCount = message.split(/\s+/).filter(Boolean).length;
       const questionSize = questionWordCount < 6 ? 'short' : questionWordCount < 18 ? 'medium' : 'long';
-      const history = currentHistoryForRequest();
       autoFollowChat = true;
       const userMessage = addMessage('user', `<p>${escapeHtml(message)}</p>`);
       addPromptActions(userMessage, message, scope);
@@ -1598,11 +1553,15 @@ permalink: "/"
       const pending = addMessage('assistant', '<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>Thingy is looking through the archive...</p>');
       pending.classList.add('librarian-message-pending');
       try {
-        const data = await postStreamingChat(message, pending, history, scope);
+        const data = await postStreamingChat(message, pending, scope);
         pending.classList.remove('librarian-message-pending');
-        rememberTurn(message, data.answer || '');
         addResponseActions(pending, data.request_id);
-        persistTurn(message, data.answer || '', scope, data.citations || [], data.request_id || '');
+        if (data.conversation_id) {
+          activeConversationId = data.conversation_id;
+          try { window.localStorage.setItem(activeConvKey, activeConversationId); } catch (error) { /* ignore */ }
+        }
+        if (data.conversation) upsertConversationSummary(data.conversation);
+        await refreshConversations();
         trackTinylyticsEvent('librarian.answer_success', `${questionSize}.${(data.citations || []).length}`);
       } catch (error) {
         pending.innerHTML = `<p>${escapeHtml(error.message)}</p>`;
@@ -1718,12 +1677,19 @@ permalink: "/"
       if (srcpickPositionFrame) return;
       srcpickPositionFrame = window.requestAnimationFrame(positionSrcPick);
     }
+    function syncSrcPickPosition() {
+      if (srcpickPositionFrame) {
+        window.cancelAnimationFrame(srcpickPositionFrame);
+        srcpickPositionFrame = 0;
+      }
+      positionSrcPick();
+    }
     function toggleSrcPick(force) {
       if (!srcpickPop || !srcpickBtn) return;
       const open = force === undefined ? srcpickPop.hasAttribute('hidden') : force;
       srcpickPop.toggleAttribute('hidden', !open);
       srcpickBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      if (open) scheduleSrcPickPosition();
+      if (open) syncSrcPickPosition();
     }
     function refreshSrcPick() {
       if (!srcpickLabelEl || !srcpickDotsEl || !srcpickNoteEl) return;
@@ -1768,26 +1734,31 @@ permalink: "/"
     /* ---- Recents list interactions ---- */
     const railRecentsEl = document.getElementById('rail-recents');
     if (railRecentsEl) {
-      railRecentsEl.addEventListener('click', (event) => {
+      railRecentsEl.addEventListener('click', async (event) => {
         const deleteBtn = event.target instanceof Element ? event.target.closest('[data-action="delete-conv"]') : null;
         if (deleteBtn) {
           event.preventDefault();
           event.stopPropagation();
           const id = deleteBtn.dataset.id;
           if (!id) return;
-          deleteConvStorage(id);
-          removeConvListEntry(id);
-          if (id === activeConversationId) {
-            activeConversationId = null;
-            try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
-            clearConversation();
-          } else {
-            renderRecents();
+          deleteBtn.disabled = true;
+          try {
+            await conversationAction({ action: 'delete', conversation_id: id });
+            conversations = conversations.filter((entry) => entry.id !== id);
+            if (id === activeConversationId) {
+              clearConversation();
+            } else {
+              renderRecents();
+            }
+            trackTinylyticsEvent('librarian.conversation_delete');
+          } catch (error) {
+            deleteBtn.disabled = false;
+            trackTinylyticsEvent('librarian.conversations_error', 'delete');
           }
           return;
         }
         const openBtn = event.target instanceof Element ? event.target.closest('button[data-id]') : null;
-        if (openBtn) loadConversationIntoChat(openBtn.dataset.id);
+        if (openBtn) await loadConversationIntoChat(openBtn.dataset.id);
       });
     }
 
@@ -1841,7 +1812,6 @@ permalink: "/"
 
     /* ---- Conversation bootstrap ---- */
     refreshAccountIdentity();
-    ensureActiveConversation();
     renderRecents();
 
     if (email) {
@@ -1852,13 +1822,15 @@ permalink: "/"
       authPanel.hidden = true;
       chatPanel.hidden = false;
       scheduleComposerReserveUpdate();
-      const activeId = ensureActiveConversation();
-      const conv = loadConv(activeId);
-      if (conv && conv.messages && conv.messages.length) {
-        loadConversationIntoChat(activeId);
-      } else {
-        loadPrompts();
-      }
+      const savedActiveId = window.localStorage.getItem(activeConvKey);
+      refreshConversations().then((list) => {
+        const active = savedActiveId && list.some((entry) => entry.id === savedActiveId) ? savedActiveId : '';
+        if (active) {
+          loadConversationIntoChat(active);
+        } else {
+          loadPrompts();
+        }
+      });
       trackTinylyticsEvent('librarian.session_resume');
       maybeSubmitInitialPrompt();
     }
