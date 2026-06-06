@@ -242,6 +242,7 @@ permalink: "/"
     const params = new URLSearchParams(window.location.search);
     const email = normalizeEmail(params.get('email'));
     const initialPrompt = normalizeInitialPrompt(params.get('prompt'));
+    const hasInitialPrompt = Boolean(initialPrompt);
     const initialScope = normalizeScopeParam(params.get('scope')) || normalizeScopeParam(params.get('corpus'));
     let activeScope = initialScope || 'all';
     let initialPromptSubmitted = false;
@@ -571,11 +572,17 @@ permalink: "/"
       hideAuthActions();
       resetMessages();
       refreshConversations().then(() => {
+        if (hasInitialPrompt) {
+          activeConversationId = null;
+          try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
+          renderRecents();
+          maybeSubmitInitialPrompt();
+          return;
+        }
         if (!activeConversationId) startAgentWelcome();
       });
       scheduleComposerReserveUpdate();
       questionInput.focus();
-      maybeSubmitInitialPrompt();
     }
 
     function clearToken() {
@@ -1715,6 +1722,7 @@ permalink: "/"
     function maybeSubmitInitialPrompt() {
       if (!initialPrompt || initialPromptSubmitted || answerInFlight || !token()) return;
       initialPromptSubmitted = true;
+      hidePrompts();
       questionInput.value = initialPrompt;
       updateQuestionState();
       questionForm.requestSubmit();
@@ -2047,7 +2055,7 @@ permalink: "/"
     }
 
     async function startAgentWelcome() {
-      if (!token() || answerInFlight || welcomeInFlight || (initialPrompt && !initialPromptSubmitted)) return;
+      if (!token() || answerInFlight || welcomeInFlight || hasInitialPrompt) return;
       hidePrompts();
       awaitingName = !preferredName;
       welcomeInFlight = true;
@@ -2460,6 +2468,14 @@ permalink: "/"
       scheduleComposerReserveUpdate();
       const savedActiveId = window.localStorage.getItem(activeConvKey);
       refreshConversations().then((list) => {
+        if (hasInitialPrompt) {
+          activeConversationId = null;
+          try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
+          resetMessages();
+          renderRecents();
+          maybeSubmitInitialPrompt();
+          return;
+        }
         const active = savedActiveId && list.some((entry) => entry.id === savedActiveId) ? savedActiveId : '';
         if (active) {
           loadConversationIntoChat(active);
@@ -2468,7 +2484,6 @@ permalink: "/"
         }
       });
       trackTinylyticsEvent('librarian.session_resume');
-      maybeSubmitInitialPrompt();
     }
   })();
 </script>
