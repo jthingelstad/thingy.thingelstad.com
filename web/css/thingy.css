@@ -802,6 +802,123 @@ th {
   background: var(--line-soft);
 }
 
+.thingy-experience {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-soft);
+  font-family: var(--sans);
+}
+
+.thingy-exp-head {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.thingy-exp-kicker {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.thingy-exp-head strong {
+  font-size: 1rem;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.thingy-exp-intro {
+  margin: 0 0 10px;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.thingy-exp-sources {
+  display: grid;
+  gap: 7px;
+}
+
+.thingy-exp-source {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  padding: 9px 10px;
+  border: 1px solid var(--line-soft);
+  border-left: 3px solid var(--accent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--surface) 82%, var(--surface-2));
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.thingy-exp-source.is-wt { border-left-color: var(--source-newsletter); }
+.thingy-exp-source.is-blog { border-left-color: var(--source-blog); }
+.thingy-exp-source.is-podcast { border-left-color: var(--source-podcast); }
+
+a.thingy-exp-source:hover {
+  border-color: var(--accent);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.thingy-exp-index {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font: 800 0.74rem / 1 var(--mono);
+}
+
+.thingy-exp-source-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.thingy-exp-source-body strong {
+  font-size: 0.94rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.thingy-exp-source-body small {
+  font-size: 0.78rem;
+  line-height: 1.25;
+  color: var(--muted);
+}
+
+.thingy-exp-source-body p {
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.32;
+}
+
+.thingy-exp-prompt {
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-deep);
+  padding: 7px 11px;
+  font: 800 0.82rem / 1 var(--sans);
+  cursor: pointer;
+}
+
+.thingy-exp-prompt:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
 .librarian-message-user {
   justify-self: end;
   background: var(--accent);

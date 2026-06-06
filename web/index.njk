@@ -941,8 +941,53 @@ permalink: "/"
       return html.join('');
     }
 
-    function renderAnswer(answer, citations = []) {
-      return renderMarkdown(answer, citations);
+    function sourceAccentClass(kind) {
+      const normalized = String(kind || '').toLowerCase().replace(/[\s-]+/g, '_');
+      if (normalized === 'weekly_thing' || normalized === 'newsletter' || normalized === 'issue' || normalized === 'chunk') return 'is-wt';
+      if (normalized === 'blog') return 'is-blog';
+      if (normalized === 'podcast' || normalized === 'another_thing') return 'is-podcast';
+      return '';
+    }
+
+    function renderExperience(experience) {
+      if (!experience || typeof experience !== 'object') return '';
+      const items = Array.isArray(experience.items) ? experience.items.slice(0, 5) : [];
+      if (!items.length && !experience.intro) return '';
+      const kind = experience.kind === 'spark' ? 'spark' : 'trail';
+      const title = experience.title || (kind === 'spark' ? 'Archive Spark' : 'Thingy Trail');
+      const prompt = String(experience.prompt || '').trim();
+      const itemHtml = items.map((item, index) => {
+        const href = safeMarkdownUrl(item.url || '');
+        const titleText = item.title || item.subject || 'Archive source';
+        const meta = [item.label, item.publish_date ? String(item.publish_date).slice(0, 10) : ''].filter(Boolean).join(' · ');
+        const reason = item.reason ? `<p>${escapeHtml(item.reason)}</p>` : '';
+        const accent = sourceAccentClass(item.source_kind);
+        const body = `
+          <span class="thingy-exp-index">${index + 1}</span>
+          <span class="thingy-exp-source-body">
+            <strong>${escapeHtml(titleText)}</strong>
+            ${meta ? `<small>${escapeHtml(meta)}</small>` : ''}
+            ${reason}
+          </span>`;
+        if (href && href !== '#') {
+          return `<a class="thingy-exp-source ${accent}" href="${href}">${body}</a>`;
+        }
+        return `<div class="thingy-exp-source ${accent}">${body}</div>`;
+      }).join('');
+      return `
+        <aside class="thingy-experience thingy-experience-${kind}" aria-label="${escapeHtml(title)}">
+          <div class="thingy-exp-head">
+            <span class="thingy-exp-kicker">${kind === 'spark' ? 'Archive Spark' : 'Thingy Trail'}</span>
+            <strong>${escapeHtml(title)}</strong>
+          </div>
+          ${experience.intro ? `<p class="thingy-exp-intro">${escapeHtml(experience.intro)}</p>` : ''}
+          ${itemHtml ? `<div class="thingy-exp-sources">${itemHtml}</div>` : ''}
+          ${prompt ? `<button type="button" class="thingy-exp-prompt" data-experience-prompt="${escapeHtml(prompt)}">${kind === 'spark' ? 'Follow this spark' : 'Continue this trail'}</button>` : ''}
+        </aside>`;
+    }
+
+    function renderAnswer(answer, citations = [], experience = null) {
+      return renderMarkdown(answer, citations) + renderExperience(experience);
     }
 
     function setFeedbackState(container, reaction) {
@@ -1641,6 +1686,7 @@ permalink: "/"
 
       let answer = '';
       let citations = [];
+      let experience = null;
       let requestId = '';
       let conversationId = activeConversationId || '';
       let conversation = null;
@@ -1680,7 +1726,7 @@ permalink: "/"
       function renderPendingAnswer() {
         renderFrame = 0;
         pending.classList.remove('librarian-message-pending');
-        pending.innerHTML = renderAnswer(answer, citations);
+        pending.innerHTML = renderAnswer(answer, citations, experience);
         scheduleChatScroll();
       }
 
@@ -1715,6 +1761,9 @@ permalink: "/"
           schedulePendingRender();
         } else if (eventName === 'citations') {
           citations = data.citations || [];
+          schedulePendingRender();
+        } else if (eventName === 'experience') {
+          experience = data.experience || null;
           schedulePendingRender();
         } else if (eventName === 'done') {
           requestId = data.request_id || requestId;
@@ -1757,7 +1806,7 @@ permalink: "/"
         window.cancelAnimationFrame(renderFrame);
         renderPendingAnswer();
       }
-      return { answer, citations, request_id: requestId, conversation_id: conversationId, conversation };
+      return { answer, citations, experience, request_id: requestId, conversation_id: conversationId, conversation };
     }
 
     async function postStreamingWelcome(pending, scope) {
@@ -1766,6 +1815,7 @@ permalink: "/"
       }
 
       let answer = '';
+      let experience = null;
       let requestId = '';
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 45000);
@@ -1801,7 +1851,7 @@ permalink: "/"
       function renderPendingWelcome() {
         renderFrame = 0;
         pending.classList.remove('librarian-message-pending');
-        pending.innerHTML = renderAnswer(answer, []);
+        pending.innerHTML = renderAnswer(answer, [], experience);
         scheduleChatScroll();
       }
 
@@ -1828,6 +1878,9 @@ permalink: "/"
           scheduleWelcomeRender();
         } else if (eventName === 'answer') {
           answer = data.answer || '';
+          scheduleWelcomeRender();
+        } else if (eventName === 'experience') {
+          experience = data.experience || null;
           scheduleWelcomeRender();
         } else if (eventName === 'done') {
           requestId = data.request_id || requestId;
@@ -1864,7 +1917,7 @@ permalink: "/"
         window.cancelAnimationFrame(renderFrame);
         renderPendingWelcome();
       }
-      return { answer, request_id: requestId };
+      return { answer, experience, request_id: requestId };
     }
 
     async function startAgentWelcome() {
@@ -2001,6 +2054,16 @@ permalink: "/"
         updateQuestionState();
         questionForm.requestSubmit();
       }
+    });
+
+    messages.addEventListener('click', (event) => {
+      const target = event.target instanceof Element ? event.target : event.target.parentElement;
+      const button = target ? target.closest('button[data-experience-prompt]') : null;
+      if (!button || answerInFlight || welcomeInFlight) return;
+      questionInput.value = button.dataset.experiencePrompt || '';
+      updateQuestionState();
+      questionInput.focus();
+      trackTinylyticsEvent('librarian.experience_prompt', button.closest('.thingy-experience-spark') ? 'spark' : 'trail');
     });
 
     updateQuestionState();
