@@ -1140,6 +1140,14 @@ permalink: "/"
       conversationHistory = compactHistory(conversationHistory);
     }
 
+    function currentHistoryForRequest() {
+      const stored = loadConv(activeConversationId);
+      if (stored && Array.isArray(stored.messages) && stored.messages.length) {
+        return compactHistory(stored.messages);
+      }
+      return compactHistory(conversationHistory);
+    }
+
     function clearConversation() {
       if (answerInFlight) return;
       conversationHistory = [];
@@ -1581,7 +1589,7 @@ permalink: "/"
       hidePrompts();
       const questionWordCount = message.split(/\s+/).filter(Boolean).length;
       const questionSize = questionWordCount < 6 ? 'short' : questionWordCount < 18 ? 'medium' : 'long';
-      const history = compactHistory(conversationHistory);
+      const history = currentHistoryForRequest();
       autoFollowChat = true;
       const userMessage = addMessage('user', `<p>${escapeHtml(message)}</p>`);
       addPromptActions(userMessage, message, scope);
