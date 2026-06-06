@@ -24,6 +24,10 @@ permalink: "/"
         <span class="label">New chat</span>
         <span class="kbd">⌘K</span>
       </button>
+      <button class="rail-newchat rail-map" type="button" id="thingy-curiosity-map" data-tinylytics-event="librarian.curiosity_map" title="Curiosity map">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><circle cx="5" cy="7" r="2"></circle><circle cx="19" cy="6" r="2"></circle><circle cx="18" cy="18" r="2"></circle><path d="M7 8l3.5 2.5M14.2 9.8L17.4 7.2M14.5 14.3l2.2 2.2"></path></svg>
+        <span class="label">Curiosity map</span>
+      </button>
 
       <div class="rail-body">
         <p class="rail-recents-label">Recents</p>
@@ -180,6 +184,7 @@ permalink: "/"
     const resendConfirmationButton = document.getElementById('librarian-resend-confirmation');
     const logoutButton = document.getElementById('librarian-logout');
     const clearChatButton = document.getElementById('librarian-clear-chat');
+    const curiosityMapButton = document.getElementById('thingy-curiosity-map');
     const questionInput = document.getElementById('librarian-question');
     const questionButton = questionForm.querySelector('button[type="submit"]');
     const voiceButton = document.getElementById('composer-voice');
@@ -190,6 +195,7 @@ permalink: "/"
     const messages = document.getElementById('librarian-messages');
     const chatScroll = document.querySelector('.thingy-chat-scroll');
     const composerZone = document.querySelector('.thingy-composer-zone');
+    const rail = document.querySelector('.rail');
     const prompts = document.getElementById('librarian-prompts');
     const storageKey = 'weeklyThingLibrarianToken';
     const userEmailKey = 'thingyUserEmail';
@@ -224,6 +230,7 @@ permalink: "/"
     let composerReserveFrame = 0;
     let feedbackStatusTimer = 0;
     let welcomeInFlight = false;
+    let mapInFlight = false;
     let speechRecognition = null;
     let speechListening = false;
     let speechBaseText = '';
@@ -671,12 +678,19 @@ permalink: "/"
       const composerObserver = new ResizeObserver(updateComposerReserve);
       composerObserver.observe(composerZone);
     }
-    window.addEventListener('resize', updateComposerReserve);
+    window.addEventListener('resize', () => {
+      updateComposerReserve();
+      if (rail && !window.matchMedia('(max-width: 640px)').matches) {
+        rail.style.display = '';
+        rail.style.left = '';
+        rail.style.transform = '';
+      }
+    });
 
     function updateQuestionState() {
       const length = questionInput.value.length;
       const hasSources = sourceCount() > 0;
-      const busy = answerInFlight || welcomeInFlight;
+      const busy = answerInFlight || welcomeInFlight || mapInFlight;
       questionCount.textContent = `${length} / ${maxQuestionChars}`;
       questionCount.classList.toggle('warning', length > maxQuestionChars * 0.9);
       if (sourceError) sourceError.textContent = hasSources ? '' : 'Switch on at least one source.';
@@ -685,6 +699,7 @@ permalink: "/"
       questionButton.setAttribute('aria-label', busy ? 'Thingy is answering' : 'Ask Thingy');
       questionButton.title = busy ? 'Thingy is answering' : 'Ask Thingy';
       clearChatButton.disabled = busy;
+      if (curiosityMapButton) curiosityMapButton.disabled = busy || !token() || !hasSources;
       scopeInputs.forEach((input) => { input.disabled = busy; });
       updateVoiceButtonState();
       updateMobileConversationTitle();
@@ -983,6 +998,73 @@ permalink: "/"
           ${experience.intro ? `<p class="thingy-exp-intro">${escapeHtml(experience.intro)}</p>` : ''}
           ${itemHtml ? `<div class="thingy-exp-sources">${itemHtml}</div>` : ''}
           ${prompt ? `<button type="button" class="thingy-exp-prompt" data-experience-prompt="${escapeHtml(prompt)}">${kind === 'spark' ? 'Follow this spark' : 'Continue this trail'}</button>` : ''}
+        </aside>`;
+    }
+
+    function curiosityMapPositions(nodes) {
+      const positioned = new Map();
+      const total = Math.max(nodes.length - 1, 1);
+      const compact = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
+      nodes.forEach((node, index) => {
+        if (index === 0 || node.kind === 'center') {
+          positioned.set(node.id, { x: 50, y: 50, scale: 1.05 });
+          return;
+        }
+        const angle = (-92 + ((index - 1) * 360 / total)) * Math.PI / 180;
+        const isWide = total > 5 && index % 2 === 0;
+        const radiusX = compact ? (isWide ? 30 : 26) : (isWide ? 40 : 34);
+        const radiusY = compact ? (isWide ? 39 : 33) : (isWide ? 36 : 31);
+        positioned.set(node.id, {
+          x: Math.round((50 + Math.cos(angle) * radiusX) * 10) / 10,
+          y: Math.round((50 + Math.sin(angle) * radiusY) * 10) / 10,
+          scale: Math.max(0.84, Math.min(1, Number(node.weight || 0.7) * 0.18 + 0.84))
+        });
+      });
+      return positioned;
+    }
+
+    function renderCuriosityMap(map) {
+      if (!map || typeof map !== 'object') return '';
+      const rawNodes = Array.isArray(map.nodes) ? map.nodes.filter((node) => node && node.id && node.label).slice(0, 8) : [];
+      if (!rawNodes.length) return '';
+      const nodes = rawNodes.some((node) => node.kind === 'center') ? rawNodes : [{ ...rawNodes[0], kind: 'center' }, ...rawNodes.slice(1)];
+      const positions = curiosityMapPositions(nodes);
+      const edges = (Array.isArray(map.edges) ? map.edges : []).filter((edge) => positions.has(edge.from) && positions.has(edge.to)).slice(0, 10);
+      const edgeHtml = edges.map((edge) => {
+        const from = positions.get(edge.from);
+        const to = positions.get(edge.to);
+        return `<line x1="${from.x}%" y1="${from.y}%" x2="${to.x}%" y2="${to.y}%"></line>`;
+      }).join('');
+      const nodeHtml = nodes.map((node) => {
+        const pos = positions.get(node.id) || { x: 50, y: 50, scale: 1 };
+        const kind = node.kind === 'center' ? 'center' : node.kind === 'domain' ? 'domain' : node.kind === 'recent' ? 'recent' : 'archive';
+        const prompt = escapeHtml(String(node.prompt || '').trim());
+        const title = escapeHtml(node.why || node.label);
+        return `<button type="button" class="thingy-map-node is-${kind}" data-map-prompt="${prompt}" style="--x:${pos.x}%;--y:${pos.y}%;--scale:${pos.scale}" title="${title}"><span>${escapeHtml(node.label)}</span></button>`;
+      }).join('');
+      const sources = (Array.isArray(map.sources) ? map.sources : []).slice(0, 3);
+      const sourceHtml = sources.map((source) => {
+        const href = safeMarkdownUrl(source.url || '');
+        const title = escapeHtml(source.title || source.subject || 'Archive source');
+        const meta = escapeHtml([source.label, source.publish_date ? String(source.publish_date).slice(0, 10) : ''].filter(Boolean).join(' · '));
+        const body = `<strong>${title}</strong>${meta ? `<small>${meta}</small>` : ''}`;
+        return href && href !== '#'
+          ? `<a class="thingy-map-source ${sourceAccentClass(source.source_kind)}" href="${href}">${body}</a>`
+          : `<span class="thingy-map-source ${sourceAccentClass(source.source_kind)}">${body}</span>`;
+      }).join('');
+      const prompt = String(map.prompt || '').trim();
+      return `
+        <aside class="thingy-curiosity-map" aria-label="${escapeHtml(map.title || 'Curiosity map')}">
+          <div class="thingy-map-head">
+            <span class="thingy-exp-kicker">Curiosity Map</span>
+            <strong>${escapeHtml(map.title || 'Curiosity Map')}</strong>
+          </div>
+          <div class="thingy-map-canvas">
+            <svg class="thingy-map-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${edgeHtml}</svg>
+            ${nodeHtml}
+          </div>
+          ${sourceHtml ? `<div class="thingy-map-sources">${sourceHtml}</div>` : ''}
+          ${prompt ? `<button type="button" class="thingy-exp-prompt" data-map-prompt="${escapeHtml(prompt)}">Follow the surprising branch</button>` : ''}
         </aside>`;
     }
 
@@ -1413,6 +1495,15 @@ permalink: "/"
     function setMobileRailOpen(open) {
       if (!appShell) return;
       appShell.classList.toggle('is-mobile-rail-open', Boolean(open));
+      if (rail && window.matchMedia('(max-width: 640px)').matches) {
+        rail.style.display = open ? 'flex' : '';
+        rail.style.left = open ? '0px' : '';
+        rail.style.transform = 'none';
+      } else if (rail) {
+        rail.style.display = '';
+        rail.style.left = '';
+        rail.style.transform = '';
+      }
       if (mobileConversationsToggle) {
         mobileConversationsToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
         mobileConversationsToggle.setAttribute('aria-label', open ? 'Hide conversations' : 'Show conversations');
@@ -1469,6 +1560,41 @@ permalink: "/"
       questionInput.focus();
       startAgentWelcome();
       trackTinylyticsEvent('librarian.clear');
+    }
+
+    async function showCuriosityMap(center = '') {
+      if (!token() || answerInFlight || welcomeInFlight || mapInFlight) return;
+      const scope = currentScope();
+      if (!scope) {
+        updateQuestionState();
+        return;
+      }
+      hidePrompts();
+      if (window.matchMedia('(max-width: 640px)').matches) setMobileRailOpen(false);
+      stopSpeaking();
+      mapInFlight = true;
+      updateQuestionState();
+      autoFollowChat = true;
+      const pending = addMessage('assistant', '<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>Thingy is drawing connections...</p>');
+      pending.classList.add('librarian-message-pending');
+      try {
+        const map = await postStreamJson('/curiosity-map', {
+          scope,
+          center,
+          user_profile: readerProfileContext()
+        }, authHeaders());
+        pending.classList.remove('librarian-message-pending');
+        pending.innerHTML = renderCuriosityMap(map) || '<p>Thingy could not find enough connected threads to draw a map yet.</p>';
+        scheduleChatScroll({ force: true });
+        trackTinylyticsEvent('librarian.curiosity_map_success', `${(map.nodes || []).length}.${(map.sources || []).length}`);
+      } catch (error) {
+        pending.innerHTML = `<p>${escapeHtml(error.message)}</p>`;
+        trackTinylyticsEvent('librarian.curiosity_map_error', error.requestId ? 'server' : 'client');
+        if (/validate|subscriber/i.test(error.message)) clearToken();
+      } finally {
+        mapInFlight = false;
+        updateQuestionState();
+      }
     }
 
     function upsertConversationSummary(conversation) {
@@ -1965,6 +2091,11 @@ permalink: "/"
     });
 
     clearChatButton.addEventListener('click', clearConversation);
+    if (curiosityMapButton) {
+      curiosityMapButton.addEventListener('click', () => {
+        showCuriosityMap();
+      });
+    }
 
     async function submitQuestion() {
       if (answerInFlight) return;
@@ -2058,12 +2189,15 @@ permalink: "/"
 
     messages.addEventListener('click', (event) => {
       const target = event.target instanceof Element ? event.target : event.target.parentElement;
-      const button = target ? target.closest('button[data-experience-prompt]') : null;
-      if (!button || answerInFlight || welcomeInFlight) return;
-      questionInput.value = button.dataset.experiencePrompt || '';
+      const button = target ? target.closest('button[data-experience-prompt], button[data-map-prompt]') : null;
+      if (!button || answerInFlight || welcomeInFlight || mapInFlight) return;
+      questionInput.value = button.dataset.experiencePrompt || button.dataset.mapPrompt || '';
       updateQuestionState();
       questionInput.focus();
-      trackTinylyticsEvent('librarian.experience_prompt', button.closest('.thingy-experience-spark') ? 'spark' : 'trail');
+      trackTinylyticsEvent(
+        button.dataset.mapPrompt ? 'librarian.curiosity_map_prompt' : 'librarian.experience_prompt',
+        button.dataset.mapPrompt ? 'map' : button.closest('.thingy-experience-spark') ? 'spark' : 'trail'
+      );
     });
 
     updateQuestionState();
