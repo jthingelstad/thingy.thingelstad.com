@@ -106,6 +106,10 @@ permalink: "/"
             <label for="librarian-question" class="sr-only">Ask Thingy</label>
             <textarea id="librarian-question" name="message" rows="1" required maxlength="1200" placeholder="Message Thingy&hellip;" aria-describedby="librarian-question-count librarian-source-error thingy-ai-note"></textarea>
             <div class="composer-toolbar">
+              <button class="composer-voice" id="composer-voice" type="button" aria-label="Dictate prompt" title="Dictate prompt">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><path d="M12 19v3"></path></svg>
+              </button>
+              <span class="composer-voice-status" id="composer-voice-status" aria-live="polite"></span>
               <div class="srcpick" id="srcpick">
                 <button class="srcpick-btn" id="srcpick-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="srcpick-pop">
                   <svg class="layers" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"></path><path d="M3 13l9 5 9-5"></path></svg>
@@ -155,16 +159,6 @@ permalink: "/"
     </section>
   </div>
 
-  <div class="librarian-beta-overlay" id="librarian-beta-overlay" hidden>
-    <div class="librarian-beta-modal" role="dialog" aria-modal="true" aria-labelledby="librarian-beta-title" aria-describedby="librarian-beta-description">
-      <p class="eyebrow">Private Beta</p>
-      <h2 id="librarian-beta-title">Thingy is experimental</h2>
-      <p id="librarian-beta-description">Thingy can search and synthesize Jamie&rsquo;s published archive, but it may miss things, read sources too narrowly, or cite an imperfect set of references. It only uses archive sources and should show references when it can.</p>
-      <p>Beta conversations may be logged and reviewed to improve Thingy. Please treat this as an early preview and send along answers that feel especially useful, vague, weird, or wrong.</p>
-      <button type="button" id="librarian-beta-close">I understand</button>
-    </div>
-  </div>
-
 </section>
 
 <script>
@@ -188,6 +182,8 @@ permalink: "/"
     const clearChatButton = document.getElementById('librarian-clear-chat');
     const questionInput = document.getElementById('librarian-question');
     const questionButton = questionForm.querySelector('button[type="submit"]');
+    const voiceButton = document.getElementById('composer-voice');
+    const voiceStatus = document.getElementById('composer-voice-status');
     const scopeInputs = Array.from(document.querySelectorAll('input[name="scope"]'));
     const sourceError = document.getElementById('librarian-source-error');
     const questionCount = document.getElementById('librarian-question-count');
@@ -195,10 +191,7 @@ permalink: "/"
     const chatScroll = document.querySelector('.thingy-chat-scroll');
     const composerZone = document.querySelector('.thingy-composer-zone');
     const prompts = document.getElementById('librarian-prompts');
-    const betaOverlay = document.getElementById('librarian-beta-overlay');
-    const betaCloseButton = document.getElementById('librarian-beta-close');
     const storageKey = 'weeklyThingLibrarianToken';
-    const betaNoticeStorageKey = 'weeklyThingLibrarianBetaNotice';
     const userEmailKey = 'thingyUserEmail';
     const userProfileKey = 'thingyUserProfile';
     const railCollapsedKey = 'thingyRailCollapsed';
@@ -231,6 +224,12 @@ permalink: "/"
     let composerReserveFrame = 0;
     let feedbackStatusTimer = 0;
     let welcomeInFlight = false;
+    let speechRecognition = null;
+    let speechListening = false;
+    let speechBaseText = '';
+    let speechFinalText = '';
+    let speechUtterance = null;
+    let speechButton = null;
     const emailRe = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
     const params = new URLSearchParams(window.location.search);
@@ -431,6 +430,115 @@ permalink: "/"
       return selectedSources().length;
     }
 
+    function speechInputCtor() {
+      return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+    }
+
+    function speechInputSupported() {
+      return Boolean(speechInputCtor());
+    }
+
+    function setVoiceStatus(message) {
+      if (!voiceStatus) return;
+      voiceStatus.textContent = message || '';
+    }
+
+    function updateVoiceButtonState() {
+      if (!voiceButton) return;
+      const supported = speechInputSupported();
+      const busy = answerInFlight || welcomeInFlight;
+      voiceButton.disabled = !supported || (busy && !speechListening);
+      voiceButton.classList.toggle('is-listening', speechListening);
+      voiceButton.setAttribute('aria-pressed', speechListening ? 'true' : 'false');
+      if (!supported) {
+        voiceButton.title = 'Speech input not supported in this browser';
+        voiceButton.setAttribute('aria-label', 'Speech input not supported');
+      } else if (speechListening) {
+        voiceButton.title = 'Stop dictation';
+        voiceButton.setAttribute('aria-label', 'Stop dictation');
+      } else {
+        voiceButton.title = 'Dictate prompt';
+        voiceButton.setAttribute('aria-label', 'Dictate prompt');
+      }
+    }
+
+    function stopDictation() {
+      if (speechRecognition) {
+        try { speechRecognition.stop(); } catch (error) { /* ignore */ }
+      }
+    }
+
+    function renderDictation(interim = '') {
+      const parts = [speechBaseText, speechFinalText, interim]
+        .map((part) => String(part || '').trim())
+        .filter(Boolean);
+      questionInput.value = parts.join(' ').slice(0, maxQuestionChars);
+      updateQuestionState();
+    }
+
+    function startDictation() {
+      const Recognition = speechInputCtor();
+      if (!Recognition) {
+        setVoiceStatus('Speech input is not supported in this browser.');
+        updateVoiceButtonState();
+        return;
+      }
+      if (speechListening) {
+        stopDictation();
+        return;
+      }
+      const recognition = new Recognition();
+      speechRecognition = recognition;
+      speechBaseText = questionInput.value.trim();
+      speechFinalText = '';
+      speechListening = true;
+      setVoiceStatus('Listening...');
+      updateVoiceButtonState();
+      recognition.lang = navigator.language || 'en-US';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+      recognition.onresult = (event) => {
+        let interim = '';
+        for (let i = event.resultIndex; i < event.results.length; i += 1) {
+          const result = event.results[i];
+          const transcript = result[0]?.transcript || '';
+          if (result.isFinal) {
+            speechFinalText = `${speechFinalText} ${transcript}`.trim();
+          } else {
+            interim = `${interim} ${transcript}`.trim();
+          }
+        }
+        renderDictation(interim);
+      };
+      recognition.onerror = (event) => {
+        const kind = event.error || '';
+        if (kind === 'not-allowed' || kind === 'service-not-allowed') {
+          setVoiceStatus('Microphone access was blocked.');
+        } else if (kind === 'no-speech') {
+          setVoiceStatus('No speech detected.');
+        } else {
+          setVoiceStatus('Dictation stopped.');
+        }
+      };
+      recognition.onend = () => {
+        speechListening = false;
+        speechRecognition = null;
+        if (voiceStatus && voiceStatus.textContent === 'Listening...') setVoiceStatus('');
+        updateVoiceButtonState();
+      };
+      try {
+        recognition.start();
+        trackTinylyticsEvent('librarian.voice_input_start');
+      } catch (error) {
+        speechListening = false;
+        speechRecognition = null;
+        setVoiceStatus('Could not start dictation.');
+        updateVoiceButtonState();
+        trackTinylyticsEvent('librarian.voice_input_error', 'start');
+      }
+    }
+
     function setActiveScope(value, options = {}) {
       const sources = sourcesForScope(value);
       scopeInputs.forEach((input) => {
@@ -443,26 +551,7 @@ permalink: "/"
 
     setActiveScope(activeScope, { track: false });
 
-    function showBetaNotice() {
-      if (window.sessionStorage.getItem(betaNoticeStorageKey) === 'dismissed') return;
-      betaOverlay.hidden = false;
-      document.body.classList.add('librarian-beta-open');
-      betaCloseButton.focus();
-      trackTinylyticsEvent('librarian.beta_notice_shown');
-    }
-
-    function hideBetaNotice(options = {}) {
-      const remember = options.remember !== false;
-      const focusQuestion = options.focusQuestion !== false;
-      betaOverlay.hidden = true;
-      document.body.classList.remove('librarian-beta-open');
-      if (remember) window.sessionStorage.setItem(betaNoticeStorageKey, 'dismissed');
-      if (focusQuestion) questionInput.focus();
-      if (remember) trackTinylyticsEvent('librarian.beta_notice_dismissed');
-      maybeSubmitInitialPrompt();
-    }
-
-    function setToken(value, data = {}, options = {}) {
+    function setToken(value, data = {}) {
       window.localStorage.setItem(storageKey, value);
       setUserProfile(data);
       const enteredEmail = emailInput && emailInput.value ? emailInput.value.trim() : '';
@@ -478,12 +567,7 @@ permalink: "/"
         if (!activeConversationId) startAgentWelcome();
       });
       scheduleComposerReserveUpdate();
-      if (options.skipBetaNotice) {
-        hideBetaNotice({ remember: false, focusQuestion: false });
-      } else {
-        showBetaNotice();
-      }
-      if (betaOverlay.hidden) questionInput.focus();
+      questionInput.focus();
       maybeSubmitInitialPrompt();
     }
 
@@ -491,7 +575,6 @@ permalink: "/"
       window.localStorage.removeItem(storageKey);
       try { window.localStorage.removeItem(userEmailKey); } catch (error) { /* ignore */ }
       try { window.localStorage.removeItem(userProfileKey); } catch (error) { /* ignore */ }
-      hideBetaNotice({ remember: false, focusQuestion: false });
       conversations = [];
       activeConversationId = null;
       try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
@@ -603,6 +686,7 @@ permalink: "/"
       questionButton.title = busy ? 'Thingy is answering' : 'Ask Thingy';
       clearChatButton.disabled = busy;
       scopeInputs.forEach((input) => { input.disabled = busy; });
+      updateVoiceButtonState();
       updateMobileConversationTitle();
       autoSizeQuestionInput();
     }
@@ -909,6 +993,8 @@ permalink: "/"
     function actionIcon(name) {
       const icons = {
         copy: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
+        play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7-11-7z"></path></svg>',
+        pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14"></path><path d="M16 5v14"></path></svg>',
         up: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10v11"></path><path d="M15 5.5 14 10h5.7a2 2 0 0 1 2 2.3l-1.2 7a2 2 0 0 1-2 1.7H7"></path><path d="M7 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"></path><path d="M14 10V5.5a2.5 2.5 0 0 0-5 0L7 10"></path></svg>',
         down: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14V3"></path><path d="M15 18.5 14 14h5.7a2 2 0 0 0 2-2.3l-1.2-7A2 2 0 0 0 18.5 3H7"></path><path d="M7 14H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3"></path><path d="M14 14v4.5a2.5 2.5 0 0 1-5 0L7 14"></path></svg>',
         share: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"></path><path d="M12 16V3"></path><path d="m7 8 5-5 5 5"></path></svg>'
@@ -947,6 +1033,51 @@ permalink: "/"
       const text = (clone.innerText || clone.textContent || '').trim();
       scratch.remove();
       return { html, text };
+    }
+
+    function speechOutputSupported() {
+      return 'speechSynthesis' in window && typeof window.SpeechSynthesisUtterance === 'function';
+    }
+
+    function setSpeechButtonState(button, playing) {
+      if (!button) return;
+      button.classList.toggle('selected', playing);
+      button.setAttribute('aria-label', playing ? 'Stop reading answer' : 'Read answer aloud');
+      button.title = playing ? 'Stop reading answer' : 'Read answer aloud';
+      button.innerHTML = actionIcon(playing ? 'pause' : 'play');
+    }
+
+    function stopSpeaking() {
+      if (speechOutputSupported()) window.speechSynthesis.cancel();
+      setSpeechButtonState(speechButton, false);
+      speechUtterance = null;
+      speechButton = null;
+    }
+
+    function toggleSpeakAnswer(messageElement, button) {
+      if (!speechOutputSupported()) return 'Speech playback not supported';
+      if (speechButton === button && speechUtterance) {
+        stopSpeaking();
+        return 'Stopped';
+      }
+      stopSpeaking();
+      const payload = answerClipboardPayload(messageElement);
+      if (!payload.text) return 'Nothing to read';
+      const utterance = new window.SpeechSynthesisUtterance(payload.text);
+      utterance.lang = document.documentElement.lang || navigator.language || 'en-US';
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      utterance.onend = () => {
+        if (speechUtterance === utterance) stopSpeaking();
+      };
+      utterance.onerror = () => {
+        if (speechUtterance === utterance) stopSpeaking();
+      };
+      speechUtterance = utterance;
+      speechButton = button;
+      setSpeechButtonState(button, true);
+      window.speechSynthesis.speak(utterance);
+      return 'Reading';
     }
 
     function legacyCopyRichHtml(html, text) {
@@ -1103,8 +1234,11 @@ permalink: "/"
       if (!requestId) return;
       const controls = document.createElement('div');
       controls.className = 'librarian-feedback';
+      const playDisabled = speechOutputSupported() ? '' : ' disabled';
+      const playTitle = speechOutputSupported() ? 'Read answer aloud' : 'Speech playback not supported';
       controls.innerHTML = `
         <button type="button" data-action="copy" aria-label="Copy answer" title="Copy answer">${actionIcon('copy')}</button>
+        <button type="button" data-action="speak" aria-label="${playTitle}" title="${playTitle}"${playDisabled}>${actionIcon('play')}</button>
         <button type="button" data-reaction="up" aria-label="Good response" aria-pressed="false" title="Good response">${actionIcon('up')}</button>
         <button type="button" data-reaction="down" aria-label="Bad response" aria-pressed="false" title="Bad response">${actionIcon('down')}</button>
         <button type="button" data-action="share" aria-label="Share answer" title="Share answer">${actionIcon('share')}</button>
@@ -1123,6 +1257,12 @@ permalink: "/"
           const message = await copyAnswerRichText(messageElement);
           flashActionStatus(controls, message);
           trackTinylyticsEvent('librarian.answer_copy', message === 'Rich text copied' ? 'rich' : message === 'Text copied' ? 'plain' : 'error');
+          return;
+        }
+        if (button.dataset.action === 'speak') {
+          const message = toggleSpeakAnswer(messageElement, button);
+          if (message && message !== 'Reading' && message !== 'Stopped') flashActionStatus(controls, message);
+          trackTinylyticsEvent('librarian.answer_speak', message === 'Reading' ? 'start' : message === 'Stopped' ? 'stop' : 'error');
           return;
         }
         if (button.dataset.action === 'share') {
@@ -1272,6 +1412,8 @@ permalink: "/"
 
     function clearConversation() {
       if (answerInFlight) return;
+      stopSpeaking();
+      if (speechListening) stopDictation();
       activeConversationId = null;
       try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
       questionInput.value = '';
@@ -1401,7 +1543,6 @@ permalink: "/"
 
     function maybeSubmitInitialPrompt() {
       if (!initialPrompt || initialPromptSubmitted || answerInFlight || !token()) return;
-      if (!betaOverlay.hidden) return;
       initialPromptSubmitted = true;
       questionInput.value = initialPrompt;
       updateQuestionState();
@@ -1772,16 +1913,6 @@ permalink: "/"
 
     clearChatButton.addEventListener('click', clearConversation);
 
-    betaCloseButton.addEventListener('click', hideBetaNotice);
-
-    betaOverlay.addEventListener('click', (event) => {
-      if (event.target === betaOverlay) hideBetaNotice();
-    });
-
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && !betaOverlay.hidden) hideBetaNotice();
-    });
-
     async function submitQuestion() {
       if (answerInFlight) return;
       const message = questionInput.value.trim();
@@ -1792,6 +1923,8 @@ permalink: "/"
         updateQuestionState();
         return;
       }
+      if (speechListening) stopDictation();
+      stopSpeaking();
       answerInFlight = true;
       updateQuestionState();
       hidePrompts();
@@ -1844,6 +1977,13 @@ permalink: "/"
     });
 
     questionInput.addEventListener('input', updateQuestionState);
+
+    if (voiceButton) {
+      voiceButton.addEventListener('click', () => {
+        if (answerInFlight || welcomeInFlight) return;
+        startDictation();
+      });
+    }
 
     scopeInputs.forEach((input) => {
       input.addEventListener('change', () => {
@@ -2115,7 +2255,7 @@ permalink: "/"
 
     if (email) {
       window.localStorage.removeItem(storageKey);
-      submitAuthCheck({ skipBetaNotice: Boolean(initialPrompt) });
+      submitAuthCheck();
       trackTinylyticsEvent('librarian.auth_auto_start');
     } else if (token()) {
       authPanel.hidden = true;
