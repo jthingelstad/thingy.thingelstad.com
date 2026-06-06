@@ -10,6 +10,10 @@ function env(name, fallback) {
   return v && v.trim() ? v.trim() : fallback;
 }
 
+function assetVersion() {
+  return env("GITHUB_SHA", env("CF_PAGES_COMMIT_SHA", String(Date.now()))).slice(0, 12);
+}
+
 module.exports = {
   title: "Thingy",
   description:
@@ -18,6 +22,7 @@ module.exports = {
   author: "Jamie Thingelstad",
   locale: "en_US",
   socialImage: "/img/thingy.png",
+  assetVersion: assetVersion(),
   networkLinks: [
     {
       label: "thingelstad.com",
