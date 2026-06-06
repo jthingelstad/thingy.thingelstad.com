@@ -47,8 +47,21 @@ permalink: "/"
         </div>
       </div>
     </aside>
+    <div class="rail-scrim" id="rail-scrim" hidden></div>
 
     <section class="thingy-conversation" aria-label="Thingy chat">
+      <div class="mobile-chatbar" id="mobile-chatbar" aria-label="Conversation">
+        <button class="mobile-chatbar-circle" id="mobile-conversations-toggle" type="button" aria-label="Show conversations" aria-expanded="false" title="Show conversations">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+        </button>
+        <div class="mobile-chatbar-title">
+          <span id="mobile-conversation-title">New chat</span>
+          <small>Thingy</small>
+        </div>
+        <button class="mobile-chatbar-action" id="mobile-new-chat" type="button" aria-label="New chat" title="New chat">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
+        </button>
+      </div>
       <a class="return-chip" id="return-chip" href="#" hidden data-tinylytics-event="network.return">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
         <span>Return to <strong id="return-chip-label">site</strong></span>
@@ -188,6 +201,10 @@ permalink: "/"
     const userEmailKey = 'thingyUserEmail';
     const railCollapsedKey = 'thingyRailCollapsed';
     const activeConvKey = 'thingyActiveConversation';
+    const mobileConversationTitle = document.getElementById('mobile-conversation-title');
+    const mobileConversationsToggle = document.getElementById('mobile-conversations-toggle');
+    const mobileNewChatButton = document.getElementById('mobile-new-chat');
+    const railScrim = document.getElementById('rail-scrim');
     const maxRecents = 20;
     let activeConversationId = null;
     let conversations = [];
@@ -1127,6 +1144,27 @@ permalink: "/"
       return postJson('/conversations', payload, authHeaders());
     }
 
+    function currentConversationTitle() {
+      if (!activeConversationId) return 'New chat';
+      const active = conversations.find((entry) => entry.id === activeConversationId || entry.conversation_id === activeConversationId);
+      return active?.title || 'Current chat';
+    }
+
+    function updateMobileConversationTitle() {
+      if (mobileConversationTitle) mobileConversationTitle.textContent = currentConversationTitle();
+    }
+
+    function setMobileRailOpen(open) {
+      if (!appShell) return;
+      appShell.classList.toggle('is-mobile-rail-open', Boolean(open));
+      if (mobileConversationsToggle) {
+        mobileConversationsToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        mobileConversationsToggle.setAttribute('aria-label', open ? 'Hide conversations' : 'Show conversations');
+        mobileConversationsToggle.title = open ? 'Hide conversations' : 'Show conversations';
+      }
+      if (railScrim) railScrim.hidden = !open;
+    }
+
     function clearConversation() {
       if (answerInFlight) return;
       activeConversationId = null;
@@ -1136,6 +1174,7 @@ permalink: "/"
       updateQuestionState();
       loadPrompts();
       renderRecents();
+      updateMobileConversationTitle();
       questionInput.focus();
       trackTinylyticsEvent('librarian.clear');
     }
@@ -1148,6 +1187,7 @@ permalink: "/"
       conversations.sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')));
       conversations = conversations.slice(0, maxRecents);
       renderRecents();
+      updateMobileConversationTitle();
     }
 
     async function refreshConversations() {
@@ -1184,6 +1224,7 @@ permalink: "/"
         railRecents.innerHTML = '';
         railRecents.hidden = true;
         railRecentsEmpty.hidden = false;
+        updateMobileConversationTitle();
         return;
       }
       railRecentsEmpty.hidden = true;
@@ -1197,6 +1238,7 @@ permalink: "/"
           + `<button type="button" class="rail-recent-del" data-action="delete-conv" data-id="${id}" aria-label="Delete conversation" title="Delete conversation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>`
           + `</div>`;
       }).join('');
+      updateMobileConversationTitle();
     }
 
     async function loadConversationIntoChat(id) {
@@ -1223,6 +1265,7 @@ permalink: "/"
         questionInput.value = '';
         updateQuestionState();
         renderRecents();
+        updateMobileConversationTitle();
         scheduleComposerReserveUpdate();
         scrollChatToBottom({ force: true });
         questionInput.focus();
@@ -1623,6 +1666,22 @@ permalink: "/"
         railCollapseBtn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
       });
     }
+    if (mobileConversationsToggle) {
+      mobileConversationsToggle.addEventListener('click', (event) => {
+        event.stopPropagation();
+        setMobileRailOpen(!appShell?.classList.contains('is-mobile-rail-open'));
+      });
+    }
+    if (mobileNewChatButton) {
+      mobileNewChatButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        clearConversation();
+        setMobileRailOpen(false);
+      });
+    }
+    if (railScrim) {
+      railScrim.addEventListener('click', () => setMobileRailOpen(false));
+    }
 
     /* ---- Account menu ---- */
     const accountBtn = document.getElementById('account-btn');
@@ -1728,6 +1787,7 @@ permalink: "/"
       if (event.key === 'Escape') {
         toggleSrcPick(false);
         toggleAccountMenu(false);
+        setMobileRailOpen(false);
       }
     });
 
@@ -1759,6 +1819,7 @@ permalink: "/"
         }
         const openBtn = event.target instanceof Element ? event.target.closest('button[data-id]') : null;
         if (openBtn) await loadConversationIntoChat(openBtn.dataset.id);
+        if (openBtn) setMobileRailOpen(false);
       });
     }
 

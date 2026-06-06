@@ -2761,3 +2761,263 @@ th {
     font-size: 11px;
   }
 }
+
+.mobile-chatbar,
+.rail-scrim {
+  display: none;
+}
+
+/* Final phone shell: ChatGPT/Claude-style header + conversations drawer. */
+@media (max-width: 640px) {
+  .thingy-app-shell,
+  .thingy-app-shell.is-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .thingy-conversation {
+    grid-column: 1;
+    grid-row: 1;
+    height: 100dvh;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .mobile-chatbar {
+    position: sticky;
+    top: 0;
+    z-index: 45;
+    min-height: calc(56px + env(safe-area-inset-top));
+    padding: calc(8px + env(safe-area-inset-top)) 10px 8px;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 8px;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    -webkit-backdrop-filter: saturate(1.15) blur(12px);
+    backdrop-filter: saturate(1.15) blur(12px);
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+  }
+
+  .mobile-chatbar-circle,
+  .mobile-chatbar-action {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 86%, transparent);
+    color: var(--ink);
+    box-shadow: 0 10px 26px rgba(23, 33, 31, 0.10);
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  .mobile-chatbar-circle svg,
+  .mobile-chatbar-action svg {
+    width: 23px;
+    height: 23px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .mobile-chatbar-title {
+    min-width: 0;
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    color: var(--ink);
+    text-align: center;
+  }
+
+  .mobile-chatbar-title span,
+  .mobile-chatbar-title small {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-chatbar-title span {
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  .mobile-chatbar-title small {
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    line-height: 1;
+  }
+
+  .rail-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: block;
+    background: rgba(14, 22, 20, 0.34);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease;
+  }
+
+  .thingy-app-shell.is-mobile-rail-open .rail-scrim {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .rail,
+  .thingy-app-shell.is-collapsed .rail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 80;
+    width: min(84vw, 320px);
+    height: 100dvh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));
+    border-right: 1px solid var(--line);
+    border-bottom: 0;
+    background: var(--rail-bg);
+    box-shadow: 18px 0 60px rgba(14, 43, 38, 0.24);
+    transform: translateX(-105%);
+    transition: transform 0.22s ease;
+    overflow: hidden;
+  }
+
+  .thingy-app-shell.is-mobile-rail-open .rail {
+    transform: translateX(0);
+  }
+
+  .rail-top,
+  .thingy-app-shell.is-collapsed .rail-top {
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 4px 10px;
+  }
+
+  .rail-brand {
+    flex: 1 1 auto;
+  }
+
+  .rail .rail-brand-text,
+  .thingy-app-shell.is-collapsed .rail-brand-text,
+  .rail .rail-newchat .label,
+  .thingy-app-shell.is-collapsed .rail-newchat .label,
+  .rail .rail-newchat .kbd,
+  .thingy-app-shell.is-collapsed .rail-newchat .kbd,
+  .rail .rail-account-meta,
+  .thingy-app-shell.is-collapsed .rail-account-meta,
+  .rail .rail-account-caret,
+  .thingy-app-shell.is-collapsed .rail-account-caret {
+    display: grid;
+  }
+
+  .rail .rail-newchat,
+  .thingy-app-shell.is-collapsed .rail-newchat {
+    width: 100%;
+    height: 40px;
+    min-height: 40px;
+    justify-content: flex-start;
+    padding: 0 12px;
+  }
+
+  .rail .rail-body,
+  .thingy-app-shell.is-collapsed .rail-body {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    align-self: auto;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 4px;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .rail-recents-label {
+    display: block;
+  }
+
+  .rail-recents {
+    display: grid;
+    gap: 2px;
+  }
+
+  .rail-recent {
+    width: 100%;
+    background: transparent;
+  }
+
+  .rail-recent-open {
+    min-height: auto;
+    padding: 8px 4px 8px 10px;
+    font-size: 13px;
+  }
+
+  .rail-recent-del {
+    width: 30px;
+    height: 30px;
+    margin-right: 2px;
+    opacity: 1;
+  }
+
+  .rail-account,
+  .thingy-app-shell.is-collapsed .rail-account {
+    flex: 0 0 auto;
+    margin-top: auto;
+  }
+
+  .rail-account-btn,
+  .thingy-app-shell.is-collapsed .rail-account-btn {
+    justify-content: flex-start;
+    width: 100%;
+    height: auto;
+    padding: 8px;
+  }
+
+  .rail-menu {
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: calc(100% + 6px);
+    width: auto;
+  }
+
+  .librarian-chat.thingy-chat {
+    grid-row: 2;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .librarian-auth.thingy-auth {
+    grid-row: 2;
+    min-height: 0;
+  }
+
+  .thingy-chat-scroll {
+    padding-top: 24px;
+  }
+
+  .return-chip {
+    top: calc(64px + env(safe-area-inset-top));
+  }
+}
