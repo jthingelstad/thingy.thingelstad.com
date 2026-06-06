@@ -60,7 +60,6 @@ permalink: "/"
         </button>
         <div class="mobile-chatbar-title">
           <span id="mobile-conversation-title">New chat</span>
-          <small>Thingy</small>
         </div>
         <div class="mobile-chatbar-actions">
           <button class="mobile-chatbar-action" id="mobile-new-chat" type="button" aria-label="New chat" title="New chat">
@@ -108,13 +107,14 @@ permalink: "/"
           <div class="librarian-prompts" id="librarian-prompts" aria-label="Suggested questions" hidden></div>
           <form class="librarian-form librarian-question-form thingy-input composer-box" id="librarian-question-form">
             <label for="librarian-question" class="sr-only">Ask Thingy</label>
-            <textarea id="librarian-question" name="message" rows="1" required maxlength="1200" placeholder="Message Thingy&hellip;" aria-describedby="librarian-question-count librarian-source-error thingy-ai-note"></textarea>
+            <textarea id="librarian-question" name="message" rows="1" required maxlength="1200" placeholder="Ask Thingy, or seed a map&hellip;" aria-describedby="librarian-question-count librarian-source-error thingy-ai-note"></textarea>
             <div class="composer-toolbar">
               <button class="composer-voice" id="composer-voice" type="button" aria-label="Dictate prompt" title="Dictate prompt">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><path d="M12 19v3"></path></svg>
               </button>
               <button class="composer-map" id="composer-map" type="button" aria-label="Map current prompt" title="Map current prompt">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><circle cx="5" cy="7" r="2"></circle><circle cx="19" cy="6" r="2"></circle><circle cx="18" cy="18" r="2"></circle><path d="M7 8l3.5 2.5M14.2 9.8L17.4 7.2M14.5 14.3l2.2 2.2"></path></svg>
+                <span>Map</span>
               </button>
               <span class="composer-voice-status" id="composer-voice-status" aria-live="polite"></span>
               <div class="srcpick" id="srcpick">
@@ -577,9 +577,7 @@ permalink: "/"
       resetMessages();
       refreshConversations().then(() => {
         if (hasInitialPrompt) {
-          activeConversationId = null;
-          try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
-          renderRecents();
+          setActiveConversation('');
           maybeSubmitInitialPrompt();
           return;
         }
@@ -594,8 +592,7 @@ permalink: "/"
       try { window.localStorage.removeItem(userEmailKey); } catch (error) { /* ignore */ }
       try { window.localStorage.removeItem(userProfileKey); } catch (error) { /* ignore */ }
       conversations = [];
-      activeConversationId = null;
-      try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
+      setActiveConversation('');
       chatPanel.hidden = true;
       authPanel.hidden = false;
       prompts.hidden = true;
@@ -691,11 +688,6 @@ permalink: "/"
     }
     window.addEventListener('resize', () => {
       updateComposerReserve();
-      if (rail && !window.matchMedia('(max-width: 640px)').matches) {
-        rail.style.display = '';
-        rail.style.left = '';
-        rail.style.transform = '';
-      }
     });
 
     function updateQuestionState() {
@@ -712,8 +704,8 @@ permalink: "/"
       if (composerMapButton) {
         const canMapDraft = Boolean(questionInput.value.trim()) && length <= maxQuestionChars && hasSources && token();
         composerMapButton.disabled = busy || !canMapDraft;
-        composerMapButton.title = canMapDraft ? 'Map current prompt' : 'Type a seed to map';
-        composerMapButton.setAttribute('aria-label', canMapDraft ? 'Map current prompt' : 'Type a seed to map');
+        composerMapButton.title = canMapDraft ? 'Seed curiosity map with this text' : 'Type a topic to seed a map';
+        composerMapButton.setAttribute('aria-label', canMapDraft ? 'Seed curiosity map with this text' : 'Type a topic to seed a map');
       }
       clearChatButton.disabled = busy;
       if (curiosityMapButton) curiosityMapButton.disabled = busy || !token() || !hasSources;
@@ -1481,6 +1473,35 @@ permalink: "/"
       return postJson('/conversations', payload, authHeaders());
     }
 
+    function setActiveConversation(id) {
+      activeConversationId = String(id || '').trim() || null;
+      try {
+        if (activeConversationId) {
+          window.localStorage.setItem(activeConvKey, activeConversationId);
+        } else {
+          window.localStorage.removeItem(activeConvKey);
+        }
+      } catch (error) { /* ignore */ }
+      renderRecents();
+      updateMobileConversationTitle();
+      return activeConversationId;
+    }
+
+    function savedActiveConversation() {
+      try {
+        return window.localStorage.getItem(activeConvKey) || '';
+      } catch (error) {
+        return '';
+      }
+    }
+
+    function startBlankConversationView() {
+      setActiveConversation('');
+      questionInput.value = '';
+      resetMessages();
+      updateQuestionState();
+    }
+
     function activeConversation() {
       if (!activeConversationId) return null;
       return conversations.find((entry) => entry.id === activeConversationId || entry.conversation_id === activeConversationId) || null;
@@ -1512,15 +1533,6 @@ permalink: "/"
     function setMobileRailOpen(open) {
       if (!appShell) return;
       appShell.classList.toggle('is-mobile-rail-open', Boolean(open));
-      if (rail && window.matchMedia('(max-width: 640px)').matches) {
-        rail.style.display = open ? 'flex' : '';
-        rail.style.left = open ? '0px' : '';
-        rail.style.transform = 'none';
-      } else if (rail) {
-        rail.style.display = '';
-        rail.style.left = '';
-        rail.style.transform = '';
-      }
       if (mobileConversationsToggle) {
         mobileConversationsToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
         mobileConversationsToggle.setAttribute('aria-label', open ? 'Hide conversations' : 'Show conversations');
@@ -1567,13 +1579,7 @@ permalink: "/"
       if (answerInFlight) return;
       stopSpeaking();
       if (speechListening) stopDictation();
-      activeConversationId = null;
-      try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
-      questionInput.value = '';
-      resetMessages();
-      updateQuestionState();
-      renderRecents();
-      updateMobileConversationTitle();
+      startBlankConversationView();
       questionInput.focus();
       startAgentWelcome();
       trackTinylyticsEvent('librarian.clear');
@@ -1589,12 +1595,9 @@ permalink: "/"
       hidePrompts();
       if (window.matchMedia('(max-width: 640px)').matches) setMobileRailOpen(false);
       stopSpeaking();
-      activeConversationId = null;
-      try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
+      setActiveConversation('');
       messages.innerHTML = '';
       questionInput.value = '';
-      renderRecents();
-      updateMobileConversationTitle();
       mapInFlight = true;
       updateQuestionState();
       autoFollowChat = true;
@@ -1608,8 +1611,7 @@ permalink: "/"
         }, authHeaders());
         pending.classList.remove('librarian-message-pending');
         if (map.conversation_id) {
-          activeConversationId = map.conversation_id;
-          try { window.localStorage.setItem(activeConvKey, activeConversationId); } catch (error) { /* ignore */ }
+          setActiveConversation(map.conversation_id);
         }
         if (map.conversation) upsertConversationSummary(map.conversation);
         pending.innerHTML = renderCuriosityMap(map) || '<p>Thingy could not find enough connected threads to draw a map yet.</p>';
@@ -1650,8 +1652,7 @@ permalink: "/"
           id: entry.id || entry.conversation_id
         })).filter((entry) => entry.id);
         if (activeConversationId && !conversations.some((entry) => entry.id === activeConversationId)) {
-          activeConversationId = null;
-          try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
+          setActiveConversation('');
         }
         renderRecents();
         return conversations;
@@ -1694,8 +1695,7 @@ permalink: "/"
       if (!conversationId) return;
       try {
         const data = await conversationAction({ action: 'get', conversation_id: conversationId });
-        activeConversationId = conversationId;
-        try { window.localStorage.setItem(activeConvKey, conversationId); } catch (error) { /* ignore */ }
+        setActiveConversation(conversationId);
         if (data.conversation) upsertConversationSummary(data.conversation);
         messages.innerHTML = '';
         hidePrompts();
@@ -1722,24 +1722,11 @@ permalink: "/"
       }
     }
 
-    async function clearAllConversations() {
-      if (answerInFlight) return;
-      for (const entry of [...conversations]) {
-        if (entry.id) await conversationAction({ action: 'delete', conversation_id: entry.id }).catch(() => null);
-      }
-      conversations = [];
-      clearConversation();
-    }
-
     function hidePrompts() {
       prompts.classList.remove('librarian-prompts-loading');
       prompts.hidden = true;
       prompts.innerHTML = '';
       scheduleComposerReserveUpdate();
-    }
-
-    function loadPrompts() {
-      hidePrompts();
     }
 
     function maybeSubmitInitialPrompt() {
@@ -1897,8 +1884,7 @@ permalink: "/"
           requestId = data.request_id || requestId;
           if (data.conversation_id) {
             conversationId = data.conversation_id;
-            activeConversationId = conversationId;
-            try { window.localStorage.setItem(activeConvKey, conversationId); } catch (error) { /* ignore */ }
+            setActiveConversation(conversationId);
           }
         } else if (eventName === 'status') {
           answer = '';
@@ -1926,8 +1912,7 @@ permalink: "/"
           requestId = data.request_id || requestId;
           if (data.conversation_id) {
             conversationId = data.conversation_id;
-            activeConversationId = conversationId;
-            try { window.localStorage.setItem(activeConvKey, conversationId); } catch (error) { /* ignore */ }
+            setActiveConversation(conversationId);
           }
           if (data.conversation) conversation = data.conversation;
         } else if (eventName === 'error') {
@@ -2094,7 +2079,6 @@ permalink: "/"
       } finally {
         welcomeInFlight = false;
         updateQuestionState();
-        loadPrompts();
       }
     }
 
@@ -2170,8 +2154,7 @@ permalink: "/"
         pending.classList.remove('librarian-message-pending');
         addResponseActions(pending, data.request_id);
         if (data.conversation_id) {
-          activeConversationId = data.conversation_id;
-          try { window.localStorage.setItem(activeConvKey, activeConversationId); } catch (error) { /* ignore */ }
+          setActiveConversation(data.conversation_id);
         }
         if (data.conversation) upsertConversationSummary(data.conversation);
         await refreshConversations();
@@ -2214,16 +2197,6 @@ permalink: "/"
         trackTinylyticsEvent('librarian.scope_change', activeScope || 'none');
         updateQuestionState();
       });
-    });
-
-    prompts.addEventListener('click', (event) => {
-      const target = event.target instanceof Element ? event.target : event.target.parentElement;
-      const button = target ? target.closest('button[data-question]') : null;
-      if (button) {
-        questionInput.value = button.dataset.question;
-        updateQuestionState();
-        questionForm.requestSubmit();
-      }
     });
 
     messages.addEventListener('click', (event) => {
@@ -2502,13 +2475,10 @@ permalink: "/"
       authPanel.hidden = true;
       chatPanel.hidden = false;
       scheduleComposerReserveUpdate();
-      const savedActiveId = window.localStorage.getItem(activeConvKey);
+      const savedActiveId = savedActiveConversation();
       refreshConversations().then((list) => {
         if (hasInitialPrompt) {
-          activeConversationId = null;
-          try { window.localStorage.removeItem(activeConvKey); } catch (error) { /* ignore */ }
-          resetMessages();
-          renderRecents();
+          startBlankConversationView();
           maybeSubmitInitialPrompt();
           return;
         }

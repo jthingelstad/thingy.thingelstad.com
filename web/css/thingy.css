@@ -2365,14 +2365,13 @@ a.thingy-exp-source:hover {
 
 .composer-voice,
 .composer-map {
-  width: 36px;
   height: 36px;
-  min-width: 36px;
   min-height: 36px;
   flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border: 0;
   border-radius: 999px;
   background: transparent;
@@ -2384,18 +2383,48 @@ a.thingy-exp-source:hover {
   transition: background 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
 }
 
+.composer-voice {
+  width: 36px;
+  min-width: 36px;
+  padding: 0;
+}
+
+.composer-map {
+  width: auto;
+  min-width: 62px;
+  padding: 0 11px 0 10px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
 .librarian-form button.composer-voice,
 .librarian-form button.composer-map {
-  width: 36px;
   height: 36px;
-  min-width: 36px;
   min-height: 36px;
-  padding: 0;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: color-mix(in srgb, var(--ink-soft) 88%, var(--muted));
   font: inherit;
+}
+
+.librarian-form button.composer-voice {
+  width: 36px;
+  min-width: 36px;
+  padding: 0;
+}
+
+.librarian-form button.composer-map {
+  width: auto;
+  min-width: 62px;
+  padding: 0 11px 0 10px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1;
 }
 
 .composer-voice:hover:not(:disabled),
@@ -2432,6 +2461,10 @@ a.thingy-exp-source:hover {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.composer-map span {
+  display: inline-block;
 }
 
 .composer-voice-status {
@@ -3184,32 +3217,19 @@ a.thingy-exp-source:hover {
     min-width: 0;
     display: grid;
     justify-items: center;
-    gap: 2px;
     color: var(--ink);
     text-align: center;
   }
 
-  .mobile-chatbar-title span,
-  .mobile-chatbar-title small {
+  .mobile-chatbar-title span {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .mobile-chatbar-title span {
     font-family: var(--sans);
     font-size: 15px;
     font-weight: 800;
-    line-height: 1.1;
-  }
-
-  .mobile-chatbar-title small {
-    font-family: var(--sans);
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted);
-    line-height: 1;
+    line-height: 1.2;
   }
 
   .rail-scrim {
@@ -3252,15 +3272,7 @@ a.thingy-exp-source:hover {
   }
 
   .thingy-app-shell.is-mobile-rail-open .rail {
-    display: flex !important;
-    left: 0 !important;
-    transform: none !important;
-  }
-
-  .thingy-app-shell.is-mobile-rail-open.is-collapsed .rail {
-    display: flex !important;
-    left: 0 !important;
-    transform: none !important;
+    display: flex;
   }
 
   .rail-top,
