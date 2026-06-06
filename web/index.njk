@@ -1582,18 +1582,22 @@ permalink: "/"
       trackTinylyticsEvent('librarian.clear');
     }
 
-    async function showCuriosityMap(center = '') {
+    async function showCuriosityMap(center = '', options = {}) {
       if (!token() || answerInFlight || welcomeInFlight || mapInFlight) return;
       const scope = currentScope();
       if (!scope) {
         updateQuestionState();
         return;
       }
+      const attachToCurrent = Boolean(options.attachToCurrent && activeConversationId);
+      const existingConversationId = attachToCurrent ? activeConversationId : '';
       hidePrompts();
       if (window.matchMedia('(max-width: 640px)').matches) setMobileRailOpen(false);
       stopSpeaking();
-      setActiveConversation('');
-      messages.innerHTML = '';
+      if (!attachToCurrent) {
+        setActiveConversation('');
+        messages.innerHTML = '';
+      }
       questionInput.value = '';
       mapInFlight = true;
       updateQuestionState();
@@ -1604,6 +1608,7 @@ permalink: "/"
         const map = await postStreamJson('/curiosity-map', {
           scope,
           center,
+          conversation_id: existingConversationId || undefined,
           user_profile: readerProfileContext()
         }, authHeaders());
         pending.classList.remove('librarian-message-pending');
@@ -2105,14 +2110,14 @@ permalink: "/"
     clearChatButton.addEventListener('click', clearConversation);
     if (curiosityMapButton) {
       curiosityMapButton.addEventListener('click', () => {
-        showCuriosityMap();
+        showCuriosityMap('', { attachToCurrent: false });
       });
     }
     if (composerMapButton) {
       composerMapButton.addEventListener('click', () => {
         const seed = questionInput.value.trim();
         if (!seed || composerMapButton.disabled) return;
-        showCuriosityMap(seed);
+        showCuriosityMap(seed, { attachToCurrent: true });
         trackTinylyticsEvent('librarian.curiosity_map_seed', seed.length < 20 ? 'short' : seed.length < 80 ? 'medium' : 'long');
       });
     }
