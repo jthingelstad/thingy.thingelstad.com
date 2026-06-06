@@ -12,7 +12,6 @@ permalink: "/"
           <span class="rail-mark"><img src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager"></span>
           <span class="rail-brand-text">
             <span class="rail-wordmark">Thingy</span>
-            <span class="rail-status" id="rail-status"><span class="dot" aria-hidden="true"></span>Not signed in</span>
           </span>
         </a>
         <button class="rail-iconbtn rail-collapse" id="rail-collapse" type="button" aria-label="Collapse sidebar" title="Collapse sidebar">
@@ -180,6 +179,7 @@ permalink: "/"
     const questionCount = document.getElementById('librarian-question-count');
     const messages = document.getElementById('librarian-messages');
     const chatScroll = document.querySelector('.thingy-chat-scroll');
+    const composerZone = document.querySelector('.thingy-composer-zone');
     const prompts = document.getElementById('librarian-prompts');
     const betaOverlay = document.getElementById('librarian-beta-overlay');
     const betaCloseButton = document.getElementById('librarian-beta-close');
@@ -257,6 +257,7 @@ permalink: "/"
     let answerInFlight = false;
     let autoFollowChat = true;
     let scrollFrame = 0;
+    let composerReserveFrame = 0;
     let conversationHistory = [];
     let feedbackStatusTimer = 0;
     const emailRe = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
@@ -413,6 +414,7 @@ permalink: "/"
       hideAuthActions();
       if (message) addMessage('system', `<p>${escapeHtml(message)}</p>`);
       loadPrompts();
+      scheduleComposerReserveUpdate();
       if (options.skipBetaNotice) {
         hideBetaNotice({ remember: false, focusQuestion: false });
       } else {
@@ -443,7 +445,6 @@ permalink: "/"
       const accountSubEl = document.getElementById('account-sub');
       const accountBtnEl = document.getElementById('account-btn');
       const accountCaretEl = document.querySelector('.rail-account-caret');
-      const railStatusEl = document.getElementById('rail-status');
       const stored = window.localStorage.getItem(userEmailKey) || '';
       const value = (emailInput && emailInput.value ? emailInput.value.trim() : '') || stored;
       const signedIn = Boolean(token());
@@ -451,7 +452,6 @@ permalink: "/"
       if (accountSubEl) accountSubEl.textContent = signedIn ? 'Weekly Thing reader' : 'Weekly Thing readers';
       if (accountAvatarEl) accountAvatarEl.textContent = signedIn && value ? value[0].toUpperCase() : 'T';
       if (accountCaretEl) accountCaretEl.hidden = !signedIn;
-      if (railStatusEl) railStatusEl.lastChild.textContent = signedIn ? 'Archive online' : 'Not signed in';
       if (accountBtnEl) {
         accountBtnEl.setAttribute('aria-haspopup', signedIn ? 'true' : 'false');
         accountBtnEl.setAttribute('aria-expanded', 'false');
@@ -461,7 +461,7 @@ permalink: "/"
 
     function nearChatBottom() {
       if (!chatScroll) return true;
-      return chatScroll.scrollHeight - chatScroll.scrollTop - chatScroll.clientHeight < 180;
+      return chatScroll.scrollHeight - chatScroll.scrollTop - chatScroll.clientHeight < 64;
     }
 
     function scrollChatToBottom(options = {}) {
@@ -502,7 +502,26 @@ permalink: "/"
     function autoSizeQuestionInput() {
       questionInput.style.height = 'auto';
       questionInput.style.height = `${Math.min(questionInput.scrollHeight, 240)}px`;
+      updateComposerReserve();
     }
+
+    function updateComposerReserve() {
+      composerReserveFrame = 0;
+      if (!composerZone || !chatPanel) return;
+      const height = Math.ceil(composerZone.getBoundingClientRect().height);
+      chatPanel.style.setProperty('--composer-reserve', `${height}px`);
+    }
+
+    function scheduleComposerReserveUpdate() {
+      if (composerReserveFrame) return;
+      composerReserveFrame = window.requestAnimationFrame(updateComposerReserve);
+    }
+
+    if (composerZone && 'ResizeObserver' in window) {
+      const composerObserver = new ResizeObserver(updateComposerReserve);
+      composerObserver.observe(composerZone);
+    }
+    window.addEventListener('resize', updateComposerReserve);
 
     function updateQuestionState() {
       const length = questionInput.value.length;
@@ -1261,6 +1280,7 @@ permalink: "/"
       questionInput.value = '';
       updateQuestionState();
       renderRecents();
+      scheduleComposerReserveUpdate();
       scrollChatToBottom({ force: true });
       questionInput.focus();
     }
@@ -1279,6 +1299,7 @@ permalink: "/"
       prompts.classList.remove('librarian-prompts-loading');
       prompts.hidden = true;
       prompts.innerHTML = '';
+      scheduleComposerReserveUpdate();
     }
 
     function randomItem(items) {
@@ -1302,6 +1323,7 @@ permalink: "/"
         return `<button type="button" data-question="${question}" title="${question}" data-tinylytics-event="librarian.prompt_select" data-tinylytics-event-value="${index + 1}">${label}</button>`;
       }).join('');
       prompts.hidden = false;
+      scheduleComposerReserveUpdate();
     }
 
     function loadPrompts() {
@@ -1794,6 +1816,7 @@ permalink: "/"
     } else if (token()) {
       authPanel.hidden = true;
       chatPanel.hidden = false;
+      scheduleComposerReserveUpdate();
       const activeId = ensureActiveConversation();
       const conv = loadConv(activeId);
       if (conv && conv.messages && conv.messages.length) {
