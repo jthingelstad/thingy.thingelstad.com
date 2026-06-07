@@ -243,6 +243,7 @@ permalink: "/"
     let speechFinalText = '';
     let speechUtterance = null;
     let speechButton = null;
+    let authRequestGeneration = 0;
     const emailRe = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
     const params = new URLSearchParams(window.location.search);
@@ -683,6 +684,7 @@ permalink: "/"
 
     function clearToken(options = {}) {
       const config = typeof options === 'string' ? { message: options } : (options || {});
+      authRequestGeneration += 1;
       const message = String(config.message || '').trim();
       const existingMessage = authMessage ? authMessage.textContent : '';
       const emailValue = storedEmail();
@@ -694,6 +696,7 @@ permalink: "/"
         try { window.localStorage.removeItem(userEmailKey); } catch (error) { /* ignore */ }
       }
       try { window.localStorage.removeItem(userProfileKey); } catch (error) { /* ignore */ }
+      if (config.scrubAuthParams) scrubUrlParams(['login_token', 'magic_token', 'email']);
       conversations = [];
       setActiveConversation('');
       welcomeShownThisVisit = false;
@@ -2037,6 +2040,7 @@ permalink: "/"
 
     async function submitAuthAction(action, button) {
       if (!validateEmail()) return;
+      const generation = authRequestGeneration;
       button.disabled = true;
       hideAuthActions();
       setAuthMessage(action === 'subscribe' ? 'Adding you to the Weekly Thing...' : 'Sending the confirmation email...');
@@ -2047,8 +2051,10 @@ permalink: "/"
           if (attribution) payload.attribution = attribution;
         }
         const data = await postJson('/auth', payload);
+        if (generation !== authRequestGeneration) return;
         handleAuthResponse(data);
       } catch (error) {
+        if (generation !== authRequestGeneration) return;
         setAuthMessage(error.message);
         trackTinylyticsEvent('librarian.auth_error', error.requestId ? 'server' : 'client');
       } finally {
@@ -2058,14 +2064,18 @@ permalink: "/"
 
     async function submitAuthCheck(options = {}) {
       if (!validateEmail()) return false;
+      const generation = authRequestGeneration;
       authButton.disabled = true;
       hideAuthActions();
       setAuthMessage('Sending a sign-in link...');
       try {
         const data = await postJson('/auth', { email: emailInput.value.trim(), action: 'check', source: 'thingy' });
+        if (generation !== authRequestGeneration) return false;
         handleAuthResponse(data, options);
+        if (options.scrubEmailParam) scrubUrlParams(['email']);
         return true;
       } catch (error) {
+        if (generation !== authRequestGeneration) return false;
         setAuthMessage(error.message);
         trackTinylyticsEvent('librarian.auth_error', error.requestId ? 'server' : 'client');
         return false;
@@ -2078,16 +2088,19 @@ permalink: "/"
     async function completeMagicLogin(value) {
       const clean = String(value || '').trim();
       if (!clean) return false;
+      const generation = authRequestGeneration;
       authButton.disabled = true;
       hideAuthActions();
       setAuthMessage('Signing you in...');
       try {
         const data = await postJson('/auth', { action: 'complete_magic_link', login_token: clean, source: 'thingy' });
+        if (generation !== authRequestGeneration) return false;
         handleAuthResponse(data);
         scrubUrlParams(['login_token', 'magic_token']);
         trackTinylyticsEvent('librarian.auth_magic_link_success');
         return Boolean(data.token);
       } catch (error) {
+        if (generation !== authRequestGeneration) return false;
         scrubUrlParams(['login_token', 'magic_token']);
         setAuthMessage(error.message || 'That sign-in link is invalid or expired. Enter your email to get a fresh link.');
         trackTinylyticsEvent('librarian.auth_magic_link_error', error.requestId ? 'server' : 'client');
@@ -2399,7 +2412,7 @@ permalink: "/"
     });
 
     logoutButton.addEventListener('click', () => {
-      clearToken();
+      clearToken({ scrubAuthParams: true });
       trackTinylyticsEvent('librarian.logout');
     });
 
@@ -2821,7 +2834,7 @@ permalink: "/"
       trackTinylyticsEvent('librarian.auth_magic_link_start');
     } else if (email) {
       window.localStorage.removeItem(storageKey);
-      submitAuthCheck();
+      submitAuthCheck({ scrubEmailParam: true });
       trackTinylyticsEvent('librarian.auth_auto_start');
     } else if (token()) {
       if (tokenExpired()) {
