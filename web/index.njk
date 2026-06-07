@@ -351,6 +351,34 @@ permalink: "/"
       return window.localStorage.getItem(storageKey);
     }
 
+    function tokenPayload(value = token()) {
+      const encoded = String(value || '').split('.')[0] || '';
+      if (!encoded) return null;
+      try {
+        const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+        return JSON.parse(atob(padded));
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function tokenExpired(value = token(), skewSeconds = 60) {
+      const payload = tokenPayload(value);
+      const expiresAt = Number(payload?.exp || 0);
+      return !expiresAt || expiresAt <= Math.floor(Date.now() / 1000) + skewSeconds;
+    }
+
+    function storedEmail() {
+      const stored = window.localStorage.getItem(userEmailKey) || '';
+      const entered = emailInput && emailInput.value ? emailInput.value.trim() : '';
+      return normalizeEmail(entered || stored);
+    }
+
+    function isAuthError(error) {
+      return error?.status === 401 || /validate|subscriber|unauthorized/i.test(String(error?.message || ''));
+    }
+
     function setUserProfile(data) {
       const profile = {
         status: data?.status || '',
@@ -561,14 +589,47 @@ permalink: "/"
 
     setActiveScope(activeScope, { track: false });
 
-    function setToken(value, data = {}) {
+    function persistToken(value, data = {}) {
       window.localStorage.setItem(storageKey, value);
       setUserProfile(data);
-      const enteredEmail = emailInput && emailInput.value ? emailInput.value.trim() : '';
-      if (enteredEmail) {
-        try { window.localStorage.setItem(userEmailKey, enteredEmail); } catch (error) { /* ignore */ }
+      const emailValue = storedEmail();
+      if (emailValue) {
+        try { window.localStorage.setItem(userEmailKey, emailValue); } catch (error) { /* ignore */ }
       }
       refreshAccountIdentity();
+    }
+
+    let authRefreshPromise = null;
+    async function refreshStoredAuth() {
+      if (authRefreshPromise) return authRefreshPromise;
+      authRefreshPromise = (async () => {
+        const emailValue = storedEmail();
+        if (!emailValue || !emailRe.test(emailValue)) return false;
+        if (emailInput) emailInput.value = emailValue;
+        try {
+          const data = await postJson('/auth', { email: emailValue, action: 'check', source: 'thingy' });
+          if (!data.token) return false;
+          persistToken(data.token, data);
+          trackTinylyticsEvent('librarian.auth_refresh_success', data.status || 'active');
+          return true;
+        } catch (error) {
+          trackTinylyticsEvent('librarian.auth_refresh_error', error.requestId ? 'server' : 'client');
+          return false;
+        } finally {
+          authRefreshPromise = null;
+        }
+      })();
+      return authRefreshPromise;
+    }
+
+    async function ensureFreshToken() {
+      if (!token()) return false;
+      if (!tokenExpired()) return true;
+      return refreshStoredAuth();
+    }
+
+    function setToken(value, data = {}) {
+      persistToken(value, data);
       authPanel.hidden = true;
       chatPanel.hidden = false;
       hideAuthActions();
@@ -1440,6 +1501,7 @@ permalink: "/"
         const message = data.error || 'Thingy is unavailable.';
         const error = new Error(requestId ? `${message} Reference: ${requestId}` : message);
         error.requestId = requestId;
+        error.status = response.status;
         throw error;
       }
       return data;
@@ -1467,6 +1529,7 @@ permalink: "/"
         const message = data.error || 'Thingy is unavailable.';
         const error = new Error(data.request_id ? `${message} Reference: ${data.request_id}` : message);
         error.requestId = data.request_id;
+        error.status = response.status;
         throw error;
       }
       return data;
@@ -1594,6 +1657,10 @@ permalink: "/"
 
     async function showCuriosityMap(center = '', options = {}) {
       if (!token() || answerInFlight || welcomeInFlight || mapInFlight) return;
+      if (!(await ensureFreshToken())) {
+        clearToken();
+        return;
+      }
       const scope = currentScope();
       if (!scope) {
         updateQuestionState();
@@ -1634,7 +1701,7 @@ permalink: "/"
       } catch (error) {
         pending.innerHTML = `<p>${escapeHtml(error.message)}</p>`;
         trackTinylyticsEvent('librarian.curiosity_map_error', error.requestId ? 'server' : 'client');
-        if (/validate|subscriber/i.test(error.message)) clearToken();
+        if (isAuthError(error)) clearToken();
       } finally {
         mapInFlight = false;
         updateQuestionState();
@@ -1652,10 +1719,14 @@ permalink: "/"
       updateMobileConversationTitle();
     }
 
-    async function refreshConversations() {
+    async function refreshConversations(options = {}) {
       if (!token()) {
         conversations = [];
         renderRecents();
+        return [];
+      }
+      if (!(await ensureFreshToken())) {
+        clearToken();
         return [];
       }
       try {
@@ -1670,7 +1741,14 @@ permalink: "/"
         renderRecents();
         return conversations;
       } catch (error) {
+        if (options.retryAuth !== false && isAuthError(error) && await refreshStoredAuth()) {
+          return refreshConversations({ retryAuth: false });
+        }
         trackTinylyticsEvent('librarian.conversations_error', 'list');
+        if (isAuthError(error)) {
+          clearToken();
+          return [];
+        }
         renderRecents();
         return conversations;
       }
@@ -1872,7 +1950,13 @@ permalink: "/"
         window.clearTimeout(timeout);
       });
       if (!response.ok || !response.body) {
-        throw new Error('Thingy is unavailable.');
+        const requestId = response.headers.get('x-request-id') || '';
+        const data = await response.json().catch(() => ({}));
+        const message = data.error || 'Thingy is unavailable.';
+        const error = new Error(requestId ? `${message} Reference: ${requestId}` : message);
+        error.requestId = requestId;
+        error.status = response.status;
+        throw error;
       }
 
       const reader = response.body.getReader();
@@ -1995,7 +2079,13 @@ permalink: "/"
         window.clearTimeout(timeout);
       });
       if (!response.ok || !response.body) {
-        throw new Error('Thingy is unavailable.');
+        const requestId = response.headers.get('x-request-id') || '';
+        const data = await response.json().catch(() => ({}));
+        const message = data.error || 'Thingy is unavailable.';
+        const error = new Error(requestId ? `${message} Reference: ${requestId}` : message);
+        error.requestId = requestId;
+        error.status = response.status;
+        throw error;
       }
 
       const reader = response.body.getReader();
@@ -2077,6 +2167,10 @@ permalink: "/"
 
     async function startAgentWelcome() {
       if (!token() || answerInFlight || welcomeInFlight || welcomeShownThisVisit || hasInitialPrompt) return;
+      if (!(await ensureFreshToken())) {
+        clearToken();
+        return;
+      }
       hidePrompts();
       awaitingName = !preferredName;
       welcomeShownThisVisit = true;
@@ -2147,6 +2241,10 @@ permalink: "/"
         updateQuestionState();
         return;
       }
+      if (!(await ensureFreshToken())) {
+        clearToken();
+        return;
+      }
       if (speechListening) stopDictation();
       stopSpeaking();
       answerInFlight = true;
@@ -2179,7 +2277,7 @@ permalink: "/"
       } catch (error) {
         pending.innerHTML = `<p>${escapeHtml(error.message)}</p>`;
         trackTinylyticsEvent('librarian.answer_error', error.requestId ? 'server' : 'client');
-        if (/validate|subscriber/i.test(error.message)) {
+        if (isAuthError(error)) {
           clearToken();
         }
       } finally {
