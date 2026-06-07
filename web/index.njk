@@ -1170,28 +1170,48 @@ permalink: "/"
       return steps.slice(-8);
     }
 
+    function normalizeActivityCommentary(value) {
+      return String(value || '')
+        .replace(/\s+/g, ' ')
+        .replace(/([.!?])(?=\S)/g, '$1 ')
+        .trim()
+        .slice(0, 700);
+    }
+
+    function appendActivityCommentary(items, value) {
+      const text = normalizeActivityCommentary(value);
+      if (!text) return items;
+      const last = items[items.length - 1] || '';
+      if (last.toLowerCase() === text.toLowerCase()) return items;
+      items.push(text);
+      return items.slice(-4);
+    }
+
     function activityStepsFromToolNames(toolNames = []) {
       return Array.from(new Set((toolNames || []).map(activityMessageFromToolName).filter(Boolean)));
     }
 
     function renderActivityLog(steps = [], options = {}) {
       const list = (steps || []).filter(Boolean);
-      if (!list.length) return '';
+      const commentary = (options.commentary || []).filter(Boolean);
+      if (!list.length && !commentary.length) return '';
       const activeIndex = options.active ? list.length - 1 : -1;
       const items = list.map((step, index) => {
         const state = index === activeIndex ? ' is-active' : ' is-complete';
         const label = index === activeIndex && step.startsWith('Checked ') ? `Checking ${step.slice(8)}` : step;
         return `<li class="librarian-activity-step${state}"><span class="librarian-activity-dot" aria-hidden="true"></span><span>${escapeHtml(label)}</span></li>`;
       }).join('');
+      const notes = commentary.map((note) => `<p>${renderInlineMarkdown(note, new Map())}</p>`).join('');
       return `<aside class="librarian-activity" aria-label="Thingy activity">`
         + `<div class="librarian-activity-kicker">${escapeHtml(options.label || 'Archive Work')}</div>`
-        + `<ol>${items}</ol>`
+        + (items ? `<ol>${items}</ol>` : '')
+        + (notes ? `<div class="librarian-activity-commentary">${notes}</div>` : '')
         + `</aside>`;
     }
 
-    function renderAssistantResponse(answer, citations = [], experience = null, activitySteps = [], options = {}) {
+    function renderAssistantResponse(answer, citations = [], experience = null, activitySteps = [], activityCommentary = [], options = {}) {
       const hasAnswer = String(answer || '').trim() || experience;
-      const activity = renderActivityLog(activitySteps, options);
+      const activity = renderActivityLog(activitySteps, { ...options, commentary: activityCommentary });
       if (!hasAnswer) return activity || renderAnswer(answer, citations, experience);
       return `${activity}<div class="librarian-answer-content">${renderAnswer(answer, citations, experience)}</div>`;
     }
@@ -1853,7 +1873,7 @@ permalink: "/"
           } else if (msg.role === 'assistant') {
             const artifactHtml = msg.artifact?.kind === 'curiosity_map' ? renderCuriosityMap(msg.artifact) : '';
             const activitySteps = activityStepsFromToolNames(msg.tool_names || msg.toolNames || []);
-            const el = addMessage('assistant', artifactHtml || renderAssistantResponse(msg.content || '', msg.citations || [], null, activitySteps));
+            const el = addMessage('assistant', artifactHtml || renderAssistantResponse(msg.content || '', msg.citations || [], null, activitySteps, []));
             if (!artifactHtml && (msg.request_id || msg.requestId)) addResponseActions(el, msg.request_id || msg.requestId);
           }
         }
@@ -2020,11 +2040,12 @@ permalink: "/"
       let buffer = '';
       let renderFrame = 0;
       let activitySteps = [];
+      let activityCommentary = [];
 
       function renderPendingAnswer() {
         renderFrame = 0;
         pending.classList.remove('librarian-message-pending');
-        pending.innerHTML = renderAssistantResponse(answer, citations, experience, activitySteps);
+        pending.innerHTML = renderAssistantResponse(answer, citations, experience, activitySteps, activityCommentary);
         scheduleChatScroll();
       }
 
@@ -2043,7 +2064,12 @@ permalink: "/"
         } else if (eventName === 'status') {
           activitySteps = appendActivityStep(activitySteps, data, 'Thingy is working...');
           pending.classList.add('librarian-message-pending');
-          pending.innerHTML = renderAssistantResponse(answer, citations, experience, activitySteps, { active: true });
+          pending.innerHTML = renderAssistantResponse(answer, citations, experience, activitySteps, activityCommentary, { active: true });
+          scheduleChatScroll({ force: true });
+        } else if (eventName === 'commentary') {
+          activityCommentary = appendActivityCommentary(activityCommentary, data.message || data.delta || '');
+          pending.classList.add('librarian-message-pending');
+          pending.innerHTML = renderAssistantResponse(answer, citations, experience, activitySteps, activityCommentary, { active: true });
           scheduleChatScroll({ force: true });
         } else if (eventName === 'answer_delta') {
           answer += data.delta || '';
@@ -2146,11 +2172,12 @@ permalink: "/"
       let buffer = '';
       let renderFrame = 0;
       let activitySteps = [];
+      let activityCommentary = [];
 
       function renderPendingWelcome() {
         renderFrame = 0;
         pending.classList.remove('librarian-message-pending');
-        pending.innerHTML = renderAssistantResponse(answer, [], experience, activitySteps, { label: 'Session Setup' });
+        pending.innerHTML = renderAssistantResponse(answer, [], experience, activitySteps, activityCommentary, { label: 'Session Setup' });
         scheduleChatScroll();
       }
 
@@ -2165,7 +2192,12 @@ permalink: "/"
         } else if (eventName === 'status') {
           activitySteps = appendActivityStep(activitySteps, data, 'Thingy is getting oriented...');
           pending.classList.add('librarian-message-pending');
-          pending.innerHTML = renderAssistantResponse(answer, [], experience, activitySteps, { active: true, label: 'Session Setup' });
+          pending.innerHTML = renderAssistantResponse(answer, [], experience, activitySteps, activityCommentary, { active: true, label: 'Session Setup' });
+          scheduleChatScroll({ force: true });
+        } else if (eventName === 'commentary') {
+          activityCommentary = appendActivityCommentary(activityCommentary, data.message || data.delta || '');
+          pending.classList.add('librarian-message-pending');
+          pending.innerHTML = renderAssistantResponse(answer, [], experience, activitySteps, activityCommentary, { active: true, label: 'Session Setup' });
           scheduleChatScroll({ force: true });
         } else if (eventName === 'answer_delta') {
           answer += data.delta || '';

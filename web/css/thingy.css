@@ -1151,6 +1151,28 @@ a.thingy-exp-source:hover {
   animation: librarian-pulse 1.35s ease-in-out infinite;
 }
 
+.librarian-activity-commentary {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid color-mix(in srgb, var(--color-highlight) 24%, var(--line-soft));
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.librarian-activity-commentary p {
+  margin: 0 0 6px;
+}
+
+.librarian-activity-commentary p:last-child {
+  margin-bottom: 0;
+}
+
+.librarian-activity-commentary a {
+  color: var(--accent-deep);
+  font-weight: 600;
+}
+
 .librarian-answer-content > :first-child {
   margin-top: 0;
 }
