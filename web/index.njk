@@ -1939,6 +1939,7 @@ permalink: "/"
       }
       try {
         const data = await conversationAction({ action: 'list', limit: maxRecents });
+        if (data.modes || data.entitlements) setUserProfile(data);
         conversations = (data.conversations || []).map((entry) => ({
           ...entry,
           id: entry.id || entry.conversation_id
