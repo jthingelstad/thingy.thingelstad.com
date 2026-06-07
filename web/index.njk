@@ -475,6 +475,18 @@ permalink: "/"
       return false;
     }
 
+    function toggleSourceInput(input) {
+      if (!input || input.disabled) return;
+      if (input.checked && sourceCount() <= 1) {
+        if (sourceError) sourceError.textContent = 'Keep at least one source selected.';
+        if (srcpickNoteEl) srcpickNoteEl.textContent = 'Keep at least one source selected.';
+        input.checked = true;
+        return;
+      }
+      input.checked = !input.checked;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
     function speechInputCtor() {
       return window.SpeechRecognition || window.webkitSpeechRecognition || null;
     }
@@ -2599,6 +2611,12 @@ permalink: "/"
         srcpickLabelEl.textContent = on.map((value) => SRC_META[value].name).join(' + ');
         srcpickNoteEl.textContent = `Thingy can draw from ${on.length} of ${scopeInputs.length} sources.`;
       }
+      if (srcpickPop) {
+        srcpickPop.querySelectorAll('.srcpick-row').forEach((row) => {
+          const input = row.querySelector('input[name="scope"]');
+          row.setAttribute('aria-checked', input?.checked ? 'true' : 'false');
+        });
+      }
       scheduleSrcPickPosition();
     }
     if (srcpickBtn) srcpickBtn.addEventListener('click', (event) => {
@@ -2609,12 +2627,31 @@ permalink: "/"
       ['pointerdown', 'mousedown', 'click'].forEach((eventName) => {
         srcpickPop.addEventListener(eventName, (event) => event.stopPropagation());
       });
+      srcpickPop.querySelectorAll('.srcpick-row').forEach((row) => {
+        const input = row.querySelector('input[name="scope"]');
+        row.setAttribute('role', 'checkbox');
+        row.setAttribute('tabindex', '0');
+        row.setAttribute('aria-checked', input?.checked ? 'true' : 'false');
+        row.addEventListener('click', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          toggleSourceInput(input);
+        });
+        row.addEventListener('keydown', (event) => {
+          if (event.key !== ' ' && event.key !== 'Enter') return;
+          event.preventDefault();
+          event.stopPropagation();
+          toggleSourceInput(input);
+        });
+      });
     }
     refreshSrcPick();
     window.addEventListener('resize', scheduleSrcPickPosition);
     if (chatScroll) chatScroll.addEventListener('scroll', scheduleSrcPickPosition, { passive: true });
 
-    document.addEventListener('click', () => {
+    document.addEventListener('click', (event) => {
+      const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+      if (target?.closest('#srcpick, #srcpick-pop')) return;
       toggleSrcPick(false);
       toggleAccountMenu(false);
       toggleMobileConversationMenu(false);
