@@ -83,7 +83,7 @@ permalink: "/"
           <label for="librarian-email">Email address</label>
           <div class="librarian-auth-row">
             <input id="librarian-email" name="email" type="email" autocomplete="email" required class="subscribe-input">
-            <button type="submit" id="librarian-auth-submit" data-tinylytics-event="librarian.auth_submit">Enter</button>
+            <button type="submit" id="librarian-auth-submit" data-tinylytics-event="librarian.auth_submit">Email link</button>
           </div>
           <span class="subscribe-error librarian-email-error" id="librarian-email-error" aria-live="polite"></span>
           <p class="form-message" id="librarian-auth-message" aria-live="polite"></p>
@@ -91,7 +91,7 @@ permalink: "/"
             <button type="button" id="librarian-add-subscriber" hidden>Add me</button>
             <button type="button" id="librarian-resend-confirmation" hidden>Resend confirmation email</button>
           </div>
-          <p class="form-note">Thingy is available to Weekly Thing readers. Enter your email above and Thingy will help you subscribe if needed.</p>
+          <p class="form-note">Thingy is available to Weekly Thing readers. Enter your email above and Thingy will send a sign-in link if it recognizes you.</p>
         </form>
       </div>
 
@@ -243,12 +243,28 @@ permalink: "/"
 
     const params = new URLSearchParams(window.location.search);
     const email = normalizeEmail(params.get('email'));
+    const loginToken = String(params.get('login_token') || params.get('magic_token') || '').trim();
     const initialPrompt = normalizeInitialPrompt(params.get('prompt'));
     const hasInitialPrompt = Boolean(initialPrompt);
     const initialScope = normalizeScopeParam(params.get('scope')) || normalizeScopeParam(params.get('corpus'));
     let activeScope = initialScope || 'all';
     let initialPromptSubmitted = false;
     if (email) emailInput.value = email;
+
+    function scrubUrlParams(names = []) {
+      if (!names.length) return;
+      const url = new URL(window.location.href);
+      let changed = false;
+      names.forEach((name) => {
+        if (url.searchParams.has(name)) {
+          url.searchParams.delete(name);
+          changed = true;
+        }
+      });
+      if (changed) {
+        window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+      }
+    }
 
     function userLocalContext() {
       const now = new Date();
@@ -611,7 +627,8 @@ permalink: "/"
     function persistToken(value, data = {}) {
       window.localStorage.setItem(storageKey, value);
       setUserProfile(data);
-      const emailValue = storedEmail();
+      if (data.email && emailInput) emailInput.value = normalizeEmail(data.email);
+      const emailValue = normalizeEmail(data.email) || storedEmail();
       if (emailValue) {
         try { window.localStorage.setItem(userEmailKey, emailValue); } catch (error) { /* ignore */ }
       }
@@ -1983,6 +2000,18 @@ permalink: "/"
         trackTinylyticsEvent('librarian.auth_reminder_success');
         return;
       }
+      if (data.status === 'magic_link_sent') {
+        setAuthMessage(data.message || 'Check your email for a sign-in link to Thingy.');
+        hideAuthActions();
+        trackTinylyticsEvent('librarian.auth_magic_link_sent');
+        return;
+      }
+      if (data.status === 'magic_link_invalid') {
+        setAuthMessage(data.error || data.message || 'That sign-in link is invalid or expired. Enter your email to get a fresh link.');
+        hideAuthActions();
+        trackTinylyticsEvent('librarian.auth_magic_link_invalid');
+        return;
+      }
       setAuthMessage(data.message || 'I could not verify active subscriber access for that email.');
       hideAuthActions();
       trackTinylyticsEvent('librarian.auth_inactive');
@@ -2022,7 +2051,7 @@ permalink: "/"
       if (!validateEmail()) return false;
       authButton.disabled = true;
       hideAuthActions();
-      setAuthMessage('Checking subscriber access...');
+      setAuthMessage('Sending a sign-in link...');
       try {
         const data = await postJson('/auth', { email: emailInput.value.trim(), action: 'check', source: 'thingy' });
         handleAuthResponse(data, options);
@@ -2030,6 +2059,29 @@ permalink: "/"
       } catch (error) {
         setAuthMessage(error.message);
         trackTinylyticsEvent('librarian.auth_error', error.requestId ? 'server' : 'client');
+        return false;
+      } finally {
+        authButton.disabled = false;
+        validateEmail();
+      }
+    }
+
+    async function completeMagicLogin(value) {
+      const clean = String(value || '').trim();
+      if (!clean) return false;
+      authButton.disabled = true;
+      hideAuthActions();
+      setAuthMessage('Signing you in...');
+      try {
+        const data = await postJson('/auth', { action: 'complete_magic_link', login_token: clean, source: 'thingy' });
+        handleAuthResponse(data);
+        scrubUrlParams(['login_token', 'magic_token']);
+        trackTinylyticsEvent('librarian.auth_magic_link_success');
+        return Boolean(data.token);
+      } catch (error) {
+        scrubUrlParams(['login_token', 'magic_token']);
+        setAuthMessage(error.message || 'That sign-in link is invalid or expired. Enter your email to get a fresh link.');
+        trackTinylyticsEvent('librarian.auth_magic_link_error', error.requestId ? 'server' : 'client');
         return false;
       } finally {
         authButton.disabled = false;
@@ -2754,7 +2806,11 @@ permalink: "/"
     refreshAccountIdentity();
     renderRecents();
 
-    if (email) {
+    if (loginToken) {
+      window.localStorage.removeItem(storageKey);
+      completeMagicLogin(loginToken);
+      trackTinylyticsEvent('librarian.auth_magic_link_start');
+    } else if (email) {
       window.localStorage.removeItem(storageKey);
       submitAuthCheck();
       trackTinylyticsEvent('librarian.auth_auto_start');

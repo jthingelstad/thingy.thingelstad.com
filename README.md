@@ -75,6 +75,12 @@ Example:
 
 - `https://thingy.thingelstad.com/?email=reader@example.com`
 
+### `login_token`
+
+One-time magic-link token created by the Librarian API. When present, Thingy
+redeems it with `/auth` and removes it from the browser URL after the attempt.
+These links are sent by email from `thingy@thingelstad.com`.
+
 ## Local Development
 
 ```sh
