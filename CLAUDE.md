@@ -2,7 +2,7 @@
 
 Orientation for Claude Code working in this repo. Human overview lives in
 `README.md` (when present); general agent instructions live in `AGENTS.md`;
-the strategic roadmap is in `THINGY_ROADMAP.md`.
+the strategic roadmap is in `ROADMAP.md`.
 
 ## What this repo is
 
@@ -55,25 +55,23 @@ schema break this repo. Version before changing.
 
 ## Planning context — both apps are evolving
 
-- **`web/`** shipped as Phase A1 of `THINGY_ROADMAP.md` (the as-built brief is
-  preserved in `docs/history/STANDALONE_BUILD.md`). The next track is **Phase A2 — magic-
-  link auth + SES + identity-aware modes**, which is backend-led (work happens
-  in Studio's Lambda); this repo gets a two-step auth UI and a magic-link
-  landing route.
-- **`apps/thingy_bridge/`** runs the current request/response shape, but
-  `THINGY_ROADMAP.md` Phase A3 plans to **retire that shape** and repurpose
-  the bridge as a one-way members broadcast tied to the temporal layer.
-  Treat existing bridge surfaces as transitional, not the destination — and
-  read `THINGY_ROADMAP.md` before starting non-trivial bridge work.
+- **`web/`** shipped as the standalone Thingy surface (the as-built brief is
+  preserved in `docs/history/STANDALONE_BUILD.md`). Magic-link auth, server-side
+  conversations, and richer chat UX have since shipped. The next strategic
+  track is identity-aware conversation modes.
+- **`apps/thingy_bridge/`** is no longer the primary user surface. Discord is
+  useful for operator notices and follow-up commands, while nuanced
+  multi-conversation UX belongs in the authenticated web app.
 
-The **private sparring mode** (the deeper, more challenging Thingy for Jamie
-himself) lives in **Studio's Discord**, not here. It's owner-gated, sits next
-to the staff and the drafts, and reads private corpus content via a
-visibility partition in the index. This repo is the **public docent only**.
+Conversation modes should be backend-enforced and conversation-scoped. The
+current roadmap favors owner-only Sparring Partner and supporting-member
+Research Guide modes over public "alter egos." Start with the published archive
+only; do not introduce a hidden private corpus unless Jamie explicitly makes
+that a separate product decision.
 
 ## When in doubt
 
-Start at `THINGY_ROADMAP.md` for direction and `studio-thing/ALIGNMENT.md`
+Start at `ROADMAP.md` for direction and `studio-thing/ALIGNMENT.md`
 for the cross-repo map. If a task would alter the Librarian API contract,
-expand the public surface beyond docent scope, or touch private/draft
-visibility rules, stop and confirm with Jamie first.
+add a new conversation mode, or change entitlement behavior, make sure the
+backend remains authoritative and the operator loop can see what happened.

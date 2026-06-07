@@ -9,7 +9,7 @@ Promote Thingy from a page on the newsletter site (`weekly.thingelstad.com/thing
 complete standalone app at **thingy.thingelstad.com**. Strangler approach: build to parity, run
 both in parallel, redirect the Weekly page only once the standalone proves out.
 
-> **This is Phase 1 of `THINGY_ROADMAP.md`.** Port the *current* subscriber-check auth **as-is** —
+> **This was Phase 1 of the Thingy roadmap, now maintained in `ROADMAP.md`.** Port the *current* subscriber-check auth **as-is** —
 > magic-link auth, SES, and identity-aware modes are Phase 2, so don't over-invest in the current
 > auth UI here. DNS is already set: `thingy.thingelstad.com` CNAME → GitHub.
 

@@ -1,6 +1,6 @@
 // Standalone Thingy site config.
 //
-// The front-end is a thin client of the Librarian API (see THINGY_ROADMAP.md /
+// The front-end is a thin client of the Librarian API (see ROADMAP.md /
 // STANDALONE_BUILD.md). The two URLs below are the only runtime coupling to the
 // backend. Defaults point at the live Lambdas; override per-environment with
 // LIBRARIAN_API_URL / LIBRARIAN_STREAM_URL for local dev or staging.

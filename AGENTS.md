@@ -2,7 +2,7 @@
 
 Use this file as the working playbook for agents in this repo. `CLAUDE.md`
 has deeper architectural context; `README.md` has user-facing operating notes;
-`THINGY_ROADMAP.md` explains where Thingy is going.
+`ROADMAP.md` explains where Thingy is going.
 
 ## What This Repo Is
 
