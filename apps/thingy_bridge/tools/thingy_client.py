@@ -279,6 +279,72 @@ async def fetch_conversations(
     return [c for c in convos if isinstance(c, dict)]
 
 
+async def fetch_operator_conversations(
+    *, since_iso: Optional[str] = None, limit: int = 150
+) -> list[dict[str, Any]]:
+    """Pull canonical server-side Thingy conversation summaries.
+
+    This supersedes :func:`fetch_conversations` for the operator review
+    loop. The API owns conversation grouping; the bridge only tracks
+    review/posting state.
+    """
+    payload: dict[str, Any] = {
+        "action": "list_operator_conversations",
+        "bridge_secret": _bridge_secret(),
+        "limit": int(limit),
+    }
+    if since_iso:
+        payload["since"] = since_iso
+    url = f"{_api_base()}/auth"
+    try:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
+            resp = await client.post(url, json=payload)
+    except httpx.RequestError as exc:
+        raise ThingyError(f"Could not reach Thingy conversation index: {exc}") from exc
+    if resp.status_code != 200:
+        try:
+            err = (resp.json() or {}).get("error") or f"HTTP {resp.status_code}"
+        except Exception:  # noqa: BLE001
+            err = f"HTTP {resp.status_code}"
+        raise ThingyError(f"Thingy conversation index rejected: {err}")
+    data = resp.json() or {}
+    conversations = data.get("conversations")
+    if not isinstance(conversations, list):
+        raise ThingyError("Thingy conversation index returned an unexpected shape")
+    if data.get("truncated"):
+        logger.warning("thingy: canonical conversation index response truncated (since=%s)", data.get("since"))
+    return [c for c in conversations if isinstance(c, dict)]
+
+
+async def fetch_operator_conversation(
+    *, conversation_id: str, subscriber_hash: Optional[str] = None
+) -> dict[str, Any]:
+    """Fetch one canonical server-side conversation with turn records."""
+    payload: dict[str, Any] = {
+        "action": "get_operator_conversation",
+        "bridge_secret": _bridge_secret(),
+        "conversation_id": conversation_id,
+    }
+    if subscriber_hash:
+        payload["subscriber_hash"] = subscriber_hash
+    url = f"{_api_base()}/auth"
+    try:
+        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
+            resp = await client.post(url, json=payload)
+    except httpx.RequestError as exc:
+        raise ThingyError(f"Could not reach Thingy conversation: {exc}") from exc
+    if resp.status_code != 200:
+        try:
+            err = (resp.json() or {}).get("error") or f"HTTP {resp.status_code}"
+        except Exception:  # noqa: BLE001
+            err = f"HTTP {resp.status_code}"
+        raise ThingyError(f"Thingy conversation rejected: {err}")
+    data = resp.json() or {}
+    if not isinstance(data.get("conversation"), dict) or not isinstance(data.get("turns"), list):
+        raise ThingyError("Thingy conversation returned an unexpected shape")
+    return data
+
+
 # ---------- feedback ----------
 
 async def submit_feedback(

@@ -69,6 +69,12 @@ _COLUMN_MIGRATIONS: tuple[tuple[str, str, str], ...] = (
      "ALTER TABLE thingy_tokens ADD COLUMN last_welcomed_at TEXT"),
     ("thingy_tokens", "session_reset_at",
      "ALTER TABLE thingy_tokens ADD COLUMN session_reset_at TEXT"),
+    ("thingy_conversations", "remote_conversation_id",
+     "ALTER TABLE thingy_conversations ADD COLUMN remote_conversation_id TEXT"),
+    ("thingy_conversations", "updated_at",
+     "ALTER TABLE thingy_conversations ADD COLUMN updated_at TEXT"),
+    ("thingy_conversations", "assessment_json",
+     "ALTER TABLE thingy_conversations ADD COLUMN assessment_json TEXT"),
 )
 
 
@@ -85,9 +91,22 @@ def _apply_column_migrations(conn: sqlite3.Connection) -> None:
             continue
         try:
             conn.execute(sql)
+            if table == "thingy_conversations" and column == "updated_at":
+                conn.execute(
+                    "UPDATE thingy_conversations "
+                    "SET updated_at = COALESCE(updated_at, created_at, ended_at, datetime('now'))"
+                )
         except sqlite3.OperationalError:
             # Column was added concurrently by another process; ignore.
             pass
+    try:
+        conn.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_thingy_conversations_remote "
+            "ON thingy_conversations(remote_conversation_id) "
+            "WHERE remote_conversation_id IS NOT NULL AND remote_conversation_id != ''"
+        )
+    except sqlite3.OperationalError:
+        pass
 
 
 # ---------- Thingy tokens (per-reader Lambda sessions) ----------
@@ -286,6 +305,7 @@ def lookup_thingy_request_by_response(
 
 def insert_thingy_conversation(
     *,
+    remote_conversation_id: Optional[str] = None,
     subscriber_hash: str,
     started_at: str,
     ended_at: str,
@@ -296,24 +316,112 @@ def insert_thingy_conversation(
     feedback: Optional[str],
     topic: Optional[str],
     assessment_md: Optional[str],
+    assessment_json: Optional[dict[str, Any]] = None,
     posted_to_chatter_at: Optional[str] = None,
 ) -> int:
     """Insert one mirrored conversation; returns its local id."""
     with connect() as conn:
         cur = conn.execute(
             "INSERT INTO thingy_conversations "
-            "(subscriber_hash, started_at, ended_at, turn_count, transcript_json, "
-            " turn_request_ids_json, source_issues_json, feedback, topic, assessment_md, "
+            "(remote_conversation_id, subscriber_hash, started_at, ended_at, turn_count, transcript_json, "
+            " turn_request_ids_json, source_issues_json, feedback, topic, assessment_md, assessment_json, "
             " posted_to_chatter_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
-                subscriber_hash, started_at, ended_at, int(turn_count),
+                remote_conversation_id or None, subscriber_hash, started_at, ended_at, int(turn_count),
                 json.dumps(transcript), json.dumps(list(turn_request_ids)),
                 json.dumps(list(source_issues)), feedback, topic, assessment_md,
+                json.dumps(assessment_json) if assessment_json is not None else None,
                 posted_to_chatter_at,
             ),
         )
         return int(cur.lastrowid)
+
+
+def upsert_thingy_conversation(
+    *,
+    remote_conversation_id: Optional[str] = None,
+    subscriber_hash: str,
+    started_at: str,
+    ended_at: str,
+    turn_count: int,
+    transcript: list[dict[str, Any]],
+    turn_request_ids: list[str],
+    source_issues: list[str],
+    feedback: Optional[str],
+    topic: Optional[str],
+    assessment_md: Optional[str],
+    assessment_json: Optional[dict[str, Any]] = None,
+) -> tuple[int, bool]:
+    """Insert or update one mirrored conversation.
+
+    Returns ``(id, changed)``. ``changed`` is true for brand-new rows and
+    for existing server-backed rows whose turn set changed. Existing rows
+    keep their stable local id; when updated, ``posted_to_chatter_at`` is
+    reset so the operator channel gets a fresh card for the continued
+    conversation.
+    """
+    remote = str(remote_conversation_id or "").strip()
+    if not remote:
+        return (
+            insert_thingy_conversation(
+                subscriber_hash=subscriber_hash,
+                started_at=started_at,
+                ended_at=ended_at,
+                turn_count=turn_count,
+                transcript=transcript,
+                turn_request_ids=turn_request_ids,
+                source_issues=source_issues,
+                feedback=feedback,
+                topic=topic,
+                assessment_md=assessment_md,
+                assessment_json=assessment_json,
+            ),
+            True,
+        )
+
+    turn_ids_json = json.dumps(list(turn_request_ids))
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT id, turn_request_ids_json FROM thingy_conversations "
+            "WHERE remote_conversation_id = ?",
+            (remote,),
+        ).fetchone()
+        if row is None:
+            cur = conn.execute(
+                "INSERT INTO thingy_conversations "
+                "(remote_conversation_id, subscriber_hash, started_at, ended_at, turn_count, "
+                " transcript_json, turn_request_ids_json, source_issues_json, feedback, topic, "
+                " assessment_md, assessment_json, posted_to_chatter_at, updated_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, datetime('now'))",
+                (
+                    remote, subscriber_hash, started_at, ended_at, int(turn_count),
+                    json.dumps(transcript), turn_ids_json, json.dumps(list(source_issues)),
+                    feedback, topic, assessment_md,
+                    json.dumps(assessment_json) if assessment_json is not None else None,
+                ),
+            )
+            return int(cur.lastrowid), True
+
+        conv_id = int(row["id"])
+        if str(row["turn_request_ids_json"] or "") == turn_ids_json:
+            return conv_id, False
+        conn.execute(
+            "UPDATE thingy_conversations SET "
+            "subscriber_hash = ?, started_at = ?, ended_at = ?, turn_count = ?, "
+            "transcript_json = ?, turn_request_ids_json = ?, source_issues_json = ?, "
+            "feedback = ?, topic = ?, assessment_md = ?, assessment_json = ?, posted_to_chatter_at = NULL, "
+            "updated_at = datetime('now') "
+            "WHERE id = ?",
+            (
+                subscriber_hash, started_at, ended_at, int(turn_count),
+                json.dumps(transcript), turn_ids_json, json.dumps(list(source_issues)),
+                feedback, topic, assessment_md,
+                json.dumps(assessment_json) if assessment_json is not None else None,
+                conv_id,
+            ),
+        )
+        return conv_id, True
 
 
 def mark_thingy_conversation_posted(conv_id: int) -> None:
@@ -329,12 +437,13 @@ def _hydrate_thingy_conversation(row: sqlite3.Row) -> dict[str, Any]:
     d = dict(row)
     for col, key in (("transcript_json", "transcript"),
                      ("turn_request_ids_json", "turn_request_ids"),
-                     ("source_issues_json", "source_issues")):
+                     ("source_issues_json", "source_issues"),
+                     ("assessment_json", "assessment")):
         raw = d.pop(col, None)
         try:
-            d[key] = json.loads(raw) if raw else []
+            d[key] = json.loads(raw) if raw else ([] if key != "assessment" else {})
         except (ValueError, TypeError):
-            d[key] = []
+            d[key] = [] if key != "assessment" else {}
     return d
 
 
@@ -342,6 +451,18 @@ def get_thingy_conversation(conv_id: int) -> Optional[dict[str, Any]]:
     with connect() as conn:
         row = conn.execute(
             "SELECT * FROM thingy_conversations WHERE id = ?", (conv_id,)
+        ).fetchone()
+    return _hydrate_thingy_conversation(row) if row else None
+
+
+def get_thingy_conversation_by_remote_id(remote_conversation_id: str) -> Optional[dict[str, Any]]:
+    remote = str(remote_conversation_id or "").strip()
+    if not remote:
+        return None
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT * FROM thingy_conversations WHERE remote_conversation_id = ?",
+            (remote,),
         ).fetchone()
     return _hydrate_thingy_conversation(row) if row else None
 

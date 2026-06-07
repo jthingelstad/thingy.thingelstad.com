@@ -64,14 +64,16 @@ CREATE TABLE IF NOT EXISTS job_locks (
 
 -- Operator-side mirror of what readers ask the public archive agent.
 -- The hourly thingy-watch job fetches logged turns from the Lambda
--- (/auth?action=list_conversations), groups them into conversations
--- (same subscriber, turns within ~30 min / a fresh browser history),
--- runs a Sonnet assessment, stores the whole thing here (so it
--- outlives the Lambda's ~60-day DynamoDB TTL and gets a stable local
--- id), and posts a card to #chatter. `/thingy recent` and `/thingy
--- show <id>` read straight from this table.
+-- (/auth?action=list_conversations), groups them by the API's canonical
+-- server-side conversation_id when present (falling back to the old
+-- same-subscriber/time-window heuristic for legacy rows),
+-- runs a Sonnet assessment, stores the review/posting state here (so
+-- Jamie gets stable local ids like #102), and posts a card to #chatter.
+-- Canonical transcript data lives in DynamoDB; transcript_json is kept as
+-- a fallback snapshot for legacy rows and old /thingy show attachments.
 CREATE TABLE IF NOT EXISTS thingy_conversations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  remote_conversation_id TEXT,                 -- API conversation_id; NULL for legacy inferred conversations
   subscriber_hash TEXT NOT NULL,               -- SHA256 of the reader's email; never the email itself
   started_at TEXT NOT NULL,                    -- ISO; created_at of the first turn
   ended_at TEXT NOT NULL,                      -- ISO; created_at of the last turn (also the watch watermark)
@@ -87,9 +89,15 @@ CREATE TABLE IF NOT EXISTS thingy_conversations (
   feedback TEXT,                               -- 'up' / 'down' / 'mixed' / NULL — rolled up from the turns
   topic TEXT,                                  -- one-line topic, from the assessment pass
   assessment_md TEXT,                          -- the assessment (markdown)
+  assessment_json TEXT,                        -- structured eval fields for aggregate improvement work
   posted_to_chatter_at TEXT,                   -- when thingy-watch posted the card; NULL until then
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_thingy_conversations_ended
   ON thingy_conversations(ended_at DESC, id DESC);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_thingy_conversations_remote
+  ON thingy_conversations(remote_conversation_id)
+  WHERE remote_conversation_id IS NOT NULL AND remote_conversation_id != '';

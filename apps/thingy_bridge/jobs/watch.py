@@ -100,11 +100,30 @@ def _source_issues(turns: list[dict]) -> list[str]:
             n = str(n).strip()
             if n and n not in out:
                 out.append(n)
+        for c in t.get("citations") or []:
+            n = str(c.get("issue_number") or "").strip()
+            if n and n not in out:
+                out.append(n)
+        for n in _inline_issue_refs(t.get("answer")):
+            if n not in out:
+                out.append(n)
     return out
 
 
 def _wt_list(issues: list[str]) -> str:
     return ", ".join(f"WT{n}" for n in issues) if issues else "—"
+
+
+_INLINE_WT_RE = re.compile(r"(?:WT|#)(\d{1,5})\b")
+
+
+def _inline_issue_refs(text: Any) -> list[str]:
+    out: list[str] = []
+    for match in _INLINE_WT_RE.finditer(str(text or "")):
+        n = match.group(1)
+        if n not in out:
+            out.append(n)
+    return out
 
 
 def _turn_preflight(t: dict) -> dict:
@@ -134,7 +153,7 @@ def _preflight_rollup(turns: list[dict]) -> list[str]:
 
 
 def _build_transcript(turns: list[dict]) -> list[dict]:
-    keep = ("request_id", "created_at", "question", "answer", "citations",
+    keep = ("request_id", "conversation_id", "created_at", "question", "answer", "citations",
             "source_issues", "feedback_reaction", "feedback_at", "history_count",
             "preflight")
     return [{k: t.get(k) for k in keep} for t in turns]
@@ -142,12 +161,7 @@ def _build_transcript(turns: list[dict]) -> list[dict]:
 
 # ---------- grouping ----------
 
-def group_into_conversations(turns: list[dict]) -> list[list[dict]]:
-    """Group logged turns into conversations. A conversation = consecutive
-    turns from the same ``subscriber_hash`` where each turn is within
-    :data:`_GAP` of the previous and didn't reset the browser history
-    (``history_count == 0`` starts a fresh conversation). Conversations are
-    returned oldest-first by their *last* turn."""
+def _group_legacy_turns(turns: list[dict]) -> list[list[dict]]:
     by_sub: dict[str, list[dict]] = {}
     for t in sorted(turns, key=lambda x: str(x.get("created_at") or "")):
         by_sub.setdefault(str(t.get("subscriber_hash") or ""), []).append(t)
@@ -171,6 +185,26 @@ def group_into_conversations(turns: list[dict]) -> list[list[dict]]:
     return convos
 
 
+def group_into_conversations(turns: list[dict]) -> list[list[dict]]:
+    """Group logged turns into conversations.
+
+    Prefer the API's canonical server-side ``conversation_id``. The old
+    same-reader/time-window heuristic remains only for legacy flat rows.
+    """
+    canonical: dict[tuple[str, str], list[dict]] = {}
+    legacy: list[dict] = []
+    for turn in sorted(turns, key=lambda x: str(x.get("created_at") or "")):
+        conversation_id = str(turn.get("conversation_id") or "").strip()
+        if conversation_id:
+            subscriber = str(turn.get("subscriber_hash") or "")
+            canonical.setdefault((subscriber, conversation_id), []).append(turn)
+        else:
+            legacy.append(turn)
+    convos = [*canonical.values(), *_group_legacy_turns(legacy)]
+    convos.sort(key=lambda c: str(c[-1].get("created_at") or ""))
+    return convos
+
+
 # ---------- assessment (one-shot Sonnet) ----------
 
 def _transcript_for_prompt(turns: list[dict]) -> str:
@@ -180,7 +214,7 @@ def _transcript_for_prompt(turns: list[dict]) -> str:
         a = str(t.get("answer") or "").strip()
         cites = ", ".join(f"WT{c.get('issue_number')}" for c in (t.get("citations") or []) if c.get("issue_number"))
         preflight = _turn_preflight(t)
-        preflight_line = ""
+        metadata_line = ""
         label = _preflight_label(preflight)
         if label:
             bits = [label]
@@ -188,8 +222,8 @@ def _transcript_for_prompt(turns: list[dict]) -> str:
                 bits.append(f"rewrote to: {preflight['rewritten_question']}")
             if preflight.get("rationale"):
                 bits.append(f"reason: {preflight['rationale']}")
-            preflight_line = "\n\n(Preflight: " + " · ".join(bits) + ")"
-        lines.append(f"### Turn {i}\nReader: {q}\n\nThingy: {a}" + preflight_line + (f"\n\n(Thingy cited: {cites})" if cites else ""))
+            metadata_line = "\n\nOperator metadata, not shown to reader: preflight " + " · ".join(bits)
+        lines.append(f"### Turn {i}\nReader: {q}\n\nThingy: {a}" + (f"\n\nThingy cited: {cites}" if cites else "") + metadata_line)
     return "\n\n".join(lines)
 
 
@@ -214,19 +248,36 @@ def _parse_json_payload(reply: str) -> Optional[dict[str, Any]]:
     return data if isinstance(data, dict) else None
 
 
-def _parse_assessment(reply: str) -> Optional[dict[str, str]]:
-    """Project the model's JSON reply down to the four assessment fields."""
+def _bounded_list(value: Any, *, limit: int = 6, item_chars: int = 80) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    out: list[str] = []
+    for item in value:
+        text = str(item or "").strip()
+        if text:
+            out.append(text[:item_chars])
+        if len(out) >= limit:
+            break
+    return out
+
+
+def _parse_assessment(reply: str) -> Optional[dict[str, Any]]:
+    """Project the model's JSON reply down to stable human + eval fields."""
     data = _parse_json_payload(reply)
     if data is None:
         return None
-    out = {}
+    out: dict[str, Any] = {}
     for k in ("topic", "reader", "thingy", "takeaway"):
         v = data.get(k)
         out[k] = str(v).strip() if v is not None else ""
+    quality = str(data.get("quality") or "").strip().lower()
+    out["quality"] = quality if quality in {"clean", "watch", "problem"} else ""
+    out["flags"] = _bounded_list(data.get("flags"))
+    out["improvements"] = _bounded_list(data.get("improvements"), limit=4, item_chars=160)
     return out if any(out.values()) else None
 
 
-def _fallback_assessment(turns: list[dict]) -> dict[str, str]:
+def _fallback_assessment(turns: list[dict]) -> dict[str, Any]:
     first_q = next((str(t.get("question") or "").strip() for t in turns if t.get("question")), "")
     topic = (first_q[:60] + "…") if len(first_q) > 60 else (first_q or "(no question text)")
     return {
@@ -234,6 +285,9 @@ def _fallback_assessment(turns: list[dict]) -> dict[str, str]:
         "reader": "(assessment unavailable — the review model didn't return a usable response)",
         "thingy": "",
         "takeaway": "",
+        "quality": "watch",
+        "flags": ["review_unavailable"],
+        "improvements": [],
     }
 
 
@@ -248,7 +302,7 @@ def _sync_assess(prompt: str, user_msg: str) -> Optional[str]:
     return "".join(b.text for b in resp.content if getattr(b, "type", None) == "text")
 
 
-async def _assess(turns: list[dict]) -> dict[str, str]:
+async def _assess(turns: list[dict]) -> dict[str, Any]:
     try:
         base = anthropic_client.load_prompt("review-conversation")
     except Exception:  # noqa: BLE001
@@ -270,7 +324,7 @@ async def _assess(turns: list[dict]) -> dict[str, str]:
     return parsed
 
 
-def _assessment_md(a: dict[str, str]) -> str:
+def _assessment_md(a: dict[str, Any]) -> str:
     bits = []
     if a.get("reader"):
         bits.append(f"**Reader:** {a['reader']}")
@@ -278,6 +332,9 @@ def _assessment_md(a: dict[str, str]) -> str:
         bits.append(f"**Thingy:** {a['thingy']}")
     if a.get("takeaway"):
         bits.append(f"**Takeaway:** {a['takeaway']}")
+    flags = a.get("flags") if isinstance(a.get("flags"), list) else []
+    if flags:
+        bits.append(f"**Eval flags:** {', '.join(str(flag) for flag in flags)}")
     return "\n".join(bits)
 
 
@@ -411,10 +468,8 @@ async def _try_post_card(ctx: "_base.JobContext", conv_row: dict) -> bool:
 
 async def _watch_locked(ctx: "_base.JobContext") -> "_base.JobResult":
     # 1) Orphan backfill — conversations whose post failed on a previous
-    #    run (e.g. the bot wasn't yet in #chatter). Without this they're
-    #    trapped: seen_thingy_turn_request_ids excludes their turns from
-    #    re-forming a fresh conversation, and the original post was a
-    #    one-shot. Capped at the same per-run budget as new cards so a
+    #    run (e.g. the bot wasn't yet in #chatter). Capped at the same
+    #    per-run budget as new cards so a
     #    long backlog drains over a few hours instead of flooding the
     #    channel in one burst.
     posted = 0
@@ -434,7 +489,9 @@ async def _watch_locked(ctx: "_base.JobContext") -> "_base.JobResult":
             # below so the local DB stays current.
             break
 
-    # 2) Pull new turns from the Lambda and mirror them.
+    # 2) Pull canonical server-side conversations from the Lambda and
+    #    review only new/changed conversation ids. The API owns grouping
+    #    and transcript history; the bridge owns review/posting state.
     watermark = db.latest_thingy_conversation_end()
     wm_dt = _parse_iso(watermark)
     if wm_dt is not None:
@@ -444,46 +501,74 @@ async def _watch_locked(ctx: "_base.JobContext") -> "_base.JobResult":
     since_iso = since_dt.astimezone(timezone.utc).isoformat()
 
     try:
-        turns = await thingy_client.fetch_conversations(since_iso=since_iso, limit=_FETCH_LIMIT)
+        summaries = await thingy_client.fetch_operator_conversations(since_iso=since_iso, limit=_FETCH_LIMIT)
     except thingy_client.ThingyError as exc:
-        return _base.JobResult(False, f"❌ thingy-watch: couldn't read the conversation log — {exc}")
+        return _base.JobResult(False, f"❌ thingy-watch: couldn't read the canonical conversation index — {exc}")
 
-    seen = db.seen_thingy_turn_request_ids()
-    fresh = [t for t in turns if t.get("request_id") and str(t["request_id"]) not in seen
-             and str(t.get("question") or "").strip()]
+    candidates: list[dict] = []
+    for summary in summaries:
+        remote_id = str(summary.get("conversation_id") or summary.get("id") or "").strip()
+        if not remote_id:
+            continue
+        existing = db.get_thingy_conversation_by_remote_id(remote_id)
+        updated_at = str(summary.get("updated_at") or summary.get("last_message_at") or "")
+        if existing and str(existing.get("ended_at") or "") == updated_at and int(existing.get("turn_count") or 0) == int(summary.get("turn_count") or 0):
+            continue
+        candidates.append(summary)
 
     stored = 0
     overflow = 0
-    if fresh:
-        convos = group_into_conversations(fresh)
-        overflow = max(0, len(convos) - _MAX_CONVOS_PER_RUN)
-        convos = convos[:_MAX_CONVOS_PER_RUN]  # drain the rest next run
-        for turns_in_convo in convos:
+    if candidates:
+        overflow = max(0, len(candidates) - _MAX_CONVOS_PER_RUN)
+        candidates = candidates[:_MAX_CONVOS_PER_RUN]  # drain the rest next run
+        for summary in candidates:
+            remote_id = str(summary.get("conversation_id") or summary.get("id") or "").strip()
+            try:
+                full = await thingy_client.fetch_operator_conversation(
+                    conversation_id=remote_id,
+                    subscriber_hash=str(summary.get("subscriber_hash") or ""),
+                )
+            except thingy_client.ThingyError as exc:
+                logger.warning("thingy-watch: couldn't fetch canonical conversation %s — %s", remote_id, exc)
+                continue
+            conversation = full.get("conversation") or summary
+            turns_in_convo = [t for t in (full.get("turns") or []) if str(t.get("question") or "").strip()]
+            if not turns_in_convo:
+                continue
+            subscriber_hash = str(conversation.get("subscriber_hash") or summary.get("subscriber_hash") or "")
+            for turn in turns_in_convo:
+                turn.setdefault("conversation_id", remote_id)
             assess = await _assess(turns_in_convo)
-            transcript = _build_transcript(turns_in_convo)
             issues = _source_issues(turns_in_convo)
             preflight_labels = _preflight_rollup(turns_in_convo)
             feedback = _feedback_rollup(turns_in_convo)
-            conv_id = db.insert_thingy_conversation(
-                subscriber_hash=str(turns_in_convo[0].get("subscriber_hash") or ""),
-                started_at=str(turns_in_convo[0].get("created_at") or ""),
-                ended_at=str(turns_in_convo[-1].get("created_at") or ""),
+            conv_id, changed = db.upsert_thingy_conversation(
+                remote_conversation_id=remote_id,
+                subscriber_hash=subscriber_hash,
+                started_at=str(conversation.get("created_at") or turns_in_convo[0].get("created_at") or ""),
+                ended_at=str(conversation.get("updated_at") or conversation.get("last_message_at") or turns_in_convo[-1].get("created_at") or ""),
                 turn_count=len(turns_in_convo),
-                transcript=transcript,
+                transcript=[],
                 turn_request_ids=[str(t.get("request_id")) for t in turns_in_convo if t.get("request_id")],
                 source_issues=issues,
                 feedback=feedback,
                 topic=assess.get("topic") or None,
                 assessment_md=_assessment_md(assess) or None,
+                assessment_json=assess,
             )
+            if not changed:
+                continue
             stored += 1
             if posted < _MAX_CARDS_PER_RUN:
                 conv_row = {
-                    "id": conv_id, "subscriber_hash": turns_in_convo[0].get("subscriber_hash"),
-                    "started_at": turns_in_convo[0].get("created_at"),
-                    "ended_at": turns_in_convo[-1].get("created_at"),
+                    "id": conv_id,
+                    "remote_conversation_id": remote_id,
+                    "subscriber_hash": subscriber_hash,
+                    "started_at": conversation.get("created_at") or turns_in_convo[0].get("created_at"),
+                    "ended_at": conversation.get("updated_at") or conversation.get("last_message_at") or turns_in_convo[-1].get("created_at"),
                     "turn_count": len(turns_in_convo), "feedback": feedback,
                     "topic": assess.get("topic"), "assessment_md": _assessment_md(assess),
+                    "assessment": assess,
                     "source_issues": issues, "preflight_labels": preflight_labels,
                 }
                 if await _try_post_card(ctx, conv_row):
@@ -513,7 +598,7 @@ async def _watch_locked(ctx: "_base.JobContext") -> "_base.JobResult":
     if backfilled:
         note_parts.append(f"{backfilled} backfilled")
     if stored:
-        note_parts.append(f"{stored} new mirrored")
+        note_parts.append(f"{stored} new reviewed")
     note_parts.append(f"{posted} card{'s' if posted != 1 else ''} posted to #chatter")
     if remaining:
         note_parts.append(f"{remaining} still pending")
@@ -532,11 +617,14 @@ def _recent_line(c: dict) -> str:
     fb = _FEEDBACK_EMOJI.get(c.get("feedback") or "", "")
     topic = (c.get("topic") or "—").strip()
     preflight = _preflight_rollup(c.get("transcript") or [])
+    assessment = c.get("assessment") if isinstance(c.get("assessment"), dict) else {}
+    flags = assessment.get("flags") if isinstance(assessment.get("flags"), list) else []
     return (
         f"`#{c['id']}` · {_when(c.get('started_at'))} · {_anon(c.get('subscriber_hash'))}"
         f" · {c.get('turn_count')}t" + (f" {fb}" if fb else "")
         + f" · \"{topic}\"" + (f" · {_wt_list(c.get('source_issues') or [])}" if c.get('source_issues') else "")
         + (f" · preflight: {', '.join(preflight)}" if preflight else "")
+        + (f" · flags: {', '.join(str(flag) for flag in flags)}" if flags else "")
     )
 
 
@@ -546,7 +634,7 @@ async def recent(ctx: "_base.JobContext", *, count: int = 8) -> "_base.JobResult
     if not rows:
         return _base.JobResult(
             True,
-            "No Thingy conversations mirrored yet. The hourly `thingy-watch` will fill this in "
+            "No Thingy conversations reviewed yet. The hourly `thingy-watch` will fill this in "
             "as readers chat — or run `/thingy sync` to pull now.",
         )
     lines = [f"**Recent Thingy conversations** (last {len(rows)}):"]
@@ -558,7 +646,28 @@ async def recent(ctx: "_base.JobContext", *, count: int = 8) -> "_base.JobResult
 async def show(ctx: "_base.JobContext", *, conv_id: int) -> "_base.JobResult":
     conv = db.get_thingy_conversation(int(conv_id))
     if conv is None:
-        return _base.JobResult(False, f"No mirrored Thingy conversation `#{conv_id}`. Try `/thingy recent`.")
+        return _base.JobResult(False, f"No reviewed Thingy conversation `#{conv_id}`. Try `/thingy recent`.")
+    remote_id = str(conv.get("remote_conversation_id") or "").strip()
+    if remote_id:
+        try:
+            full = await thingy_client.fetch_operator_conversation(
+                conversation_id=remote_id,
+                subscriber_hash=str(conv.get("subscriber_hash") or ""),
+            )
+            turns = full.get("turns") or []
+            conversation = full.get("conversation") or {}
+            conv = {
+                **conv,
+                "subscriber_hash": conversation.get("subscriber_hash") or conv.get("subscriber_hash"),
+                "started_at": conversation.get("created_at") or conv.get("started_at"),
+                "ended_at": conversation.get("updated_at") or conversation.get("last_message_at") or conv.get("ended_at"),
+                "turn_count": len(turns) or conv.get("turn_count"),
+                "transcript": _build_transcript(turns),
+                "source_issues": _source_issues(turns) or conv.get("source_issues") or [],
+                "feedback": _feedback_rollup(turns) or conv.get("feedback"),
+            }
+        except thingy_client.ThingyError as exc:
+            logger.warning("thingy-show: couldn't fetch canonical conversation %s — %s", remote_id, exc)
     return _base.JobResult(
         True,
         _card(conv, for_show=True),

@@ -22,14 +22,32 @@ from apps.thingy_bridge.jobs import _base, watch as thingy_job  # noqa: E402
 from apps.thingy_bridge.tools import db  # noqa: E402
 
 
-def _turn(rid, sub, created_at, *, q="q?", a="a.", history=0, issues=None, feedback=None, preflight=None):
+def _turn(rid, sub, created_at, *, q="q?", a="a.", history=0, issues=None, feedback=None, preflight=None, conversation_id=None):
     return {
-        "request_id": rid, "subscriber_hash": sub, "created_at": created_at,
+        "request_id": rid, "conversation_id": conversation_id, "subscriber_hash": sub, "created_at": created_at,
         "question": q, "answer": a, "history_count": history,
         "source_issues": issues or [], "citations": [{"issue_number": n} for n in (issues or [])],
         "feedback_reaction": feedback, "feedback_at": None, "user_agent": "UA",
         "preflight": preflight,
     }
+
+
+def _summary(conversation_id, sub, created_at, updated_at, *, title="t", turn_count=1):
+    return {
+        "id": conversation_id,
+        "conversation_id": conversation_id,
+        "subscriber_hash": sub,
+        "title": title,
+        "preview": title,
+        "created_at": created_at,
+        "updated_at": updated_at,
+        "last_message_at": updated_at,
+        "turn_count": turn_count,
+    }
+
+
+def _full(summary, turns):
+    return {"conversation": summary, "turns": turns}
 
 
 class GroupingTests(unittest.TestCase):
@@ -62,6 +80,16 @@ class GroupingTests(unittest.TestCase):
         self.assertEqual([[t["request_id"] for t in c] for c in convos],
                          [["t1", "t2"], ["t3"], ["t4"]])
 
+    def test_server_conversation_id_wins_over_time_window(self):
+        turns = [
+            _turn("a1", "subA", "2026-05-12T01:00:00Z", conversation_id="conv-a"),
+            _turn("b1", "subA", "2026-05-12T01:01:00Z", conversation_id="conv-b"),
+            _turn("a2", "subA", "2026-05-12T01:02:00Z", conversation_id="conv-a"),
+        ]
+        convos = thingy_job.group_into_conversations(turns)
+        self.assertEqual([[t["request_id"] for t in c] for c in convos],
+                         [["b1"], ["a1", "a2"]])
+
 
 class RenderTests(unittest.TestCase):
     def test_anon_and_assessment_md(self):
@@ -91,6 +119,12 @@ class RenderTests(unittest.TestCase):
         self.assertIn("archive_rewrite/rewrite", card)
         self.assertIn("WT200, WT247", card)
         self.assertIn("/thingy show 5", card)
+
+    def test_assessment_parser_keeps_eval_fields(self):
+        parsed = thingy_job._parse_assessment('{"topic":"Hector","reader":"R","thingy":"T","takeaway":"K","quality":"problem","flags":["citation_mismatch","prompt_leak"],"improvements":["Fill missing WT citations"]}')
+        self.assertEqual(parsed["quality"], "problem")
+        self.assertEqual(parsed["flags"], ["citation_mismatch", "prompt_leak"])
+        self.assertIn("Fill missing", parsed["improvements"][0])
 
 
 class _DBCase(unittest.TestCase):
@@ -170,12 +204,15 @@ class WatchTests(_DBCase):
             "rationale": "Vague but answerable.",
         }
         turns = [
-            _turn("r1", "subA", "2026-05-12T01:00:00Z", q="Tell me a story.", issues=["200"], preflight=rewrite),
-            _turn("r2", "subA", "2026-05-12T01:02:00Z", q="And Atom?", history=1, issues=["247"], feedback="up"),
-            _turn("r3", "subB", "2026-05-12T02:00:00Z", q="POSSE?"),
+            _turn("r1", "subA", "2026-05-12T01:00:00Z", q="Tell me a story.", issues=["200"], preflight=rewrite, conversation_id="conv-a"),
+            _turn("r2", "subA", "2026-05-12T01:02:00Z", q="And Atom?", history=1, issues=["247"], feedback="up", conversation_id="conv-a"),
         ]
+        turns_b = [_turn("r3", "subB", "2026-05-12T02:00:00Z", q="POSSE?", conversation_id="conv-b")]
+        summary_a = _summary("conv-a", "subA", "2026-05-12T01:00:00Z", "2026-05-12T01:02:00Z", title="Tell me a story.", turn_count=2)
+        summary_b = _summary("conv-b", "subB", "2026-05-12T02:00:00Z", "2026-05-12T02:00:00Z", title="POSSE?", turn_count=1)
         assessment = {"topic": "syndication", "reader": "R.", "thingy": "T.", "takeaway": "K."}
-        with patch.object(thingy_job.thingy_client, "fetch_conversations", AsyncMock(return_value=turns)), \
+        with patch.object(thingy_job.thingy_client, "fetch_operator_conversations", AsyncMock(return_value=[summary_a, summary_b])), \
+             patch.object(thingy_job.thingy_client, "fetch_operator_conversation", AsyncMock(side_effect=[_full(summary_a, turns), _full(summary_b, turns_b)])), \
              patch.object(thingy_job, "_assess", AsyncMock(return_value=assessment)):
             ctx = self._ctx()
             res = asyncio.run(thingy_job.watch(ctx))
@@ -187,11 +224,12 @@ class WatchTests(_DBCase):
             rows = db.recent_thingy_conversations(10)
             self.assertEqual(len(rows), 2)
             convA = next(r for r in rows if r["turn_count"] == 2)
+            self.assertEqual(convA["remote_conversation_id"], "conv-a")
             self.assertEqual(convA["source_issues"], ["200", "247"])
             self.assertEqual(convA["feedback"], "up")
             self.assertEqual(convA["topic"], "syndication")
             self.assertIn("**Reader:** R.", convA["assessment_md"])
-            self.assertEqual(convA["transcript"][0]["preflight"]["category"], "archive_rewrite")
+            self.assertEqual(convA["transcript"], [])
             self.assertIsNotNone(convA["posted_to_chatter_at"])
 
             # second run with the same turns → nothing new
@@ -203,14 +241,14 @@ class WatchTests(_DBCase):
             self.assertEqual(len(db.recent_thingy_conversations(10)), 2)
 
     def test_watch_passes_when_log_empty(self):
-        with patch.object(thingy_job.thingy_client, "fetch_conversations", AsyncMock(return_value=[])):
+        with patch.object(thingy_job.thingy_client, "fetch_operator_conversations", AsyncMock(return_value=[])):
             res = asyncio.run(thingy_job.watch(self._ctx()))
         self.assertTrue(res.ok)
         self.assertIn("no new conversations", res.message)
 
     def test_watch_surfaces_lambda_error(self):
         from apps.thingy_bridge.tools.thingy_client import ThingyError
-        with patch.object(thingy_job.thingy_client, "fetch_conversations",
+        with patch.object(thingy_job.thingy_client, "fetch_operator_conversations",
                           AsyncMock(side_effect=ThingyError("bridge down"))):
             res = asyncio.run(thingy_job.watch(self._ctx()))
         self.assertFalse(res.ok)
@@ -224,11 +262,13 @@ class WatchTests(_DBCase):
         is still ok, and ``posted_to_chatter_at`` is NULL so the next
         run can retry."""
         import discord
-        turns = [_turn("r1", "subA", "2026-05-12T01:00:00Z", q="?", issues=["247"])]
+        turns = [_turn("r1", "subA", "2026-05-12T01:00:00Z", q="?", issues=["247"], conversation_id="conv-a")]
+        summary = _summary("conv-a", "subA", "2026-05-12T01:00:00Z", "2026-05-12T01:00:00Z", title="?", turn_count=1)
         assessment = {"topic": "t", "reader": "R.", "thingy": "T.", "takeaway": "K."}
         ctx = self._ctx()
         ctx.post = AsyncMock(side_effect=discord.DiscordException("403 Forbidden 50001"))
-        with patch.object(thingy_job.thingy_client, "fetch_conversations", AsyncMock(return_value=turns)), \
+        with patch.object(thingy_job.thingy_client, "fetch_operator_conversations", AsyncMock(return_value=[summary])), \
+             patch.object(thingy_job.thingy_client, "fetch_operator_conversation", AsyncMock(return_value=_full(summary, turns))), \
              patch.object(thingy_job, "_assess", AsyncMock(return_value=assessment)):
             res = asyncio.run(thingy_job.watch(ctx))
         self.assertTrue(res.ok, res.message)
@@ -247,12 +287,14 @@ class WatchTests(_DBCase):
         next watch run posts the orphan card without re-fetching it from
         the Lambda — purely from the local mirror."""
         import discord
-        turns = [_turn("r1", "subA", "2026-05-12T01:00:00Z", q="?", issues=["247"])]
+        turns = [_turn("r1", "subA", "2026-05-12T01:00:00Z", q="?", issues=["247"], conversation_id="conv-a")]
+        summary = _summary("conv-a", "subA", "2026-05-12T01:00:00Z", "2026-05-12T01:00:00Z", title="?", turn_count=1)
         assessment = {"topic": "t", "reader": "R.", "thingy": "T.", "takeaway": "K."}
         # First run: post fails, conversation stored as orphan.
         ctx1 = self._ctx()
         ctx1.post = AsyncMock(side_effect=discord.DiscordException("403 Forbidden 50001"))
-        with patch.object(thingy_job.thingy_client, "fetch_conversations", AsyncMock(return_value=turns)), \
+        with patch.object(thingy_job.thingy_client, "fetch_operator_conversations", AsyncMock(return_value=[summary])), \
+             patch.object(thingy_job.thingy_client, "fetch_operator_conversation", AsyncMock(return_value=_full(summary, turns))), \
              patch.object(thingy_job, "_assess", AsyncMock(return_value=assessment)):
             asyncio.run(thingy_job.watch(ctx1))
         self.assertEqual(db.count_unposted_thingy_conversations(), 1)
@@ -260,7 +302,7 @@ class WatchTests(_DBCase):
         # Second run: post succeeds. The Lambda returns no new turns; the
         # backfill alone should post the orphan card and mark it posted.
         ctx2 = self._ctx()  # default post returns True
-        with patch.object(thingy_job.thingy_client, "fetch_conversations", AsyncMock(return_value=[])), \
+        with patch.object(thingy_job.thingy_client, "fetch_operator_conversations", AsyncMock(return_value=[])), \
              patch.object(thingy_job, "_assess", AsyncMock(return_value=assessment)):
             res = asyncio.run(thingy_job.watch(ctx2))
         self.assertTrue(res.ok, res.message)
@@ -286,7 +328,7 @@ class WatchTests(_DBCase):
             )
         ctx = self._ctx()
         ctx.post = AsyncMock(side_effect=discord.DiscordException("403"))
-        with patch.object(thingy_job.thingy_client, "fetch_conversations", AsyncMock(return_value=[])):
+        with patch.object(thingy_job.thingy_client, "fetch_operator_conversations", AsyncMock(return_value=[])):
             res = asyncio.run(thingy_job.watch(ctx))
         self.assertTrue(res.ok, res.message)
         self.assertEqual(res.data["backfilled"], 0)
@@ -308,7 +350,7 @@ class WatchTests(_DBCase):
                 feedback=None, topic=f"O{i}", assessment_md=None,
             )
         ctx = self._ctx()  # post returns True
-        with patch.object(thingy_job.thingy_client, "fetch_conversations", AsyncMock(return_value=[])):
+        with patch.object(thingy_job.thingy_client, "fetch_operator_conversations", AsyncMock(return_value=[])):
             res = asyncio.run(thingy_job.watch(ctx))
         self.assertTrue(res.ok, res.message)
         self.assertEqual(res.data["backfilled"], cap)
@@ -324,7 +366,7 @@ class ReadCommandTests(_DBCase):
     def test_recent_empty_then_populated(self):
         res = asyncio.run(thingy_job.recent(_base.JobContext(), count=8))
         self.assertTrue(res.ok)
-        self.assertIn("No Thingy conversations mirrored yet", res.message)
+        self.assertIn("No Thingy conversations reviewed yet", res.message)
 
         db.insert_thingy_conversation(
             subscriber_hash="zz9988", started_at="2026-05-12T01:00:00Z", ended_at="2026-05-12T01:03:00Z",
@@ -381,7 +423,7 @@ class ReadCommandTests(_DBCase):
 
         missing = asyncio.run(thingy_job.show(_base.JobContext(), conv_id=999))
         self.assertFalse(missing.ok)
-        self.assertIn("No mirrored Thingy conversation", missing.message)
+        self.assertIn("No reviewed Thingy conversation", missing.message)
 
 
 class WiringTests(unittest.TestCase):
@@ -410,7 +452,7 @@ class WatchLockTests(_DBCase):
         ctx.post = AsyncMock(return_value=True)
         # Pre-acquire the lock; the watch call should see "already running."
         with job_lock([f"job:{thingy_job.NAME}"], thingy_job.NAME):
-            with patch.object(thingy_job.thingy_client, "fetch_conversations",
+            with patch.object(thingy_job.thingy_client, "fetch_operator_conversations",
                               AsyncMock(return_value=[])):
                 res = asyncio.run(thingy_job.watch(ctx))
         self.assertTrue(res.ok)
