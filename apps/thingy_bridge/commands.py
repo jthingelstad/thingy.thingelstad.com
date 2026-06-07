@@ -2,12 +2,10 @@
 
 The operator window into reader Q&A plus a per-user session reset:
 
-- ``/thingy recent [count]`` — last N mirrored conversations
+- ``/thingy recent [count]`` — last N reviewed conversations from the API
   (operator-only — reads private reader content).
 - ``/thingy show <id>`` — one conversation: assessment card + the full
   transcript attached as a ``.md`` file (operator-only — same reason).
-- ``/thingy sync`` — manual re-fire of the hourly ``thingy-watch`` job
-  (operator-only — touches the conversation mirror).
 - ``/thingy new`` — clear this user's #ask-thingy session boundary so
   their next question is not pulled into the prior conversation
   (available to anyone — only affects the caller's own history).
@@ -125,15 +123,15 @@ def register_thingy_commands(bot: "PersonaBot") -> app_commands.CommandTree:
         name="show",
         description="One Thingy conversation — assessment + full transcript (attached).",
     )
-    @app_commands.describe(id="The conversation id from `thingy recent` (the `#N`)")
+    @app_commands.describe(id="The conversation id from `thingy recent`")
     async def thingy_show_cmd(  # type: ignore[misc]
-        interaction: discord.Interaction, id: int
+        interaction: discord.Interaction, id: str
     ) -> None:
         if not await _require_owner(interaction):
             return
         await interaction.response.defer(ephemeral=True, thinking=True)
         try:
-            result = await thingy_job.show(_ctx(bot), conv_id=int(id))
+            result = await thingy_job.show(_ctx(bot), conv_id=str(id))
         except Exception as exc:  # noqa: BLE001
             logger.exception("/thingy show failed")
             await _ack(interaction, f"❌ `thingy show` hit an error: `{type(exc).__name__}: {exc}`")
@@ -145,15 +143,6 @@ def register_thingy_commands(bot: "PersonaBot") -> app_commands.CommandTree:
                        file=discord.File(io.BytesIO(md.encode("utf-8")), filename=fname))
         else:
             await _ack(interaction, result.message)
-
-    @thingy.command(
-        name="sync",
-        description="Pull new Thingy conversations now (the hourly thingy-watch, on demand).",
-    )
-    async def thingy_sync_cmd(interaction: discord.Interaction) -> None:  # type: ignore[misc]
-        if not await _require_owner(interaction):
-            return
-        await _run_and_ack(interaction, lambda: thingy_job.watch(_ctx(bot)), "thingy sync")
 
     @thingy.command(
         name="new",

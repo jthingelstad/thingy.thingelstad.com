@@ -45,16 +45,6 @@ def _install_stubs() -> None:
         sys.modules["discord"] = discord
         sys.modules["discord.abc"] = abc_mod
 
-    if "anthropic" not in sys.modules:
-        anthropic = types.ModuleType("anthropic")
-
-        class _A:
-            def __init__(self, *a, **k):
-                pass
-
-        anthropic.Anthropic = _A  # type: ignore[attr-defined]
-        sys.modules["anthropic"] = anthropic
-
     if "httpx" not in sys.modules:
         httpx = types.ModuleType("httpx")
 

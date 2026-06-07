@@ -1088,7 +1088,7 @@ permalink: "/"
       });
     }
 
-    async function submitFeedback(requestId, reaction, container) {
+    async function submitFeedback(requestId, reaction, container, comment = '') {
       const status = container.querySelector('.librarian-feedback-status');
       container.querySelectorAll('button[data-reaction]').forEach((button) => {
         button.disabled = true;
@@ -1097,7 +1097,8 @@ permalink: "/"
       try {
         const data = await postStreamJson('/feedback', {
           request_id: requestId,
-          reaction
+          reaction,
+          comment
         }, { authorization: `Bearer ${token()}` });
         setFeedbackState(container, data.reaction || reaction);
         if (status) status.textContent = 'Saved';
@@ -1106,6 +1107,7 @@ permalink: "/"
           if (status && status.textContent === 'Saved') status.textContent = '';
         }, 1800);
         trackTinylyticsEvent('librarian.feedback_submit', data.reaction || reaction);
+        if (comment) trackTinylyticsEvent('librarian.feedback_comment', reaction);
       } catch (error) {
         if (status) status.textContent = 'Could not save';
         trackTinylyticsEvent('librarian.feedback_error', error.requestId ? 'server' : 'client');
@@ -1385,7 +1387,13 @@ permalink: "/"
         if (!button || !controls.contains(button)) return;
         if (button.dataset.reaction) {
           if (button.classList.contains('selected')) return;
-          submitFeedback(requestId, button.dataset.reaction, controls);
+          let comment = '';
+          if (button.dataset.reaction === 'down') {
+            const value = window.prompt('What went wrong?');
+            if (value === null) return;
+            comment = value.trim().slice(0, 1000);
+          }
+          submitFeedback(requestId, button.dataset.reaction, controls, comment);
           return;
         }
         if (button.dataset.action === 'copy') {

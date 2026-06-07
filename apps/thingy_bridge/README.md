@@ -1,18 +1,9 @@
-# thingy_bridge — Discord ↔ Librarian Lambda bridge
+# thingy_bridge — Discord ↔ Thingy API bridge
 
-> The public Q&A surface for *The Weekly Thing* archive. Runs the Thingy
-> Discord bot in `#ask-thingy` and mirrors reader conversations from the
-> Librarian Lambda into a local SQLite so Jamie can see what's being
-> asked. Reader-facing only; everything author-facing lives in the
-> `studio-thing` repo.
-
-> **Status: transitional.** The current shape (reader Q&A bot +
-> operator-side conversation mirror) is **Phase 1** in
-> [`../../THINGY_ROADMAP.md`](../../THINGY_ROADMAP.md). Phase A3 plans
-> to **retire the request/response relay + mirror** and repurpose this
-> process as a one-way members broadcast that deep-links to authenticated
-> web Thingy. Read the roadmap before investing in extensions to the
-> current shape.
+> Runs the Thingy Discord bot in `#ask-thingy` and posts operator
+> notifications to `#chatter`. Conversations, transcripts, summaries,
+> evals, and posting state are canonical in the Thingy/Librarian API;
+> this bridge is only a Discord connector.
 
 ## Quick start
 
@@ -39,16 +30,13 @@ Two surfaces, one process:
    back, rewrites `#NNN` issue citations into clickable Discord links,
    and adds 👍/👎 feedback reactions that POST to the Lambda's
    `/feedback` endpoint.
-2. **Operator-side conversation mirror** — hourly `thingy-watch` job
-   pulls newly-logged conversation turns from the Lambda's
-   `list_conversations` auth endpoint, groups them into conversations,
-   has Sonnet write a two-sided assessment of each new one, mirrors
-   into the local `thingy_conversations` SQLite table (a stable local
-   id that outlives the Lambda's ~60-day DynamoDB TTL), and posts a
-   card to `#chatter`. Operator commands `/thingy {recent,show,sync}`
-   browse the mirror; reader commands `/thingy {new,scope}` manage the
-   caller's session boundary and corpus scope (Weekly Thing, blog, Another
-   Thing, or all sources).
+2. **Operator-side visibility** — the Librarian API's background eval
+   Lambda posts reviewed conversation cards directly to `#chatter` via
+   Discord webhook, so the bridge can be down without delaying reader
+   answers or evals. Operator commands `/thingy {recent,show}` read
+   canonical API conversations; reader
+   commands `/thingy {new,scope}` manage the caller's session boundary and
+   corpus scope (Weekly Thing, blog, Another Thing, or all sources).
 
 ## Architecture
 
@@ -73,17 +61,16 @@ this bridge is the thin connector between Discord and the Lambda's HTTP API.
 |---|---|---|
 | `DISCORD_TOKEN_THINGY` | yes | Bot token for the Thingy Discord application |
 | `DISCORD_CHANNEL_ASK_THINGY` | yes | Reader-facing channel id |
-| `DISCORD_CHANNEL_CHATTER` | yes | Operator channel for `thingy-watch` cards |
+| `DISCORD_CHANNEL_CHATTER` | yes | Operator channel for startup notices and API-posted eval cards |
 | `DISCORD_OWNER_USER_ID` | yes | Discord user id authorized to use `/thingy` slash commands |
-| `LIBRARIAN_API_URL` | optional | Lambda auth/list_conversations base URL (has a sane default) |
+| `LIBRARIAN_API_URL` | optional | Lambda auth/conversation API base URL (has a sane default) |
 | `LIBRARIAN_STREAM_URL` | optional | Lambda /chat SSE base URL (has a sane default) |
-| `LIBRARIAN_BRIDGE_SECRET` | yes | Shared secret for the `list_conversations` auth action |
-| `ANTHROPIC_API_KEY` | yes | For the conversation-assessment LLM call in `thingy-watch` |
+| `LIBRARIAN_BRIDGE_SECRET` | yes | Shared secret for operator conversation API actions |
 | `WEEKLY_THING_SITE_URL` | optional | For citation-link rewriting (defaults to `https://weekly.thingelstad.com`) |
 | `THINGY_BRIDGE_DB_PATH` | optional | SQLite path (defaults to `apps/thingy_bridge/data/thingy_bridge.db`) |
 | `THINGY_BRIDGE_LOG_FILE` | optional | Log path (defaults to `apps/thingy_bridge/logs/bridge.log`) |
 | `THINGY_BRIDGE_LOG_LEVEL` | optional | Logging level (default `INFO`) |
-| `THINGY_BRIDGE_SCHEDULER_ENABLED` | optional | Set to `0` to disable the hourly watch job |
+| `THINGY_BRIDGE_SCHEDULER_ENABLED` | optional | Reserved for future bridge jobs; no Thingy polling job is registered today |
 
 See `.env.example` for the template.
 

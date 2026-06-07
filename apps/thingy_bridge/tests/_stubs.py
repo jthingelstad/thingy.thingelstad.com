@@ -1,13 +1,12 @@
-"""Shared discord/anthropic stubs for offline unit tests.
+"""Shared discord stubs for offline unit tests.
 
 Multiple test files in this directory need to import workshop_bot
-modules without the real ``discord`` and ``anthropic`` packages
-installed (or, more commonly, without binding to those packages so
-tests can run on bare CI). Rather than each file maintaining its own
-inline stub — which collided under ``unittest discover`` because the
-first stub installed wins and later test modules reference whichever
-class binding was active at their own module-load time — this helper
-installs one canonical stub.
+modules without the real ``discord`` package installed (or, more
+commonly, without binding to it so tests can run on bare CI). Rather
+than each file maintaining its own inline stub — which collided under
+``unittest discover`` because the first stub installed wins and later
+test modules reference whichever class binding was active at their own
+module-load time — this helper installs one canonical stub.
 
 The stub is **idempotent**: callers can safely call ``install()``
 multiple times. The second call is a no-op.
@@ -29,7 +28,6 @@ def install() -> None:
     _INSTALLED = True
 
     _install_discord()
-    _install_anthropic()
 
 
 def _install_discord() -> None:
@@ -143,14 +141,3 @@ def _install_discord() -> None:
     sys.modules["discord"] = discord
     sys.modules["discord.abc"] = abc_mod
     sys.modules["discord.app_commands"] = app_commands
-
-
-def _install_anthropic() -> None:
-    anthropic = types.ModuleType("anthropic")
-
-    class _A:
-        def __init__(self, *a, **k):
-            pass
-
-    anthropic.Anthropic = _A  # type: ignore[attr-defined]
-    sys.modules["anthropic"] = anthropic

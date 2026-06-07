@@ -1,8 +1,8 @@
 """SQLite wrapper for thingy_bridge.
 
-The bridge's local store: cached Lambda tokens, per-question request
-mirror, the operator-side conversation mirror, and a small job_locks
-table for serializing the watch job.
+The bridge's local store: cached Lambda tokens, per-reader source scopes,
+per-question request ids for Discord feedback reactions, and a small
+job_locks table for future local bridge jobs.
 
 Connections are short-lived (per-call) — sqlite3 connections aren't
 safe to share across asyncio tasks, and the workload is tiny enough
@@ -69,12 +69,6 @@ _COLUMN_MIGRATIONS: tuple[tuple[str, str, str], ...] = (
      "ALTER TABLE thingy_tokens ADD COLUMN last_welcomed_at TEXT"),
     ("thingy_tokens", "session_reset_at",
      "ALTER TABLE thingy_tokens ADD COLUMN session_reset_at TEXT"),
-    ("thingy_conversations", "remote_conversation_id",
-     "ALTER TABLE thingy_conversations ADD COLUMN remote_conversation_id TEXT"),
-    ("thingy_conversations", "updated_at",
-     "ALTER TABLE thingy_conversations ADD COLUMN updated_at TEXT"),
-    ("thingy_conversations", "assessment_json",
-     "ALTER TABLE thingy_conversations ADD COLUMN assessment_json TEXT"),
 )
 
 
@@ -91,22 +85,9 @@ def _apply_column_migrations(conn: sqlite3.Connection) -> None:
             continue
         try:
             conn.execute(sql)
-            if table == "thingy_conversations" and column == "updated_at":
-                conn.execute(
-                    "UPDATE thingy_conversations "
-                    "SET updated_at = COALESCE(updated_at, created_at, ended_at, datetime('now'))"
-                )
         except sqlite3.OperationalError:
             # Column was added concurrently by another process; ignore.
             pass
-    try:
-        conn.execute(
-            "CREATE UNIQUE INDEX IF NOT EXISTS idx_thingy_conversations_remote "
-            "ON thingy_conversations(remote_conversation_id) "
-            "WHERE remote_conversation_id IS NOT NULL AND remote_conversation_id != ''"
-        )
-    except sqlite3.OperationalError:
-        pass
 
 
 # ---------- Thingy tokens (per-reader Lambda sessions) ----------
@@ -299,237 +280,6 @@ def lookup_thingy_request_by_response(
             (bot_response_message_id,),
         ).fetchone()
     return dict(row) if row else None
-
-
-# ---------- Thingy conversations (operator's view into reader Q&A) ----------
-
-def insert_thingy_conversation(
-    *,
-    remote_conversation_id: Optional[str] = None,
-    subscriber_hash: str,
-    started_at: str,
-    ended_at: str,
-    turn_count: int,
-    transcript: list[dict[str, Any]],
-    turn_request_ids: list[str],
-    source_issues: list[str],
-    feedback: Optional[str],
-    topic: Optional[str],
-    assessment_md: Optional[str],
-    assessment_json: Optional[dict[str, Any]] = None,
-    posted_to_chatter_at: Optional[str] = None,
-) -> int:
-    """Insert one mirrored conversation; returns its local id."""
-    with connect() as conn:
-        cur = conn.execute(
-            "INSERT INTO thingy_conversations "
-            "(remote_conversation_id, subscriber_hash, started_at, ended_at, turn_count, transcript_json, "
-            " turn_request_ids_json, source_issues_json, feedback, topic, assessment_md, assessment_json, "
-            " posted_to_chatter_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (
-                remote_conversation_id or None, subscriber_hash, started_at, ended_at, int(turn_count),
-                json.dumps(transcript), json.dumps(list(turn_request_ids)),
-                json.dumps(list(source_issues)), feedback, topic, assessment_md,
-                json.dumps(assessment_json) if assessment_json is not None else None,
-                posted_to_chatter_at,
-            ),
-        )
-        return int(cur.lastrowid)
-
-
-def upsert_thingy_conversation(
-    *,
-    remote_conversation_id: Optional[str] = None,
-    subscriber_hash: str,
-    started_at: str,
-    ended_at: str,
-    turn_count: int,
-    transcript: list[dict[str, Any]],
-    turn_request_ids: list[str],
-    source_issues: list[str],
-    feedback: Optional[str],
-    topic: Optional[str],
-    assessment_md: Optional[str],
-    assessment_json: Optional[dict[str, Any]] = None,
-) -> tuple[int, bool]:
-    """Insert or update one mirrored conversation.
-
-    Returns ``(id, changed)``. ``changed`` is true for brand-new rows and
-    for existing server-backed rows whose turn set changed. Existing rows
-    keep their stable local id; when updated, ``posted_to_chatter_at`` is
-    reset so the operator channel gets a fresh card for the continued
-    conversation.
-    """
-    remote = str(remote_conversation_id or "").strip()
-    if not remote:
-        return (
-            insert_thingy_conversation(
-                subscriber_hash=subscriber_hash,
-                started_at=started_at,
-                ended_at=ended_at,
-                turn_count=turn_count,
-                transcript=transcript,
-                turn_request_ids=turn_request_ids,
-                source_issues=source_issues,
-                feedback=feedback,
-                topic=topic,
-                assessment_md=assessment_md,
-                assessment_json=assessment_json,
-            ),
-            True,
-        )
-
-    turn_ids_json = json.dumps(list(turn_request_ids))
-    with connect() as conn:
-        row = conn.execute(
-            "SELECT id, turn_request_ids_json FROM thingy_conversations "
-            "WHERE remote_conversation_id = ?",
-            (remote,),
-        ).fetchone()
-        if row is None:
-            cur = conn.execute(
-                "INSERT INTO thingy_conversations "
-                "(remote_conversation_id, subscriber_hash, started_at, ended_at, turn_count, "
-                " transcript_json, turn_request_ids_json, source_issues_json, feedback, topic, "
-                " assessment_md, assessment_json, posted_to_chatter_at, updated_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, datetime('now'))",
-                (
-                    remote, subscriber_hash, started_at, ended_at, int(turn_count),
-                    json.dumps(transcript), turn_ids_json, json.dumps(list(source_issues)),
-                    feedback, topic, assessment_md,
-                    json.dumps(assessment_json) if assessment_json is not None else None,
-                ),
-            )
-            return int(cur.lastrowid), True
-
-        conv_id = int(row["id"])
-        if str(row["turn_request_ids_json"] or "") == turn_ids_json:
-            return conv_id, False
-        conn.execute(
-            "UPDATE thingy_conversations SET "
-            "subscriber_hash = ?, started_at = ?, ended_at = ?, turn_count = ?, "
-            "transcript_json = ?, turn_request_ids_json = ?, source_issues_json = ?, "
-            "feedback = ?, topic = ?, assessment_md = ?, assessment_json = ?, posted_to_chatter_at = NULL, "
-            "updated_at = datetime('now') "
-            "WHERE id = ?",
-            (
-                subscriber_hash, started_at, ended_at, int(turn_count),
-                json.dumps(transcript), turn_ids_json, json.dumps(list(source_issues)),
-                feedback, topic, assessment_md,
-                json.dumps(assessment_json) if assessment_json is not None else None,
-                conv_id,
-            ),
-        )
-        return conv_id, True
-
-
-def mark_thingy_conversation_posted(conv_id: int) -> None:
-    with connect() as conn:
-        conn.execute(
-            "UPDATE thingy_conversations SET posted_to_chatter_at = datetime('now') "
-            "WHERE id = ? AND posted_to_chatter_at IS NULL",
-            (conv_id,),
-        )
-
-
-def _hydrate_thingy_conversation(row: sqlite3.Row) -> dict[str, Any]:
-    d = dict(row)
-    for col, key in (("transcript_json", "transcript"),
-                     ("turn_request_ids_json", "turn_request_ids"),
-                     ("source_issues_json", "source_issues"),
-                     ("assessment_json", "assessment")):
-        raw = d.pop(col, None)
-        try:
-            d[key] = json.loads(raw) if raw else ([] if key != "assessment" else {})
-        except (ValueError, TypeError):
-            d[key] = [] if key != "assessment" else {}
-    return d
-
-
-def get_thingy_conversation(conv_id: int) -> Optional[dict[str, Any]]:
-    with connect() as conn:
-        row = conn.execute(
-            "SELECT * FROM thingy_conversations WHERE id = ?", (conv_id,)
-        ).fetchone()
-    return _hydrate_thingy_conversation(row) if row else None
-
-
-def get_thingy_conversation_by_remote_id(remote_conversation_id: str) -> Optional[dict[str, Any]]:
-    remote = str(remote_conversation_id or "").strip()
-    if not remote:
-        return None
-    with connect() as conn:
-        row = conn.execute(
-            "SELECT * FROM thingy_conversations WHERE remote_conversation_id = ?",
-            (remote,),
-        ).fetchone()
-    return _hydrate_thingy_conversation(row) if row else None
-
-
-def recent_thingy_conversations(limit: int = 8) -> list[dict[str, Any]]:
-    with connect() as conn:
-        rows = conn.execute(
-            "SELECT * FROM thingy_conversations ORDER BY ended_at DESC, id DESC LIMIT ?",
-            (int(limit),),
-        ).fetchall()
-    return [_hydrate_thingy_conversation(r) for r in rows]
-
-
-def unposted_thingy_conversations(limit: int = 50) -> list[dict[str, Any]]:
-    """Conversations mirrored locally but whose ``#chatter`` card never
-    landed (``posted_to_chatter_at IS NULL``).
-
-    Returned oldest-first so the operator sees them in chronological
-    order when the bridge backfills after a permission/access window.
-    The watch job reads this at the top of each run and retries the
-    posts — without it, a row whose post failed is trapped forever
-    because :func:`seen_thingy_turn_request_ids` excludes its turns
-    from re-forming a fresh conversation.
-    """
-    with connect() as conn:
-        rows = conn.execute(
-            "SELECT * FROM thingy_conversations "
-            "WHERE posted_to_chatter_at IS NULL "
-            "ORDER BY ended_at ASC, id ASC LIMIT ?",
-            (int(limit),),
-        ).fetchall()
-    return [_hydrate_thingy_conversation(r) for r in rows]
-
-
-def count_unposted_thingy_conversations() -> int:
-    with connect() as conn:
-        row = conn.execute(
-            "SELECT COUNT(*) AS n FROM thingy_conversations "
-            "WHERE posted_to_chatter_at IS NULL"
-        ).fetchone()
-    return int(row["n"]) if row else 0
-
-
-def latest_thingy_conversation_end() -> Optional[str]:
-    """ISO timestamp of the newest mirrored turn — the watch watermark."""
-    with connect() as conn:
-        row = conn.execute(
-            "SELECT MAX(ended_at) AS m FROM thingy_conversations"
-        ).fetchone()
-    return row["m"] if row and row["m"] else None
-
-
-def seen_thingy_turn_request_ids() -> set[str]:
-    """Every turn request_id already folded into a mirrored conversation."""
-    seen: set[str] = set()
-    with connect() as conn:
-        rows = conn.execute(
-            "SELECT turn_request_ids_json FROM thingy_conversations"
-        ).fetchall()
-    for r in rows:
-        try:
-            for rid in json.loads(r["turn_request_ids_json"] or "[]"):
-                if rid:
-                    seen.add(str(rid))
-        except (ValueError, TypeError):
-            continue
-    return seen
 
 
 # ---------- Job locks (single-asset serialization for the watch job) ----------

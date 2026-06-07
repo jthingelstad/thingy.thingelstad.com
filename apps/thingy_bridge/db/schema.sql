@@ -53,51 +53,11 @@ CREATE TABLE IF NOT EXISTS thingy_requests (
 CREATE INDEX IF NOT EXISTS idx_thingy_requests_bot_msg
   ON thingy_requests(bot_response_message_id);
 
--- Job locks — single-asset serialization for the watch job. A lock
--- whose pid is no longer a live process is treated as stale and stolen.
+-- Job locks — single-asset serialization for future local bridge jobs.
+-- A lock whose pid is no longer a live process is treated as stale and stolen.
 CREATE TABLE IF NOT EXISTS job_locks (
-  asset TEXT PRIMARY KEY,                        -- e.g. 'job:thingy-watch'
+  asset TEXT PRIMARY KEY,                        -- e.g. 'job:future-task'
   job TEXT NOT NULL,
   started_at TEXT NOT NULL DEFAULT (datetime('now')),
   pid INTEGER NOT NULL
 );
-
--- Operator-side mirror of what readers ask the public archive agent.
--- The hourly thingy-watch job fetches logged turns from the Lambda
--- (/auth?action=list_conversations), groups them by the API's canonical
--- server-side conversation_id when present (falling back to the old
--- same-subscriber/time-window heuristic for legacy rows),
--- runs a Sonnet assessment, stores the review/posting state here (so
--- Jamie gets stable local ids like #102), and posts a card to #chatter.
--- Canonical transcript data lives in DynamoDB; transcript_json is kept as
--- a fallback snapshot for legacy rows and old /thingy show attachments.
-CREATE TABLE IF NOT EXISTS thingy_conversations (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  remote_conversation_id TEXT,                 -- API conversation_id; NULL for legacy inferred conversations
-  subscriber_hash TEXT NOT NULL,               -- SHA256 of the reader's email; never the email itself
-  started_at TEXT NOT NULL,                    -- ISO; created_at of the first turn
-  ended_at TEXT NOT NULL,                      -- ISO; created_at of the last turn (also the watch watermark)
-  turn_count INTEGER NOT NULL,
-  -- the conversation as JSON: [{request_id, created_at, question, answer,
-  --   citations:[{issue_number,subject,publish_date,section,url}],
-  --   source_issues:[...], feedback_reaction, feedback_at}]
-  transcript_json TEXT NOT NULL,
-  -- JSON array of the turn request_ids in this conversation — the dedup key
-  -- (a turn already mirrored here is never re-formed into a new conversation)
-  turn_request_ids_json TEXT NOT NULL,
-  source_issues_json TEXT,                     -- JSON array of issue numbers cited across the conversation
-  feedback TEXT,                               -- 'up' / 'down' / 'mixed' / NULL — rolled up from the turns
-  topic TEXT,                                  -- one-line topic, from the assessment pass
-  assessment_md TEXT,                          -- the assessment (markdown)
-  assessment_json TEXT,                        -- structured eval fields for aggregate improvement work
-  posted_to_chatter_at TEXT,                   -- when thingy-watch posted the card; NULL until then
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE INDEX IF NOT EXISTS idx_thingy_conversations_ended
-  ON thingy_conversations(ended_at DESC, id DESC);
-
-CREATE UNIQUE INDEX IF NOT EXISTS idx_thingy_conversations_remote
-  ON thingy_conversations(remote_conversation_id)
-  WHERE remote_conversation_id IS NOT NULL AND remote_conversation_id != '';

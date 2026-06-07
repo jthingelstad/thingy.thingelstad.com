@@ -1,20 +1,11 @@
 """Scheduler handlers for the bridge.
 
-Just the one — ``thingy-watch`` invoked hourly from
-``scheduler/jobs.py``. The handler shape mirrors workshop_bot's
-``content_job`` but only routes the single ``watch`` entrypoint.
+No recurring jobs are registered today. Thingy conversation review
+notifications are emitted by the Librarian API's evaluator Lambda via
+Discord webhook, so the bridge has no polling handler to run.
 """
 
 from __future__ import annotations
 
-import logging
 
-logger = logging.getLogger("thingy_bridge.scheduler.handlers")
-
-
-async def thingy_watch(ctx) -> None:
-    """Fire the hourly conversation-mirror job. Lazy import so this
-    module loads without pulling the watch graph at startup."""
-    from ..jobs import watch as watch_job
-    result = await watch_job.watch(ctx)
-    logger.info("scheduler thingy-watch: %s", result.message)
+__all__: tuple[str, ...] = ()

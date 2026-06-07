@@ -1,17 +1,15 @@
 """Declarative scheduled jobs for the bridge.
 
-One job: the hourly ``thingy-watch`` that pulls newly-logged
-conversations from the Lambda's ``list_conversations`` endpoint and
-mirrors them into ``thingy_conversations``. If a second cron job ever
-lives here, add a second ``JobSpec`` entry.
+Thingy conversation notifications are event-driven now: the Librarian
+eval Lambda posts directly to Discord via webhook after reviewing a
+conversation. This bridge keeps scheduler support for future local jobs,
+but no recurring Thingy poller is registered.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Awaitable, Callable, TYPE_CHECKING
-
-from . import handlers
 
 if TYPE_CHECKING:
     from .runner import JobContext
@@ -28,18 +26,7 @@ class JobSpec:
     timezone: str = DEFAULT_TZ
 
 
-JOBS: tuple[JobSpec, ...] = (
-    JobSpec(
-        id="thingy-watch",
-        cron="7 * * * *",                                # Hourly at :07. Pulls newly-logged
-                                                         # conversations from the Lambda, runs a
-                                                         # one-shot Sonnet assessment of each new
-                                                         # one, mirrors it locally, and posts a
-                                                         # card to #chatter. PASSes silently when
-                                                         # nothing new.
-        func=handlers.thingy_watch,
-    ),
-)
+JOBS: tuple[JobSpec, ...] = ()
 
 
 def by_id(job_id: str) -> JobSpec | None:

@@ -4,10 +4,11 @@ Run with ``python -m apps.thingy_bridge.bot`` from the repo root.
 
 Spins up a single discord.py Client (the Thingy bot), runs DB
 migrations, registers the ``/thingy`` slash tree, and starts the
-hourly ``thingy-watch`` APScheduler job. The reader-facing answering
-behavior lives in :class:`apps.thingy_bridge.personas.thingy.ThingyBot`
-— ``on_message`` forwards each question to the Lambda's ``/chat`` SSE
-endpoint and posts the streamed answer.
+bridge scheduler if any local jobs are registered. The reader-facing
+answering behavior lives in
+:class:`apps.thingy_bridge.personas.thingy.ThingyBot` — ``on_message``
+forwards each question to the Lambda's ``/chat`` SSE endpoint and posts
+the streamed answer.
 
 Author-facing personas (Eddy, Linky, Marky, Patty) run in the separate
 ``apps.workshop_bot.bot`` process. See ``apps/thingy_bridge/README.md``
@@ -180,9 +181,6 @@ async def _gateway_watchdog(
 
 
 async def run() -> int:
-    if not os.environ.get("ANTHROPIC_THINGY_API_KEY"):
-        logger.error("ANTHROPIC_THINGY_API_KEY is not set (required for thingy-watch assessment calls)")
-        return 2
     token = os.environ.get("DISCORD_TOKEN_THINGY")
     if not token:
         logger.error("DISCORD_TOKEN_THINGY is not set")
