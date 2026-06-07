@@ -2027,7 +2027,7 @@ permalink: "/"
       let conversationId = activeConversationId || '';
       let conversation = null;
       const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 85000);
+      const timeout = window.setTimeout(() => controller.abort(), 190000);
       const response = await fetch(`${streamBase}/chat`, {
         method: 'POST',
         headers: {
@@ -2044,7 +2044,7 @@ permalink: "/"
         signal: controller.signal
       }).catch((error) => {
         if (error.name === 'AbortError') {
-          throw new Error('Thingy took too long to respond. Please try again.');
+          throw new Error('Thingy spent too long in the archive. Please try again with a narrower angle.');
         }
         throw error;
       }).finally(() => {
