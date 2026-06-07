@@ -1659,6 +1659,29 @@ a.thingy-exp-source:hover {
   backdrop-filter: blur(10px);
 }
 
+.rail-newchat-combo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  width: 100%;
+  min-height: var(--rail-item-h);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--shadow-subtle);
+  overflow: hidden;
+  transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease;
+}
+
+.rail-newchat-combo:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: color-mix(in srgb, var(--accent-soft) 28%, var(--surface));
+}
+
+.rail-newchat-combo:active {
+  transform: translateY(1px);
+}
+
 .rail-newchat {
   display: flex;
   align-items: center;
@@ -1666,25 +1689,19 @@ a.thingy-exp-source:hover {
   width: 100%;
   min-height: var(--rail-item-h);
   padding: 0 12px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--surface);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--ink);
   font-family: var(--sans);
   font-weight: 700;
   font-size: 14px;
   cursor: pointer;
-  box-shadow: var(--shadow-subtle);
-  transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease;
+  transition: background 0.14s ease;
 }
 
 .rail-newchat:hover {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
-  background: color-mix(in srgb, var(--accent-soft) 35%, var(--surface));
-}
-
-.rail-newchat:active {
-  transform: translateY(1px);
+  background: color-mix(in srgb, var(--accent-soft) 30%, transparent);
 }
 
 .rail-newchat:disabled {
@@ -1718,42 +1735,34 @@ a.thingy-exp-source:hover {
 
 .rail-map {
   margin-top: 6px;
+  border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
+  border-radius: 10px;
   background: color-mix(in srgb, var(--surface) 84%, var(--accent-soft));
   color: var(--accent-deep);
+  box-shadow: var(--shadow-subtle);
 }
 
-.rail-mode {
-  display: grid;
-  gap: 5px;
-  margin: 10px 0 2px;
-  padding: 9px 10px;
-  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--surface) 78%, var(--rail-bg));
+.rail-newchat-mode {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 5px 6px 5px 0;
 }
 
-.rail-mode[hidden] {
+.rail-newchat-mode[hidden] {
   display: none;
 }
 
-.rail-mode label {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.rail-mode select {
-  width: 100%;
-  min-height: 32px;
-  border: 1px solid var(--line);
+.rail-newchat-mode select {
+  max-width: 128px;
+  min-height: 30px;
+  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
   border-radius: 7px;
-  background: var(--surface);
-  color: var(--ink);
-  font: 700 13px/1 var(--sans);
-  padding: 0 8px;
+  background: color-mix(in srgb, var(--rail-bg) 52%, var(--surface));
+  color: var(--ink-soft);
+  font: 700 12px/1 var(--sans);
+  padding: 0 24px 0 8px;
+  cursor: pointer;
 }
 
 .rail-body {
@@ -2061,11 +2070,17 @@ a.thingy-exp-source:hover {
 
 .thingy-app-shell.is-collapsed .rail-newchat .label,
 .thingy-app-shell.is-collapsed .rail-newchat .kbd,
-.thingy-app-shell.is-collapsed .rail-mode,
+.thingy-app-shell.is-collapsed .rail-newchat-mode,
 .thingy-app-shell.is-collapsed .rail-body,
 .thingy-app-shell.is-collapsed .rail-account-meta,
 .thingy-app-shell.is-collapsed .rail-account-caret {
   display: none;
+}
+
+.thingy-app-shell.is-collapsed .rail-newchat-combo {
+  display: block;
+  width: 40px;
+  min-height: 40px;
 }
 
 .thingy-app-shell.is-collapsed .rail-newchat {
@@ -2265,6 +2280,38 @@ a.thingy-exp-source:hover {
 
 .librarian-chat.thingy-chat[hidden] {
   display: none;
+}
+
+.thingy-mode-banner {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 8px clamp(18px, 5vw, 72px);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line));
+  background: color-mix(in srgb, var(--accent-soft) 56%, var(--surface));
+  color: var(--accent-deep);
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.thingy-mode-banner[hidden] {
+  display: none;
+}
+
+.thingy-mode-banner-kicker {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.thingy-mode-banner strong {
+  font-weight: 800;
 }
 
 .thingy-chat-scroll {
@@ -3153,10 +3200,17 @@ a.thingy-exp-source:hover {
 
   .rail .rail-newchat .label,
   .rail .rail-newchat .kbd,
+  .rail .rail-newchat-mode,
   .rail .rail-body,
   .rail .rail-account-meta,
   .rail .rail-account-caret {
     display: none;
+  }
+
+  .rail-newchat-combo {
+    display: block;
+    width: 40px;
+    min-height: 40px;
   }
 
   .rail-newchat {
@@ -3218,6 +3272,13 @@ a.thingy-exp-source:hover {
 
   .rail-brand {
     flex: 0 0 auto;
+  }
+
+  .rail-newchat-combo {
+    flex: 0 0 auto;
+    display: block;
+    width: 38px;
+    min-height: 38px;
   }
 
   .rail-newchat {
@@ -3581,10 +3642,6 @@ a.thingy-exp-source:hover {
     overflow: hidden;
   }
 
-  .thingy-app-shell.is-collapsed .rail-mode:not([hidden]) {
-    display: grid;
-  }
-
   .thingy-app-shell.is-mobile-rail-open .rail {
     display: flex;
   }
@@ -3612,11 +3669,31 @@ a.thingy-exp-source:hover {
   .thingy-app-shell.is-collapsed .rail-newchat .label,
   .rail .rail-newchat .kbd,
   .thingy-app-shell.is-collapsed .rail-newchat .kbd,
+  .rail .rail-newchat-mode,
+  .thingy-app-shell.is-collapsed .rail-newchat-mode,
   .rail .rail-account-meta,
   .thingy-app-shell.is-collapsed .rail-account-meta,
   .rail .rail-account-caret,
   .thingy-app-shell.is-collapsed .rail-account-caret {
     display: grid;
+  }
+
+  .rail .rail-newchat-mode[hidden],
+  .thingy-app-shell.is-collapsed .rail-newchat-mode[hidden] {
+    display: none;
+  }
+
+  .rail .rail-newchat-mode:not([hidden]),
+  .thingy-app-shell.is-collapsed .rail-newchat-mode:not([hidden]) {
+    display: flex;
+  }
+
+  .rail .rail-newchat-combo,
+  .thingy-app-shell.is-collapsed .rail-newchat-combo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: 100%;
+    min-height: 40px;
   }
 
   .rail .rail-newchat,

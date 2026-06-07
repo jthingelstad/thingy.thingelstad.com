@@ -16,19 +16,21 @@ permalink: "/"
         </button>
       </div>
 
-      <button class="rail-newchat" type="button" id="librarian-clear-chat" data-tinylytics-event="librarian.clear" title="New chat">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
-        <span class="label">New chat</span>
-        <span class="kbd">⌘K</span>
-      </button>
+      <div class="rail-newchat-combo">
+        <button class="rail-newchat" type="button" id="librarian-clear-chat" data-tinylytics-event="librarian.clear" title="New chat">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+          <span class="label">New chat</span>
+          <span class="kbd">⌘K</span>
+        </button>
+        <div class="rail-newchat-mode" id="thingy-mode-control" hidden>
+          <label for="thingy-mode-select" class="sr-only">New chat mode</label>
+          <select id="thingy-mode-select" aria-label="New chat mode"></select>
+        </div>
+      </div>
       <button class="rail-newchat rail-map" type="button" id="thingy-curiosity-map" data-tinylytics-event="librarian.curiosity_map" title="Curiosity map">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><circle cx="5" cy="7" r="2"></circle><circle cx="19" cy="6" r="2"></circle><circle cx="18" cy="18" r="2"></circle><path d="M7 8l3.5 2.5M14.2 9.8L17.4 7.2M14.5 14.3l2.2 2.2"></path></svg>
         <span class="label">Curiosity map</span>
       </button>
-      <div class="rail-mode" id="thingy-mode-control" hidden>
-        <label for="thingy-mode-select">Mode</label>
-        <select id="thingy-mode-select" aria-label="Thingy conversation mode"></select>
-      </div>
 
       <div class="rail-body">
         <p class="rail-recents-label">Recents</p>
@@ -104,6 +106,7 @@ permalink: "/"
       </div>
 
       <div class="librarian-chat thingy-chat" id="librarian-chat" hidden>
+        <div class="thingy-mode-banner" id="thingy-mode-banner" hidden aria-live="polite"></div>
         <div class="thingy-chat-scroll">
           <div class="librarian-messages" id="librarian-messages" aria-live="polite"></div>
         </div>
@@ -195,6 +198,7 @@ permalink: "/"
     const curiosityMapButton = document.getElementById('thingy-curiosity-map');
     const modeControl = document.getElementById('thingy-mode-control');
     const modeSelect = document.getElementById('thingy-mode-select');
+    const modeBanner = document.getElementById('thingy-mode-banner');
     const questionInput = document.getElementById('librarian-question');
     const questionButton = questionForm.querySelector('button[type="submit"]');
     const voiceButton = document.getElementById('composer-voice');
@@ -464,12 +468,26 @@ permalink: "/"
       return activeConversation()?.mode || activeMode || 'thingy';
     }
 
+    function renderModeBanner() {
+      if (!modeBanner) return;
+      const mode = currentConversationMode();
+      const show = token() && mode && mode !== 'thingy';
+      modeBanner.hidden = !show;
+      if (!show) {
+        modeBanner.innerHTML = '';
+        return;
+      }
+      const label = modeLabel(mode);
+      modeBanner.innerHTML = `<span class="thingy-mode-banner-kicker">Mode</span><strong>${escapeHtml(label)}</strong>`;
+    }
+
     function renderModeControl() {
       if (!modeControl || !modeSelect) return;
       const show = token() && availableModes.length > 1;
       modeControl.hidden = !show;
       modeSelect.innerHTML = availableModes.map((mode) => `<option value="${escapeHtml(mode.id)}">${escapeHtml(mode.label)}</option>`).join('');
       modeSelect.value = availableModes.some((mode) => mode.id === activeMode) ? activeMode : 'thingy';
+      renderModeBanner();
     }
 
     function extractPreferredName(message) {
@@ -1761,6 +1779,7 @@ permalink: "/"
       } catch (error) { /* ignore */ }
       renderRecents();
       updateMobileConversationTitle();
+      renderModeBanner();
       return activeConversationId;
     }
 
@@ -1925,6 +1944,7 @@ permalink: "/"
       conversations = conversations.slice(0, maxRecents);
       renderRecents();
       updateMobileConversationTitle();
+      renderModeBanner();
     }
 
     async function refreshConversations(options = {}) {
