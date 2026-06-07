@@ -468,6 +468,13 @@ permalink: "/"
       return selectedSources().length;
     }
 
+    function ensureOneSourceSelected(changedInput = null) {
+      if (sourceCount() > 0) return true;
+      const fallback = changedInput || scopeInputs[0];
+      if (fallback) fallback.checked = true;
+      return false;
+    }
+
     function speechInputCtor() {
       return window.SpeechRecognition || window.webkitSpeechRecognition || null;
     }
@@ -2408,9 +2415,17 @@ permalink: "/"
 
     scopeInputs.forEach((input) => {
       input.addEventListener('change', () => {
+        const keptSelection = ensureOneSourceSelected(input);
         activeScope = currentScope();
         trackTinylyticsEvent('librarian.scope_change', activeScope || 'none');
         updateQuestionState();
+        refreshSrcPick();
+        if (!keptSelection && sourceError) {
+          sourceError.textContent = 'Keep at least one source selected.';
+        }
+        if (!keptSelection && srcpickNoteEl) {
+          srcpickNoteEl.textContent = 'Keep at least one source selected.';
+        }
       });
     });
 
@@ -2546,6 +2561,13 @@ permalink: "/"
     function toggleSrcPick(force) {
       if (!srcpickPop || !srcpickBtn) return;
       const open = force === undefined ? srcpickPop.hasAttribute('hidden') : force;
+      if (!open && !ensureOneSourceSelected()) {
+        if (srcpickNoteEl) srcpickNoteEl.textContent = 'Keep at least one source selected.';
+        srcpickPop.toggleAttribute('hidden', false);
+        srcpickBtn.setAttribute('aria-expanded', 'true');
+        syncSrcPickPosition();
+        return;
+      }
       srcpickPop.toggleAttribute('hidden', !open);
       srcpickBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
       if (open) syncSrcPickPosition();
@@ -2573,8 +2595,11 @@ permalink: "/"
       event.stopPropagation();
       toggleSrcPick();
     });
-    if (srcpickPop) srcpickPop.addEventListener('click', (event) => event.stopPropagation());
-    scopeInputs.forEach((input) => input.addEventListener('change', refreshSrcPick));
+    if (srcpickPop) {
+      ['pointerdown', 'mousedown', 'click'].forEach((eventName) => {
+        srcpickPop.addEventListener(eventName, (event) => event.stopPropagation());
+      });
+    }
     refreshSrcPick();
     window.addEventListener('resize', scheduleSrcPickPosition);
     if (chatScroll) chatScroll.addEventListener('scroll', scheduleSrcPickPosition, { passive: true });
