@@ -1141,6 +1141,61 @@ permalink: "/"
       return renderMarkdown(answer, citations) + renderExperience(experience);
     }
 
+    function humanToolName(value) {
+      return String(value || '')
+        .replace(/_/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    }
+
+    function activityMessageFromToolName(value) {
+      const name = humanToolName(value);
+      return name ? `Checked ${name}` : '';
+    }
+
+    function normalizeActivityStep(data, fallback = 'Thingy is working...') {
+      if (typeof data === 'string') return String(data || fallback).trim();
+      const toolName = data?.tool_name || data?.toolName || '';
+      if (toolName) return activityMessageFromToolName(toolName);
+      return String(data?.message || fallback).trim().replace(/\.\.\.$/, '');
+    }
+
+    function appendActivityStep(steps, data, fallback) {
+      const text = normalizeActivityStep(data, fallback).replace(/\s+/g, ' ').slice(0, 120);
+      if (!text) return steps;
+      const last = steps[steps.length - 1] || '';
+      if (last.toLowerCase() === text.toLowerCase()) return steps;
+      steps.push(text);
+      return steps.slice(-8);
+    }
+
+    function activityStepsFromToolNames(toolNames = []) {
+      return Array.from(new Set((toolNames || []).map(activityMessageFromToolName).filter(Boolean)));
+    }
+
+    function renderActivityLog(steps = [], options = {}) {
+      const list = (steps || []).filter(Boolean);
+      if (!list.length) return '';
+      const activeIndex = options.active ? list.length - 1 : -1;
+      const items = list.map((step, index) => {
+        const state = index === activeIndex ? ' is-active' : ' is-complete';
+        const label = index === activeIndex && step.startsWith('Checked ') ? `Checking ${step.slice(8)}` : step;
+        return `<li class="librarian-activity-step${state}"><span class="librarian-activity-dot" aria-hidden="true"></span><span>${escapeHtml(label)}</span></li>`;
+      }).join('');
+      return `<aside class="librarian-activity" aria-label="Thingy activity">`
+        + `<div class="librarian-activity-kicker">${escapeHtml(options.label || 'Archive Work')}</div>`
+        + `<ol>${items}</ol>`
+        + `</aside>`;
+    }
+
+    function renderAssistantResponse(answer, citations = [], experience = null, activitySteps = [], options = {}) {
+      const hasAnswer = String(answer || '').trim() || experience;
+      const activity = renderActivityLog(activitySteps, options);
+      if (!hasAnswer) return activity || renderAnswer(answer, citations, experience);
+      return `${activity}<div class="librarian-answer-content">${renderAnswer(answer, citations, experience)}</div>`;
+    }
+
     function setFeedbackState(container, reaction) {
       container.querySelectorAll('button[data-reaction]').forEach((button) => {
         const selected = button.dataset.reaction === reaction;
@@ -1212,7 +1267,7 @@ permalink: "/"
 
     function answerClipboardPayload(messageElement) {
       const clone = messageElement.cloneNode(true);
-      clone.querySelectorAll('.librarian-feedback, .librarian-prompt-actions').forEach((node) => node.remove());
+      clone.querySelectorAll('.librarian-feedback, .librarian-prompt-actions, .librarian-activity').forEach((node) => node.remove());
       clone.querySelectorAll('[aria-hidden="true"]').forEach((node) => node.remove());
       clone.querySelectorAll('a[href]').forEach((link) => {
         try {
@@ -1797,7 +1852,8 @@ permalink: "/"
             addPromptActions(el, msg.content || '', msg.scope || scopeFallback);
           } else if (msg.role === 'assistant') {
             const artifactHtml = msg.artifact?.kind === 'curiosity_map' ? renderCuriosityMap(msg.artifact) : '';
-            const el = addMessage('assistant', artifactHtml || renderAnswer(msg.content || '', msg.citations || []));
+            const activitySteps = activityStepsFromToolNames(msg.tool_names || msg.toolNames || []);
+            const el = addMessage('assistant', artifactHtml || renderAssistantResponse(msg.content || '', msg.citations || [], null, activitySteps));
             if (!artifactHtml && (msg.request_id || msg.requestId)) addResponseActions(el, msg.request_id || msg.requestId);
           }
         }
@@ -1963,11 +2019,12 @@ permalink: "/"
       const decoder = new TextDecoder();
       let buffer = '';
       let renderFrame = 0;
+      let activitySteps = [];
 
       function renderPendingAnswer() {
         renderFrame = 0;
         pending.classList.remove('librarian-message-pending');
-        pending.innerHTML = renderAnswer(answer, citations, experience);
+        pending.innerHTML = renderAssistantResponse(answer, citations, experience, activitySteps);
         scheduleChatScroll();
       }
 
@@ -1984,17 +2041,13 @@ permalink: "/"
             setActiveConversation(conversationId);
           }
         } else if (eventName === 'status') {
-          answer = '';
+          activitySteps = appendActivityStep(activitySteps, data, 'Thingy is working...');
           pending.classList.add('librarian-message-pending');
-          pending.innerHTML = `<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>${escapeHtml(data.message || 'Thingy is working...')}</p>`;
+          pending.innerHTML = renderAssistantResponse(answer, citations, experience, activitySteps, { active: true });
           scheduleChatScroll({ force: true });
         } else if (eventName === 'answer_delta') {
-          const wasEmpty = answer === '';
           answer += data.delta || '';
-          if (wasEmpty) {
-            answer = answer.replace(/^\s+/, '');
-            while (pending.firstChild) pending.removeChild(pending.firstChild);
-          }
+          answer = answer.replace(/^\s+/, '');
           schedulePendingRender();
         } else if (eventName === 'answer') {
           answer = data.answer || '';
@@ -2092,11 +2145,12 @@ permalink: "/"
       const decoder = new TextDecoder();
       let buffer = '';
       let renderFrame = 0;
+      let activitySteps = [];
 
       function renderPendingWelcome() {
         renderFrame = 0;
         pending.classList.remove('librarian-message-pending');
-        pending.innerHTML = renderAnswer(answer, [], experience);
+        pending.innerHTML = renderAssistantResponse(answer, [], experience, activitySteps, { label: 'Session Setup' });
         scheduleChatScroll();
       }
 
@@ -2109,17 +2163,13 @@ permalink: "/"
         if (eventName === 'meta') {
           requestId = data.request_id || requestId;
         } else if (eventName === 'status') {
-          answer = '';
+          activitySteps = appendActivityStep(activitySteps, data, 'Thingy is getting oriented...');
           pending.classList.add('librarian-message-pending');
-          pending.innerHTML = `<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>${escapeHtml(data.message || 'Thingy is getting oriented...')}</p>`;
+          pending.innerHTML = renderAssistantResponse(answer, [], experience, activitySteps, { active: true, label: 'Session Setup' });
           scheduleChatScroll({ force: true });
         } else if (eventName === 'answer_delta') {
-          const wasEmpty = answer === '';
           answer += data.delta || '';
-          if (wasEmpty) {
-            answer = answer.replace(/^\s+/, '');
-            while (pending.firstChild) pending.removeChild(pending.firstChild);
-          }
+          answer = answer.replace(/^\s+/, '');
           scheduleWelcomeRender();
         } else if (eventName === 'answer') {
           answer = data.answer || '';
