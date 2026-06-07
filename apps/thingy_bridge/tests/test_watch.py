@@ -66,6 +66,8 @@ class RenderTests(unittest.TestCase):
 
     def test_transcript_includes_feedback_preflight_tools_and_sources(self):
         md = thingy_job._transcript_md(_summary(), [_turn(feedback="down")])
+        self.assertNotIn("## Assessment", md)
+        self.assertNotIn("nothing to act on", md)
         self.assertIn("Reader feedback: down — Helpful context.", md)
         self.assertIn("Preflight: archive_answer/pass", md)
         self.assertIn("Tools: archive_lens, get_source", md)
@@ -89,7 +91,8 @@ class ReadCommandTests(unittest.TestCase):
             res = asyncio.run(thingy_job.show(_base.JobContext(), conv_id="conv-1"))
         self.assertTrue(res.ok)
         fetch.assert_awaited_once_with(conversation_id="conv-1")
-        self.assertIn("full transcript attached", res.message)
+        self.assertIn("Transcript attached", res.message)
+        self.assertNotIn("**Reader:** Reader wanted", res.message)
         self.assertIn("Did Jamie write about RSS?", res.data["transcript_md"])
 
 

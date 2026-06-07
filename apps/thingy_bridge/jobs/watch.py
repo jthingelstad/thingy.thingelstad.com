@@ -100,7 +100,7 @@ def _assessment_md(c: dict[str, Any]) -> str:
     return "\n".join(bits)
 
 
-def _card(c: dict[str, Any], *, for_show: bool = False, turns: Optional[list[dict[str, Any]]] = None) -> str:
+def _card(c: dict[str, Any], *, turns: Optional[list[dict[str, Any]]] = None) -> str:
     cid = _conversation_id(c)
     fb = _FEEDBACK_EMOJI.get(_feedback_rollup(turns or []) or "", "")
     quality = str(c.get("eval_quality") or "watch")
@@ -120,8 +120,18 @@ def _card(c: dict[str, Any], *, for_show: bool = False, turns: Optional[list[dic
     if turns is not None:
         labels = _source_labels(turns)
         parts.append(f"Sources: {', '.join(labels) if labels else '—'}")
-    parts.append("full transcript attached" if for_show else f"`/thingy show id:{cid}` for the transcript")
+    parts.append(f"`/thingy show id:{cid}` for the transcript")
     return "\n".join(parts)
+
+
+def _show_message(c: dict[str, Any], turns: list[dict[str, Any]]) -> str:
+    cid = _conversation_id(c)
+    turn_count = len(turns) or int(c.get("turn_count") or 0)
+    return (
+        f"📎 Transcript attached for **Thingy · `{cid}`**"
+        f" · {_when(c.get('created_at'))}"
+        f" · {turn_count} turn{'s' if turn_count != 1 else ''}."
+    )
 
 
 def _transcript_md(c: dict[str, Any], turns: list[dict[str, Any]]) -> str:
@@ -132,14 +142,10 @@ def _transcript_md(c: dict[str, Any], turns: list[dict[str, Any]]) -> str:
         f"- Created: {_when(c.get('created_at'))}",
         f"- Updated: {_when(c.get('updated_at') or c.get('last_message_at'))}",
         f"- Turns: {c.get('turn_count')}",
-        f"- Quality: {c.get('eval_quality') or '—'}",
     ]
     if c.get("eval_topic"):
         lines.append(f"- Topic: {c['eval_topic']}")
-    flags = c.get("eval_flags") if isinstance(c.get("eval_flags"), list) else []
-    if flags:
-        lines.append(f"- Eval flags: {', '.join(str(flag) for flag in flags)}")
-    lines += ["", "## Assessment", "", _assessment_md(c) or "—", "", "## Transcript", ""]
+    lines += ["", "## Transcript", ""]
     for i, t in enumerate(turns, 1):
         lines.append(f"### Turn {i} — {_when(t.get('created_at'))}")
         lines.append("")
@@ -189,7 +195,7 @@ async def recent(ctx: "_base.JobContext", *, count: int = 8) -> "_base.JobResult
         return _base.JobResult(True, "No reviewed Thingy conversations in the recent window.")
     lines = ["**Recent reviewed Thingy conversations**", ""]
     lines += [_recent_line(row) for row in rows[-count:]]
-    lines.append("Use `/thingy show id:<conversation_id>` for the assessment + full transcript.")
+    lines.append("Use `/thingy show id:<conversation_id>` for the transcript.")
     return _base.JobResult(True, "\n".join(lines))
 
 
@@ -207,7 +213,7 @@ async def show(ctx: "_base.JobContext", *, conv_id: str) -> "_base.JobResult":
     md = _transcript_md(conv, turns)
     return _base.JobResult(
         True,
-        _card(conv, for_show=True, turns=turns),
+        _show_message(conv, turns),
         data={
             "transcript_md": md,
             "filename": f"thingy-conversation-{conversation_id[:12]}.md",

@@ -34,7 +34,7 @@ The bridge's two surfaces:
 
 The slash surface is small. Operator-only (gated on `DISCORD_OWNER_USER_ID`):
 `/thingy recent [count]` (last N reviewed API conversations), `/thingy show <id>`
-(full assessment + canonical transcript attachment). Reader-facing (no gate, affects only the caller): `/thingy new`
+(canonical transcript attachment). Reader-facing (no gate, affects only the caller): `/thingy new`
 (clear the caller's session boundary) and `/thingy scope <weekly_thing|blog|podcast|both|all>`
 (pick which corpus Thingy searches for the caller — persisted in the
 `thingy_scopes` table, threaded into the `/chat` body, disclosed in a

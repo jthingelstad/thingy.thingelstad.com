@@ -4,8 +4,8 @@ The operator window into reader Q&A plus a per-user session reset:
 
 - ``/thingy recent [count]`` — last N reviewed conversations from the API
   (operator-only — reads private reader content).
-- ``/thingy show <id>`` — one conversation: assessment card + the full
-  transcript attached as a ``.md`` file (operator-only — same reason).
+- ``/thingy show <id>`` — one conversation transcript attached as a
+  ``.md`` file (operator-only — same reason).
 - ``/thingy new`` — clear this user's #ask-thingy session boundary so
   their next question is not pulled into the prior conversation
   (available to anyone — only affects the caller's own history).
@@ -121,7 +121,7 @@ def register_thingy_commands(bot: "PersonaBot") -> app_commands.CommandTree:
 
     @thingy.command(
         name="show",
-        description="One Thingy conversation — assessment + full transcript (attached).",
+        description="One Thingy conversation transcript (attached).",
     )
     @app_commands.describe(id="The conversation id from `thingy recent`")
     async def thingy_show_cmd(  # type: ignore[misc]
