@@ -76,15 +76,15 @@ product direction.
 
 ### Conversation Modes
 
-Conversation modes are the next identity-aware capability. They should be stored on the conversation,
-enforced by the backend, and shown clearly in the web app and operator reports.
+Conversation modes are now the first identity-aware capability beyond default Thingy. They are stored on
+the conversation, enforced by the backend, and shown clearly in the web app and operator reports.
 
 Initial modes:
 
 - **Thingy**: default mode for authenticated readers. Helpful, careful, grounded in the public archive.
 - **Research Guide**: deeper synthesis for supporting members. Better trails, timelines, comparisons, and
   "teach me through the archive" behavior.
-- **Sparring Partner**: owner-only initially. More challenging and reflective; helps Jamie interrogate his
+- **Thought Partner**: owner-only initially. More challenging and reflective; helps Jamie interrogate his
   own published thinking, contradictions, recurring themes, and avoided questions.
 - **Trusted Circle**: possible future mode for family or close friends. Warmer and more contextual, but
   still based on the published archive unless a separate, explicit data policy is created.
@@ -101,12 +101,12 @@ Mode rules:
 
 Mode access should be based on backend entitlements, not UI-only state.
 
-Recommended entitlement sources:
+Entitlement sources:
 
 - **Owner**: explicit server-side allowlist for Jamie's verified email address.
 - **Supporting member**: Buttondown subscriber status or Buttondown tags.
 - **Trusted circle**: Buttondown tags are probably the cleanest interface. For example,
-  `thingy-trusted-circle`, `thingy-family`, or `thingy-sparring-preview`.
+  `thingy-trusted-circle`, `thingy-family`, or `thingy-close-friends`.
 - **Reader**: any verified subscriber/reader allowed into Thingy.
 
 Buttondown tags are attractive because they keep the permission UI where the audience already lives and
@@ -130,13 +130,13 @@ Conversation modes need first-class observability.
 The earlier roadmap proposed a private/owner corpus with unpublished drafts. That is no longer the
 default direction.
 
-Sparring Partner should start by challenging Jamie using the same published archive that readers can ask
+Thought Partner should start by challenging Jamie using the same published archive that readers can ask
 about. That is both safer and conceptually cleaner: the mode changes the relationship to the material, not
 the material itself.
 
 If private material is ever introduced, it should be treated as a separate product decision with explicit
 visibility guarantees, tests, and operator reporting. It should not sneak in as an implementation detail
-of Sparring Partner.
+of Thought Partner.
 
 ## Intelligence Roadmap
 
@@ -147,14 +147,16 @@ published, but what season of life, work, travel, family, and world context surr
 
 Recommended shape:
 
-- Plain markdown, one file per year, probably in Studio: `data/timeline/{year}.md`.
-- Entries can include date ranges, tags, confidence, public/private note, and related URLs.
-- The first version should be manually reviewable and owned by Jamie, not an opaque generated database.
-- Thingy consumes the timeline as context for answers, curiosity map seeds, and mode-specific reasoning.
+- Publishable blog pages, not posts, owned and edited by Jamie on thingelstad.com.
+- The first version should read like something Jamie is comfortable putting on the public site, not like a
+  private structured database.
+- Thingy should ingest those pages as part of the published blog corpus and use them as context for
+  answers, curiosity map seeds, and mode-specific reasoning.
+- Keep the shape loose at first: prose, headings, dates, and links are enough. Avoid schema until the
+  product need is obvious.
 
 This does not need to become a private corpus. The timeline can be context metadata. Some entries may be
-personal and non-public, but they can be used to improve interpretation without being quoted or exposed.
-The safer initial version should only use timeline entries that Jamie is comfortable letting Thingy
+personal, but the safer initial version should only include pages Jamie is comfortable letting Thingy
 reference directly.
 
 ### Cross-Corpus Thematic Threading
@@ -223,15 +225,14 @@ Each broadcast should deep-link into authenticated web Thingy with a seeded prom
 2. Should `Trusted Circle` be a real mode, or just an entitlement that unlocks selected features?
 3. What Buttondown tags should map to Thingy entitlements?
 4. Should the temporal layer include personal entries that Thingy may use but not quote?
-5. How aggressive should Sparring Partner be, and what should the evaluator consider "too much"?
+5. How aggressive should Thought Partner be, and what should the evaluator consider "too much"?
 6. Should corpus/source selectors eventually disappear entirely, or remain as an advanced control?
 
 ## Suggested Next Build Sequence
 
-1. Add backend entitlements and expose them in the authenticated profile response.
-2. Add conversation `mode` to API schema, storage, turns, evaluator records, webhook notices, and operator
-   report filters.
-3. Ship owner-only `Sparring Partner` using the published corpus only.
-4. Ship supporting-member `Research Guide`.
-5. Prototype one year of the temporal layer and wire it into answers where directly relevant.
-6. Tune Archive Sparks and curiosity map generation against durable theme clusters.
+1. Tune Thought Partner against real Jamie conversations and evaluator notes.
+2. Decide whether Research Guide should launch to all supporting members immediately or remain hidden until
+   the behavior is more differentiated.
+3. Add Buttondown tag plumbing for Trusted Circle when there is a concrete invite list.
+4. Prototype one publishable timeline page and verify that Thingy can use it without over-structuring it.
+5. Tune Archive Sparks and curiosity map generation against durable theme clusters.

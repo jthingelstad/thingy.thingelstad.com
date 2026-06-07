@@ -25,6 +25,10 @@ permalink: "/"
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><circle cx="5" cy="7" r="2"></circle><circle cx="19" cy="6" r="2"></circle><circle cx="18" cy="18" r="2"></circle><path d="M7 8l3.5 2.5M14.2 9.8L17.4 7.2M14.5 14.3l2.2 2.2"></path></svg>
         <span class="label">Curiosity map</span>
       </button>
+      <div class="rail-mode" id="thingy-mode-control" hidden>
+        <label for="thingy-mode-select">Mode</label>
+        <select id="thingy-mode-select" aria-label="Thingy conversation mode"></select>
+      </div>
 
       <div class="rail-body">
         <p class="rail-recents-label">Recents</p>
@@ -189,6 +193,8 @@ permalink: "/"
     const logoutButton = document.getElementById('librarian-logout');
     const clearChatButton = document.getElementById('librarian-clear-chat');
     const curiosityMapButton = document.getElementById('thingy-curiosity-map');
+    const modeControl = document.getElementById('thingy-mode-control');
+    const modeSelect = document.getElementById('thingy-mode-select');
     const questionInput = document.getElementById('librarian-question');
     const questionButton = questionForm.querySelector('button[type="submit"]');
     const voiceButton = document.getElementById('composer-voice');
@@ -220,6 +226,8 @@ permalink: "/"
     let conversations = [];
     let preferredName = '';
     let awaitingName = false;
+    let activeMode = 'thingy';
+    let availableModes = [{ id: 'thingy', label: 'Thingy' }];
     const maxQuestionChars = Number(questionInput.getAttribute('maxlength') || '1200');
     const sourceOrder = ['weekly_thing', 'blog', 'podcast'];
     const eventSink = document.createElement('button');
@@ -401,13 +409,19 @@ permalink: "/"
     }
 
     function setUserProfile(data) {
+      const modes = normalizeModes(data?.modes || data?.profile?.modes || []);
+      availableModes = modes.length ? modes : [{ id: 'thingy', label: 'Thingy' }];
+      if (!availableModes.some((mode) => mode.id === activeMode)) activeMode = 'thingy';
       const profile = {
+        ...(data?.profile && typeof data.profile === 'object' ? data.profile : {}),
         status: data?.status || '',
         supporting_member: data?.status === 'premium',
-        ...(data?.profile && typeof data.profile === 'object' ? data.profile : {})
+        entitlements: Array.isArray(data?.entitlements) ? data.entitlements : data?.profile?.entitlements,
+        modes: availableModes
       };
       preferredName = String(profile.preferred_name || '').trim();
       try { window.localStorage.setItem(userProfileKey, JSON.stringify(profile)); } catch (error) { /* ignore */ }
+      renderModeControl();
       return profile;
     }
 
@@ -418,6 +432,44 @@ permalink: "/"
       } catch (error) {
         return {};
       }
+    }
+
+    function normalizeModeId(value) {
+      const key = String(value || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+      return key || 'thingy';
+    }
+
+    function normalizeModes(value) {
+      const raw = Array.isArray(value) ? value : [];
+      const modes = [];
+      const seen = new Set();
+      for (const entry of raw) {
+        const id = normalizeModeId(typeof entry === 'string' ? entry : entry?.id);
+        if (!id || seen.has(id)) continue;
+        seen.add(id);
+        modes.push({
+          id,
+          label: String(entry?.label || id.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())).trim()
+        });
+      }
+      if (!seen.has('thingy')) modes.unshift({ id: 'thingy', label: 'Thingy' });
+      return modes;
+    }
+
+    function modeLabel(id = activeMode) {
+      return availableModes.find((mode) => mode.id === id)?.label || 'Thingy';
+    }
+
+    function currentConversationMode() {
+      return activeConversation()?.mode || activeMode || 'thingy';
+    }
+
+    function renderModeControl() {
+      if (!modeControl || !modeSelect) return;
+      const show = token() && availableModes.length > 1;
+      modeControl.hidden = !show;
+      modeSelect.innerHTML = availableModes.map((mode) => `<option value="${escapeHtml(mode.id)}">${escapeHtml(mode.label)}</option>`).join('');
+      modeSelect.value = availableModes.some((mode) => mode.id === activeMode) ? activeMode : 'thingy';
     }
 
     function extractPreferredName(message) {
@@ -698,6 +750,8 @@ permalink: "/"
       try { window.localStorage.removeItem(userProfileKey); } catch (error) { /* ignore */ }
       if (config.scrubAuthParams) scrubUrlParams(['login_token', 'magic_token', 'email']);
       conversations = [];
+      availableModes = [{ id: 'thingy', label: 'Thingy' }];
+      activeMode = 'thingy';
       setActiveConversation('');
       welcomeShownThisVisit = false;
       chatPanel.hidden = true;
@@ -708,6 +762,7 @@ permalink: "/"
       hideAuthActions();
       setAuthMessage(message || existingMessage || '');
       refreshAccountIdentity();
+      renderModeControl();
       renderRecents();
       emailInput.focus();
     }
@@ -730,6 +785,7 @@ permalink: "/"
         accountBtnEl.setAttribute('aria-expanded', 'false');
         accountBtnEl.title = signedIn ? 'Account' : 'Sign in';
       }
+      renderModeControl();
     }
 
     function nearChatBottom() {
@@ -1836,6 +1892,7 @@ permalink: "/"
       try {
         const map = await postStreamJson('/curiosity-map', {
           scope,
+          mode: currentConversationMode(),
           center,
           conversation_id: existingConversationId || undefined,
           user_profile: readerProfileContext()
@@ -1922,9 +1979,10 @@ permalink: "/"
       railRecents.innerHTML = list.map((entry) => {
         const title = escapeHtml(entry.title || 'Untitled chat');
         const id = escapeHtml(entry.id);
+        const mode = entry.mode && entry.mode !== 'thingy' ? `<span class="rail-recent-mode">${escapeHtml(modeLabel(entry.mode))}</span>` : '';
         const active = entry.id === activeConversationId ? ' is-active' : '';
         return `<div class="rail-recent${active}" role="listitem">`
-          + `<button type="button" class="rail-recent-open" data-id="${id}" title="${title}"><span class="rail-recent-title">${title}</span></button>`
+          + `<button type="button" class="rail-recent-open" data-id="${id}" title="${title}"><span class="rail-recent-title">${title}</span>${mode}</button>`
           + `<button type="button" class="rail-recent-del" data-action="delete-conv" data-id="${id}" aria-label="Delete conversation" title="Delete conversation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>`
           + `</div>`;
       }).join('');
@@ -1939,6 +1997,10 @@ permalink: "/"
         const data = await conversationAction({ action: 'get', conversation_id: conversationId });
         setActiveConversation(conversationId);
         if (data.conversation) upsertConversationSummary(data.conversation);
+        if (data.conversation?.mode) {
+          activeMode = data.conversation.mode;
+          renderModeControl();
+        }
         messages.innerHTML = '';
         hidePrompts();
         const scopeFallback = currentScope();
@@ -2133,6 +2195,7 @@ permalink: "/"
         body: JSON.stringify({
           message,
           scope,
+          mode: currentConversationMode(),
           conversation_id: conversationId || undefined,
           client_context: userLocalContext(),
           user_profile: readerProfileContext()
@@ -2178,6 +2241,10 @@ permalink: "/"
       function applyEvent(eventName, data) {
         if (eventName === 'meta') {
           requestId = data.request_id || requestId;
+          if (data.mode) {
+            activeMode = data.mode;
+            renderModeControl();
+          }
           if (data.conversation_id) {
             conversationId = data.conversation_id;
             setActiveConversation(conversationId);
@@ -2207,6 +2274,10 @@ permalink: "/"
           schedulePendingRender();
         } else if (eventName === 'done') {
           requestId = data.request_id || requestId;
+          if (data.mode) {
+            activeMode = data.mode;
+            renderModeControl();
+          }
           if (data.conversation_id) {
             conversationId = data.conversation_id;
             setActiveConversation(conversationId);
@@ -2266,6 +2337,7 @@ permalink: "/"
         },
         body: JSON.stringify({
           scope,
+          mode: currentConversationMode(),
           client_context: userLocalContext(),
           user_profile: readerProfileContext()
         }),
@@ -2310,6 +2382,10 @@ permalink: "/"
       function applyEvent(eventName, data) {
         if (eventName === 'meta') {
           requestId = data.request_id || requestId;
+          if (data.mode) {
+            activeMode = data.mode;
+            renderModeControl();
+          }
         } else if (eventName === 'status') {
           activitySteps = appendActivityStep(activitySteps, data, 'Thingy is getting oriented...');
           pending.classList.add('librarian-message-pending');
@@ -2332,6 +2408,10 @@ permalink: "/"
           scheduleWelcomeRender();
         } else if (eventName === 'done') {
           requestId = data.request_id || requestId;
+          if (data.mode) {
+            activeMode = data.mode;
+            renderModeControl();
+          }
         } else if (eventName === 'error') {
           const error = new Error(data.error || 'Thingy is unavailable.');
           error.requestId = data.request_id || requestId;
@@ -2572,6 +2652,22 @@ permalink: "/"
         toggleMobileConversationMenu(false);
         clearConversation();
         setMobileRailOpen(false);
+      });
+    }
+    if (modeSelect) {
+      modeSelect.addEventListener('change', () => {
+        const nextMode = normalizeModeId(modeSelect.value);
+        if (!availableModes.some((mode) => mode.id === nextMode)) {
+          modeSelect.value = activeMode;
+          return;
+        }
+        if (nextMode === activeMode && !activeConversationId) return;
+        activeMode = nextMode;
+        welcomeShownThisVisit = false;
+        startBlankConversationView();
+        renderModeControl();
+        startAgentWelcome();
+        trackTinylyticsEvent('librarian.mode_change', activeMode);
       });
     }
     if (mobileConversationMenuButton) {
@@ -2824,7 +2920,11 @@ permalink: "/"
 
     /* ---- Conversation bootstrap ---- */
     resetMessages();
-    preferredName = String(userProfile().preferred_name || '').trim();
+    const storedProfile = userProfile();
+    preferredName = String(storedProfile.preferred_name || '').trim();
+    availableModes = normalizeModes(storedProfile.modes || []);
+    if (!availableModes.length) availableModes = [{ id: 'thingy', label: 'Thingy' }];
+    if (!availableModes.some((mode) => mode.id === activeMode)) activeMode = 'thingy';
     refreshAccountIdentity();
     renderRecents();
 

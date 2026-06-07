@@ -1722,6 +1722,40 @@ a.thingy-exp-source:hover {
   color: var(--accent-deep);
 }
 
+.rail-mode {
+  display: grid;
+  gap: 5px;
+  margin: 10px 0 2px;
+  padding: 9px 10px;
+  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 78%, var(--rail-bg));
+}
+
+.rail-mode[hidden] {
+  display: none;
+}
+
+.rail-mode label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.rail-mode select {
+  width: 100%;
+  min-height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 700 13px/1 var(--sans);
+  padding: 0 8px;
+}
+
 .rail-body {
   flex: 1 1 auto;
   min-height: 0;
@@ -1774,8 +1808,8 @@ a.thingy-exp-source:hover {
 }
 
 .rail-recent-open {
-  display: flex;
-  align-items: center;
+  display: grid;
+  gap: 2px;
   min-width: 0;
   width: 100%;
   padding: 8px 4px 8px 10px;
@@ -1799,6 +1833,17 @@ a.thingy-exp-source:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.rail-recent-mode {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 700;
 }
 
 .rail-recent-del {
@@ -2016,6 +2061,7 @@ a.thingy-exp-source:hover {
 
 .thingy-app-shell.is-collapsed .rail-newchat .label,
 .thingy-app-shell.is-collapsed .rail-newchat .kbd,
+.thingy-app-shell.is-collapsed .rail-mode,
 .thingy-app-shell.is-collapsed .rail-body,
 .thingy-app-shell.is-collapsed .rail-account-meta,
 .thingy-app-shell.is-collapsed .rail-account-caret {
@@ -3533,6 +3579,10 @@ a.thingy-exp-source:hover {
     transform: none;
     transition: none;
     overflow: hidden;
+  }
+
+  .thingy-app-shell.is-collapsed .rail-mode:not([hidden]) {
+    display: grid;
   }
 
   .thingy-app-shell.is-mobile-rail-open .rail {
