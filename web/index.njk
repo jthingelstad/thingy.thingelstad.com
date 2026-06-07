@@ -5,7 +5,7 @@ description: Ask Thingy to find and synthesize writing from across Jamie Thingel
 permalink: "/"
 ---
 <section class="thingy-page">
-  <div class="thingy-app-shell" id="thingy-app-shell">
+  <div class="thingy-app-shell is-auth" id="thingy-app-shell">
     <aside class="rail" aria-label="Thingy">
       <div class="rail-top">
         <a class="rail-brand" href="/" aria-label="Thingy home" data-tinylytics-event="network.home" data-tinylytics-event-value="thingy">
@@ -628,6 +628,12 @@ permalink: "/"
 
     setActiveScope(activeScope, { track: false });
 
+    function setAuthShellMode(isAuth) {
+      if (!appShell) return;
+      appShell.classList.toggle('is-auth', Boolean(isAuth));
+      if (isAuth) setMobileRailOpen(false);
+    }
+
     function persistToken(value, data = {}) {
       window.localStorage.setItem(storageKey, value);
       setUserProfile(data);
@@ -639,37 +645,26 @@ permalink: "/"
       refreshAccountIdentity();
     }
 
-    let authRefreshPromise = null;
     async function refreshStoredAuth() {
-      if (authRefreshPromise) return authRefreshPromise;
-      authRefreshPromise = (async () => {
-        const emailValue = storedEmail();
-        if (!emailValue || !emailRe.test(emailValue)) return false;
-        if (emailInput) emailInput.value = emailValue;
-        try {
-          const data = await postJson('/auth', { email: emailValue, action: 'check', source: 'thingy' });
-          if (!data.token) return false;
-          persistToken(data.token, data);
-          trackTinylyticsEvent('librarian.auth_refresh_success', data.status || 'active');
-          return true;
-        } catch (error) {
-          trackTinylyticsEvent('librarian.auth_refresh_error', error.requestId ? 'server' : 'client');
-          return false;
-        } finally {
-          authRefreshPromise = null;
-        }
-      })();
-      return authRefreshPromise;
+      trackTinylyticsEvent('librarian.auth_refresh_disabled', 'magic_link');
+      return false;
     }
 
     async function ensureFreshToken() {
       if (!token()) return false;
       if (!tokenExpired()) return true;
-      return refreshStoredAuth();
+      const emailValue = storedEmail();
+      clearToken({
+        message: "Your Thingy session expired. Enter your email and I'll send a fresh sign-in link.",
+        preserveEmail: Boolean(emailValue)
+      });
+      trackTinylyticsEvent('librarian.session_expired');
+      return false;
     }
 
     function setToken(value, data = {}) {
       persistToken(value, data);
+      setAuthShellMode(false);
       authPanel.hidden = true;
       chatPanel.hidden = false;
       hideAuthActions();
@@ -686,19 +681,29 @@ permalink: "/"
       questionInput.focus();
     }
 
-    function clearToken() {
+    function clearToken(options = {}) {
+      const config = typeof options === 'string' ? { message: options } : (options || {});
+      const message = String(config.message || '').trim();
+      const existingMessage = authMessage ? authMessage.textContent : '';
+      const emailValue = storedEmail();
       window.localStorage.removeItem(storageKey);
-      try { window.localStorage.removeItem(userEmailKey); } catch (error) { /* ignore */ }
+      if (config.preserveEmail && emailValue) {
+        if (emailInput) emailInput.value = emailValue;
+        try { window.localStorage.setItem(userEmailKey, emailValue); } catch (error) { /* ignore */ }
+      } else {
+        try { window.localStorage.removeItem(userEmailKey); } catch (error) { /* ignore */ }
+      }
       try { window.localStorage.removeItem(userProfileKey); } catch (error) { /* ignore */ }
       conversations = [];
       setActiveConversation('');
       welcomeShownThisVisit = false;
       chatPanel.hidden = true;
       authPanel.hidden = false;
+      setAuthShellMode(true);
       prompts.hidden = true;
       prompts.innerHTML = '';
       hideAuthActions();
-      setAuthMessage('');
+      setAuthMessage(message || existingMessage || '');
       refreshAccountIdentity();
       renderRecents();
       emailInput.focus();
@@ -2819,24 +2824,33 @@ permalink: "/"
       submitAuthCheck();
       trackTinylyticsEvent('librarian.auth_auto_start');
     } else if (token()) {
-      authPanel.hidden = true;
-      chatPanel.hidden = false;
-      scheduleComposerReserveUpdate();
-      const savedActiveId = savedActiveConversation();
-      refreshConversations().then((list) => {
-        if (hasInitialPrompt) {
-          startBlankConversationView();
-          maybeSubmitInitialPrompt();
-          return;
-        }
-        const active = savedActiveId && list.some((entry) => entry.id === savedActiveId) ? savedActiveId : '';
-        if (active) {
-          loadConversationIntoChat(active);
-        } else {
-          startAgentWelcome();
-        }
-      });
-      trackTinylyticsEvent('librarian.session_resume');
+      if (tokenExpired()) {
+        clearToken({
+          message: "Your Thingy session expired. Enter your email and I'll send a fresh sign-in link.",
+          preserveEmail: true
+        });
+        trackTinylyticsEvent('librarian.session_expired_startup');
+      } else {
+        setAuthShellMode(false);
+        authPanel.hidden = true;
+        chatPanel.hidden = false;
+        scheduleComposerReserveUpdate();
+        const savedActiveId = savedActiveConversation();
+        refreshConversations().then((list) => {
+          if (hasInitialPrompt) {
+            startBlankConversationView();
+            maybeSubmitInitialPrompt();
+            return;
+          }
+          const active = savedActiveId && list.some((entry) => entry.id === savedActiveId) ? savedActiveId : '';
+          if (active) {
+            loadConversationIntoChat(active);
+          } else {
+            startAgentWelcome();
+          }
+        });
+        trackTinylyticsEvent('librarian.session_resume');
+      }
     }
   })();
 </script>
