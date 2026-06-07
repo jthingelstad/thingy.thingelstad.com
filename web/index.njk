@@ -1218,6 +1218,8 @@ permalink: "/"
       }).filter((step) => step.label || step.note).concat(commentary);
       if (!list.length && !commentary.length) return '';
       const activeIndex = options.active ? list.length - 1 : -1;
+      const activityLabel = options.label || 'Archive Work';
+      const stepCount = list.length;
       const items = list.map((step, index) => {
         const state = index === activeIndex ? ' is-active' : ' is-complete';
         const rawLabel = step.label || 'Thinking through the path';
@@ -1228,15 +1230,23 @@ permalink: "/"
           + note
           + `</li>`;
       }).join('');
+      const body = (items ? `<ol>${items}</ol>` : '');
+      if (!options.active && options.collapsible) {
+        const summary = `${stepCount} ${stepCount === 1 ? 'step' : 'steps'} completed`;
+        return `<details class="librarian-activity is-collapsed" aria-label="Thingy activity">`
+          + `<summary><span class="librarian-activity-kicker">${escapeHtml(activityLabel)}</span><span class="librarian-activity-summary">${escapeHtml(summary)}</span></summary>`
+          + body
+          + `</details>`;
+      }
       return `<aside class="librarian-activity" aria-label="Thingy activity">`
-        + `<div class="librarian-activity-kicker">${escapeHtml(options.label || 'Archive Work')}</div>`
-        + (items ? `<ol>${items}</ol>` : '')
+        + `<div class="librarian-activity-kicker">${escapeHtml(activityLabel)}</div>`
+        + body
         + `</aside>`;
     }
 
     function renderAssistantResponse(answer, citations = [], experience = null, activitySteps = [], activityCommentary = [], options = {}) {
       const hasAnswer = String(answer || '').trim() || experience;
-      const activity = renderActivityLog(activitySteps, { ...options, commentary: activityCommentary });
+      const activity = renderActivityLog(activitySteps, { ...options, commentary: activityCommentary, collapsible: Boolean(hasAnswer) });
       if (!hasAnswer) return activity || renderAnswer(answer, citations, experience);
       return `${activity}<div class="librarian-answer-content">${renderAnswer(answer, citations, experience)}</div>`;
     }

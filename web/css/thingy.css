@@ -1097,6 +1097,46 @@ a.thingy-exp-source:hover {
   font-family: var(--sans);
 }
 
+.librarian-activity summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 24px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.librarian-activity summary::-webkit-details-marker {
+  display: none;
+}
+
+.librarian-activity summary::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  color: var(--accent-deep);
+  transform: rotate(-45deg);
+  transition: transform 0.18s ease;
+}
+
+.librarian-activity[open] summary {
+  margin-bottom: 10px;
+}
+
+.librarian-activity[open] summary::before {
+  transform: rotate(45deg);
+}
+
+.librarian-activity.is-collapsed {
+  padding: 8px 11px;
+  border-color: color-mix(in srgb, var(--accent) 25%, var(--line-soft));
+  border-left-width: 2px;
+  background: color-mix(in srgb, var(--surface-2) 82%, transparent);
+}
+
 .librarian-activity-kicker {
   margin-bottom: 10px;
   color: var(--accent-deep);
@@ -1105,6 +1145,16 @@ a.thingy-exp-source:hover {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.librarian-activity summary .librarian-activity-kicker {
+  margin-bottom: 0;
+}
+
+.librarian-activity-summary {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
 }
 
 .librarian-activity ol {
