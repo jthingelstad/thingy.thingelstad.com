@@ -13,6 +13,15 @@
   const emailRe = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
   let lastEmail = session.storedEmail();
 
+  function destinationPath() {
+    if (!returnTo || returnTo === '/signin/' || returnTo.startsWith('/signin/?')) return '/chat/';
+    return returnTo;
+  }
+
+  function continueToDestination() {
+    window.location.replace(destinationPath());
+  }
+
   function setMessage(text, kind) {
     if (!message) return;
     message.textContent = text || '';
@@ -34,7 +43,7 @@
 
   function finish(data, email) {
     session.persistAuth(data, email);
-    window.location.href = returnTo;
+    continueToDestination();
   }
 
   async function completeMagicLink() {
@@ -47,6 +56,7 @@
         login_token: loginToken,
         source: 'thingy'
       });
+      if (!data.token) throw new Error(data.message || 'That sign-in link did not return a session.');
       tokenParams.delete('login_token');
       tokenParams.delete('magic_token');
       window.history.replaceState(window.history.state, document.title, `${window.location.pathname}?${tokenParams.toString()}`.replace(/\?$/, ''));
@@ -119,6 +129,7 @@
 
   if (session.token() && !session.tokenExpired()) {
     setMessage('You are already signed in.', 'success');
+    if (!loginToken) continueToDestination();
   }
   completeMagicLink();
 }());

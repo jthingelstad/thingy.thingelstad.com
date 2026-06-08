@@ -40,109 +40,10 @@
   {% endif %}
 </head>
 <body>
-  <header class="thingy-site-head">
-    <div class="thingy-site-head-inner">
-      <a class="thingy-site-home" href="/" aria-label="Thingy home" data-tinylytics-event="network.home" data-tinylytics-event-value="thingy">
-        <span class="thingy-site-wordmark">Thingy</span>
-        <span class="thingy-site-context">Jamie&rsquo;s archive agent</span>
-      </a>
-      <div class="thingy-network">
-        <nav class="thingy-network-nav" aria-label="Jamie Thingelstad network">
-          {% for link in site.networkLinks %}
-          <a href="{{ link.href }}" data-network-key="{{ link.key }}" data-network-label="{{ link.label }}" data-network-aliases="{{ link.aliases | join('|') }}" data-tinylytics-event="network.visit" data-tinylytics-event-value="{{ link.key }}">
-            <span>{{ link.label }}</span>
-            <small>Visit</small>
-          </a>
-          {% endfor %}
-        </nav>
-      </div>
-    </div>
-  </header>
   <main id="main-content">
     {{ content | safe }}
   </main>
 
-  <script>
-    (() => {
-      const params = new URLSearchParams(window.location.search);
-      const from = String(params.get('from') || '').trim();
-      if (!from) return;
-
-      const links = Array.from(document.querySelectorAll('.thingy-network-nav a[data-network-label]'));
-
-      function normalize(value) {
-        return String(value || '')
-          .toLowerCase()
-          .replace(/^https?:\/\//, '')
-          .replace(/^www\./, '')
-          .replace(/\/+$/, '')
-          .replace(/&/g, ' and ')
-          .replace(/[^a-z0-9]+/g, ' ')
-          .trim();
-      }
-
-      function normalizeHost(value) {
-        return String(value || '').toLowerCase().replace(/^www\./, '').replace(/\.$/, '');
-      }
-
-      function fromUrl(value) {
-        try {
-          const parsed = new URL(value);
-          if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return parsed;
-        } catch (error) { /* try host-like values below */ }
-
-        if (/^[a-z0-9.-]+\.[a-z]{2,}(?:[/:?#]|$)/i.test(value)) {
-          try {
-            return new URL(`https://${value}`);
-          } catch (error) { /* ignore */ }
-        }
-        return null;
-      }
-
-      function linkHosts(link) {
-        const hosts = new Set();
-        try {
-          hosts.add(normalizeHost(new URL(link.href).hostname));
-        } catch (error) { /* ignore */ }
-
-        const aliases = [
-          link.dataset.networkKey,
-          link.dataset.networkLabel,
-          ...(link.dataset.networkAliases || '').split('|')
-        ];
-        aliases.forEach((alias) => {
-          const parsed = fromUrl(alias);
-          if (parsed) hosts.add(normalizeHost(parsed.hostname));
-        });
-        return hosts;
-      }
-
-      const normalizedFrom = normalize(from);
-      const parsedFrom = fromUrl(from);
-      const parsedFromHost = parsedFrom ? normalizeHost(parsedFrom.hostname) : '';
-      let matchedLink = null;
-      for (const link of links) {
-        const aliases = [
-          link.dataset.networkKey,
-          link.dataset.networkLabel,
-          ...(link.dataset.networkAliases || '').split('|')
-        ].map(normalize).filter(Boolean);
-        const hosts = linkHosts(link);
-        if ((parsedFromHost && hosts.has(parsedFromHost)) || aliases.includes(normalizedFrom)) {
-          matchedLink = link;
-          break;
-        }
-      }
-
-      if (matchedLink) {
-        matchedLink.classList.add('is-origin');
-        matchedLink.setAttribute('aria-current', 'location');
-        const action = matchedLink.querySelector('small');
-        if (action) action.textContent = 'Return';
-        if (parsedFrom) matchedLink.href = parsedFrom.href;
-      }
-    })();
-  </script>
   {% if site.tinylyticsId %}
   <script>
     (function() {
