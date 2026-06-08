@@ -260,6 +260,7 @@ permalink: "/chat/"
     let feedbackStatusTimer = 0;
     let welcomeInFlight = false;
     let welcomeShownThisVisit = false;
+    let welcomeAbortController = null;
     let mapInFlight = false;
     let conversationCreateInFlight = false;
     let speechRecognition = null;
@@ -919,7 +920,18 @@ permalink: "/chat/"
     });
 
     function interactionBusy() {
-      return answerInFlight || welcomeInFlight || mapInFlight || conversationCreateInFlight;
+      return answerInFlight || mapInFlight || conversationCreateInFlight;
+    }
+
+    function cancelWelcomeSetup() {
+      if (!welcomeInFlight) return;
+      welcomeInFlight = false;
+      if (welcomeAbortController) welcomeAbortController.abort();
+      welcomeAbortController = null;
+      document.querySelectorAll('.librarian-message-pending').forEach((message) => {
+        if (/Thingy is getting oriented/i.test(message.textContent || '')) message.remove();
+      });
+      updateQuestionState();
     }
 
     function updateQuestionState() {
@@ -1924,6 +1936,7 @@ permalink: "/chat/"
 
     function clearConversation() {
       if (interactionBusy()) return;
+      cancelWelcomeSetup();
       stopSpeaking();
       if (speechListening) stopDictation();
       welcomeShownThisVisit = true;
@@ -2120,6 +2133,7 @@ permalink: "/chat/"
       if (interactionBusy()) return;
       const conversationId = String(id || '').trim();
       if (!conversationId) return;
+      cancelWelcomeSetup();
       try {
         const data = await conversationAction({ action: 'get', conversation_id: conversationId });
         setActiveConversation(conversationId);
@@ -2452,7 +2466,7 @@ permalink: "/chat/"
       return { answer, citations, experience, request_id: requestId, conversation_id: conversationId, conversation };
     }
 
-    async function postStreamingWelcome(pending, scope) {
+    async function postStreamingWelcome(pending, scope, options = {}) {
       if (!streamBase) {
         throw new Error('Thingy has not been connected to the archive stream API yet.');
       }
@@ -2460,7 +2474,7 @@ permalink: "/chat/"
       let answer = '';
       let experience = null;
       let requestId = '';
-      const controller = new AbortController();
+      const controller = options.controller || new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 45000);
       const response = await fetch(`${streamBase}/welcome`, {
         method: 'POST',
@@ -2582,7 +2596,7 @@ permalink: "/chat/"
     }
 
     async function startAgentWelcome() {
-      if (!token() || interactionBusy() || welcomeShownThisVisit || hasInitialPrompt) return;
+      if (!token() || interactionBusy() || welcomeInFlight || welcomeShownThisVisit || hasInitialPrompt) return;
       if (!(await ensureFreshToken())) {
         clearToken();
         return;
@@ -2591,18 +2605,23 @@ permalink: "/chat/"
       awaitingName = !preferredName;
       welcomeShownThisVisit = true;
       welcomeInFlight = true;
+      welcomeAbortController = new AbortController();
       updateQuestionState();
       const pending = addMessage('assistant', '<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>Thingy is getting oriented...</p>');
       pending.classList.add('librarian-message-pending');
       try {
-        await postStreamingWelcome(pending, currentScope());
+        await postStreamingWelcome(pending, currentScope(), { controller: welcomeAbortController });
         trackTinylyticsEvent('librarian.welcome_success');
       } catch (error) {
+        if (!welcomeInFlight || !pending.isConnected) return;
         pending.innerHTML = '<p>Hi. I&rsquo;m Thingy. Ask me what you&rsquo;re curious about and I&rsquo;ll help you explore the archive.</p>';
         trackTinylyticsEvent('librarian.welcome_error', error.requestId ? 'server' : 'client');
       } finally {
-        welcomeInFlight = false;
-        updateQuestionState();
+        if (pending.isConnected) {
+          welcomeInFlight = false;
+          welcomeAbortController = null;
+          updateQuestionState();
+        }
       }
     }
 
@@ -2651,6 +2670,7 @@ permalink: "/chat/"
 
     async function submitQuestion() {
       if (interactionBusy()) return;
+      cancelWelcomeSetup();
       const message = questionInput.value.trim();
       if (!message) return;
       if (message.length > maxQuestionChars) return;
