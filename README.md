@@ -57,8 +57,9 @@ Supported values:
 
 ### `prompt`
 
-Seeds the question box and auto-submits once the visitor is authenticated and
-the beta notice is dismissed.
+Seeds the question box and auto-submits once the visitor is authenticated. When
+`prompt` is present, Thingy skips the generated welcome and starts with the
+prompt instead.
 
 Example:
 
@@ -106,10 +107,10 @@ Enabled Tinylytics features:
 - Page hits with the minified embed script.
 - Click/event tracking with `events`.
 - Beacon delivery for outbound links with `beacon`.
-- Public hit counter with `hits`.
-- Public visitor countries with `countries`.
-- Homepage kudos with `kudos=🤖`.
 - Tinylytics Webmention endpoint in the document head.
+
+Public hit counters, country flags, and kudos are intentionally not shown in
+the current chat-client UI.
 
 Before loading Tinylytics, the app strips Thingy control parameters from the
 browser URL after the app has read them:
@@ -119,6 +120,7 @@ browser URL after the app has read them:
 - `from`
 - `scope`
 - `corpus`
+- `login_token`
 
 This keeps Tinylytics page URLs clean and avoids recording typed emails or
 prompts in analytics.

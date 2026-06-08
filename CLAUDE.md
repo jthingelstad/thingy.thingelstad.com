@@ -15,9 +15,10 @@ concerns:
   auth UI, streams `/chat` SSE from the Librarian Lambda, renders citations,
   collects 👍/👎 feedback. No server beyond GitHub Pages.
 - **`apps/thingy_bridge/`** — the Discord side of Thingy. A standalone Python
-  process running one discord.py client + APScheduler instance: answers
-  questions in `#ask-thingy`, mirrors logged conversations into a local
-  SQLite, posts cards to `#chatter`. See `apps/thingy_bridge/CLAUDE.md`.
+  process running one discord.py client + APScheduler support: answers
+  questions in `#ask-thingy` and provides operator follow-up commands.
+  Conversation eval cards are posted by the API-side webhook, not by polling
+  in the bridge. See `apps/thingy_bridge/CLAUDE.md`.
 
 Both apps are **live clients of the Librarian API in `studio-thing`**. The
 intelligence (corpus retrieval, Bedrock embeddings, the Claude tool-use loop)
@@ -57,17 +58,16 @@ schema break this repo. Version before changing.
 
 - **`web/`** shipped as the standalone Thingy surface (the as-built brief is
   preserved in `docs/history/STANDALONE_BUILD.md`). Magic-link auth, server-side
-  conversations, and richer chat UX have since shipped. The next strategic
-  track is identity-aware conversation modes.
+  conversations, conversation modes, curiosity maps, source controls, audio
+  input/playback, and richer chat UX have since shipped.
 - **`apps/thingy_bridge/`** is no longer the primary user surface. Discord is
   useful for operator notices and follow-up commands, while nuanced
   multi-conversation UX belongs in the authenticated web app.
 
-Conversation modes should be backend-enforced and conversation-scoped. The
-current roadmap favors owner-only Sparring Partner and supporting-member
-Research Guide modes over public "alter egos." Start with the published archive
-only; do not introduce a hidden private corpus unless Jamie explicitly makes
-that a separate product decision.
+Conversation modes are backend-enforced and conversation-scoped. Current modes
+are default Thingy, Research Guide, Thought Partner, and Trusted Circle. Start
+with the published archive only; do not introduce a hidden private corpus unless
+Jamie explicitly makes that a separate product decision.
 
 ## When in doubt
 

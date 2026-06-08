@@ -72,7 +72,7 @@ product direction.
 - Archive work/tool activity is visible in the chat, then collapses after completion.
 - Archive Sparks can surface adjacent ideas, though emission needs continued tuning.
 
-## Current Direction
+## Current Mode Model
 
 ### Conversation Modes
 
@@ -86,8 +86,8 @@ Initial modes:
   "teach me through the archive" behavior.
 - **Thought Partner**: owner-only initially. More challenging and reflective; helps Jamie interrogate his
   own published thinking, contradictions, recurring themes, and avoided questions.
-- **Trusted Circle**: possible future mode for family or close friends. Warmer and more contextual, but
-  still based on the published archive unless a separate, explicit data policy is created.
+- **Trusted Circle**: warmer mode for explicitly invited family or close friends, still based on the
+  published archive unless a separate, explicit data policy is created.
 
 Mode rules:
 
@@ -105,7 +105,7 @@ Entitlement sources:
 
 - **Owner**: explicit server-side allowlist for Jamie's verified email address.
 - **Supporting member**: Buttondown subscriber status or Buttondown tags.
-- **Trusted circle**: Buttondown tags are probably the cleanest interface. For example,
+- **Trusted circle**: Buttondown tags are the cleanest operator interface. For example,
   `thingy-trusted-circle`, `thingy-family`, or `thingy-close-friends`.
 - **Reader**: any verified subscriber/reader allowed into Thingy.
 
@@ -118,10 +118,9 @@ and `owner`.
 
 Conversation modes need first-class observability.
 
-- Store `mode`, `entitlements`, `user_email_hash`, and membership tier on each conversation.
+- Store `mode`, source scope, eval status, feedback, tool traces, and artifacts on canonical server-side conversations.
 - Store `mode` on every turn/evaluation event so mode-specific failures are easy to audit.
-- Add evaluator checks for mode fit: was Thingy appropriately helpful, appropriately challenging, or too
-  intrusive for the selected mode?
+- Keep evaluator checks mode-aware: default Thingy should not overbuild, Research Guide should reason carefully across timelines, Thought Partner should challenge without inventing private context, and Trusted Circle should be warm without becoming ungrounded.
 - Show mode filters in the operator report.
 - Include mode in Discord webhook summaries without making the webhook verbose again.
 
@@ -222,17 +221,16 @@ Each broadcast should deep-link into authenticated web Thingy with a seeded prom
 ## Open Decisions
 
 1. Should `Research Guide` be supporting-member-only, or available to all readers with usage limits?
-2. Should `Trusted Circle` be a real mode, or just an entitlement that unlocks selected features?
-3. What Buttondown tags should map to Thingy entitlements?
+2. Which specific people should receive Trusted Circle mode?
+3. Should supporting members receive any mode beyond Research Guide?
 4. Should the temporal layer include personal entries that Thingy may use but not quote?
 5. How aggressive should Thought Partner be, and what should the evaluator consider "too much"?
 6. Should corpus/source selectors eventually disappear entirely, or remain as an advanced control?
 
 ## Suggested Next Build Sequence
 
-1. Tune Thought Partner against real Jamie conversations and evaluator notes.
-2. Decide whether Research Guide should launch to all supporting members immediately or remain hidden until
-   the behavior is more differentiated.
-3. Add Buttondown tag plumbing for Trusted Circle when there is a concrete invite list.
+1. Use real conversations and evaluator notes to keep tuning each mode.
+2. Decide whether Research Guide should stay supporting-member-only.
+3. Add the Trusted Circle Buttondown tags to actual people when there is a concrete invite list.
 4. Prototype one publishable timeline page and verify that Thingy can use it without over-structuring it.
 5. Tune Archive Sparks and curiosity map generation against durable theme clusters.
