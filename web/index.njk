@@ -600,7 +600,7 @@ permalink: "/"
     function updateVoiceButtonState() {
       if (!voiceButton) return;
       const supported = speechInputSupported();
-      const busy = answerInFlight || welcomeInFlight;
+      const busy = interactionBusy();
       voiceButton.disabled = !supported || (busy && !speechListening);
       voiceButton.classList.toggle('is-listening', speechListening);
       voiceButton.setAttribute('aria-pressed', speechListening ? 'true' : 'false');
@@ -878,10 +878,14 @@ permalink: "/"
       updateComposerReserve();
     });
 
+    function interactionBusy() {
+      return answerInFlight || welcomeInFlight || mapInFlight;
+    }
+
     function updateQuestionState() {
       const length = questionInput.value.length;
       const hasSources = sourceCount() > 0;
-      const busy = answerInFlight || welcomeInFlight || mapInFlight;
+      const busy = interactionBusy();
       questionCount.textContent = `${length} / ${maxQuestionChars}`;
       questionCount.classList.toggle('warning', length > maxQuestionChars * 0.9);
       if (sourceError) sourceError.textContent = hasSources ? '' : 'Switch on at least one source.';
@@ -897,6 +901,7 @@ permalink: "/"
       }
       clearChatButton.disabled = busy;
       if (curiosityMapButton) curiosityMapButton.disabled = busy || !token() || !hasSources;
+      if (modeSelect) modeSelect.disabled = busy;
       scopeInputs.forEach((input) => { input.disabled = busy; });
       updateVoiceButtonState();
       updateMobileConversationTitle();
@@ -1826,7 +1831,7 @@ permalink: "/"
       if (mobileConversationTitle) mobileConversationTitle.textContent = currentConversationTitle();
       const hasActive = Boolean(activeConversationId && activeConversation());
       if (mobileConversationMenuButton) {
-        mobileConversationMenuButton.disabled = !hasActive || answerInFlight;
+        mobileConversationMenuButton.disabled = !hasActive || interactionBusy();
         mobileConversationMenuButton.title = hasActive ? 'Conversation actions' : 'No conversation actions';
       }
       if (!hasActive) toggleMobileConversationMenu(false);
@@ -1845,7 +1850,7 @@ permalink: "/"
 
     async function renameActiveConversation() {
       const active = activeConversation();
-      if (!active || answerInFlight) return;
+      if (!active || interactionBusy()) return;
       toggleMobileConversationMenu(false);
       const current = active.title || 'Untitled chat';
       const title = window.prompt('Rename conversation', current);
@@ -1863,7 +1868,7 @@ permalink: "/"
 
     async function deleteActiveConversation() {
       const active = activeConversation();
-      if (!active || answerInFlight) return;
+      if (!active || interactionBusy()) return;
       toggleMobileConversationMenu(false);
       if (!window.confirm('Delete this conversation?')) return;
       try {
@@ -1878,17 +1883,18 @@ permalink: "/"
     }
 
     function clearConversation() {
-      if (answerInFlight) return;
+      if (interactionBusy()) return;
       stopSpeaking();
       if (speechListening) stopDictation();
       welcomeShownThisVisit = true;
+      activeMode = normalizeModeId(modeSelect?.value || activeMode);
       startBlankConversationView();
       questionInput.focus();
       trackTinylyticsEvent('librarian.clear');
     }
 
     async function showCuriosityMap(center = '', options = {}) {
-      if (!token() || answerInFlight || welcomeInFlight || mapInFlight) return;
+      if (!token() || interactionBusy()) return;
       if (!(await ensureFreshToken())) {
         clearToken();
         return;
@@ -1951,6 +1957,24 @@ permalink: "/"
       renderRecents();
       updateMobileConversationTitle();
       renderModeBanner();
+    }
+
+    function upsertPendingConversation({ conversationId, title, scope, mode }) {
+      const id = String(conversationId || '').trim();
+      if (!id || conversations.some((entry) => entry.id === id || entry.conversation_id === id)) return;
+      const now = new Date().toISOString();
+      upsertConversationSummary({
+        id,
+        conversation_id: id,
+        title: title || 'New chat',
+        preview: title || '',
+        scope: scope || currentScope(),
+        mode: normalizeModeId(mode || currentConversationMode()),
+        created_at: now,
+        updated_at: now,
+        last_message_at: now,
+        turn_count: 0
+      });
     }
 
     async function refreshConversations(options = {}) {
@@ -2020,7 +2044,7 @@ permalink: "/"
     }
 
     async function loadConversationIntoChat(id) {
-      if (answerInFlight) return;
+      if (interactionBusy()) return;
       const conversationId = String(id || '').trim();
       if (!conversationId) return;
       try {
@@ -2065,7 +2089,7 @@ permalink: "/"
     }
 
     function maybeSubmitInitialPrompt() {
-      if (!initialPrompt || initialPromptSubmitted || answerInFlight || !token()) return;
+      if (!initialPrompt || initialPromptSubmitted || interactionBusy() || !token()) return;
       initialPromptSubmitted = true;
       hidePrompts();
       questionInput.value = initialPrompt;
@@ -2277,6 +2301,12 @@ permalink: "/"
           }
           if (data.conversation_id) {
             conversationId = data.conversation_id;
+            upsertPendingConversation({
+              conversationId,
+              title: message,
+              scope,
+              mode: data.mode || currentConversationMode()
+            });
             setActiveConversation(conversationId);
           }
         } else if (eventName === 'status') {
@@ -2479,7 +2509,7 @@ permalink: "/"
     }
 
     async function startAgentWelcome() {
-      if (!token() || answerInFlight || welcomeInFlight || welcomeShownThisVisit || hasInitialPrompt) return;
+      if (!token() || interactionBusy() || welcomeShownThisVisit || hasInitialPrompt) return;
       if (!(await ensureFreshToken())) {
         clearToken();
         return;
@@ -2545,7 +2575,7 @@ permalink: "/"
     }
 
     async function submitQuestion() {
-      if (answerInFlight) return;
+      if (interactionBusy()) return;
       const message = questionInput.value.trim();
       if (!message) return;
       if (message.length > maxQuestionChars) return;
@@ -2614,7 +2644,7 @@ permalink: "/"
 
     if (voiceButton) {
       voiceButton.addEventListener('click', () => {
-        if (answerInFlight || welcomeInFlight) return;
+        if (interactionBusy()) return;
         startDictation();
       });
     }
@@ -2638,7 +2668,7 @@ permalink: "/"
     messages.addEventListener('click', (event) => {
       const target = event.target instanceof Element ? event.target : event.target.parentElement;
       const button = target ? target.closest('button[data-experience-prompt], button[data-map-prompt]') : null;
-      if (!button || answerInFlight || welcomeInFlight || mapInFlight) return;
+      if (!button || interactionBusy()) return;
       questionInput.value = button.dataset.experiencePrompt || button.dataset.mapPrompt || '';
       updateQuestionState();
       if (button.dataset.mapPrompt) {
@@ -2679,6 +2709,7 @@ permalink: "/"
     if (mobileNewChatButton) {
       mobileNewChatButton.addEventListener('click', (event) => {
         event.stopPropagation();
+        if (interactionBusy()) return;
         toggleMobileConversationMenu(false);
         clearConversation();
         setMobileRailOpen(false);
@@ -2686,6 +2717,10 @@ permalink: "/"
     }
     if (modeSelect) {
       modeSelect.addEventListener('change', () => {
+        if (interactionBusy()) {
+          modeSelect.value = activeMode;
+          return;
+        }
         const nextMode = normalizeModeId(modeSelect.value);
         if (!availableModes.some((mode) => mode.id === nextMode)) {
           modeSelect.value = activeMode;
