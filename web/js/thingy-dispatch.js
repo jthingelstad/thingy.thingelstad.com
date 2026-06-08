@@ -1,76 +1,28 @@
 (function () {
   const session = window.ThingySession;
-  const gate = document.getElementById('dispatch-gate');
+  const shell = document.getElementById('dispatch-shell');
   const app = document.getElementById('dispatch-app');
+  const messagesEl = document.getElementById('dispatch-messages');
+  const recentsEl = document.getElementById('dispatch-recents');
+  const emptyEl = document.getElementById('dispatch-empty');
   const form = document.getElementById('dispatch-form');
-  const promptInput = document.getElementById('dispatch-prompt');
-  const clarifyButton = document.getElementById('dispatch-clarify');
-  const generateButton = document.getElementById('dispatch-generate');
-  const status = document.getElementById('dispatch-status');
-  const clarification = document.getElementById('dispatch-clarification');
-  const clarificationQuestion = document.getElementById('dispatch-clarification-question');
-  const clarificationAnswer = document.getElementById('dispatch-clarification-answer');
-  const directionBox = document.getElementById('dispatch-direction');
-  const history = document.getElementById('dispatch-history');
-  const emailTarget = document.getElementById('dispatch-email-target');
-  const upgrade = document.getElementById('dispatch-upgrade');
-  let currentDirection = '';
-  let currentQuestion = '';
-  let activeDispatchId = '';
+  const input = document.getElementById('dispatch-input');
+  const statusEl = document.getElementById('dispatch-status');
+  const actionsEl = document.getElementById('dispatch-actions');
+  const countEl = document.getElementById('dispatch-count');
+  const newButtons = [document.getElementById('dispatch-new'), document.getElementById('dispatch-mobile-new')].filter(Boolean);
+  const accountEmail = document.getElementById('dispatch-account-email');
+  const accountSub = document.getElementById('dispatch-account-sub');
+  const accountAvatar = document.getElementById('dispatch-account-avatar');
+  const mobileTitle = document.getElementById('dispatch-mobile-title');
+  const draftKey = 'thingyDispatchDrafts';
+  const activeKey = 'thingyActiveDispatchDraft';
+  const maxInputChars = Number(input && input.getAttribute('maxlength') || 1200);
+  let drafts = loadDrafts();
+  let remoteDispatches = [];
+  let activeId = window.localStorage.getItem(activeKey) || '';
+  let busy = false;
   let pollTimer = 0;
-
-  function setStatus(message, kind) {
-    if (!status) return;
-    status.textContent = message || '';
-    status.dataset.kind = kind || '';
-  }
-
-  function setBusy(busy) {
-    if (clarifyButton) clarifyButton.disabled = Boolean(busy);
-    if (generateButton) generateButton.disabled = Boolean(busy);
-    if (promptInput) promptInput.disabled = Boolean(busy);
-    if (clarificationAnswer) clarificationAnswer.disabled = Boolean(busy);
-  }
-
-  function signedIn() {
-    return session.token() && !session.tokenExpired();
-  }
-
-  function requireAuth() {
-    if (signedIn()) return true;
-    if (gate) gate.hidden = false;
-    if (app) app.hidden = true;
-    window.location.href = session.signInUrl('/dispatch/');
-    return false;
-  }
-
-  function dispatchPayload(action, extra) {
-    return {
-      action,
-      ...(extra || {})
-    };
-  }
-
-  async function dispatchPost(action, extra) {
-    if (!(await session.ensureFreshToken())) {
-      session.clearAuth();
-      requireAuth();
-      throw new Error('Sign in again to continue.');
-    }
-    return await session.postJson('/dispatch', dispatchPayload(action, extra), session.authHeaders());
-  }
-
-  function renderDispatch(row) {
-    const date = row.sent_at || row.started_at || row.queued_at || row.created_at || '';
-    const label = row.status === 'sent' ? 'Sent' : row.status === 'failed' ? 'Failed' : row.status === 'generating' ? 'Generating' : 'Queued';
-    const title = row.title || row.topic || row.direction || 'Dispatch';
-    return `<li class="dispatch-log-item is-${escapeHtml(row.status || 'unknown')}">
-      <span class="dispatch-log-state">${escapeHtml(label)}</span>
-      <strong>${escapeHtml(title)}</strong>
-      <small>${escapeHtml(date ? new Date(date).toLocaleString() : '')}</small>
-      ${row.error ? `<p>${escapeHtml(row.error)}</p>` : ''}
-    </li>`;
-  }
 
   function escapeHtml(value) {
     return String(value || '')
@@ -80,155 +32,457 @@
       .replaceAll('"', '&quot;');
   }
 
-  function renderHistory(rows) {
-    if (!history) return;
-    if (!rows || !rows.length) {
-      history.innerHTML = '<p class="dispatch-empty">No Dispatches yet.</p>';
-      return;
-    }
-    history.innerHTML = `<ul class="dispatch-log">${rows.map(renderDispatch).join('')}</ul>`;
+  function nowIso() {
+    return new Date().toISOString();
   }
 
-  function showUpgrade(show, message) {
-    if (!upgrade) return;
-    upgrade.hidden = !show;
-    if (message) upgrade.querySelector('p').textContent = message;
+  function draftTitle(draft) {
+    return draft.title || draft.prompt || draft.direction || 'New Dispatch';
+  }
+
+  function stageLabel(value) {
+    return {
+      empty: 'Draft',
+      shaping: 'Shaping',
+      needs_clarification: 'Clarify',
+      ready: 'Ready',
+      upgrade: 'Ready',
+      queued: 'Queued',
+      generating: 'Generating',
+      sent: 'Sent',
+      failed: 'Failed'
+    }[value] || 'Draft';
+  }
+
+  function normalizeDraft(raw) {
+    const draft = raw && typeof raw === 'object' ? raw : {};
+    return {
+      id: String(draft.id || `draft-${Date.now()}-${Math.random().toString(16).slice(2)}`),
+      stage: String(draft.stage || 'empty'),
+      prompt: String(draft.prompt || ''),
+      direction: String(draft.direction || ''),
+      currentQuestion: String(draft.currentQuestion || ''),
+      clarificationAnswer: String(draft.clarificationAnswer || ''),
+      dispatchId: String(draft.dispatchId || ''),
+      title: String(draft.title || ''),
+      statusText: String(draft.statusText || ''),
+      updatedAt: String(draft.updatedAt || nowIso()),
+      messages: Array.isArray(draft.messages) ? draft.messages : []
+    };
+  }
+
+  function loadDrafts() {
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(draftKey) || '[]');
+      return Array.isArray(parsed) ? parsed.map(normalizeDraft) : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function saveDrafts() {
+    drafts.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+    window.localStorage.setItem(draftKey, JSON.stringify(drafts.slice(0, 20)));
+  }
+
+  function activeDraft() {
+    let draft = drafts.find((entry) => entry.id === activeId);
+    if (!draft) draft = createDraft({ activate: true });
+    return draft;
+  }
+
+  function createDraft(options = {}) {
+    const draft = normalizeDraft({
+      stage: 'empty',
+      messages: [{
+        role: 'assistant',
+        text: "What should this Dispatch explore? Give me a topic, question, or thread from Jamie's archive and I'll help shape it before you send it."
+      }]
+    });
+    drafts.unshift(draft);
+    if (options.activate !== false) setActiveDraft(draft.id, { render: false });
+    saveDrafts();
+    return draft;
+  }
+
+  function updateDraft(patch = {}) {
+    const draft = activeDraft();
+    Object.assign(draft, patch, { updatedAt: nowIso() });
+    saveDrafts();
+    return draft;
+  }
+
+  function addMessage(role, text, extra = {}) {
+    const draft = activeDraft();
+    draft.messages.push({
+      role,
+      text: String(text || ''),
+      time: nowIso(),
+      ...extra
+    });
+    draft.updatedAt = nowIso();
+    saveDrafts();
+    return draft;
+  }
+
+  function setActiveDraft(id, options = {}) {
+    activeId = String(id || '');
+    if (activeId) window.localStorage.setItem(activeKey, activeId);
+    if (options.render !== false) render();
+  }
+
+  function signedIn() {
+    return session.token() && !session.tokenExpired();
+  }
+
+  function requireAuth() {
+    if (signedIn()) return true;
+    window.location.href = session.signInUrl('/dispatch/');
+    return false;
+  }
+
+  function hasSupportingAccess() {
+    const profile = session.storedProfile();
+    const entitlements = Array.isArray(profile.entitlements) ? profile.entitlements : [];
+    return Boolean(profile.supporting_member || entitlements.includes('supporting_member') || entitlements.includes('owner'));
+  }
+
+  async function dispatchPost(action, extra) {
+    if (!(await session.ensureFreshToken())) {
+      session.clearAuth();
+      requireAuth();
+      throw new Error('Sign in again to continue.');
+    }
+    return await session.postJson('/dispatch', { action, ...(extra || {}) }, session.authHeaders());
+  }
+
+  function setBusy(value, text = '') {
+    busy = Boolean(value);
+    if (input) input.disabled = busy;
+    const button = form && form.querySelector('button[type="submit"]');
+    if (button) button.disabled = busy;
+    setStatus(text || '');
+  }
+
+  function setStatus(text, kind = '') {
+    if (!statusEl) return;
+    statusEl.textContent = text || '';
+    statusEl.dataset.kind = kind || '';
+  }
+
+  function refreshIdentity() {
+    const email = session.storedEmail();
+    const profile = session.storedProfile();
+    if (accountEmail) accountEmail.textContent = email || 'Signed in';
+    if (accountSub) accountSub.textContent = hasSupportingAccess() ? 'Supporting Member' : 'Weekly Thing reader';
+    if (accountAvatar) accountAvatar.textContent = email ? email[0].toUpperCase() : 'T';
+    if (mobileTitle) mobileTitle.textContent = draftTitle(activeDraft());
+    if (profile && profile.preferred_name && accountEmail && !email) accountEmail.textContent = profile.preferred_name;
+  }
+
+  function renderMessage(message) {
+    const role = message.role === 'user' ? 'user' : message.role === 'system' ? 'system' : 'assistant';
+    const paragraphs = String(message.text || '').split(/\n{2,}/).map((part) => `<p>${escapeHtml(part)}</p>`).join('');
+    return `<article class="librarian-message librarian-message-${role} dispatch-message">${paragraphs}</article>`;
+  }
+
+  function renderActions(draft) {
+    if (!actionsEl) return;
+    const actions = [];
+    if (draft.stage === 'ready' || draft.stage === 'upgrade') {
+      actions.push(`<button type="button" class="dispatch-action-primary" data-action="generate">Generate Dispatch</button>`);
+    }
+    if (draft.stage === 'upgrade') {
+      actions.push(`<a class="dispatch-action-secondary" href="https://www.thingelstad.com/2024/11/17/weekly-thing-supporting.html" target="_blank" rel="noopener">Supporting Membership</a>`);
+      actions.push(`<button type="button" class="dispatch-action-secondary" data-action="signin">I joined, sign in again</button>`);
+    }
+    if (draft.stage === 'queued' || draft.stage === 'generating') {
+      actions.push(`<button type="button" class="dispatch-action-secondary" data-action="check">Check Status</button>`);
+    }
+    actionsEl.innerHTML = actions.join('');
+    actionsEl.hidden = !actions.length;
+  }
+
+  function renderRecents() {
+    const localRows = drafts.map((draft) => ({
+      id: draft.id,
+      title: draftTitle(draft),
+      status: draft.stage,
+      local: true
+    }));
+    const remoteRows = remoteDispatches
+      .filter((row) => !drafts.some((draft) => draft.dispatchId && draft.dispatchId === (row.id || row.dispatch_id)))
+      .map((row) => ({
+        id: `remote-${row.id || row.dispatch_id}`,
+        title: row.title || row.subject || row.topic || 'Dispatch',
+        status: row.status,
+        local: false
+      }));
+    const rows = [...localRows, ...remoteRows].slice(0, 24);
+    if (emptyEl) emptyEl.hidden = Boolean(rows.length);
+    if (!recentsEl) return;
+    recentsEl.hidden = !rows.length;
+    recentsEl.innerHTML = rows.map((row) => `
+      <div class="rail-recent dispatch-rail-item ${row.id === activeId ? 'is-active' : ''} is-${escapeHtml(row.status)}" role="listitem">
+        <button class="rail-recent-open" type="button" data-id="${escapeHtml(row.id)}" ${row.local ? '' : 'disabled'}>
+          <span class="rail-recent-title">${escapeHtml(row.title)}</span>
+          <small>${escapeHtml(stageLabel(row.status))}</small>
+        </button>
+      </div>
+    `).join('');
+  }
+
+  function render() {
+    const draft = activeDraft();
+    if (!draft.messages.length) {
+      draft.messages.push({
+        role: 'assistant',
+        text: "What should this Dispatch explore? Give me a topic, question, or thread from Jamie's archive and I'll help shape it before you send it."
+      });
+    }
+    if (messagesEl) {
+      messagesEl.innerHTML = draft.messages.map(renderMessage).join('');
+      const scroll = document.querySelector('.dispatch-scroll');
+      if (scroll) scroll.scrollTop = scroll.scrollHeight;
+    }
+    if (input) {
+      input.placeholder = draft.stage === 'needs_clarification'
+        ? 'Answer Thingy’s clarification question...'
+        : draft.stage === 'ready' || draft.stage === 'upgrade'
+          ? 'Adjust the direction, or generate when ready...'
+          : 'Tell Thingy what this Dispatch should explore...';
+    }
+    renderActions(draft);
+    renderRecents();
+    refreshIdentity();
+    updateCount();
+  }
+
+  function updateCount() {
+    if (!countEl || !input) return;
+    countEl.textContent = `${input.value.length} / ${maxInputChars}`;
+  }
+
+  function titleFromPrompt(value) {
+    return String(value || 'Dispatch').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Dispatch';
   }
 
   async function loadHistory() {
     try {
-      const data = await dispatchPost('list', { limit: 8 });
-      renderHistory(data.dispatches || []);
-      const email = session.storedEmail();
-      if (emailTarget) emailTarget.textContent = email ? `Dispatch will be sent to ${email}.` : 'Dispatch will be sent to your signed-in email.';
-      showUpgrade(false);
-      const availability = data.availability || {};
-      if (!availability.allowed && availability.reason === 'cooldown') {
-        const hours = Math.ceil(Number(availability.retry_after_seconds || 0) / 3600);
-        setStatus(`Your next Dispatch opens in about ${hours} hour${hours === 1 ? '' : 's'}.`, 'notice');
+      const data = await dispatchPost('list', { limit: 12 });
+      remoteDispatches = data.dispatches || [];
+      if (data.entitlements || data.supporting_member) {
+        const profile = session.storedProfile();
+        session.persistAuth({
+          token: session.token(),
+          email: session.storedEmail(),
+          profile: {
+            ...profile,
+            supporting_member: Boolean(data.supporting_member || profile.supporting_member),
+            entitlements: data.entitlements || profile.entitlements
+          }
+        }, session.storedEmail());
       }
+      render();
     } catch (error) {
-      if (error.status === 401) {
-        session.clearAuth();
-        requireAuth();
-        return;
-      }
       setStatus(error.message || 'Could not load Dispatch history.', 'error');
     }
   }
 
-  async function clarify() {
-    const prompt = String(promptInput && promptInput.value || '').trim();
-    if (prompt.length < 8) {
-      setStatus('Give Thingy a topic, question, or thread to work from.', 'error');
-      return;
-    }
-    setBusy(true);
-    setStatus('Thingy is shaping the Dispatch...', 'pending');
+  async function clarifyWithThingy(text) {
+    const draft = activeDraft();
+    const prompt = draft.prompt || text;
+    const answer = draft.stage === 'needs_clarification' ? text : '';
+    setBusy(true, 'Thingy is shaping this Dispatch...');
+    updateDraft({
+      stage: 'shaping',
+      prompt,
+      title: titleFromPrompt(prompt),
+      clarificationAnswer: answer || draft.clarificationAnswer
+    });
     try {
       const data = await dispatchPost('clarify', {
         prompt,
-        clarification_question: currentQuestion,
-        clarification_answer: clarificationAnswer && clarificationAnswer.value
+        clarification_question: draft.currentQuestion,
+        clarification_answer: answer
       });
-      currentDirection = data.direction || prompt;
-      if (directionBox) {
-        directionBox.hidden = false;
-        directionBox.textContent = currentDirection;
-      }
+      const direction = data.direction || prompt;
       if (data.needs_clarification) {
-        currentQuestion = data.question || '';
-        if (clarificationQuestion) clarificationQuestion.textContent = currentQuestion;
-        if (clarification) clarification.hidden = false;
-        setStatus('Thingy has one question before generating.', 'notice');
+        updateDraft({
+          stage: 'needs_clarification',
+          direction,
+          currentQuestion: data.question || ''
+        });
+        addMessage('assistant', data.question || 'What angle should I use for this Dispatch?');
       } else {
-        if (clarification) clarification.hidden = true;
-        setStatus('Direction is clear. Generate when you are ready.', 'success');
+        updateDraft({
+          stage: 'ready',
+          direction,
+          currentQuestion: ''
+        });
+        addMessage('assistant', `Here is the Dispatch I am ready to generate:\n\n${direction}\n\nIf this is right, use Generate Dispatch. If you want to steer it, send me the adjustment.`);
       }
-      if (generateButton) generateButton.hidden = false;
-      showUpgrade(false);
+      setStatus('');
     } catch (error) {
-      setStatus(error.message || 'Thingy could not clarify that right now.', 'error');
+      updateDraft({ stage: draft.stage === 'needs_clarification' ? 'needs_clarification' : 'empty' });
+      addMessage('assistant', error.message || 'I could not shape that Dispatch right now.');
+      setStatus('Thingy could not shape that right now.', 'error');
     } finally {
       setBusy(false);
+      render();
     }
   }
 
-  async function generate() {
-    const prompt = String(promptInput && promptInput.value || '').trim();
+  async function generateDispatch() {
+    const draft = activeDraft();
     const email = session.storedEmail();
     if (!email) {
-      setStatus('Sign in again so Thingy knows where to send the Dispatch.', 'error');
       window.location.href = session.signInUrl('/dispatch/');
       return;
     }
-    setBusy(true);
-    setStatus('Queueing your Dispatch...', 'pending');
+    setBusy(true, 'Queueing Dispatch...');
     try {
       const data = await dispatchPost('create', {
-        prompt,
-        topic: prompt,
-        direction: currentDirection || prompt,
-        clarification_question: currentQuestion,
-        clarification_answer: clarificationAnswer && clarificationAnswer.value,
+        prompt: draft.prompt,
+        topic: draft.prompt,
+        direction: draft.direction || draft.prompt,
+        clarification_question: draft.currentQuestion,
+        clarification_answer: draft.clarificationAnswer,
         email
       });
-      activeDispatchId = data.dispatch && (data.dispatch.id || data.dispatch.dispatch_id) || '';
-      setStatus('Dispatch queued. Thingy will email it when it is ready.', 'success');
+      const row = data.dispatch || {};
+      updateDraft({
+        stage: row.status || 'queued',
+        dispatchId: row.id || row.dispatch_id || '',
+        statusText: 'Dispatch queued.'
+      });
+      addMessage('assistant', 'Done. I queued this Dispatch and will email it when it is ready.');
       await loadHistory();
       startPolling();
     } catch (error) {
       if (error.status === 403 && error.data && error.data.status === 'supporting_member_required') {
-        showUpgrade(true, error.data.message || 'Sending a Dispatch requires a Supporting Membership.');
-        setStatus('This Dispatch is shaped and ready. Sending is a supporting-member feature.', 'notice');
+        updateDraft({ stage: 'upgrade' });
+        addMessage('assistant', [
+          'This Dispatch is shaped and ready.',
+          'Sending Dispatches is a Supporting Member feature. Supporting Membership helps sustain The Weekly Thing and Jamie directs the membership proceeds as a charitable giving pool rather than treating this as a paywall for Thingy.',
+          'You can become a Supporting Member, come back here, sign in again so I can see the updated membership, and generate this same Dispatch.'
+        ].join('\n\n'));
+        setStatus('Ready to send after Supporting Membership.', 'notice');
       } else if (error.status === 429) {
-        setStatus(error.message || 'Dispatch is rate limited right now.', 'notice');
+        addMessage('assistant', error.message || 'Dispatch is rate limited right now.');
+        setStatus('Dispatch is rate limited right now.', 'notice');
       } else {
-        setStatus(error.message || 'Could not queue this Dispatch.', 'error');
+        addMessage('assistant', error.message || 'I could not queue this Dispatch.');
+        setStatus('Could not queue this Dispatch.', 'error');
       }
     } finally {
       setBusy(false);
+      render();
     }
   }
 
   async function pollStatus() {
-    if (!activeDispatchId) return;
+    const draft = activeDraft();
+    if (!draft.dispatchId) return;
     try {
-      const data = await dispatchPost('status', { dispatch_id: activeDispatchId });
+      const data = await dispatchPost('status', { dispatch_id: draft.dispatchId });
       const row = data.dispatch || {};
       if (row.status === 'sent') {
-        setStatus('Dispatch sent. Check your email.', 'success');
+        updateDraft({
+          stage: 'sent',
+          title: row.title || row.subject || draft.title,
+          statusText: 'Sent'
+        });
+        if (!draft.messages.some((message) => message.kind === 'sent')) {
+          addMessage('assistant', 'Dispatch sent. Check your email.', { kind: 'sent' });
+        }
         window.clearInterval(pollTimer);
         pollTimer = 0;
         await loadHistory();
       } else if (row.status === 'failed') {
-        setStatus(row.error || 'Dispatch failed while generating.', 'error');
+        updateDraft({ stage: 'failed', statusText: row.error || 'Failed' });
+        addMessage('assistant', row.error || 'Dispatch failed while generating.');
         window.clearInterval(pollTimer);
         pollTimer = 0;
         await loadHistory();
       } else if (row.status) {
-        setStatus(`Dispatch is ${row.status}.`, 'pending');
+        updateDraft({ stage: row.status });
+        render();
       }
     } catch (error) {
-      // Polling is best-effort; leave the queued status visible.
+      // Polling is best-effort.
     }
   }
 
   function startPolling() {
-    if (!activeDispatchId || pollTimer) return;
+    const draft = activeDraft();
+    if (!draft.dispatchId || pollTimer) return;
     pollTimer = window.setInterval(pollStatus, 6000);
     pollStatus();
   }
 
   if (!requireAuth()) return;
-  if (gate) gate.hidden = true;
+  if (!drafts.length) createDraft({ activate: true });
+  if (!activeId) setActiveDraft(drafts[0].id, { render: false });
+  if (shell) shell.classList.remove('is-booting', 'is-auth');
   if (app) app.hidden = false;
-  loadHistory();
+
   if (form) {
     form.addEventListener('submit', (event) => {
       event.preventDefault();
-      clarify();
+      if (busy || !input) return;
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      updateCount();
+      addMessage('user', text);
+      const draft = activeDraft();
+      if (draft.stage === 'ready' || draft.stage === 'upgrade') {
+        updateDraft({
+          stage: 'shaping',
+          prompt: `${draft.prompt}\n\nAdjustment from reader: ${text}`,
+          direction: `${draft.direction}\n\nAdjustment from reader: ${text}`
+        });
+      }
+      clarifyWithThingy(text);
+      render();
     });
   }
-  if (generateButton) generateButton.addEventListener('click', generate);
+
+  if (input) {
+    input.addEventListener('input', updateCount);
+  }
+
+  newButtons.forEach((button) => button.addEventListener('click', () => {
+    const draft = createDraft({ activate: true });
+    setActiveDraft(draft.id);
+  }));
+
+  if (recentsEl) {
+    recentsEl.addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-id]');
+      if (!button || button.disabled) return;
+      setActiveDraft(button.dataset.id);
+    });
+  }
+
+  if (actionsEl) {
+    actionsEl.addEventListener('click', (event) => {
+      const target = event.target.closest('[data-action]');
+      if (!target || busy) return;
+      const action = target.dataset.action;
+      if (action === 'generate') generateDispatch();
+      if (action === 'check') pollStatus();
+      if (action === 'signin') {
+        session.clearAuth();
+        window.location.href = session.signInUrl('/dispatch/');
+      }
+    });
+  }
+
+  render();
+  loadHistory().then(() => {
+    const draft = activeDraft();
+    if (draft.dispatchId && (draft.stage === 'queued' || draft.stage === 'generating')) startPolling();
+  });
 }());

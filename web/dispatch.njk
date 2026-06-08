@@ -5,53 +5,89 @@ pageTitle: Dispatch
 description: Shape a Thingy-authored archive Dispatch and have it sent to your email.
 ---
 
-<section class="dispatch-page">
-  <div class="dispatch-hero">
-    <p class="dispatch-kicker">Thingy Dispatch</p>
-    <h1>Ask Thingy for an archive brief.</h1>
-    <p>Shape a topic, clarify the angle, and Thingy will send a polished archive-backed Dispatch by email. Sending is available to Weekly Thing Supporting Members.</p>
-  </div>
-
-  <div class="dispatch-gate" id="dispatch-gate" hidden>
-    <p>Sign in to start a Dispatch.</p>
-    <a href="/signin/?return=/dispatch/">Sign In</a>
-  </div>
-
-  <div class="dispatch-layout" id="dispatch-app" hidden>
-    <section class="dispatch-workspace" aria-label="Create a Dispatch">
-      <form id="dispatch-form" class="dispatch-form">
-        <label for="dispatch-prompt">Topic or question</label>
-        <textarea id="dispatch-prompt" rows="7" maxlength="1200" required placeholder="Examples: ownership and the open web, Jamie's thread on personal automation, how the archive talks about attention..."></textarea>
-        <button type="submit" id="dispatch-clarify">Shape Dispatch</button>
-      </form>
-
-      <section class="dispatch-clarification" id="dispatch-clarification" hidden>
-        <h2>Thingy has one question</h2>
-        <p id="dispatch-clarification-question"></p>
-        <label for="dispatch-clarification-answer">Clarification</label>
-        <textarea id="dispatch-clarification-answer" rows="4" maxlength="1200"></textarea>
-        <button type="button" id="dispatch-generate" hidden>Generate and Email Dispatch</button>
-      </section>
-
-      <section class="dispatch-direction" aria-label="Confirmed direction">
-        <h2>Direction</h2>
-        <p id="dispatch-direction" hidden></p>
-      </section>
-
-      <div class="dispatch-upgrade" id="dispatch-upgrade" hidden>
-        <h2>Supporting Member Feature</h2>
-        <p>Sending a Dispatch requires a Weekly Thing Supporting Membership.</p>
-        <a href="https://www.thingelstad.com/2024/11/17/weekly-thing-supporting.html">Learn about Supporting Membership</a>
+<section class="thingy-page dispatch-shell-page">
+  <div class="thingy-app-shell dispatch-shell is-booting" id="dispatch-shell">
+    <aside class="rail" aria-label="Thingy Dispatch">
+      <div class="rail-top">
+        <a class="rail-brand" href="/" aria-label="Thingy home" data-tinylytics-event="network.home" data-tinylytics-event-value="thingy">
+          <img class="rail-mark" src="/img/thingy.png?v={{ site.assetVersion }}" alt="" width="1022" height="1022" loading="eager">
+        </a>
       </div>
 
-      <p class="dispatch-status" id="dispatch-status" aria-live="polite"></p>
-      <p class="dispatch-email-target" id="dispatch-email-target"></p>
-    </section>
+      <nav class="rail-surface-switch" aria-label="Thingy surfaces">
+        <a href="/">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path></svg>
+          <span>Chat</span>
+        </a>
+        <a class="is-active" href="/dispatch/" aria-current="page">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"></path><path d="M8 9h8"></path><path d="M8 13h6"></path><path d="M8 17h4"></path></svg>
+          <span>Dispatch</span>
+        </a>
+      </nav>
 
-    <aside class="dispatch-side" aria-label="Dispatch history">
-      <h2>Recent Dispatches</h2>
-      <div id="dispatch-history"></div>
+      <button class="rail-newchat dispatch-new" type="button" id="dispatch-new" data-tinylytics-event="dispatch.new" title="New Dispatch">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+        <span class="label">New Dispatch</span>
+      </button>
+
+      <div class="rail-body">
+        <p class="rail-recents-label">Dispatches</p>
+        <div class="rail-recents dispatch-recents" id="dispatch-recents" role="list" hidden></div>
+        <p class="rail-empty" id="dispatch-empty">Shape a Dispatch and it will stay here until it is sent.</p>
+      </div>
+
+      <div class="rail-account">
+        <button class="rail-account-btn" id="dispatch-account-btn" type="button" aria-haspopup="true" aria-expanded="false">
+          <span class="rail-avatar" id="dispatch-account-avatar" aria-hidden="true">T</span>
+          <span class="rail-account-meta">
+            <span class="rail-account-email" id="dispatch-account-email">Signed in</span>
+            <span class="rail-account-sub" id="dispatch-account-sub">Weekly Thing reader</span>
+          </span>
+        </button>
+      </div>
     </aside>
+
+    <section class="thingy-conversation dispatch-conversation" aria-label="Thingy Dispatch">
+      <div class="mobile-chatbar" id="dispatch-mobilebar" aria-label="Dispatch">
+        <a class="mobile-chatbar-circle" href="/" aria-label="Switch to Chat" title="Switch to Chat">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+        </a>
+        <div class="mobile-chatbar-title">
+          <span id="dispatch-mobile-title">Dispatch</span>
+        </div>
+        <div class="mobile-chatbar-actions">
+          <button class="mobile-chatbar-action" id="dispatch-mobile-new" type="button" aria-label="New Dispatch" title="New Dispatch">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="dispatch-chat" id="dispatch-app" hidden>
+        <div class="thingy-chat-scroll dispatch-scroll">
+          <div class="librarian-messages dispatch-messages" id="dispatch-messages" aria-live="polite"></div>
+        </div>
+
+        <div class="thingy-composer-zone dispatch-composer-zone">
+          <div class="dispatch-actions" id="dispatch-actions" hidden></div>
+          <form class="librarian-form librarian-question-form thingy-input composer-box dispatch-composer" id="dispatch-form">
+            <label for="dispatch-input" class="sr-only">Message Thingy about this Dispatch</label>
+            <textarea id="dispatch-input" rows="1" maxlength="1200" required placeholder="Tell Thingy what this Dispatch should explore..."></textarea>
+            <div class="composer-toolbar">
+              <span class="dispatch-status" id="dispatch-status" aria-live="polite"></span>
+              <span class="composer-spacer"></span>
+              <span class="composer-count" id="dispatch-count">0 / 1200</span>
+              <button type="submit" class="composer-send" aria-label="Send to Thingy" title="Send to Thingy" data-tinylytics-event="dispatch.message">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 19V5"></path>
+                  <path d="m5 12 7-7 7 7"></path>
+                </svg>
+              </button>
+            </div>
+          </form>
+          <p class="thingy-ai-note">Dispatches are written by Thingy from Jamie&rsquo;s public archive, then sent by email when you generate them.</p>
+        </div>
+      </div>
+    </section>
   </div>
 </section>
 
@@ -62,4 +98,3 @@ description: Shape a Thingy-authored archive Dispatch and have it sent to your e
 </script>
 <script src="/js/thingy-session.js?v={{ site.assetVersion }}"></script>
 <script src="/js/thingy-dispatch.js?v={{ site.assetVersion }}"></script>
-
