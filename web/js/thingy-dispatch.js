@@ -402,7 +402,8 @@
 
   function readyDispatchText(data, direction) {
     const message = String(data.message || '').trim();
-    if (message && !message.includes('?')) return message;
+    const claimsStarted = /\b(?:generating now|generate now|drafting now|sending now|emailing now)\b/i.test(message);
+    if (message && !message.includes('?') && !claimsStarted) return message;
     return `I have shaped this Dispatch direction:\n\n${direction}\n\nIf this is right, use Generate Dispatch. If you want to steer it, send me the adjustment.`;
   }
 
