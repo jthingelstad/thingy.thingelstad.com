@@ -388,6 +388,65 @@
     return String(value || 'Dispatch').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Dispatch';
   }
 
+  function assistantClarificationText(data) {
+    const message = String(data.message || '').trim();
+    const question = String(data.question || '').trim();
+    if (message && question && !message.includes(question)) return `${message}\n\n${question}`;
+    return message || question || 'What angle should I use for this Dispatch?';
+  }
+
+  function readyDispatchText(data, direction) {
+    const message = String(data.message || '').trim();
+    if (message) return message;
+    return `I have shaped this Dispatch direction:\n\n${direction}\n\nIf this is right, use Generate Dispatch. If you want to steer it, send me the adjustment.`;
+  }
+
+  function clarifyRequest(draft, text) {
+    const seed = draft.prompt || text;
+    if (draft.stage === 'needs_clarification') {
+      return {
+        prompt: seed,
+        answer: text,
+        nextPrompt: seed,
+        nextDirection: draft.direction,
+        nextQuestion: draft.currentQuestion
+      };
+    }
+    if (draft.stage === 'ready' || draft.stage === 'upgrade') {
+      return {
+        prompt: [
+          seed ? `Original Dispatch seed: ${seed}` : '',
+          draft.direction ? `Current confirmed direction: ${draft.direction}` : '',
+          `Reader adjustment: ${text}`
+        ].filter(Boolean).join('\n'),
+        answer: '',
+        nextPrompt: seed,
+        nextDirection: draft.direction,
+        nextQuestion: ''
+      };
+    }
+    if (draft.prompt && draft.prompt !== text) {
+      return {
+        prompt: [
+          `Original Dispatch seed: ${draft.prompt}`,
+          draft.direction ? `Current working direction: ${draft.direction}` : '',
+          `Reader follow-up: ${text}`
+        ].filter(Boolean).join('\n'),
+        answer: '',
+        nextPrompt: draft.prompt,
+        nextDirection: draft.direction,
+        nextQuestion: draft.currentQuestion
+      };
+    }
+    return {
+      prompt: text,
+      answer: '',
+      nextPrompt: text,
+      nextDirection: draft.direction,
+      nextQuestion: ''
+    };
+  }
+
   async function loadHistory() {
     try {
       const data = await dispatchPost('list', { limit: 12 });
@@ -437,30 +496,40 @@
 
   async function clarifyWithThingy(text) {
     const draft = activeDraft();
-    const prompt = draft.prompt || text;
-    const answer = draft.stage === 'needs_clarification' ? text : '';
+    const previous = {
+      stage: draft.stage,
+      prompt: draft.prompt,
+      direction: draft.direction,
+      currentQuestion: draft.currentQuestion,
+      clarificationAnswer: draft.clarificationAnswer,
+      title: draft.title
+    };
+    const request = clarifyRequest(draft, text);
     setBusy(true, 'Thingy is shaping this Dispatch...');
     updateDraft({
       stage: 'shaping',
-      prompt,
-      title: titleFromPrompt(prompt),
-      clarificationAnswer: answer || draft.clarificationAnswer
+      prompt: request.nextPrompt,
+      direction: request.nextDirection,
+      currentQuestion: request.nextQuestion,
+      title: titleFromPrompt(request.nextPrompt),
+      clarificationAnswer: request.answer || draft.clarificationAnswer
     });
     try {
       await saveDraftToServer(activeDraft(), { status: 'shaping' });
       const data = await dispatchPost('clarify', {
-        prompt,
+        prompt: request.prompt,
         clarification_question: draft.currentQuestion,
-        clarification_answer: answer
+        clarification_answer: request.answer,
+        messages: activeDraft().messages || []
       });
-      const direction = data.direction || prompt;
+      const direction = data.direction || request.prompt;
       if (data.needs_clarification) {
         updateDraft({
           stage: 'needs_clarification',
           direction,
           currentQuestion: data.question || ''
         });
-        addMessage('assistant', data.question || 'What angle should I use for this Dispatch?');
+        addMessage('assistant', assistantClarificationText(data));
         await saveDraftToServer(activeDraft(), { status: 'needs_clarification' });
       } else {
         updateDraft({
@@ -468,12 +537,12 @@
           direction,
           currentQuestion: ''
         });
-        addMessage('assistant', `Here is the Dispatch I am ready to generate:\n\n${direction}\n\nIf this is right, use Generate Dispatch. If you want to steer it, send me the adjustment.`);
+        addMessage('assistant', readyDispatchText(data, direction));
         await saveDraftToServer(activeDraft(), { status: 'ready' });
       }
       setStatus('');
     } catch (error) {
-      updateDraft({ stage: draft.stage === 'needs_clarification' ? 'needs_clarification' : 'empty' });
+      updateDraft(previous);
       addMessage('assistant', error.message || 'I could not shape that Dispatch right now.');
       saveDraftToServer(activeDraft(), { status: activeDraft().stage === 'empty' ? 'draft' : activeDraft().stage }).catch(() => {});
       setStatus('Thingy could not shape that right now.', 'error');
@@ -591,14 +660,6 @@
       input.value = '';
       updateCount();
       addMessage('user', text);
-      const draft = activeDraft();
-      if (draft.stage === 'ready' || draft.stage === 'upgrade') {
-        updateDraft({
-          stage: 'shaping',
-          prompt: `${draft.prompt}\n\nAdjustment from reader: ${text}`,
-          direction: `${draft.direction}\n\nAdjustment from reader: ${text}`
-        });
-      }
       clarifyWithThingy(text);
       render();
     });
