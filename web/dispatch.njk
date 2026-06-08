@@ -1,0 +1,65 @@
+---
+layout: layouts/base.njk
+permalink: /dispatch/
+pageTitle: Dispatch
+description: Shape a Thingy-authored archive Dispatch and have it sent to your email.
+---
+
+<section class="dispatch-page">
+  <div class="dispatch-hero">
+    <p class="dispatch-kicker">Thingy Dispatch</p>
+    <h1>Ask Thingy for an archive brief.</h1>
+    <p>Shape a topic, clarify the angle, and Thingy will send a polished archive-backed Dispatch by email. Sending is available to Weekly Thing Supporting Members.</p>
+  </div>
+
+  <div class="dispatch-gate" id="dispatch-gate" hidden>
+    <p>Sign in to start a Dispatch.</p>
+    <a href="/signin/?return=/dispatch/">Sign In</a>
+  </div>
+
+  <div class="dispatch-layout" id="dispatch-app" hidden>
+    <section class="dispatch-workspace" aria-label="Create a Dispatch">
+      <form id="dispatch-form" class="dispatch-form">
+        <label for="dispatch-prompt">Topic or question</label>
+        <textarea id="dispatch-prompt" rows="7" maxlength="1200" required placeholder="Examples: ownership and the open web, Jamie's thread on personal automation, how the archive talks about attention..."></textarea>
+        <button type="submit" id="dispatch-clarify">Shape Dispatch</button>
+      </form>
+
+      <section class="dispatch-clarification" id="dispatch-clarification" hidden>
+        <h2>Thingy has one question</h2>
+        <p id="dispatch-clarification-question"></p>
+        <label for="dispatch-clarification-answer">Clarification</label>
+        <textarea id="dispatch-clarification-answer" rows="4" maxlength="1200"></textarea>
+        <button type="button" id="dispatch-generate" hidden>Generate and Email Dispatch</button>
+      </section>
+
+      <section class="dispatch-direction" aria-label="Confirmed direction">
+        <h2>Direction</h2>
+        <p id="dispatch-direction" hidden></p>
+      </section>
+
+      <div class="dispatch-upgrade" id="dispatch-upgrade" hidden>
+        <h2>Supporting Member Feature</h2>
+        <p>Sending a Dispatch requires a Weekly Thing Supporting Membership.</p>
+        <a href="https://www.thingelstad.com/2024/11/17/weekly-thing-supporting.html">Learn about Supporting Membership</a>
+      </div>
+
+      <p class="dispatch-status" id="dispatch-status" aria-live="polite"></p>
+      <p class="dispatch-email-target" id="dispatch-email-target"></p>
+    </section>
+
+    <aside class="dispatch-side" aria-label="Dispatch history">
+      <h2>Recent Dispatches</h2>
+      <div id="dispatch-history"></div>
+    </aside>
+  </div>
+</section>
+
+<script>
+  window.ThingyConfig = {
+    librarianApiUrl: "{{ site.librarianApiUrl }}"
+  };
+</script>
+<script src="/js/thingy-session.js?v={{ site.assetVersion }}"></script>
+<script src="/js/thingy-dispatch.js?v={{ site.assetVersion }}"></script>
+

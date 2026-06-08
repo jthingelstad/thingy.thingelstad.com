@@ -1,0 +1,164 @@
+(function () {
+  const storageKey = 'weeklyThingLibrarianToken';
+  const userEmailKey = 'thingyUserEmail';
+  const userProfileKey = 'thingyUserProfile';
+  const refreshWindowSeconds = 60 * 60 * 24 * 3;
+
+  function config() {
+    return window.ThingyConfig || {};
+  }
+
+  function apiUrl() {
+    return String(config().librarianApiUrl || '').replace(/\/$/, '');
+  }
+
+  function normalizeEmail(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function token() {
+    return window.localStorage.getItem(storageKey) || '';
+  }
+
+  function tokenPayload(value) {
+    const encoded = String(value || token()).split('.')[0] || '';
+    if (!encoded) return null;
+    try {
+      const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+      return JSON.parse(window.atob(padded));
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function tokenExpired(value, skewSeconds = 60) {
+    const payload = tokenPayload(value || token());
+    const expiresAt = Number(payload && payload.exp || 0);
+    return !expiresAt || expiresAt <= Math.floor(Date.now() / 1000) + skewSeconds;
+  }
+
+  function tokenNeedsRefresh(value) {
+    const payload = tokenPayload(value || token());
+    const expiresAt = Number(payload && payload.exp || 0);
+    return Boolean(expiresAt) && expiresAt <= Math.floor(Date.now() / 1000) + refreshWindowSeconds;
+  }
+
+  function authHeaders() {
+    return token() ? { authorization: `Bearer ${token()}` } : {};
+  }
+
+  async function postJson(path, payload, headers) {
+    const response = await window.fetch(`${apiUrl()}${path}`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(headers || {})
+      },
+      body: JSON.stringify(payload || {})
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const error = new Error(data.error || data.message || `Request failed (${response.status})`);
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
+    return data;
+  }
+
+  async function refreshAuth() {
+    if (!token() || tokenExpired()) return false;
+    try {
+      const data = await postJson('/auth', { action: 'refresh_session' }, authHeaders());
+      persistAuth(data, storedEmail());
+      return Boolean(data.token);
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async function ensureFreshToken() {
+    if (!token()) return false;
+    if (tokenExpired()) return false;
+    if (!tokenNeedsRefresh()) return true;
+    return await refreshAuth();
+  }
+
+  function normalizeModes(modes) {
+    return Array.isArray(modes) ? modes.filter((mode) => mode && mode.id) : [];
+  }
+
+  function persistAuth(data, email) {
+    if (!data || !data.token) return null;
+    window.localStorage.setItem(storageKey, data.token);
+    const emailValue = normalizeEmail(data.email || email);
+    if (emailValue) window.localStorage.setItem(userEmailKey, emailValue);
+    const profile = {
+      ...(data.profile && typeof data.profile === 'object' ? data.profile : {}),
+      status: data.status || '',
+      supporting_member: data.status === 'premium' || (data.entitlements || []).includes('supporting_member'),
+      entitlements: Array.isArray(data.entitlements) ? data.entitlements : data.profile && data.profile.entitlements,
+      modes: normalizeModes(data.modes || data.profile && data.profile.modes)
+    };
+    window.localStorage.setItem(userProfileKey, JSON.stringify(profile));
+    return profile;
+  }
+
+  function clearAuth() {
+    window.localStorage.removeItem(storageKey);
+    window.localStorage.removeItem(userProfileKey);
+  }
+
+  function storedEmail() {
+    return normalizeEmail(window.localStorage.getItem(userEmailKey) || '');
+  }
+
+  function storedProfile() {
+    try {
+      return JSON.parse(window.localStorage.getItem(userProfileKey) || '{}') || {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function hasEntitlement(name) {
+    const entitlements = storedProfile().entitlements || [];
+    return Array.isArray(entitlements) && entitlements.includes(name);
+  }
+
+  function returnPath(defaultPath) {
+    const params = new URLSearchParams(window.location.search);
+    const value = String(params.get('return') || defaultPath || '/').trim();
+    return value.startsWith('/') && !value.startsWith('//') ? value : '/';
+  }
+
+  function signInUrl(returnTo) {
+    const url = new URL('/signin/', window.location.origin);
+    url.searchParams.set('return', returnTo || `${window.location.pathname}${window.location.search}${window.location.hash}`);
+    return url.toString();
+  }
+
+  window.ThingySession = {
+    storageKey,
+    userEmailKey,
+    userProfileKey,
+    apiUrl,
+    normalizeEmail,
+    token,
+    tokenPayload,
+    tokenExpired,
+    tokenNeedsRefresh,
+    authHeaders,
+    postJson,
+    refreshAuth,
+    ensureFreshToken,
+    persistAuth,
+    clearAuth,
+    storedEmail,
+    storedProfile,
+    hasEntitlement,
+    returnPath,
+    signInUrl
+  };
+}());

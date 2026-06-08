@@ -225,6 +225,7 @@ permalink: "/"
     const mobileRenameConversation = document.getElementById('mobile-rename-conversation');
     const mobileDeleteConversation = document.getElementById('mobile-delete-conversation');
     const railScrim = document.getElementById('rail-scrim');
+    const sessionRefreshWindowSeconds = 60 * 60 * 24 * 3;
     const maxRecents = 20;
     let activeConversationId = null;
     let conversations = [];
@@ -403,6 +404,12 @@ permalink: "/"
       return !expiresAt || expiresAt <= Math.floor(Date.now() / 1000) + skewSeconds;
     }
 
+    function tokenNeedsRefresh(value = token()) {
+      const payload = tokenPayload(value);
+      const expiresAt = Number(payload?.exp || 0);
+      return Boolean(expiresAt) && expiresAt <= Math.floor(Date.now() / 1000) + sessionRefreshWindowSeconds;
+    }
+
     function storedEmail() {
       const stored = window.localStorage.getItem(userEmailKey) || '';
       const entered = emailInput && emailInput.value ? emailInput.value.trim() : '';
@@ -417,11 +424,12 @@ permalink: "/"
       const modes = normalizeModes(data?.modes || data?.profile?.modes || []);
       availableModes = modes.length ? modes : [{ id: 'thingy', label: 'Thingy' }];
       if (!availableModes.some((mode) => mode.id === activeMode)) activeMode = 'thingy';
+      const entitlements = Array.isArray(data?.entitlements) ? data.entitlements : data?.profile?.entitlements;
       const profile = {
         ...(data?.profile && typeof data.profile === 'object' ? data.profile : {}),
         status: data?.status || '',
-        supporting_member: data?.status === 'premium',
-        entitlements: Array.isArray(data?.entitlements) ? data.entitlements : data?.profile?.entitlements,
+        supporting_member: data?.status === 'premium' || (Array.isArray(entitlements) && entitlements.includes('supporting_member')),
+        entitlements,
         modes: availableModes
       };
       preferredName = String(profile.preferred_name || '').trim();
@@ -727,13 +735,24 @@ permalink: "/"
     }
 
     async function refreshStoredAuth() {
-      trackTinylyticsEvent('librarian.auth_refresh_disabled', 'magic_link');
-      return false;
+      if (!token() || tokenExpired()) return false;
+      try {
+        const data = await postJson('/auth', { action: 'refresh_session' }, authHeaders());
+        if (!data.token) return false;
+        persistToken(data.token, data);
+        refreshAccountIdentity();
+        trackTinylyticsEvent('librarian.auth_refresh_success');
+        return true;
+      } catch (error) {
+        trackTinylyticsEvent('librarian.auth_refresh_error');
+        return false;
+      }
     }
 
     async function ensureFreshToken() {
       if (!token()) return false;
-      if (!tokenExpired()) return true;
+      if (!tokenExpired() && !tokenNeedsRefresh()) return true;
+      if (tokenNeedsRefresh()) return await refreshStoredAuth();
       const emailValue = storedEmail();
       clearToken({
         message: "Your Thingy session expired. Enter your email and I'll send a fresh sign-in link.",
