@@ -51,12 +51,14 @@ Supported values:
 - `weekly_thing_podcast` or `wt_podcast` for Weekly Thing plus Another Thing
 - `blog_podcast` or `podcast_blog` for the blog plus Another Thing
 
-`corpus` can also accept comma, plus, or pipe-separated values. For example:
+`corpus` can also accept comma, plus, or pipe-separated values. These chat
+parameters belong on `/chat/`; the root URL is a static landing page. For
+example:
 
-- `https://thingy.thingelstad.com/?corpus=blog`
-- `https://thingy.thingelstad.com/?scope=podcast`
-- `https://thingy.thingelstad.com/?corpus=weekly%20thing,blog`
-- `https://thingy.thingelstad.com/?scope=blog_podcast`
+- `https://thingy.thingelstad.com/chat/?corpus=blog`
+- `https://thingy.thingelstad.com/chat/?scope=podcast`
+- `https://thingy.thingelstad.com/chat/?corpus=weekly%20thing,blog`
+- `https://thingy.thingelstad.com/chat/?scope=blog_podcast`
 
 ### `prompt`
 
@@ -66,7 +68,7 @@ prompt instead.
 
 Example:
 
-- `https://thingy.thingelstad.com/?prompt=What%20has%20Jamie%20written%20about%20AI%3F`
+- `https://thingy.thingelstad.com/chat/?prompt=What%20has%20Jamie%20written%20about%20AI%3F`
 
 Shared prompt links generated inside Thingy include `scope` so the recipient
 gets the same corpus boundary used for that answer.
@@ -77,7 +79,7 @@ Prefills the subscriber email field and starts the auth check.
 
 Example:
 
-- `https://thingy.thingelstad.com/?email=reader@example.com`
+- `https://thingy.thingelstad.com/chat/?email=reader@example.com`
 
 ### `login_token`
 

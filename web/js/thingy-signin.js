@@ -9,7 +9,7 @@
   const subscribeButton = document.getElementById('thingy-signin-subscribe');
   const tokenParams = new URLSearchParams(window.location.search);
   const loginToken = String(tokenParams.get('login_token') || tokenParams.get('magic_token') || '').trim();
-  const returnTo = session.returnPath('/');
+  const returnTo = session.returnPath('/chat/');
   const emailRe = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
   let lastEmail = session.storedEmail();
 
@@ -122,4 +122,3 @@
   }
   completeMagicLink();
 }());
-
