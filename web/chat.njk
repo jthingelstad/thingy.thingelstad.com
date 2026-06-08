@@ -196,6 +196,7 @@ permalink: "/chat/"
 
 </section>
 
+<script src="/js/thingy-composer.js?v={{ site.assetVersion }}"></script>
 <script src="/js/thingy-markdown.js?v={{ site.assetVersion }}"></script>
 <script>
   (() => {
@@ -268,6 +269,7 @@ permalink: "/chat/"
     let autoFollowChat = true;
     let scrollFrame = 0;
     let composerReserveFrame = 0;
+    let composerControls = null;
     let feedbackStatusTimer = 0;
     let welcomeInFlight = false;
     let welcomeShownThisVisit = false;
@@ -934,9 +936,13 @@ permalink: "/chat/"
     }
 
     function autoSizeQuestionInput() {
-      questionInput.style.height = 'auto';
-      questionInput.style.height = `${Math.min(questionInput.scrollHeight, 240)}px`;
-      updateComposerReserve();
+      if (composerControls) {
+        composerControls.autoSize();
+      } else {
+        questionInput.style.height = 'auto';
+        questionInput.style.height = `${Math.min(questionInput.scrollHeight, 240)}px`;
+        updateComposerReserve();
+      }
     }
 
     function updateComposerReserve() {
@@ -2854,18 +2860,18 @@ permalink: "/chat/"
       }
     }
 
-    questionForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      await submitQuestion();
+    composerControls = window.ThingyComposer?.createComposer({
+      form: questionForm,
+      input: questionInput,
+      count: questionCount,
+      maxChars: maxQuestionChars,
+      isBusy: interactionBusy,
+      onSubmit: submitQuestion,
+      onInput: updateQuestionState,
+      autoSize: true,
+      maxHeight: 240,
+      onAutoSize: updateComposerReserve
     });
-
-    questionInput.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter' || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
-      event.preventDefault();
-      questionForm.requestSubmit();
-    });
-
-    questionInput.addEventListener('input', updateQuestionState);
 
     if (voiceButton) {
       voiceButton.addEventListener('click', () => {

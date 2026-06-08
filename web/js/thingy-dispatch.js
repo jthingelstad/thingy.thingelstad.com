@@ -39,6 +39,7 @@
   let busy = false;
   let pollTimer = 0;
   let pollingDraftId = '';
+  let composerControls = null;
 
   function escapeHtml(value) {
     if (window.ThingyMarkdown?.escapeHtml) return window.ThingyMarkdown.escapeHtml(value);
@@ -421,6 +422,10 @@
   }
 
   function updateCount() {
+    if (composerControls) {
+      composerControls.sync();
+      return;
+    }
     if (!countEl || !input) return;
     countEl.textContent = `${input.value.length} / ${maxInputChars}`;
   }
@@ -755,21 +760,25 @@
   if (app) app.hidden = false;
 
   if (form) {
-    form.addEventListener('submit', (event) => {
-      event.preventDefault();
-      if (busy || !input) return;
-      const text = input.value.trim();
-      if (!text) return;
-      input.value = '';
-      updateCount();
-      addMessage('user', text);
-      clarifyWithThingy(text);
-      render();
+    composerControls = window.ThingyComposer?.createComposer({
+      form,
+      input,
+      count: countEl,
+      maxChars: maxInputChars,
+      isBusy: () => busy,
+      autoSize: true,
+      maxHeight: 240,
+      onSubmit: async () => {
+        if (busy || !input) return;
+        const text = input.value.trim();
+        if (!text) return;
+        input.value = '';
+        updateCount();
+        addMessage('user', text);
+        await clarifyWithThingy(text);
+        render();
+      }
     });
-  }
-
-  if (input) {
-    input.addEventListener('input', updateCount);
   }
 
   newButtons.forEach((button) => button.addEventListener('click', () => {
