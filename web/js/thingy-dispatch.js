@@ -30,6 +30,7 @@
   let activeId = window.localStorage.getItem(activeKey) || '';
   let busy = false;
   let pollTimer = 0;
+  let pollingDraftId = '';
 
   function escapeHtml(value) {
     return String(value || '')
@@ -179,6 +180,10 @@
     let draft = drafts.find((entry) => entry.id === activeId);
     if (!draft) draft = createDraft({ activate: true });
     return draft;
+  }
+
+  function draftById(id) {
+    return drafts.find((entry) => entry.id === id);
   }
 
   function createDraft(options = {}) {
@@ -397,7 +402,7 @@
 
   function readyDispatchText(data, direction) {
     const message = String(data.message || '').trim();
-    if (message) return message;
+    if (message && !message.includes('?')) return message;
     return `I have shaped this Dispatch direction:\n\n${direction}\n\nIf this is right, use Generate Dispatch. If you want to steer it, send me the adjustment.`;
   }
 
@@ -605,32 +610,58 @@
     }
   }
 
-  async function pollStatus() {
-    const draft = activeDraft();
+  async function pollStatus(draftId = activeId) {
+    const draft = draftById(draftId) || activeDraft();
     if (!draft.dispatchId) return;
     try {
       const data = await dispatchPost('status', { dispatch_id: draft.dispatchId });
       const row = data.dispatch || {};
       if (row.status === 'sent') {
-        updateDraft({
+        Object.assign(draft, {
           stage: 'sent',
           title: row.title || row.subject || draft.title,
-          statusText: 'Sent'
+          statusText: 'Sent',
+          updatedAt: nowIso()
         });
         if (!draft.messages.some((message) => message.kind === 'sent')) {
-          addMessage('assistant', 'Dispatch sent. Check your email.', { kind: 'sent' });
+          draft.messages.push({
+            role: 'assistant',
+            text: 'Dispatch sent. Check your email.',
+            time: nowIso(),
+            kind: 'sent'
+          });
+          saveDrafts();
         }
-        window.clearInterval(pollTimer);
-        pollTimer = 0;
+        if (pollingDraftId === draft.id) {
+          window.clearInterval(pollTimer);
+          pollTimer = 0;
+          pollingDraftId = '';
+        }
         await loadHistory();
       } else if (row.status === 'failed') {
-        updateDraft({ stage: 'failed', statusText: row.error || 'Failed' });
-        addMessage('assistant', row.error || 'Dispatch failed while generating.');
-        window.clearInterval(pollTimer);
-        pollTimer = 0;
+        Object.assign(draft, {
+          stage: 'failed',
+          statusText: row.error || 'Failed',
+          updatedAt: nowIso()
+        });
+        draft.messages.push({
+          role: 'assistant',
+          text: row.error || 'Dispatch failed while generating.',
+          time: nowIso()
+        });
+        saveDrafts();
+        if (pollingDraftId === draft.id) {
+          window.clearInterval(pollTimer);
+          pollTimer = 0;
+          pollingDraftId = '';
+        }
         await loadHistory();
       } else if (row.status) {
-        updateDraft({ stage: row.status });
+        Object.assign(draft, {
+          stage: row.status,
+          updatedAt: nowIso()
+        });
+        saveDrafts();
         render();
       }
     } catch (error) {
@@ -638,11 +669,14 @@
     }
   }
 
-  function startPolling() {
-    const draft = activeDraft();
-    if (!draft.dispatchId || pollTimer) return;
-    pollTimer = window.setInterval(pollStatus, 6000);
-    pollStatus();
+  function startPolling(draftId = activeId) {
+    const draft = draftById(draftId) || activeDraft();
+    if (!draft.dispatchId) return;
+    if (pollTimer && pollingDraftId === draft.id) return;
+    if (pollTimer) window.clearInterval(pollTimer);
+    pollingDraftId = draft.id;
+    pollTimer = window.setInterval(() => pollStatus(pollingDraftId), 6000);
+    pollStatus(pollingDraftId);
   }
 
   if (!requireAuth()) return;
