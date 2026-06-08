@@ -14,11 +14,19 @@
   const accountEmail = document.getElementById('dispatch-account-email');
   const accountSub = document.getElementById('dispatch-account-sub');
   const accountAvatar = document.getElementById('dispatch-account-avatar');
+  const accountBtn = document.getElementById('dispatch-account-btn');
+  const accountMenu = document.getElementById('dispatch-account-menu');
+  const accountNameForm = document.getElementById('dispatch-account-name-form');
+  const accountNameInput = document.getElementById('dispatch-account-name-input');
+  const accountNameStatus = document.getElementById('dispatch-account-name-status');
+  const logoutButton = document.getElementById('dispatch-logout');
   const mobileTitle = document.getElementById('dispatch-mobile-title');
   const mobileToggle = document.getElementById('dispatch-mobile-toggle');
   const railScrim = document.getElementById('dispatch-rail-scrim');
+  const railCollapseBtn = document.getElementById('dispatch-rail-collapse');
   const draftKey = 'thingyDispatchDrafts';
   const activeKey = 'thingyActiveDispatchDraft';
+  const railCollapsedKey = 'thingyRailCollapsed';
   const welcomeText = "What should this Dispatch explore? Give me a topic, question, or thread from Jamie's archive and I'll help shape it before you send it.";
   const maxInputChars = Number(input && input.getAttribute('maxlength') || 1200);
   const dispatchTestMode = (() => {
@@ -33,6 +41,7 @@
   let pollingDraftId = '';
 
   function escapeHtml(value) {
+    if (window.ThingyMarkdown?.escapeHtml) return window.ThingyMarkdown.escapeHtml(value);
     return String(value || '')
       .replaceAll('&', '&amp;')
       .replaceAll('<', '&lt;')
@@ -243,6 +252,29 @@
     return Boolean(profile.supporting_member || entitlements.includes('supporting_member') || entitlements.includes('owner'));
   }
 
+  function normalizePreferredName(value) {
+    const candidate = String(value || '').trim().replace(/[.!]+$/, '').replace(/\s+/g, ' ');
+    if (!/^[a-z][a-z .'’-]{0,78}$/i.test(candidate)) return '';
+    const words = candidate.split(/\s+/).filter(Boolean);
+    if (words.length < 1 || words.length > 4) return '';
+    const blocked = new Set(['hello', 'hi', 'hey', 'there', 'thingy', 'thanks', 'thank', 'yes', 'no', 'ok', 'okay']);
+    if (words.some((word) => blocked.has(word.toLowerCase()))) return '';
+    return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  }
+
+  function updateStoredProfile(patch = {}) {
+    const profile = { ...session.storedProfile(), ...patch };
+    try { window.localStorage.setItem(session.userProfileKey, JSON.stringify(profile)); } catch (error) { /* ignore */ }
+    return profile;
+  }
+
+  function toggleAccountMenu(force) {
+    if (!accountMenu) return;
+    const open = force === undefined ? accountMenu.hasAttribute('hidden') : Boolean(force);
+    accountMenu.toggleAttribute('hidden', !open);
+    if (accountBtn) accountBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
   async function dispatchPost(action, extra) {
     if (!(await session.ensureFreshToken())) {
       session.clearAuth();
@@ -303,6 +335,7 @@
     if (accountAvatar) accountAvatar.textContent = email ? email[0].toUpperCase() : 'T';
     if (mobileTitle) mobileTitle.textContent = draftTitle(activeDraft());
     if (profile && profile.preferred_name && accountEmail && !email) accountEmail.textContent = profile.preferred_name;
+    if (accountNameInput) accountNameInput.value = profile.preferred_name || '';
   }
 
   function setMobileRailOpen(open) {
@@ -318,8 +351,10 @@
 
   function renderMessage(message) {
     const role = message.role === 'user' ? 'user' : message.role === 'system' ? 'system' : 'assistant';
-    const paragraphs = String(message.text || '').split(/\n{2,}/).map((part) => `<p>${escapeHtml(part)}</p>`).join('');
-    return `<article class="librarian-message librarian-message-${role} dispatch-message">${paragraphs}</article>`;
+    const body = window.ThingyMarkdown?.renderMarkdown
+      ? window.ThingyMarkdown.renderMarkdown(message.text || '')
+      : String(message.text || '').split(/\n{2,}/).map((part) => `<p>${escapeHtml(part)}</p>`).join('');
+    return `<article class="librarian-message librarian-message-${role} dispatch-message">${body}</article>`;
   }
 
   function renderActions(draft) {
@@ -742,6 +777,20 @@
     setMobileRailOpen(false);
   }));
 
+  if (shell && window.localStorage.getItem(railCollapsedKey) === '1') {
+    shell.classList.add('is-collapsed');
+    if (railCollapseBtn) railCollapseBtn.setAttribute('aria-label', 'Expand sidebar');
+  }
+  if (railCollapseBtn && shell) {
+    railCollapseBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const collapsed = shell.classList.toggle('is-collapsed');
+      try { window.localStorage.setItem(railCollapsedKey, collapsed ? '1' : '0'); } catch (error) { /* ignore */ }
+      railCollapseBtn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+      railCollapseBtn.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+    });
+  }
+
   if (recentsEl) {
     recentsEl.addEventListener('click', (event) => {
       const deleteBtn = event.target.closest('[data-action="delete-dispatch"]');
@@ -768,6 +817,52 @@
   if (railScrim) {
     railScrim.addEventListener('click', () => setMobileRailOpen(false));
   }
+
+  if (accountBtn) {
+    accountBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      toggleAccountMenu();
+    });
+  }
+
+  if (accountMenu) {
+    accountMenu.addEventListener('click', (event) => event.stopPropagation());
+  }
+
+  if (accountNameForm) {
+    accountNameForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const nextName = normalizePreferredName(accountNameInput?.value || '');
+      if (!nextName) {
+        if (accountNameStatus) accountNameStatus.textContent = 'Enter a name Thingy should use.';
+        return;
+      }
+      if (accountNameStatus) accountNameStatus.textContent = 'Saving...';
+      try {
+        const data = await session.postJson('/auth', { action: 'update_profile', preferred_name: nextName }, session.authHeaders());
+        updateStoredProfile({ ...(data.profile || {}), preferred_name: nextName });
+        refreshIdentity();
+        if (accountNameStatus) accountNameStatus.textContent = 'Saved.';
+      } catch (error) {
+        if (accountNameStatus) accountNameStatus.textContent = error.message || 'Could not save that right now.';
+      }
+    });
+  }
+
+  if (logoutButton) {
+    logoutButton.addEventListener('click', () => {
+      session.clearAuth();
+      window.location.href = session.signInUrl('/dispatch/');
+    });
+  }
+
+  document.addEventListener('click', () => toggleAccountMenu(false));
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      toggleAccountMenu(false);
+      setMobileRailOpen(false);
+    }
+  });
 
   if (actionsEl) {
     actionsEl.addEventListener('click', (event) => {

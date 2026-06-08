@@ -12,6 +12,9 @@ description: Shape a Thingy-authored archive Dispatch and have it sent to your e
         <a class="rail-brand" href="/" aria-label="Thingy home" data-tinylytics-event="network.home" data-tinylytics-event-value="thingy">
           <img class="rail-mark" src="/img/thingy.png?v={{ site.assetVersion }}" alt="" width="1022" height="1022" loading="eager">
         </a>
+        <button class="rail-iconbtn rail-collapse" id="dispatch-rail-collapse" type="button" aria-label="Collapse sidebar" title="Collapse sidebar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"></rect><path d="M9 4v16"></path></svg>
+        </button>
       </div>
 
       <nav class="rail-surface-switch" aria-label="Thingy surfaces">
@@ -43,7 +46,22 @@ description: Shape a Thingy-authored archive Dispatch and have it sent to your e
             <span class="rail-account-email" id="dispatch-account-email">Signed in</span>
             <span class="rail-account-sub" id="dispatch-account-sub">Weekly Thing reader</span>
           </span>
+          <span class="rail-account-caret" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"></path></svg></span>
         </button>
+        <div class="rail-menu" id="dispatch-account-menu" hidden role="menu">
+          <form class="rail-account-setting" id="dispatch-account-name-form">
+            <label for="dispatch-account-name-input">Name</label>
+            <div class="rail-account-setting-row">
+              <input id="dispatch-account-name-input" name="preferred_name" type="text" maxlength="80" autocomplete="name" placeholder="What should Thingy call you?">
+              <button type="submit">Save</button>
+            </div>
+            <p id="dispatch-account-name-status" aria-live="polite"></p>
+          </form>
+          <div class="rail-menu-sep" role="separator"></div>
+          <button type="button" role="menuitem" class="danger" id="dispatch-logout">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path><path d="M9 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3"></path></svg>Logout
+          </button>
+        </div>
       </div>
     </aside>
     <div class="rail-scrim" id="dispatch-rail-scrim" hidden></div>
@@ -98,4 +116,5 @@ description: Shape a Thingy-authored archive Dispatch and have it sent to your e
   };
 </script>
 <script src="/js/thingy-session.js?v={{ site.assetVersion }}"></script>
+<script src="/js/thingy-markdown.js?v={{ site.assetVersion }}"></script>
 <script src="/js/thingy-dispatch.js?v={{ site.assetVersion }}"></script>
