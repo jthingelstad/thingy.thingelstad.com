@@ -51,7 +51,7 @@
 
       try {
         var url = new URL(window.location.href);
-        ['email', 'prompt', 'from', 'scope', 'corpus', 'login_token', 'magic_token'].forEach(function(name) {
+        ['email', 'prompt', 'from', 'scope', 'corpus', 'dispatch_test', 'test', 'login_token', 'magic_token'].forEach(function(name) {
           url.searchParams.delete(name);
         });
         if (url.href !== window.location.href) {

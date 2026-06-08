@@ -228,6 +228,7 @@ permalink: "/chat/"
     const userProfileKey = 'thingyUserProfile';
     const railCollapsedKey = 'thingyRailCollapsed';
     const activeConvKey = 'thingyActiveConversation';
+    const localConversationPrefix = 'local-chat-';
     const mobileConversationTitle = document.getElementById('mobile-conversation-title');
     const mobileConversationsToggle = document.getElementById('mobile-conversations-toggle');
     const mobileNewChatButton = document.getElementById('mobile-new-chat');
@@ -497,6 +498,15 @@ permalink: "/chat/"
 
     function currentConversationMode() {
       return activeConversation()?.mode || activeMode || 'thingy';
+    }
+
+    function isLocalConversationId(id) {
+      return String(id || '').startsWith(localConversationPrefix);
+    }
+
+    function newConversationTitle(mode = activeMode) {
+      const normalized = normalizeModeId(mode);
+      return normalized === 'thingy' ? 'New chat' : `${modeLabel(normalized)} chat`;
     }
 
     function renderModeBanner() {
@@ -1846,6 +1856,12 @@ permalink: "/chat/"
       return activeConversationId;
     }
 
+    function resetConversationView() {
+      questionInput.value = '';
+      resetMessages();
+      updateQuestionState();
+    }
+
     function savedActiveConversation() {
       try {
         return window.localStorage.getItem(activeConvKey) || '';
@@ -1856,9 +1872,46 @@ permalink: "/chat/"
 
     function startBlankConversationView() {
       setActiveConversation('');
-      questionInput.value = '';
-      resetMessages();
-      updateQuestionState();
+      resetConversationView();
+    }
+
+    function createLocalConversationShell(mode = activeMode) {
+      const normalized = normalizeModeId(mode);
+      const existing = activeConversation();
+      if (existing?.id && isLocalConversationId(existing.id)) {
+        existing.mode = normalized;
+        existing.title = existing.title || newConversationTitle(normalized);
+        existing.updated_at = new Date().toISOString();
+        setActiveConversation(existing.id);
+        return existing;
+      }
+      const now = new Date().toISOString();
+      const id = `${localConversationPrefix}${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const shell = {
+        id,
+        conversation_id: id,
+        title: newConversationTitle(normalized),
+        preview: '',
+        scope: currentScope(),
+        mode: normalized,
+        created_at: now,
+        updated_at: now,
+        last_message_at: now,
+        turn_count: 0,
+        local: true
+      };
+      conversations = conversations.filter((entry) => !(entry?.local && isLocalConversationId(entry.id) && Number(entry.turn_count || 0) === 0));
+      conversations.unshift(shell);
+      conversations = conversations.slice(0, maxRecents);
+      setActiveConversation(id);
+      return shell;
+    }
+
+    function startNewConversationView(mode = activeMode) {
+      activeMode = normalizeModeId(mode);
+      const shell = createLocalConversationShell(activeMode);
+      resetConversationView();
+      return shell;
     }
 
     function activeConversation() {
@@ -1909,6 +1962,13 @@ permalink: "/chat/"
       if (title == null) return;
       const trimmed = title.trim();
       if (!trimmed || trimmed === current) return;
+      if (isLocalConversationId(active.id)) {
+        active.title = trimmed;
+        active.updated_at = new Date().toISOString();
+        renderRecents();
+        updateMobileConversationTitle();
+        return;
+      }
       try {
         const data = await conversationAction({ action: 'rename', conversation_id: active.id, title: trimmed });
         if (data.conversation) upsertConversationSummary(data.conversation);
@@ -1923,6 +1983,12 @@ permalink: "/chat/"
       if (!active || interactionBusy()) return;
       toggleMobileConversationMenu(false);
       if (!window.confirm('Delete this conversation?')) return;
+      if (isLocalConversationId(active.id)) {
+        conversations = conversations.filter((entry) => entry.id !== active.id);
+        startBlankConversationView();
+        setMobileRailOpen(false);
+        return;
+      }
       try {
         await conversationAction({ action: 'delete', conversation_id: active.id });
         conversations = conversations.filter((entry) => entry.id !== active.id);
@@ -1935,15 +2001,16 @@ permalink: "/chat/"
     }
 
     function clearConversation() {
-      if (interactionBusy()) return;
+      if (interactionBusy()) return null;
       cancelWelcomeSetup();
       stopSpeaking();
       if (speechListening) stopDictation();
       welcomeShownThisVisit = true;
       activeMode = normalizeModeId(modeSelect?.value || activeMode);
-      startBlankConversationView();
+      const shell = startNewConversationView(activeMode);
       questionInput.focus();
       trackTinylyticsEvent('librarian.clear');
+      return shell;
     }
 
     async function showCuriosityMap(center = '', options = {}) {
@@ -1957,7 +2024,7 @@ permalink: "/chat/"
         updateQuestionState();
         return;
       }
-      const attachToCurrent = Boolean(options.attachToCurrent && activeConversationId);
+      const attachToCurrent = Boolean(options.attachToCurrent && activeConversationId && !isLocalConversationId(activeConversationId));
       const existingConversationId = attachToCurrent ? activeConversationId : '';
       if (!attachToCurrent) welcomeShownThisVisit = true;
       hidePrompts();
@@ -2000,13 +2067,21 @@ permalink: "/chat/"
       }
     }
 
-    function upsertConversationSummary(conversation) {
+    function upsertConversationSummary(conversation, options = {}) {
       if (!conversation || !(conversation.id || conversation.conversation_id)) return;
       const id = conversation.id || conversation.conversation_id;
-      conversations = conversations.filter((entry) => (entry.id || entry.conversation_id) !== id);
-      conversations.unshift({ ...conversation, id, conversation_id: id });
+      const replaceId = String(options.replaceId || '').trim();
+      conversations = conversations.filter((entry) => {
+        const entryId = entry.id || entry.conversation_id;
+        return entryId !== id && (!replaceId || entryId !== replaceId);
+      });
+      conversations.unshift({ ...conversation, id, conversation_id: id, local: false });
       conversations.sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')));
       conversations = conversations.slice(0, maxRecents);
+      if (replaceId && activeConversationId === replaceId) {
+        activeConversationId = id;
+        try { window.localStorage.setItem(activeConvKey, id); } catch (error) { /* ignore */ }
+      }
       renderRecents();
       updateMobileConversationTitle();
       renderModeBanner();
@@ -2014,7 +2089,9 @@ permalink: "/chat/"
 
     function upsertPendingConversation({ conversationId, title, scope, mode }) {
       const id = String(conversationId || '').trim();
-      if (!id || conversations.some((entry) => entry.id === id || entry.conversation_id === id)) return;
+      if (!id) return;
+      const replaceId = isLocalConversationId(activeConversationId) ? activeConversationId : '';
+      if (!replaceId && conversations.some((entry) => entry.id === id || entry.conversation_id === id)) return;
       const now = new Date().toISOString();
       upsertConversationSummary({
         id,
@@ -2027,28 +2104,31 @@ permalink: "/chat/"
         updated_at: now,
         last_message_at: now,
         turn_count: 0
-      });
+      }, { replaceId });
     }
 
-    async function createConversationShellForMode(mode) {
+    async function createConversationShellForMode(mode, options = {}) {
       const normalized = normalizeModeId(mode);
-      if (!token() || normalized === 'thingy') return null;
+      if (!token() || normalized === 'thingy') return activeConversation();
       if (!availableModes.some((entry) => entry.id === normalized)) return null;
       if (!(await ensureFreshToken())) {
         clearToken();
         return null;
       }
+      const replaceId = String(options.replaceId || activeConversationId || '').trim();
       conversationCreateInFlight = true;
       updateQuestionState();
       try {
         const data = await conversationAction({
           action: 'create',
           mode: normalized,
-          title: `${modeLabel(normalized)} chat`,
+          title: newConversationTitle(normalized),
           scope: currentScope()
         });
         if (data.conversation) {
-          upsertConversationSummary(data.conversation);
+          upsertConversationSummary(data.conversation, {
+            replaceId: isLocalConversationId(replaceId) ? replaceId : ''
+          });
           setActiveConversation(data.conversation.id || data.conversation.conversation_id);
           return data.conversation;
         }
@@ -2075,10 +2155,20 @@ permalink: "/chat/"
       try {
         const data = await conversationAction({ action: 'list', limit: maxRecents });
         if (data.modes || data.entitlements) setUserProfile(data);
-        conversations = (data.conversations || []).map((entry) => ({
+        const clientActiveShells = conversations.filter((entry) => {
+          if (!entry?.id) return false;
+          return isLocalConversationId(entry.id) || entry.id === activeConversationId;
+        });
+        const serverConversations = (data.conversations || []).map((entry) => ({
           ...entry,
-          id: entry.id || entry.conversation_id
+          id: entry.id || entry.conversation_id,
+          local: false
         })).filter((entry) => entry.id);
+        const serverIds = new Set(serverConversations.map((entry) => entry.id));
+        const keptClientShells = clientActiveShells.filter((entry) => entry.id === activeConversationId && !serverIds.has(entry.id));
+        conversations = [...keptClientShells, ...serverConversations]
+          .sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))
+          .slice(0, maxRecents);
         if (activeConversationId && !conversations.some((entry) => entry.id === activeConversationId)) {
           setActiveConversation('');
         }
@@ -2134,6 +2224,13 @@ permalink: "/chat/"
       const conversationId = String(id || '').trim();
       if (!conversationId) return;
       cancelWelcomeSetup();
+      if (isLocalConversationId(conversationId)) {
+        setActiveConversation(conversationId);
+        resetConversationView();
+        hidePrompts();
+        questionInput.focus();
+        return;
+      }
       try {
         const data = await conversationAction({ action: 'get', conversation_id: conversationId });
         setActiveConversation(conversationId);
@@ -2323,7 +2420,7 @@ permalink: "/chat/"
       let citations = [];
       let experience = null;
       let requestId = '';
-      let conversationId = activeConversationId || '';
+      let conversationId = isLocalConversationId(activeConversationId) ? '' : (activeConversationId || '');
       let conversation = null;
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 190000);
@@ -2650,8 +2747,8 @@ permalink: "/chat/"
 
     clearChatButton.addEventListener('click', async () => {
       if (interactionBusy()) return;
-      clearConversation();
-      await createConversationShellForMode(activeMode);
+      const shell = clearConversation();
+      await createConversationShellForMode(activeMode, { replaceId: shell?.id });
       if (window.matchMedia('(max-width: 640px)').matches) setMobileRailOpen(false);
     });
     if (curiosityMapButton) {
@@ -2806,8 +2903,8 @@ permalink: "/chat/"
         event.stopPropagation();
         if (interactionBusy()) return;
         toggleMobileConversationMenu(false);
-        clearConversation();
-        await createConversationShellForMode(activeMode);
+        const shell = clearConversation();
+        await createConversationShellForMode(activeMode, { replaceId: shell?.id });
         setMobileRailOpen(false);
       });
     }
@@ -2825,9 +2922,9 @@ permalink: "/chat/"
         if (nextMode === activeMode && !activeConversationId) return;
         activeMode = nextMode;
         welcomeShownThisVisit = false;
-        startBlankConversationView();
+        const shell = startNewConversationView(activeMode);
         renderModeControl();
-        const conversation = await createConversationShellForMode(activeMode);
+        const conversation = await createConversationShellForMode(activeMode, { replaceId: shell?.id });
         if (window.matchMedia('(max-width: 640px)').matches) setMobileRailOpen(false);
         if (activeMode === 'thingy' || conversation) startAgentWelcome();
         trackTinylyticsEvent('librarian.mode_change', activeMode);
@@ -3019,6 +3116,16 @@ permalink: "/chat/"
           const id = deleteBtn.dataset.id;
           if (!id) return;
           deleteBtn.disabled = true;
+          if (isLocalConversationId(id)) {
+            conversations = conversations.filter((entry) => entry.id !== id);
+            if (id === activeConversationId) {
+              startBlankConversationView();
+            } else {
+              renderRecents();
+            }
+            trackTinylyticsEvent('librarian.conversation_delete');
+            return;
+          }
           try {
             await conversationAction({ action: 'delete', conversation_id: id });
             conversations = conversations.filter((entry) => entry.id !== id);

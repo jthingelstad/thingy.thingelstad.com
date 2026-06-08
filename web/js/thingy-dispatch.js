@@ -21,6 +21,11 @@
   const activeKey = 'thingyActiveDispatchDraft';
   const welcomeText = "What should this Dispatch explore? Give me a topic, question, or thread from Jamie's archive and I'll help shape it before you send it.";
   const maxInputChars = Number(input && input.getAttribute('maxlength') || 1200);
+  const dispatchTestMode = (() => {
+    const params = new URLSearchParams(window.location.search);
+    const value = String(params.get('dispatch_test') || params.get('test') || '').trim().toLowerCase();
+    return value === 'template' || value === 'template_test';
+  })();
   let drafts = loadDrafts();
   let activeId = window.localStorage.getItem(activeKey) || '';
   let busy = false;
@@ -109,6 +114,7 @@
   }
 
   function keepLocalDraftWhenMissingFromServer(draft, serverIds) {
+    if (draft?.id && draft.id === activeId && !serverDispatchId(draft)) return true;
     if (!hasDraftContent(draft)) return false;
     const id = draftIdentity(draft);
     if (!id) return true;
@@ -183,8 +189,9 @@
         text: welcomeText
       }]
     });
+    drafts = drafts.filter((entry) => serverDispatchId(entry) || hasDraftContent(entry));
     drafts.unshift(draft);
-    if (options.activate !== false) setActiveDraft(draft.id, { render: false });
+    if (options.activate !== false) setActiveDraft(draft.id, { render: Boolean(options.render) });
     saveDrafts();
     return draft;
   }
@@ -314,7 +321,7 @@
     if (!actionsEl) return;
     const actions = [];
     if (draft.stage === 'ready' || draft.stage === 'upgrade') {
-      actions.push(`<button type="button" class="dispatch-action-primary" data-action="generate">Generate Dispatch</button>`);
+      actions.push(`<button type="button" class="dispatch-action-primary" data-action="generate">${dispatchTestMode ? 'Send Template Test' : 'Generate Dispatch'}</button>`);
     }
     if (draft.stage === 'upgrade') {
       actions.push(`<a class="dispatch-action-secondary" href="https://www.thingelstad.com/2024/11/17/weekly-thing-supporting.html" target="_blank" rel="noopener">Supporting Membership</a>`);
@@ -483,7 +490,7 @@
       window.location.href = session.signInUrl('/dispatch/');
       return;
     }
-    setBusy(true, 'Queueing Dispatch...');
+    setBusy(true, dispatchTestMode ? 'Queueing template test...' : 'Queueing Dispatch...');
     try {
       await saveDraftToServer(draft, { status: draft.stage === 'upgrade' ? 'ready' : draft.stage });
       const data = await dispatchPost('create', {
@@ -493,15 +500,18 @@
         direction: draft.direction || draft.prompt,
         clarification_question: draft.currentQuestion,
         clarification_answer: draft.clarificationAnswer,
+        template_test: dispatchTestMode,
         email
       });
       const row = data.dispatch || {};
       updateDraft({
         stage: row.status || 'queued',
         dispatchId: row.id || row.dispatch_id || '',
-        statusText: 'Dispatch queued.'
+        statusText: dispatchTestMode ? 'Template test queued.' : 'Dispatch queued.'
       });
-      addMessage('assistant', 'Done. I queued this Dispatch and will email it when it is ready.');
+      addMessage('assistant', dispatchTestMode
+        ? 'Done. I queued a Dispatch template test and will email it when it is ready.'
+        : 'Done. I queued this Dispatch and will email it when it is ready.');
       startPolling();
     } catch (error) {
       if (error.status === 403 && error.data && error.data.status === 'supporting_member_required') {
@@ -567,7 +577,7 @@
   }
 
   if (!requireAuth()) return;
-  if (!drafts.length) createDraft({ activate: true });
+  if (!drafts.length) createDraft({ activate: true, render: false });
   if (!activeId) setActiveDraft(drafts[0].id, { render: false });
   if (shell) shell.classList.remove('is-booting', 'is-auth');
   if (app) app.hidden = false;
@@ -599,8 +609,7 @@
   }
 
   newButtons.forEach((button) => button.addEventListener('click', () => {
-    const draft = createDraft({ activate: true });
-    setActiveDraft(draft.id);
+    createDraft({ activate: true, render: true });
     setMobileRailOpen(false);
   }));
 

@@ -87,6 +87,27 @@ One-time magic-link token created by the Librarian API. When present, Thingy
 redeems it with `/auth` and removes it from the browser URL after the attempt.
 These links are sent by email from `thingy@thingelstad.com`.
 
+### `dispatch_test`
+
+Hidden owner-only Dispatch testing mode. Use this on `/dispatch/` when shaping
+a Dispatch email template and you want to exercise the queue, status, delivery,
+storage, and operator-report flow without invoking the expensive Dispatch
+writing model.
+
+Supported values:
+
+- `template`
+- `template_test`
+
+Example:
+
+- `https://thingy.thingelstad.com/dispatch/?dispatch_test=template`
+
+When enabled, the final action button reads `Send Template Test` and sends
+`template_test: true` to the Librarian API. The backend only honors this for
+Jamie/owner sessions. The resulting email uses placeholder Dispatch copy with
+real source metadata and the normal HTML/text email template.
+
 ## Local Development
 
 ```sh

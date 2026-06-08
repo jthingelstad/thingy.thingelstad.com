@@ -118,10 +118,13 @@ Document behavior changes in `README.md` when touching these.
   is cross-corpus search with `all`.
 - `prompt`: Seeds the question and submits after auth/beta notice.
 - `email`: Prefills the auth field and starts subscriber auth.
+- `dispatch_test`: Hidden owner-only Dispatch testing mode. Use
+  `dispatch_test=template` on `/dispatch/` to exercise queue/status/email
+  template flow without invoking the expensive Dispatch writer.
 
 Privacy requirement: after the app reads these params, the Tinylytics loader
-strips `email`, `prompt`, `from`, `scope`, and `corpus` from the browser URL
-before analytics loads. Preserve this.
+strips `email`, `prompt`, `from`, `scope`, `corpus`, `dispatch_test`, and
+`test` from the browser URL before analytics loads. Preserve this.
 
 ## Tinylytics
 
