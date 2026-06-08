@@ -1567,6 +1567,11 @@ a.thingy-exp-source:hover {
   overflow: hidden;
 }
 
+.thingy-app-shell.is-booting .librarian-auth,
+.thingy-app-shell.is-booting .librarian-chat {
+  visibility: hidden;
+}
+
 .thingy-app-shell.is-auth {
   grid-template-columns: minmax(0, 1fr);
 }
