@@ -464,6 +464,10 @@ permalink: "/"
       return availableModes.find((mode) => mode.id === id)?.label || 'Thingy';
     }
 
+    function modeClass(id) {
+      return normalizeModeId(id).replace(/[^a-z0-9_]/g, '_');
+    }
+
     function currentConversationMode() {
       return activeConversation()?.mode || activeMode || 'thingy';
     }
@@ -475,9 +479,11 @@ permalink: "/"
       modeBanner.hidden = !show;
       if (!show) {
         modeBanner.innerHTML = '';
+        modeBanner.removeAttribute('data-mode');
         return;
       }
       const label = modeLabel(mode);
+      modeBanner.dataset.mode = modeClass(mode);
       modeBanner.innerHTML = `<span class="thingy-mode-banner-kicker">Mode</span><strong>${escapeHtml(label)}</strong>`;
     }
 
@@ -2000,10 +2006,13 @@ permalink: "/"
       railRecents.innerHTML = list.map((entry) => {
         const title = escapeHtml(entry.title || 'Untitled chat');
         const id = escapeHtml(entry.id);
-        const mode = entry.mode && entry.mode !== 'thingy' ? `<span class="rail-recent-mode">${escapeHtml(modeLabel(entry.mode))}</span>` : '';
+        const mode = entry.mode && entry.mode !== 'thingy' ? modeClass(entry.mode) : '';
+        const modeClassName = mode ? ' has-mode' : '';
+        const modeAttr = mode ? ` data-mode="${escapeHtml(mode)}"` : '';
+        const modeTitle = mode ? `${title} - ${escapeHtml(modeLabel(entry.mode))}` : title;
         const active = entry.id === activeConversationId ? ' is-active' : '';
-        return `<div class="rail-recent${active}" role="listitem">`
-          + `<button type="button" class="rail-recent-open" data-id="${id}" title="${title}"><span class="rail-recent-title">${title}</span>${mode}</button>`
+        return `<div class="rail-recent${active}${modeClassName}"${modeAttr} role="listitem">`
+          + `<button type="button" class="rail-recent-open" data-id="${id}" title="${modeTitle}"><span class="rail-recent-title">${title}</span></button>`
           + `<button type="button" class="rail-recent-del" data-action="delete-conv" data-id="${id}" aria-label="Delete conversation" title="Delete conversation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>`
           + `</div>`;
       }).join('');

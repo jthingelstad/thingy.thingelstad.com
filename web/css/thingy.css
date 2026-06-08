@@ -1661,10 +1661,11 @@ a.thingy-exp-source:hover {
 
 .rail-newchat-combo {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
   align-items: stretch;
   width: 100%;
-  min-height: var(--rail-item-h);
+  min-height: 0;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface);
@@ -1745,8 +1746,10 @@ a.thingy-exp-source:hover {
 .rail-newchat-mode {
   display: flex;
   align-items: center;
+  grid-column: 1;
   min-width: 0;
-  padding: 5px 6px 5px 0;
+  padding: 0 8px 8px;
+  border-top: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
 }
 
 .rail-newchat-mode[hidden] {
@@ -1754,7 +1757,7 @@ a.thingy-exp-source:hover {
 }
 
 .rail-newchat-mode select {
-  max-width: 128px;
+  width: 100%;
   min-height: 30px;
   border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
   border-radius: 7px;
@@ -1816,6 +1819,53 @@ a.thingy-exp-source:hover {
   background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
+.rail-recent.has-mode {
+  overflow: hidden;
+  border: 1px solid var(--mode-rail-line, transparent);
+  background: var(--mode-rail-bg);
+}
+
+.rail-recent.has-mode:hover,
+.rail-recent.has-mode.is-active {
+  background: var(--mode-rail-bg-active, var(--mode-rail-bg));
+}
+
+.rail-recent[data-mode="thought_partner"] {
+  --mode-rail-line: rgba(28, 25, 12, 0.22);
+  --mode-rail-bg:
+    repeating-linear-gradient(135deg, rgba(247, 202, 39, 0.34) 0 9px, rgba(24, 22, 15, 0.2) 9px 18px),
+    color-mix(in srgb, #f9d74a 18%, var(--rail-bg));
+  --mode-rail-bg-active:
+    repeating-linear-gradient(135deg, rgba(247, 202, 39, 0.48) 0 9px, rgba(24, 22, 15, 0.28) 9px 18px),
+    color-mix(in srgb, #f9d74a 28%, var(--surface));
+}
+
+.rail-recent[data-mode="research_guide"] {
+  --mode-rail-line: rgba(29, 83, 142, 0.22);
+  --mode-rail-bg:
+    linear-gradient(rgba(38, 112, 184, 0.17) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(38, 112, 184, 0.17) 1px, transparent 1px),
+    color-mix(in srgb, #d9ecff 42%, var(--rail-bg));
+  --mode-rail-bg-active:
+    linear-gradient(rgba(38, 112, 184, 0.23) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(38, 112, 184, 0.23) 1px, transparent 1px),
+    color-mix(in srgb, #c9e4ff 58%, var(--surface));
+  background-size: 12px 12px, 12px 12px, auto;
+}
+
+.rail-recent[data-mode="trusted_circle"] {
+  --mode-rail-line: rgba(38, 105, 83, 0.22);
+  --mode-rail-bg:
+    radial-gradient(circle at 10px 10px, rgba(35, 122, 91, 0.22) 0 2px, transparent 2.5px),
+    linear-gradient(135deg, rgba(35, 122, 91, 0.12), rgba(222, 188, 119, 0.16)),
+    color-mix(in srgb, #dff2e7 48%, var(--rail-bg));
+  --mode-rail-bg-active:
+    radial-gradient(circle at 10px 10px, rgba(35, 122, 91, 0.3) 0 2px, transparent 2.5px),
+    linear-gradient(135deg, rgba(35, 122, 91, 0.18), rgba(222, 188, 119, 0.22)),
+    color-mix(in srgb, #d1efdf 64%, var(--surface));
+  background-size: 18px 18px, auto, auto;
+}
+
 .rail-recent-open {
   display: grid;
   gap: 2px;
@@ -1842,17 +1892,6 @@ a.thingy-exp-source:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.rail-recent-mode {
-  display: block;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--muted);
-  font-size: 10.5px;
-  font-weight: 700;
 }
 
 .rail-recent-del {
@@ -2287,13 +2326,13 @@ a.thingy-exp-source:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 42px;
-  padding: 8px clamp(18px, 5vw, 72px);
-  border-bottom: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line));
-  background: color-mix(in srgb, var(--accent-soft) 56%, var(--surface));
-  color: var(--accent-deep);
-  font-size: 13px;
+  gap: 12px;
+  min-height: 58px;
+  padding: 10px clamp(18px, 5vw, 72px);
+  border-bottom: 1px solid var(--mode-banner-line, color-mix(in srgb, var(--accent) 24%, var(--line)));
+  background: var(--mode-banner-bg, color-mix(in srgb, var(--accent-soft) 56%, var(--surface)));
+  color: var(--mode-banner-ink, var(--accent-deep));
+  font-size: 15px;
   line-height: 1.25;
 }
 
@@ -2307,11 +2346,56 @@ a.thingy-exp-source:hover {
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--muted);
+  padding: 5px 7px;
+  border-radius: 5px;
+  background: var(--mode-banner-kicker-bg, color-mix(in srgb, var(--surface) 72%, transparent));
+  color: var(--mode-banner-kicker-ink, var(--muted));
 }
 
 .thingy-mode-banner strong {
-  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--mode-banner-label-bg, color-mix(in srgb, var(--surface) 84%, transparent));
+  color: var(--mode-banner-label-ink, currentColor);
+  font-size: clamp(20px, 2.8vw, 31px);
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  box-shadow: 0 12px 30px -20px rgba(0, 0, 0, 0.5);
+}
+
+.thingy-mode-banner[data-mode="thought_partner"] {
+  --mode-banner-bg: repeating-linear-gradient(135deg, #f7ca27 0 18px, #15130e 18px 36px);
+  --mode-banner-line: #14120c;
+  --mode-banner-ink: #15130e;
+  --mode-banner-kicker-bg: #15130e;
+  --mode-banner-kicker-ink: #f7ca27;
+  --mode-banner-label-bg: #15130e;
+  --mode-banner-label-ink: #f7ca27;
+}
+
+.thingy-mode-banner[data-mode="research_guide"] {
+  --mode-banner-bg:
+    linear-gradient(rgba(255, 255, 255, 0.13) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.13) 1px, transparent 1px),
+    linear-gradient(135deg, #124477, #1c75a7);
+  --mode-banner-line: #0f3b68;
+  --mode-banner-kicker-bg: rgba(255, 255, 255, 0.16);
+  --mode-banner-kicker-ink: rgba(255, 255, 255, 0.82);
+  --mode-banner-label-bg: rgba(255, 255, 255, 0.9);
+  --mode-banner-label-ink: #10395f;
+  background-size: 18px 18px, 18px 18px, auto;
+}
+
+.thingy-mode-banner[data-mode="trusted_circle"] {
+  --mode-banner-bg:
+    radial-gradient(circle at 12px 12px, rgba(255, 255, 255, 0.22) 0 2px, transparent 2.5px),
+    linear-gradient(135deg, #266d58, #d0a85b);
+  --mode-banner-line: #215d4d;
+  --mode-banner-kicker-bg: rgba(255, 255, 255, 0.18);
+  --mode-banner-kicker-ink: rgba(255, 255, 255, 0.86);
+  --mode-banner-label-bg: rgba(255, 255, 255, 0.9);
+  --mode-banner-label-ink: #215d4d;
+  background-size: 22px 22px, auto;
 }
 
 .thingy-chat-scroll {
@@ -3691,9 +3775,10 @@ a.thingy-exp-source:hover {
   .rail .rail-newchat-combo,
   .thingy-app-shell.is-collapsed .rail-newchat-combo {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
     width: 100%;
-    min-height: 40px;
+    min-height: 0;
   }
 
   .rail .rail-newchat,
