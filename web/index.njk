@@ -249,6 +249,7 @@ permalink: "/"
     let welcomeInFlight = false;
     let welcomeShownThisVisit = false;
     let mapInFlight = false;
+    let conversationCreateInFlight = false;
     let speechRecognition = null;
     let speechListening = false;
     let speechBaseText = '';
@@ -879,7 +880,7 @@ permalink: "/"
     });
 
     function interactionBusy() {
-      return answerInFlight || welcomeInFlight || mapInFlight;
+      return answerInFlight || welcomeInFlight || mapInFlight || conversationCreateInFlight;
     }
 
     function updateQuestionState() {
@@ -1977,6 +1978,38 @@ permalink: "/"
       });
     }
 
+    async function createConversationShellForMode(mode) {
+      const normalized = normalizeModeId(mode);
+      if (!token() || normalized === 'thingy') return null;
+      if (!availableModes.some((entry) => entry.id === normalized)) return null;
+      if (!(await ensureFreshToken())) {
+        clearToken();
+        return null;
+      }
+      conversationCreateInFlight = true;
+      updateQuestionState();
+      try {
+        const data = await conversationAction({
+          action: 'create',
+          mode: normalized,
+          title: `${modeLabel(normalized)} chat`,
+          scope: currentScope()
+        });
+        if (data.conversation) {
+          upsertConversationSummary(data.conversation);
+          setActiveConversation(data.conversation.id || data.conversation.conversation_id);
+          return data.conversation;
+        }
+      } catch (error) {
+        trackTinylyticsEvent('librarian.conversations_error', 'create');
+        if (isAuthError(error)) clearToken();
+      } finally {
+        conversationCreateInFlight = false;
+        updateQuestionState();
+      }
+      return null;
+    }
+
     async function refreshConversations(options = {}) {
       if (!token()) {
         conversations = [];
@@ -2556,8 +2589,10 @@ permalink: "/"
       trackTinylyticsEvent('librarian.logout');
     });
 
-    clearChatButton.addEventListener('click', () => {
+    clearChatButton.addEventListener('click', async () => {
+      if (interactionBusy()) return;
       clearConversation();
+      await createConversationShellForMode(activeMode);
       if (window.matchMedia('(max-width: 640px)').matches) setMobileRailOpen(false);
     });
     if (curiosityMapButton) {
@@ -2707,16 +2742,17 @@ permalink: "/"
       });
     }
     if (mobileNewChatButton) {
-      mobileNewChatButton.addEventListener('click', (event) => {
+      mobileNewChatButton.addEventListener('click', async (event) => {
         event.stopPropagation();
         if (interactionBusy()) return;
         toggleMobileConversationMenu(false);
         clearConversation();
+        await createConversationShellForMode(activeMode);
         setMobileRailOpen(false);
       });
     }
     if (modeSelect) {
-      modeSelect.addEventListener('change', () => {
+      modeSelect.addEventListener('change', async () => {
         if (interactionBusy()) {
           modeSelect.value = activeMode;
           return;
@@ -2731,7 +2767,8 @@ permalink: "/"
         welcomeShownThisVisit = false;
         startBlankConversationView();
         renderModeControl();
-        startAgentWelcome();
+        const conversation = await createConversationShellForMode(activeMode);
+        if (activeMode === 'thingy' || conversation) startAgentWelcome();
         trackTinylyticsEvent('librarian.mode_change', activeMode);
       });
     }
