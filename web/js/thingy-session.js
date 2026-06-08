@@ -94,12 +94,18 @@
     window.localStorage.setItem(storageKey, data.token);
     const emailValue = normalizeEmail(data.email || email);
     if (emailValue) window.localStorage.setItem(userEmailKey, emailValue);
+    const existingProfile = storedProfile();
+    const incomingProfile = data.profile && typeof data.profile === 'object' ? data.profile : {};
     const profile = {
-      ...(data.profile && typeof data.profile === 'object' ? data.profile : {}),
-      status: data.status || '',
-      supporting_member: data.status === 'premium' || (data.entitlements || []).includes('supporting_member'),
-      entitlements: Array.isArray(data.entitlements) ? data.entitlements : data.profile && data.profile.entitlements,
-      modes: normalizeModes(data.modes || data.profile && data.profile.modes)
+      ...existingProfile,
+      ...incomingProfile,
+      preferred_name: String(incomingProfile.preferred_name || existingProfile.preferred_name || '').trim(),
+      status: data.status || incomingProfile.status || existingProfile.status || '',
+      supporting_member: data.status === 'premium'
+        || Boolean(incomingProfile.supporting_member || existingProfile.supporting_member)
+        || (data.entitlements || []).includes('supporting_member'),
+      entitlements: Array.isArray(data.entitlements) ? data.entitlements : incomingProfile.entitlements || existingProfile.entitlements,
+      modes: normalizeModes(data.modes || incomingProfile.modes || existingProfile.modes)
     };
     window.localStorage.setItem(userProfileKey, JSON.stringify(profile));
     return profile;

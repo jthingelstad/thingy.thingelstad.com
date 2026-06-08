@@ -450,15 +450,21 @@ permalink: "/chat/"
     }
 
     function setUserProfile(data) {
+      const existing = userProfile();
       const modes = normalizeModes(data?.modes || data?.profile?.modes || []);
       availableModes = modes.length ? modes : [{ id: 'thingy', label: 'Thingy' }];
       if (!availableModes.some((mode) => mode.id === activeMode)) activeMode = 'thingy';
       const entitlements = Array.isArray(data?.entitlements) ? data.entitlements : data?.profile?.entitlements;
+      const incomingProfile = data?.profile && typeof data.profile === 'object' ? data.profile : {};
       const profile = {
-        ...(data?.profile && typeof data.profile === 'object' ? data.profile : {}),
-        status: data?.status || '',
-        supporting_member: data?.status === 'premium' || (Array.isArray(entitlements) && entitlements.includes('supporting_member')),
-        entitlements,
+        ...existing,
+        ...incomingProfile,
+        preferred_name: String(incomingProfile.preferred_name || existing.preferred_name || '').trim(),
+        status: data?.status || incomingProfile.status || existing.status || '',
+        supporting_member: data?.status === 'premium'
+          || Boolean(incomingProfile.supporting_member || existing.supporting_member)
+          || (Array.isArray(entitlements) && entitlements.includes('supporting_member')),
+        entitlements: Array.isArray(entitlements) ? entitlements : existing.entitlements,
         modes: availableModes
       };
       preferredName = String(profile.preferred_name || '').trim();
