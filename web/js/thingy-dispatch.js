@@ -19,9 +19,9 @@
   const railScrim = document.getElementById('dispatch-rail-scrim');
   const draftKey = 'thingyDispatchDrafts';
   const activeKey = 'thingyActiveDispatchDraft';
+  const welcomeText = "What should this Dispatch explore? Give me a topic, question, or thread from Jamie's archive and I'll help shape it before you send it.";
   const maxInputChars = Number(input && input.getAttribute('maxlength') || 1200);
   let drafts = loadDrafts();
-  let remoteDispatches = [];
   let activeId = window.localStorage.getItem(activeKey) || '';
   let busy = false;
   let pollTimer = 0;
@@ -73,6 +73,62 @@
     };
   }
 
+  function isServerDispatchId(value) {
+    const id = String(value || '');
+    return Boolean(id && !id.startsWith('draft-'));
+  }
+
+  function serverDispatchId(draft) {
+    if (isServerDispatchId(draft.dispatchId)) return draft.dispatchId;
+    if (isServerDispatchId(draft.id)) return draft.id;
+    return '';
+  }
+
+  function hasDraftContent(draft) {
+    if (!draft) return false;
+    if (draft.prompt || draft.direction || draft.currentQuestion || draft.clarificationAnswer) return true;
+    return (draft.messages || []).some((message) => String(message.text || '') && message.text !== welcomeText);
+  }
+
+  function draftStageFromRow(row) {
+    const status = String(row.status || 'draft');
+    return status === 'draft' ? 'empty' : status;
+  }
+
+  function fallbackMessagesForRow(row) {
+    if (Array.isArray(row.messages) && row.messages.length) return row.messages;
+    if (row.status === 'queued' || row.status === 'generating') {
+      return [{ role: 'assistant', text: 'This Dispatch is queued and I am preparing it now.' }];
+    }
+    if (row.status === 'sent') {
+      return [{ role: 'assistant', text: 'Dispatch sent. Check your email.', kind: 'sent' }];
+    }
+    if (row.status === 'failed') {
+      return [{ role: 'assistant', text: row.error || 'Dispatch failed while generating.' }];
+    }
+    if (row.direction) {
+      return [{ role: 'assistant', text: `Here is the Dispatch I am ready to generate:\n\n${row.direction}\n\nIf this is right, use Generate Dispatch. If you want to steer it, send me the adjustment.` }];
+    }
+    return [{ role: 'assistant', text: welcomeText }];
+  }
+
+  function draftFromServerRow(row) {
+    const id = String(row.id || row.dispatch_id || '');
+    return normalizeDraft({
+      id,
+      dispatchId: id,
+      stage: draftStageFromRow(row),
+      prompt: row.prompt || row.topic || '',
+      direction: row.direction || '',
+      currentQuestion: row.clarification_question || '',
+      clarificationAnswer: row.clarification_answer || '',
+      title: row.title || row.subject || row.topic || '',
+      statusText: row.preview || row.error || '',
+      updatedAt: row.updated_at || row.created_at || nowIso(),
+      messages: fallbackMessagesForRow(row)
+    });
+  }
+
   function loadDrafts() {
     try {
       const parsed = JSON.parse(window.localStorage.getItem(draftKey) || '[]');
@@ -98,7 +154,7 @@
       stage: 'empty',
       messages: [{
         role: 'assistant',
-        text: "What should this Dispatch explore? Give me a topic, question, or thread from Jamie's archive and I'll help shape it before you send it."
+        text: welcomeText
       }]
     });
     drafts.unshift(draft);
@@ -156,6 +212,35 @@
       throw new Error('Sign in again to continue.');
     }
     return await session.postJson('/dispatch', { action, ...(extra || {}) }, session.authHeaders());
+  }
+
+  async function saveDraftToServer(draft = activeDraft(), overrides = {}) {
+    if (!signedIn() || !hasDraftContent(draft)) return draft;
+    const serverId = serverDispatchId(draft);
+    const data = await dispatchPost('save_draft', {
+      dispatch_id: serverId,
+      status: overrides.status || draft.stage || 'draft',
+      topic: draft.prompt || draft.title,
+      prompt: draft.prompt,
+      direction: draft.direction,
+      clarification_question: draft.currentQuestion,
+      clarification_answer: draft.clarificationAnswer,
+      title: draftTitle(draft),
+      messages: draft.messages || []
+    });
+    const row = data.dispatch || {};
+    const newId = String(row.id || row.dispatch_id || '');
+    if (newId && draft.id !== newId) {
+      const oldId = draft.id;
+      draft.id = newId;
+      draft.dispatchId = newId;
+      if (activeId === oldId) setActiveDraft(newId, { render: false });
+    } else if (newId) {
+      draft.dispatchId = newId;
+    }
+    draft.updatedAt = row.updated_at || draft.updatedAt || nowIso();
+    saveDrafts();
+    return draft;
   }
 
   function setBusy(value, text = '') {
@@ -217,27 +302,17 @@
   }
 
   function renderRecents() {
-    const localRows = drafts.map((draft) => ({
+    const rows = drafts.map((draft) => ({
       id: draft.id,
       title: draftTitle(draft),
-      status: draft.stage,
-      local: true
-    }));
-    const remoteRows = remoteDispatches
-      .filter((row) => !drafts.some((draft) => draft.dispatchId && draft.dispatchId === (row.id || row.dispatch_id)))
-      .map((row) => ({
-        id: `remote-${row.id || row.dispatch_id}`,
-        title: row.title || row.subject || row.topic || 'Dispatch',
-        status: row.status,
-        local: false
-      }));
-    const rows = [...localRows, ...remoteRows].slice(0, 24);
+      status: draft.stage
+    })).slice(0, 24);
     if (emptyEl) emptyEl.hidden = Boolean(rows.length);
     if (!recentsEl) return;
     recentsEl.hidden = !rows.length;
     recentsEl.innerHTML = rows.map((row) => `
       <div class="rail-recent dispatch-rail-item ${row.id === activeId ? 'is-active' : ''} is-${escapeHtml(row.status)}" role="listitem">
-        <button class="rail-recent-open" type="button" data-id="${escapeHtml(row.id)}" ${row.local ? '' : 'disabled'}>
+        <button class="rail-recent-open" type="button" data-id="${escapeHtml(row.id)}">
           <span class="rail-recent-title">${escapeHtml(row.title)}</span>
           <small>${escapeHtml(stageLabel(row.status))}</small>
         </button>
@@ -250,7 +325,7 @@
     if (!draft.messages.length) {
       draft.messages.push({
         role: 'assistant',
-        text: "What should this Dispatch explore? Give me a topic, question, or thread from Jamie's archive and I'll help shape it before you send it."
+        text: welcomeText
       });
     }
     if (messagesEl) {
@@ -283,7 +358,26 @@
   async function loadHistory() {
     try {
       const data = await dispatchPost('list', { limit: 12 });
-      remoteDispatches = data.dispatches || [];
+      const serverDrafts = (data.dispatches || []).map(draftFromServerRow);
+      const serverIds = new Set(serverDrafts.map((draft) => draft.id));
+      const localUnsynced = drafts.filter((draft) => !serverDispatchId(draft) && hasDraftContent(draft));
+      drafts = [
+        ...serverDrafts,
+        ...localUnsynced.filter((draft) => !serverIds.has(draft.id))
+      ].sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))).slice(0, 24);
+      if (!drafts.some((draft) => draft.id === activeId)) {
+        activeId = drafts[0]?.id || '';
+        if (activeId) window.localStorage.setItem(activeKey, activeId);
+      }
+      saveDrafts();
+      for (const draft of localUnsynced) {
+        try {
+          await saveDraftToServer(draft, { status: draft.stage === 'empty' ? 'draft' : draft.stage });
+        } catch (error) {
+          // Local cache remains as a best-effort fallback if migration fails.
+        }
+      }
+      saveDrafts();
       if (data.entitlements || data.supporting_member) {
         const profile = session.storedProfile();
         session.persistAuth({
@@ -314,6 +408,7 @@
       clarificationAnswer: answer || draft.clarificationAnswer
     });
     try {
+      await saveDraftToServer(activeDraft(), { status: 'shaping' });
       const data = await dispatchPost('clarify', {
         prompt,
         clarification_question: draft.currentQuestion,
@@ -327,6 +422,7 @@
           currentQuestion: data.question || ''
         });
         addMessage('assistant', data.question || 'What angle should I use for this Dispatch?');
+        await saveDraftToServer(activeDraft(), { status: 'needs_clarification' });
       } else {
         updateDraft({
           stage: 'ready',
@@ -334,11 +430,13 @@
           currentQuestion: ''
         });
         addMessage('assistant', `Here is the Dispatch I am ready to generate:\n\n${direction}\n\nIf this is right, use Generate Dispatch. If you want to steer it, send me the adjustment.`);
+        await saveDraftToServer(activeDraft(), { status: 'ready' });
       }
       setStatus('');
     } catch (error) {
       updateDraft({ stage: draft.stage === 'needs_clarification' ? 'needs_clarification' : 'empty' });
       addMessage('assistant', error.message || 'I could not shape that Dispatch right now.');
+      saveDraftToServer(activeDraft(), { status: activeDraft().stage === 'empty' ? 'draft' : activeDraft().stage }).catch(() => {});
       setStatus('Thingy could not shape that right now.', 'error');
     } finally {
       setBusy(false);
@@ -355,7 +453,9 @@
     }
     setBusy(true, 'Queueing Dispatch...');
     try {
+      await saveDraftToServer(draft, { status: draft.stage === 'upgrade' ? 'ready' : draft.stage });
       const data = await dispatchPost('create', {
+        dispatch_id: serverDispatchId(draft),
         prompt: draft.prompt,
         topic: draft.prompt,
         direction: draft.direction || draft.prompt,
@@ -380,6 +480,7 @@
           'Sending Dispatches is a Supporting Member feature. Supporting Membership helps sustain The Weekly Thing and Jamie directs the membership proceeds as a charitable giving pool rather than treating this as a paywall for Thingy.',
           'You can become a Supporting Member, come back here, sign in again so I can see the updated membership, and generate this same Dispatch.'
         ].join('\n\n'));
+        saveDraftToServer(activeDraft(), { status: 'ready' }).catch(() => {});
         setStatus('Ready to send after Supporting Membership.', 'notice');
       } else if (error.status === 429) {
         addMessage('assistant', error.message || 'Dispatch is rate limited right now.');
