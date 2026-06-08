@@ -354,6 +354,7 @@
           <span class="rail-recent-title">${escapeHtml(row.title)}</span>
           <small>${escapeHtml(stageLabel(row.status))}</small>
         </button>
+        <button type="button" class="rail-recent-del" data-action="delete-dispatch" data-id="${escapeHtml(row.id)}" aria-label="Delete Dispatch" title="Delete Dispatch"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
       </div>
     `).join('');
   }
@@ -680,6 +681,38 @@
     pollStatus(pollingDraftId);
   }
 
+  async function deleteDispatch(id, button) {
+    const dispatchId = String(id || '').trim();
+    if (!dispatchId || busy) return;
+    const draft = draftById(dispatchId);
+    if (!draft) return;
+    if (!window.confirm('Delete this Dispatch?')) return;
+    if (button) button.disabled = true;
+    try {
+      const serverId = serverDispatchId(draft);
+      if (serverId) await dispatchPost('delete', { dispatch_id: serverId });
+      if (pollingDraftId === draft.id) {
+        window.clearInterval(pollTimer);
+        pollTimer = 0;
+        pollingDraftId = '';
+      }
+      drafts = drafts.filter((entry) => entry.id !== draft.id);
+      if (activeId === draft.id) {
+        const next = drafts[0];
+        if (next) {
+          setActiveDraft(next.id, { render: false });
+        } else {
+          createDraft({ activate: true, render: false });
+        }
+      }
+      saveDrafts();
+      render();
+    } catch (error) {
+      if (button) button.disabled = false;
+      setStatus(error.message || 'Could not delete that Dispatch.', 'error');
+    }
+  }
+
   if (!requireAuth()) return;
   if (!drafts.length) createDraft({ activate: true, render: false });
   if (!activeId) setActiveDraft(drafts[0].id, { render: false });
@@ -711,6 +744,13 @@
 
   if (recentsEl) {
     recentsEl.addEventListener('click', (event) => {
+      const deleteBtn = event.target.closest('[data-action="delete-dispatch"]');
+      if (deleteBtn) {
+        event.preventDefault();
+        event.stopPropagation();
+        deleteDispatch(deleteBtn.dataset.id, deleteBtn);
+        return;
+      }
       const button = event.target.closest('button[data-id]');
       if (!button || button.disabled) return;
       setActiveDraft(button.dataset.id);
