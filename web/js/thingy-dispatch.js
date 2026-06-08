@@ -15,6 +15,8 @@
   const accountSub = document.getElementById('dispatch-account-sub');
   const accountAvatar = document.getElementById('dispatch-account-avatar');
   const mobileTitle = document.getElementById('dispatch-mobile-title');
+  const mobileToggle = document.getElementById('dispatch-mobile-toggle');
+  const railScrim = document.getElementById('dispatch-rail-scrim');
   const draftKey = 'thingyDispatchDrafts';
   const activeKey = 'thingyActiveDispatchDraft';
   const maxInputChars = Number(input && input.getAttribute('maxlength') || 1200);
@@ -178,6 +180,17 @@
     if (accountAvatar) accountAvatar.textContent = email ? email[0].toUpperCase() : 'T';
     if (mobileTitle) mobileTitle.textContent = draftTitle(activeDraft());
     if (profile && profile.preferred_name && accountEmail && !email) accountEmail.textContent = profile.preferred_name;
+  }
+
+  function setMobileRailOpen(open) {
+    if (!shell) return;
+    shell.classList.toggle('is-mobile-rail-open', Boolean(open));
+    if (mobileToggle) {
+      mobileToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      mobileToggle.setAttribute('aria-label', open ? 'Hide Dispatches' : 'Show Dispatches');
+      mobileToggle.title = open ? 'Hide Dispatches' : 'Show Dispatches';
+    }
+    if (railScrim) railScrim.hidden = false;
   }
 
   function renderMessage(message) {
@@ -456,6 +469,7 @@
   newButtons.forEach((button) => button.addEventListener('click', () => {
     const draft = createDraft({ activate: true });
     setActiveDraft(draft.id);
+    setMobileRailOpen(false);
   }));
 
   if (recentsEl) {
@@ -463,7 +477,19 @@
       const button = event.target.closest('button[data-id]');
       if (!button || button.disabled) return;
       setActiveDraft(button.dataset.id);
+      setMobileRailOpen(false);
     });
+  }
+
+  if (mobileToggle) {
+    mobileToggle.addEventListener('click', (event) => {
+      event.preventDefault();
+      setMobileRailOpen(!shell?.classList.contains('is-mobile-rail-open'));
+    });
+  }
+
+  if (railScrim) {
+    railScrim.addEventListener('click', () => setMobileRailOpen(false));
   }
 
   if (actionsEl) {

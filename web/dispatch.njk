@@ -46,12 +46,13 @@ description: Shape a Thingy-authored archive Dispatch and have it sent to your e
         </button>
       </div>
     </aside>
+    <div class="rail-scrim" id="dispatch-rail-scrim" hidden></div>
 
     <section class="thingy-conversation dispatch-conversation" aria-label="Thingy Dispatch">
       <div class="mobile-chatbar" id="dispatch-mobilebar" aria-label="Dispatch">
-        <a class="mobile-chatbar-circle" href="/chat/" aria-label="Switch to Chat" title="Switch to Chat">
+        <button class="mobile-chatbar-circle" id="dispatch-mobile-toggle" type="button" aria-label="Show Dispatches" aria-expanded="false" title="Show Dispatches">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
-        </a>
+        </button>
         <div class="mobile-chatbar-title">
           <span id="dispatch-mobile-title">Dispatch</span>
         </div>
