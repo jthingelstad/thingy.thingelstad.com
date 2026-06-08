@@ -3900,6 +3900,13 @@ a.thingy-exp-source:hover {
     display: none;
   }
 
+  .thingy-app-shell.is-mobile-rail-open .mobile-chatbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 90;
+  }
+
   .mobile-chatbar-circle,
   .mobile-chatbar-action,
   .mobile-chatbar-menu-button {
@@ -4048,6 +4055,7 @@ a.thingy-exp-source:hover {
 
   .thingy-app-shell.is-mobile-rail-open .rail {
     display: flex;
+    padding-top: calc(68px + env(safe-area-inset-top));
   }
 
   .rail-top,

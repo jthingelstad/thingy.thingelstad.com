@@ -84,10 +84,36 @@
     return '';
   }
 
+  function draftIdentity(draft) {
+    return serverDispatchId(draft) || String(draft?.id || '');
+  }
+
   function hasDraftContent(draft) {
     if (!draft) return false;
     if (draft.prompt || draft.direction || draft.currentQuestion || draft.clarificationAnswer) return true;
     return (draft.messages || []).some((message) => String(message.text || '') && message.text !== welcomeText);
+  }
+
+  function isInFlightStage(stage) {
+    return ['shaping', 'needs_clarification', 'ready', 'upgrade', 'queued', 'generating', 'sent', 'failed'].includes(stage);
+  }
+
+  function draftTime(draft) {
+    const time = Date.parse(draft?.updatedAt || '');
+    return Number.isFinite(time) ? time : 0;
+  }
+
+  function shouldPreferLocalDraft(localDraft, serverDraft) {
+    if (!localDraft || !hasDraftContent(localDraft) || !isInFlightStage(localDraft.stage)) return false;
+    return draftTime(localDraft) >= draftTime(serverDraft);
+  }
+
+  function keepLocalDraftWhenMissingFromServer(draft, serverIds) {
+    if (!hasDraftContent(draft)) return false;
+    const id = draftIdentity(draft);
+    if (!id) return true;
+    if (serverIds.has(id)) return false;
+    return isInFlightStage(draft.stage);
   }
 
   function draftStageFromRow(row) {
@@ -275,7 +301,7 @@
       mobileToggle.setAttribute('aria-label', open ? 'Hide Dispatches' : 'Show Dispatches');
       mobileToggle.title = open ? 'Hide Dispatches' : 'Show Dispatches';
     }
-    if (railScrim) railScrim.hidden = false;
+    if (railScrim) railScrim.hidden = !open;
   }
 
   function renderMessage(message) {
@@ -359,11 +385,17 @@
     try {
       const data = await dispatchPost('list', { limit: 12 });
       const serverDrafts = (data.dispatches || []).map(draftFromServerRow);
-      const serverIds = new Set(serverDrafts.map((draft) => draft.id));
+      const localById = new Map(drafts.map((draft) => [draftIdentity(draft), draft]).filter(([id]) => id));
+      const mergedServerDrafts = serverDrafts.map((serverDraft) => {
+        const localDraft = localById.get(draftIdentity(serverDraft));
+        return shouldPreferLocalDraft(localDraft, serverDraft) ? localDraft : serverDraft;
+      });
+      const serverIds = new Set(mergedServerDrafts.map((draft) => draftIdentity(draft)));
       const localUnsynced = drafts.filter((draft) => !serverDispatchId(draft) && hasDraftContent(draft));
+      const localFallbacks = drafts.filter((draft) => keepLocalDraftWhenMissingFromServer(draft, serverIds));
       drafts = [
-        ...serverDrafts,
-        ...localUnsynced.filter((draft) => !serverIds.has(draft.id))
+        ...mergedServerDrafts,
+        ...localFallbacks.filter((draft) => !serverIds.has(draftIdentity(draft)))
       ].sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))).slice(0, 24);
       if (!drafts.some((draft) => draft.id === activeId)) {
         activeId = drafts[0]?.id || '';
@@ -470,7 +502,6 @@
         statusText: 'Dispatch queued.'
       });
       addMessage('assistant', 'Done. I queued this Dispatch and will email it when it is ready.');
-      await loadHistory();
       startPolling();
     } catch (error) {
       if (error.status === 403 && error.data && error.data.status === 'supporting_member_required') {
