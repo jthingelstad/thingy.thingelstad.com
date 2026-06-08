@@ -1840,12 +1840,8 @@ a.thingy-exp-source:hover {
 }
 
 /* --- Chat-client app shell --- */
-.thingy-site-head {
-  display: none;
-}
-
 .thingy-page {
-  min-height: 100dvh;
+  min-height: calc(100dvh - 69px);
   padding: 0;
   background: var(--bg);
 }
