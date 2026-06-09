@@ -33,14 +33,16 @@ import {
   speechInputSupported
 } from './thingy-voice.js';
 import { createChatMessageActions } from './thingy-chat-actions.js';
+import {
+  librarianApiUrl,
+  librarianStreamUrl,
+  tinylyticsId
+} from './thingy-config.js';
 
 (() => {
     applyReturnChip();
-    const config = window.ThingyConfig || {};
-    const apiBaseSource = window.WEEKLY_THING_LIBRARIAN_API === undefined ? config.librarianApiUrl : window.WEEKLY_THING_LIBRARIAN_API;
-    const streamBaseSource = window.WEEKLY_THING_LIBRARIAN_STREAM_API === undefined ? config.librarianStreamUrl : window.WEEKLY_THING_LIBRARIAN_STREAM_API;
-    const apiBase = String(apiBaseSource || '').replace(/\/$/, '');
-    const streamBase = String(streamBaseSource || '').replace(/\/$/, '');
+    const apiBase = librarianApiUrl();
+    const streamBase = librarianStreamUrl();
     const authPanel = document.getElementById('librarian-auth');
     const chatPanel = document.getElementById('librarian-chat');
     const appShell = document.getElementById('thingy-app-shell');
@@ -99,9 +101,7 @@ import { createChatMessageActions } from './thingy-chat-actions.js';
     let activeMode = 'thingy';
     let availableModes = [{ id: 'thingy', label: 'Thingy' }];
     const maxQuestionChars = Number(questionInput.getAttribute('maxlength') || '1200');
-    const analytics = createTinylyticsTracker({
-      enabled: Boolean(config.tinylyticsId)
-    });
+    const analytics = createTinylyticsTracker({ enabled: Boolean(tinylyticsId()) });
     let answerInFlight = false;
     let autoFollowChat = true;
     let scrollFrame = 0;

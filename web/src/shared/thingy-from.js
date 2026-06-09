@@ -1,5 +1,6 @@
-const config = window.ThingyConfig || {};
-const links = Array.isArray(config.networkLinks) ? config.networkLinks : [];
+import { networkLinks } from './thingy-config.js';
+
+const links = networkLinks();
 
 function buildFromMap() {
     const map = new Map();

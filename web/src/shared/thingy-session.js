@@ -1,14 +1,12 @@
+import { librarianApiUrl } from './thingy-config.js';
+
 const storageKey = 'weeklyThingLibrarianToken';
 const userEmailKey = 'thingyUserEmail';
 const userProfileKey = 'thingyUserProfile';
 const refreshWindowSeconds = 60 * 60 * 24 * 3;
 
-  function config() {
-    return window.ThingyConfig || {};
-  }
-
   function apiUrl() {
-    return String(config().librarianApiUrl || '').replace(/\/$/, '');
+    return librarianApiUrl();
   }
 
   function normalizeEmail(value) {
