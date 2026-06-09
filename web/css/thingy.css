@@ -1685,6 +1685,10 @@ a.thingy-exp-source:hover {
   overflow: hidden;
 }
 
+.thingy-app-shell:has(.rail-menu:not([hidden])) {
+  overflow: visible;
+}
+
 .thingy-app-shell.is-booting .librarian-auth,
 .thingy-app-shell.is-booting .librarian-chat,
 .thingy-app-shell.is-booting .dispatch-chat {
@@ -1709,6 +1713,7 @@ a.thingy-exp-source:hover {
 .rail {
   position: sticky;
   top: 0;
+  z-index: 100;
   height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -2328,7 +2333,7 @@ a.thingy-exp-source:hover {
   box-shadow: 0 14px 40px -18px rgba(14, 43, 38, 0.45), 0 2px 8px rgba(14, 43, 38, 0.08);
   display: grid;
   gap: 2px;
-  z-index: 40;
+  z-index: 1200;
 }
 
 .rail-menu[hidden] {
@@ -2533,9 +2538,11 @@ a.thingy-exp-source:hover {
 }
 
 .thingy-app-shell.is-collapsed .rail-menu {
-  left: 8px;
-  width: 220px;
+  position: fixed;
+  left: 72px;
   right: auto;
+  bottom: 14px;
+  width: min(260px, calc(100vw - 88px));
 }
 
 .thingy-conversation {

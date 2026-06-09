@@ -1682,6 +1682,50 @@ permalink: "/chat/"
       resetConversationView();
     }
 
+    function isEmptyConversationDraft(entry, mode = '') {
+      if (!entry?.id) return false;
+      const normalized = normalizeModeId(mode || entry.mode || 'thingy');
+      return normalizeModeId(entry.mode || 'thingy') === normalized
+        && Number(entry.turn_count || 0) === 0
+        && String(entry.title || '') === newConversationTitle(normalized);
+    }
+
+    function emptyConversationDraftKey(entry) {
+      if (!entry?.id) return '';
+      const normalized = normalizeModeId(entry.mode || 'thingy');
+      const title = String(entry.title || '');
+      return title === newConversationTitle(normalized) ? `${normalized}:${title}` : '';
+    }
+
+    function dedupeEmptyConversationDrafts(list = []) {
+      const nonEmptyDraftKeys = new Set(
+        list
+          .filter((entry) => Number(entry?.turn_count || 0) > 0)
+          .map(emptyConversationDraftKey)
+          .filter(Boolean)
+      );
+      const seen = new Map();
+      const out = [];
+      for (const entry of list) {
+        if (!isEmptyConversationDraft(entry)) {
+          out.push(entry);
+          continue;
+        }
+        const key = emptyConversationDraftKey(entry);
+        if (nonEmptyDraftKeys.has(key)) continue;
+        const existingIndex = seen.get(key);
+        if (existingIndex === undefined) {
+          seen.set(key, out.length);
+          out.push(entry);
+          continue;
+        }
+        if (entry.id === activeConversationId && out[existingIndex]?.id !== activeConversationId) {
+          out[existingIndex] = entry;
+        }
+      }
+      return out;
+    }
+
     function createLocalConversationShell(mode = activeMode) {
       const normalized = normalizeModeId(mode);
       const existing = activeConversation();
@@ -1707,9 +1751,9 @@ permalink: "/chat/"
         turn_count: 0,
         local: true
       };
-      conversations = conversations.filter((entry) => !(entry?.local && isLocalConversationId(entry.id) && Number(entry.turn_count || 0) === 0));
+      conversations = conversations.filter((entry) => !isEmptyConversationDraft(entry, normalized));
       conversations.unshift(shell);
-      conversations = conversations.slice(0, maxRecents);
+      conversations = dedupeEmptyConversationDrafts(conversations).slice(0, maxRecents);
       setActiveConversation(id);
       return shell;
     }
@@ -1877,7 +1921,7 @@ permalink: "/chat/"
       });
       conversations.unshift({ ...conversation, id, conversation_id: id, local: false });
       conversations.sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')));
-      conversations = conversations.slice(0, maxRecents);
+      conversations = dedupeEmptyConversationDrafts(conversations).slice(0, maxRecents);
       if (replaceId && activeConversationId === replaceId) {
         activeConversationId = id;
         try { window.localStorage.setItem(activeConvKey, id); } catch (error) { /* ignore */ }
@@ -1979,9 +2023,10 @@ permalink: "/chat/"
         })).filter((entry) => entry.id);
         const serverIds = new Set(serverConversations.map((entry) => entry.id));
         const keptClientShells = clientActiveShells.filter((entry) => entry.id === activeConversationId && !serverIds.has(entry.id));
-        conversations = [...keptClientShells, ...serverConversations]
-          .sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))
-          .slice(0, maxRecents);
+        conversations = dedupeEmptyConversationDrafts(
+          [...keptClientShells, ...serverConversations]
+            .sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))
+        ).slice(0, maxRecents);
         if (activeConversationId && !conversations.some((entry) => entry.id === activeConversationId)) {
           setActiveConversation('');
         }
