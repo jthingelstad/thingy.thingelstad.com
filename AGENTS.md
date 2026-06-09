@@ -32,8 +32,9 @@ For web work, also inspect:
 ```sh
 sed -n '1,220p' README.md
 sed -n '1,220p' CLAUDE.md
-sed -n '1,220p' web/index.njk
-sed -n '1,220p' web/_data/site.js
+sed -n '1,220p' web/vite.config.js
+sed -n '1,220p' web/src/pages/chat.js
+sed -n '1,220p' web/src/pages/dispatch.js
 ```
 
 For bridge work, read:
@@ -75,17 +76,19 @@ Only run bridge tests when bridge code changes.
 
 Key files:
 
-- `web/index.njk`: page markup and browser-side chat/auth logic.
-- `web/css/thingy.css`: all standalone Thingy styling.
-- `web/_includes/layouts/base.njk`: document head, network nav, Tinylytics
-  loader, cross-site `from` handling.
-- `web/_data/site.js`: site config, network links, API URLs, Tinylytics ID.
-- `web/robots.njk`: `robots.txt`.
-- `web/sitemap.njk`: `sitemap.xml`.
+- `web/index.html`, `web/chat/index.html`, `web/dispatch/index.html`,
+  `web/signin/index.html`: static route shells.
+- `web/src/pages/`: Vite page entrypoints.
+- `web/src/shared/`: browser-side app modules.
+- `web/src/styles/thingy.css`: stylesheet manifest imported by page entries.
+- `web/public/robots.txt`: `robots.txt`.
+- `web/public/sitemap.xml`: `sitemap.xml`.
+- `web/vite.config.js`: multi-page build config and build-time public config
+  injection for Librarian API URLs, network links, and Tinylytics ID.
 
-The web app is an Eleventy static site. Do not add secrets, server-only logic,
-or a second backend here. Anything requiring privileged logic belongs in the
-Librarian Lambda in `studio-thing`.
+The web app is a Vite-built static app served by GitHub Pages from `web/_site`.
+Do not add secrets, server-only logic, or a second backend here. Anything
+requiring privileged logic belongs in the Librarian Lambda in `studio-thing`.
 
 ## Design Direction
 
@@ -127,7 +130,7 @@ strips `email`, `prompt`, `from`, `scope`, `corpus`, `dispatch_test`, and
 
 ## Tinylytics
 
-Thingy has its own Tinylytics site ID in `web/_data/site.js`, overridable with
+Thingy has its own Tinylytics site ID in `web/vite.config.js`, overridable with
 `TINYLYTICS_SITE_UID`.
 
 Current Tinylytics usage:
@@ -152,9 +155,10 @@ The public app should be indexable at `/`.
 
 Current files:
 
-- `web/robots.njk` allows crawling and points to the sitemap.
-- `web/sitemap.njk` lists the canonical homepage.
-- The layout sets canonical, Open Graph, Twitter, robots, and sitemap tags.
+- `web/public/robots.txt` allows crawling and points to the sitemap.
+- `web/public/sitemap.xml` lists the canonical homepage.
+- The route HTML files set canonical, Open Graph, Twitter, robots, and sitemap
+  tags.
 
 Query-param app states should canonicalize to `/`, not become separate indexed
 pages.
@@ -193,7 +197,7 @@ typically fail on missing packages such as `boto3`.
 ## Deployment
 
 `main` is pushed to GitHub. GitHub Pages deploys the static site from the web
-build. `web/CNAME` contains `thingy.thingelstad.com`.
+build. `web/public/CNAME` contains `thingy.thingelstad.com`.
 
 Before committing web changes:
 

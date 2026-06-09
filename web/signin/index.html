@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign In — Thingy</title>
+  <meta name="description" content="Sign in to Thingy with a private email link.">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+
+
+  <meta property="og:title" content="Sign In">
+  <meta property="og:description" content="Sign in to Thingy with a private email link.">
+  <meta property="og:url" content="https://thingy.thingelstad.com/signin/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Thingy">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:image" content="https://thingy.thingelstad.com/img/thingy.png">
+  <meta property="og:image:alt" content="Thingy, Jamie Thingelstad's archive agent">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Sign In">
+  <meta name="twitter:description" content="Sign in to Thingy with a private email link.">
+  <meta name="twitter:image" content="https://thingy.thingelstad.com/img/thingy.png">
+  <meta name="twitter:image:alt" content="Thingy, Jamie Thingelstad's archive agent">
+
+  <link rel="canonical" href="https://thingy.thingelstad.com/signin/">
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+  <link rel="webmention" href="https://tinylytics.app/webmention/__THINGY_TINYLYTICS_ID__">
+
+
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400..600&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+
+  <link rel="preconnect" href="https://tinylytics.app">
+
+</head>
+<body>
+  <main id="main-content">
+
+<section class="thingy-auth-page">
+  <div class="thingy-auth-card">
+    <span class="thingy-auth-mark" aria-hidden="true"><img src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager"></span>
+    <div class="thingy-auth-content">
+      <p class="thingy-auth-kicker">Thingy access</p>
+      <h1 class="thingy-auth-title">Sign in to Thingy</h1>
+      <p class="thingy-auth-copy">Enter your email address and Thingy will send a private sign-in link. Weekly Thing readers can use Chat, and supporting members get the deeper features.</p>
+      <form class="thingy-signin-form" id="thingy-signin-form">
+        <label for="thingy-signin-email">Email address</label>
+        <div class="thingy-signin-row">
+          <input id="thingy-signin-email" name="email" type="email" autocomplete="email" inputmode="email" required placeholder="you@example.com">
+          <button type="submit" id="thingy-signin-submit">Send Link</button>
+        </div>
+      </form>
+      <p class="thingy-signin-message" id="thingy-signin-message" aria-live="polite"></p>
+      <div class="thingy-signin-secondary" id="thingy-signin-secondary" hidden>
+        <button type="button" id="thingy-signin-subscribe" hidden>Add Me to The Weekly Thing</button>
+        <button type="button" id="thingy-signin-resend" hidden>Resend Confirmation</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  window.ThingyConfig = __THINGY_SIGNIN_CONFIG__;
+</script>
+  <script type="module" src="/src/pages/signin.js"></script>
+  </main>
+
+
+
+</body>
+</html>

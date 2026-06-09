@@ -10,10 +10,10 @@ The **query surface** for Thingy — Jamie's agent over his published content.
 Two apps share the repo, but they're independent processes with separate
 concerns:
 
-- **`web/`** — the standalone Thingy chat at `thingy.thingelstad.com`. An 11ty
-  static site (consistent with `weekly` and `another`). Thin client: handles
-  auth UI, streams `/chat` SSE from the Librarian Lambda, renders citations,
-  collects 👍/👎 feedback. No server beyond GitHub Pages.
+- **`web/`** — the standalone Thingy app at `thingy.thingelstad.com`. A
+  Vite-built static app served by GitHub Pages. Thin client: handles auth UI,
+  streams `/chat` SSE from the Librarian Lambda, shapes Dispatch drafts,
+  renders citations, and collects feedback. No server beyond GitHub Pages.
 - **`apps/thingy_bridge/`** — the Discord side of Thingy. A standalone Python
   process running one discord.py client + APScheduler support: answers
   questions in `#ask-thingy` and provides member session/source commands.

@@ -1,16 +1,51 @@
----
-layout: layouts/base.njk
-permalink: /dispatch/
-pageTitle: Dispatch
-description: Shape a Thingy-authored archive Dispatch and have it sent to your email.
----
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dispatch — Thingy</title>
+  <meta name="description" content="Shape a Thingy-authored archive Dispatch and have it sent to your email.">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+
+
+  <meta property="og:title" content="Dispatch">
+  <meta property="og:description" content="Shape a Thingy-authored archive Dispatch and have it sent to your email.">
+  <meta property="og:url" content="https://thingy.thingelstad.com/dispatch/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Thingy">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:image" content="https://thingy.thingelstad.com/img/thingy.png">
+  <meta property="og:image:alt" content="Thingy, Jamie Thingelstad's archive agent">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Dispatch">
+  <meta name="twitter:description" content="Shape a Thingy-authored archive Dispatch and have it sent to your email.">
+  <meta name="twitter:image" content="https://thingy.thingelstad.com/img/thingy.png">
+  <meta name="twitter:image:alt" content="Thingy, Jamie Thingelstad's archive agent">
+
+  <link rel="canonical" href="https://thingy.thingelstad.com/dispatch/">
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+  <link rel="webmention" href="https://tinylytics.app/webmention/__THINGY_TINYLYTICS_ID__">
+
+
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400..600&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+
+  <link rel="preconnect" href="https://tinylytics.app">
+
+</head>
+<body>
+  <main id="main-content">
 
 <section class="thingy-page dispatch-shell-page">
   <div class="thingy-app-shell dispatch-shell is-booting" id="dispatch-shell">
     <aside class="rail" aria-label="Thingy Dispatch">
       <div class="rail-top">
         <a class="rail-brand" href="/" aria-label="Thingy home" data-tinylytics-event="network.home" data-tinylytics-event-value="thingy">
-          <img class="rail-mark" src="/img/thingy.png?v={{ site.assetVersion }}" alt="" width="1022" height="1022" loading="eager">
+          <img class="rail-mark" src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager">
         </a>
         <button class="rail-iconbtn rail-collapse" id="dispatch-rail-collapse" type="button" aria-label="Collapse sidebar" title="Collapse sidebar">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"></rect><path d="M9 4v16"></path></svg>
@@ -111,13 +146,12 @@ description: Shape a Thingy-authored archive Dispatch and have it sent to your e
 </section>
 
 <script>
-  window.ThingyConfig = {
-    librarianApiUrl: "{{ site.librarianApiUrl }}"
-  };
+  window.ThingyConfig = __THINGY_DISPATCH_CONFIG__;
 </script>
-<script src="/js/thingy-session.js?v={{ site.assetVersion }}"></script>
-<script src="/js/thingy-composer.js?v={{ site.assetVersion }}"></script>
-<script src="/js/thingy-markdown.js?v={{ site.assetVersion }}"></script>
-<script src="/js/thingy-rail.js?v={{ site.assetVersion }}"></script>
-<script src="/js/thingy-account.js?v={{ site.assetVersion }}"></script>
-<script src="/js/thingy-dispatch.js?v={{ site.assetVersion }}"></script>
+  <script type="module" src="/src/pages/dispatch.js"></script>
+  </main>
+
+
+
+</body>
+</html>

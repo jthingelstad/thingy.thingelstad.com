@@ -110,10 +110,13 @@ real source metadata and the normal HTML/text email template.
 
 ## Local Development
 
+The web app is a Vite-built static app. GitHub Pages serves the generated
+`web/_site` directory; there is no Node server in production.
+
 ```sh
 cd web
 npm install
-LIBRARIAN_API_URL="$LIBRARIAN_API_URL" LIBRARIAN_STREAM_URL="$LIBRARIAN_STREAM_URL" npm run serve
+LIBRARIAN_API_URL="$LIBRARIAN_API_URL" LIBRARIAN_STREAM_URL="$LIBRARIAN_STREAM_URL" npm run serve -- --port=8080
 ```
 
 Build:
@@ -127,10 +130,20 @@ LIBRARIAN_API_URL="$LIBRARIAN_API_URL" LIBRARIAN_STREAM_URL="$LIBRARIAN_STREAM_U
 Production gets them from GitHub repository variables; local shells can export
 the same values from the Studio Librarian stack outputs.
 
+Key web files:
+
+- `web/index.html`, `web/chat/index.html`, `web/dispatch/index.html`,
+  `web/signin/index.html`: static route shells.
+- `web/src/pages/`: Vite entrypoints for each route.
+- `web/src/shared/`: browser-side app modules.
+- `web/src/styles/`: shared styles imported by the page entrypoints.
+- `web/public/`: static files copied as-is to `_site`.
+- `web/vite.config.js`: build-time config injection and multi-page inputs.
+
 ## Tinylytics
 
 Thingy uses its own Tinylytics site ID via `TINYLYTICS_SITE_UID`, falling back to
-the production ID in `web/_data/site.js`.
+the production ID in `web/vite.config.js`.
 
 Enabled Tinylytics features:
 

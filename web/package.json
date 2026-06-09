@@ -4,11 +4,11 @@
   "private": true,
   "description": "Standalone Thingy web app — thin client of the Librarian API.",
   "scripts": {
-    "build": "eleventy",
-    "serve": "eleventy --serve",
+    "build": "vite build",
+    "serve": "vite --host 0.0.0.0",
     "clean": "rm -rf _site"
   },
   "devDependencies": {
-    "@11ty/eleventy": "^3.0.0"
+    "vite": "^8.0.16"
   }
 }
