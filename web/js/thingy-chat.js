@@ -8,9 +8,6 @@
     const modeGlyph = modeTools.modeGlyph || (() => '•');
     const modeClass = modeTools.modeClass || normalizeModeId;
     const normalizeScopeParam = scopeTools.normalizeScopeParam || (() => '');
-    const scopeForSources = scopeTools.scopeForSources || (() => 'all');
-    const sourcesForScope = scopeTools.sourcesForScope || (() => ['weekly_thing', 'blog', 'podcast']);
-    const sourceOrder = Array.isArray(scopeTools.sourceOrder) ? scopeTools.sourceOrder : ['weekly_thing', 'blog', 'podcast'];
     const apiBaseSource = window.WEEKLY_THING_LIBRARIAN_API === undefined ? config.librarianApiUrl : window.WEEKLY_THING_LIBRARIAN_API;
     const streamBaseSource = window.WEEKLY_THING_LIBRARIAN_STREAM_API === undefined ? config.librarianStreamUrl : window.WEEKLY_THING_LIBRARIAN_STREAM_API;
     const apiBase = String(apiBaseSource || '').replace(/\/$/, '');
@@ -38,8 +35,8 @@
     const voiceButton = document.getElementById('composer-voice');
     const composerMapButton = document.getElementById('composer-map');
     const voiceStatus = document.getElementById('composer-voice-status');
-    const scopeInputs = Array.from(document.querySelectorAll('input[name="scope"]'));
     const sourceError = document.getElementById('librarian-source-error');
+    const scopeInputs = Array.from(document.querySelectorAll('input[name="scope"]'));
     const questionCount = document.getElementById('librarian-question-count');
     const messages = document.getElementById('librarian-messages');
     const chatScroll = document.querySelector('.thingy-chat-scroll');
@@ -100,6 +97,21 @@
     const hasInitialPrompt = Boolean(initialPrompt);
     const initialScope = normalizeScopeParam(params.get('scope')) || normalizeScopeParam(params.get('corpus'));
     let activeScope = initialScope || 'all';
+    const sourceControls = window.ThingySourcePicker.createSourcePicker({
+      inputs: scopeInputs,
+      button: document.getElementById('srcpick-btn'),
+      popover: document.getElementById('srcpick-pop'),
+      label: document.getElementById('srcpick-label'),
+      dots: document.getElementById('srcpick-dots'),
+      note: document.getElementById('srcpick-note'),
+      error: sourceError,
+      scrollContainer: chatScroll,
+      onChange: (nextScope) => {
+        activeScope = nextScope;
+        trackTinylyticsEvent('librarian.scope_change', activeScope || 'none');
+        updateQuestionState();
+      }
+    });
     let initialPromptSubmitted = false;
     if (email) emailInput.value = email;
 
@@ -315,34 +327,15 @@
     }
 
     function currentScope() {
-      return scopeForSources(selectedSources());
+      return sourceControls.currentScope();
     }
 
     function selectedSources() {
-      return scopeInputs.filter((input) => input.checked).map((input) => input.value);
+      return sourceControls.selectedSources();
     }
 
     function sourceCount() {
-      return selectedSources().length;
-    }
-
-    function ensureOneSourceSelected(changedInput = null) {
-      if (sourceCount() > 0) return true;
-      const fallback = changedInput || scopeInputs[0];
-      if (fallback) fallback.checked = true;
-      return false;
-    }
-
-    function toggleSourceInput(input) {
-      if (!input || input.disabled) return;
-      if (input.checked && sourceCount() <= 1) {
-        if (sourceError) sourceError.textContent = 'Keep at least one source selected.';
-        if (srcpickNoteEl) srcpickNoteEl.textContent = 'Keep at least one source selected.';
-        input.checked = true;
-        return;
-      }
-      input.checked = !input.checked;
-      input.dispatchEvent(new Event('change', { bubbles: true }));
+      return sourceControls.sourceCount();
     }
 
     function speechInputSupported() {
@@ -358,11 +351,7 @@
     }
 
     function setActiveScope(value, options = {}) {
-      const sources = sourcesForScope(value);
-      scopeInputs.forEach((input) => {
-        input.checked = sources.includes(input.value);
-      });
-      activeScope = scopeForSources(sources);
+      activeScope = sourceControls.setScope(value);
       if (options.track !== false) trackTinylyticsEvent('librarian.scope_change', activeScope);
       updateQuestionState();
     }
@@ -589,7 +578,7 @@
       clearChatButton.disabled = busy;
       if (curiosityMapButton) curiosityMapButton.disabled = busy || !token() || !hasSources;
       if (modeSelect) modeSelect.disabled = busy;
-      scopeInputs.forEach((input) => { input.disabled = busy; });
+      sourceControls.setDisabled(busy);
       updateVoiceButtonState();
       updateMobileConversationTitle();
       autoSizeQuestionInput();
@@ -2257,22 +2246,6 @@
       onTrack: trackTinylyticsEvent
     }) || null;
 
-    scopeInputs.forEach((input) => {
-      input.addEventListener('change', () => {
-        const keptSelection = ensureOneSourceSelected(input);
-        activeScope = currentScope();
-        trackTinylyticsEvent('librarian.scope_change', activeScope || 'none');
-        updateQuestionState();
-        refreshSrcPick();
-        if (!keptSelection && sourceError) {
-          sourceError.textContent = 'Keep at least one source selected.';
-        }
-        if (!keptSelection && srcpickNoteEl) {
-          srcpickNoteEl.textContent = 'Keep at least one source selected.';
-        }
-      });
-    });
-
     messages.addEventListener('click', (event) => {
       const target = event.target instanceof Element ? event.target : event.target.parentElement;
       const button = target ? target.closest('button[data-experience-prompt], button[data-map-prompt]') : null;
@@ -2374,136 +2347,16 @@
       }
     });
 
-    /* ---- Source picker popover ---- */
-    const srcpickBtn = document.getElementById('srcpick-btn');
-    const srcpickPop = document.getElementById('srcpick-pop');
-    const srcpickLabelEl = document.getElementById('srcpick-label');
-    const srcpickDotsEl = document.getElementById('srcpick-dots');
-    const srcpickNoteEl = document.getElementById('srcpick-note');
-    let srcpickPositionFrame = 0;
-    const SRC_META = {
-      weekly_thing: { name: 'Weekly Thing', cls: 'dot-wt' },
-      blog: { name: 'Blog', cls: 'dot-blog' },
-      podcast: { name: 'Another Thing', cls: 'dot-podcast' }
-    };
-    function positionSrcPick() {
-      srcpickPositionFrame = 0;
-      if (!srcpickPop || !srcpickBtn || srcpickPop.hidden) return;
-      const margin = 12;
-      const gap = 8;
-      const buttonRect = srcpickBtn.getBoundingClientRect();
-      const popRect = srcpickPop.getBoundingClientRect();
-      const width = Math.min(264, Math.max(220, window.innerWidth - margin * 2));
-      const left = Math.min(Math.max(buttonRect.left, margin), window.innerWidth - width - margin);
-      const openAboveTop = buttonRect.top - popRect.height - gap;
-      const openBelowTop = buttonRect.bottom + gap;
-      const top = openAboveTop >= margin
-        ? openAboveTop
-        : Math.min(openBelowTop, window.innerHeight - popRect.height - margin);
-      srcpickPop.style.setProperty('--srcpick-pop-width', `${width}px`);
-      srcpickPop.style.setProperty('--srcpick-pop-left', `${Math.round(left)}px`);
-      srcpickPop.style.setProperty('--srcpick-pop-top', `${Math.round(Math.max(margin, top))}px`);
-    }
-    function scheduleSrcPickPosition() {
-      if (srcpickPositionFrame) return;
-      srcpickPositionFrame = window.requestAnimationFrame(positionSrcPick);
-    }
-    function syncSrcPickPosition() {
-      if (srcpickPositionFrame) {
-        window.cancelAnimationFrame(srcpickPositionFrame);
-        srcpickPositionFrame = 0;
-      }
-      positionSrcPick();
-    }
-    function keepSrcPickOpen() {
-      if (!srcpickPop || !srcpickBtn) return;
-      srcpickPop.hidden = false;
-      srcpickBtn.setAttribute('aria-expanded', 'true');
-      syncSrcPickPosition();
-    }
-    function toggleSrcPick(force) {
-      if (!srcpickPop || !srcpickBtn) return;
-      const open = force === undefined ? srcpickPop.hasAttribute('hidden') : force;
-      if (!open && !ensureOneSourceSelected()) {
-        if (srcpickNoteEl) srcpickNoteEl.textContent = 'Keep at least one source selected.';
-        srcpickPop.toggleAttribute('hidden', false);
-        srcpickBtn.setAttribute('aria-expanded', 'true');
-        syncSrcPickPosition();
-        return;
-      }
-      srcpickPop.toggleAttribute('hidden', !open);
-      srcpickBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      if (open) syncSrcPickPosition();
-    }
-    function refreshSrcPick() {
-      if (!srcpickLabelEl || !srcpickDotsEl || !srcpickNoteEl) return;
-      const on = scopeInputs.filter((input) => input.checked).map((input) => input.value);
-      srcpickDotsEl.innerHTML = on.map((value) => `<i class="${SRC_META[value].cls}"></i>`).join('');
-      if (on.length === 0) {
-        srcpickLabelEl.textContent = 'No sources';
-        srcpickNoteEl.textContent = 'Switch on at least one source for Thingy to use.';
-      } else if (on.length === scopeInputs.length) {
-        srcpickLabelEl.textContent = 'All sources';
-        srcpickNoteEl.textContent = 'Thingy can draw from all three sources.';
-      } else if (on.length === 1) {
-        srcpickLabelEl.textContent = SRC_META[on[0]].name;
-        srcpickNoteEl.textContent = `Thingy will only draw from ${SRC_META[on[0]].name}.`;
-      } else {
-        srcpickLabelEl.textContent = on.map((value) => SRC_META[value].name).join(' + ');
-        srcpickNoteEl.textContent = `Thingy can draw from ${on.length} of ${scopeInputs.length} sources.`;
-      }
-      if (srcpickPop) {
-        srcpickPop.querySelectorAll('.srcpick-row').forEach((row) => {
-          const input = row.querySelector('input[name="scope"]');
-          row.setAttribute('aria-checked', input?.checked ? 'true' : 'false');
-        });
-      }
-      scheduleSrcPickPosition();
-    }
-    if (srcpickBtn) srcpickBtn.addEventListener('click', (event) => {
-      event.stopPropagation();
-      toggleSrcPick();
-    });
-    if (srcpickPop) {
-      ['pointerdown', 'mousedown', 'click'].forEach((eventName) => {
-        srcpickPop.addEventListener(eventName, (event) => event.stopPropagation());
-      });
-      srcpickPop.querySelectorAll('.srcpick-row').forEach((row) => {
-        const input = row.querySelector('input[name="scope"]');
-        row.setAttribute('role', 'checkbox');
-        row.setAttribute('tabindex', '0');
-        row.setAttribute('aria-checked', input?.checked ? 'true' : 'false');
-        row.addEventListener('click', (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          toggleSourceInput(input);
-          keepSrcPickOpen();
-          window.setTimeout(keepSrcPickOpen, 0);
-        });
-        row.addEventListener('keydown', (event) => {
-          if (event.key !== ' ' && event.key !== 'Enter') return;
-          event.preventDefault();
-          event.stopPropagation();
-          toggleSourceInput(input);
-          keepSrcPickOpen();
-          window.setTimeout(keepSrcPickOpen, 0);
-        });
-      });
-    }
-    refreshSrcPick();
-    window.addEventListener('resize', scheduleSrcPickPosition);
-    if (chatScroll) chatScroll.addEventListener('scroll', scheduleSrcPickPosition, { passive: true });
-
     document.addEventListener('click', (event) => {
       const target = event.target instanceof Element ? event.target : event.target?.parentElement;
-      if (target && (srcpickBtn?.contains(target) || srcpickPop?.contains(target))) return;
-      toggleSrcPick(false);
+      if (target && sourceControls.contains?.(target)) return;
+      sourceControls.close();
       accountControls.close();
       toggleMobileConversationMenu(false);
     });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
-        toggleSrcPick(false);
+        sourceControls.close();
         accountControls.close();
         toggleMobileConversationMenu(false);
         setMobileRailOpen(false);
