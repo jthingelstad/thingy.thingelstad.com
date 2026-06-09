@@ -1,0 +1,341 @@
+/* Message activity, feedback, prompt actions, and loading indicators. */
+.librarian-status-line {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-text-muted);
+}
+
+.librarian-activity {
+  margin: 0 0 14px;
+  padding: 12px 13px;
+  border: 1px solid color-mix(in srgb, var(--color-highlight) 58%, var(--line));
+  border-left-width: 3px;
+  border-radius: 7px;
+  background:
+    linear-gradient(180deg, rgba(20, 119, 111, 0.08), rgba(20, 119, 111, 0.025)),
+    var(--surface);
+  font-family: var(--sans);
+}
+
+.librarian-activity summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 24px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.librarian-activity summary::-webkit-details-marker {
+  display: none;
+}
+
+.librarian-activity summary::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  color: var(--accent-deep);
+  transform: rotate(-45deg);
+  transition: transform 0.18s ease;
+}
+
+.librarian-activity[open] summary {
+  margin-bottom: 10px;
+}
+
+.librarian-activity[open] summary::before {
+  transform: rotate(45deg);
+}
+
+.librarian-activity.is-collapsed {
+  padding: 8px 11px;
+  border-color: color-mix(in srgb, var(--accent) 25%, var(--line-soft));
+  border-left-width: 2px;
+  background: color-mix(in srgb, var(--surface-2) 82%, transparent);
+}
+
+.librarian-activity-kicker {
+  margin-bottom: 10px;
+  color: var(--accent-deep);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.librarian-activity summary .librarian-activity-kicker {
+  margin-bottom: 0;
+}
+
+.librarian-activity-summary {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.librarian-activity ol {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.librarian-activity-step {
+  position: relative;
+  display: block;
+  margin: 0;
+  padding: 0 0 0 18px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.librarian-activity-step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 20px;
+  bottom: -11px;
+  width: 1px;
+  background: color-mix(in srgb, var(--accent) 22%, var(--line-soft));
+}
+
+.librarian-activity-step-main {
+  min-height: 25px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 9px 4px 7px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-2) 68%, transparent);
+  color: var(--ink-soft);
+  line-height: 1.2;
+}
+
+.librarian-activity-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.65);
+}
+
+.librarian-activity-step.is-active {
+  color: var(--ink);
+}
+
+.librarian-activity-step.is-active .librarian-activity-step-main {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.librarian-activity-step.is-active .librarian-activity-dot {
+  box-shadow: 0 0 0 0 rgba(20, 119, 111, 0.34);
+  animation: librarian-pulse 1.35s ease-in-out infinite;
+}
+
+.librarian-activity-note {
+  max-width: 58rem;
+  margin: 5px 0 0 22px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.librarian-activity-note a {
+  color: var(--accent-deep);
+  font-weight: 600;
+}
+
+.librarian-thinking-dot {
+  width: 0.58rem;
+  height: 0.58rem;
+  border-radius: 999px;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 0 rgba(20, 119, 111, 0.35);
+  animation: librarian-pulse 1.35s ease-in-out infinite;
+}
+
+@keyframes librarian-pulse {
+  0% {
+    transform: scale(0.86);
+    box-shadow: 0 0 0 0 rgba(20, 119, 111, 0.32);
+  }
+
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0.55rem rgba(20, 119, 111, 0);
+  }
+
+  100% {
+    transform: scale(0.86);
+    box-shadow: 0 0 0 0 rgba(20, 119, 111, 0);
+  }
+}
+
+.librarian-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+  font-family: var(--sans);
+}
+
+.librarian-feedback button {
+  width: 2.15rem;
+  height: 2.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+.librarian-feedback button:hover,
+.librarian-feedback button.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.librarian-feedback button:hover {
+  transform: translateY(-1px);
+}
+
+.librarian-feedback button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.librarian-feedback-status {
+  min-width: 0;
+  margin-left: 4px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.librarian-feedback-status:empty {
+  display: none;
+}
+
+.librarian-prompt-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.librarian-prompt-actions button {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.librarian-prompt-actions button:hover {
+  background: color-mix(in srgb, var(--surface-2) 70%, var(--bg));
+  color: var(--ink);
+}
+
+.librarian-prompt-actions svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.librarian-prompt-actions .librarian-feedback-status {
+  color: var(--muted);
+}
+
+.librarian-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 2.75rem;
+  margin-bottom: 14px;
+}
+
+.librarian-prompts[hidden] {
+  display: none;
+}
+
+.librarian-prompts span {
+  color: var(--color-text-muted);
+  font: 700 var(--size-sm) / 1.4 var(--font-ui);
+}
+
+.librarian-prompts button {
+  padding: 0.7rem 0.8rem;
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--line));
+  background: color-mix(in srgb, var(--surface) 86%, var(--accent-soft));
+  color: var(--accent-deep);
+  font-weight: 700;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+.librarian-prompts button:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.librarian-prompts-loading span::after {
+  display: inline-block;
+  width: 1.4em;
+  content: "";
+  animation: librarian-loading-dots 1.2s steps(4, end) infinite;
+}
+
+@keyframes librarian-loading-dots {
+  0% {
+    content: "";
+  }
+
+  25% {
+    content: ".";
+  }
+
+  50% {
+    content: "..";
+  }
+
+  75%,
+  100% {
+    content: "...";
+  }
+}
