@@ -177,6 +177,20 @@ Stop and confirm before changing anything that affects:
 
 Backend changes belong in `studio-thing`, not here.
 
+When you do need to deploy Studio's Librarian Lambdas, use Studio's repo-local
+virtualenv:
+
+```sh
+cd ../studio-thing
+make librarian-deploy ARGS="--skip-corpus-upload"
+# or directly:
+venv/bin/python pipeline/deploy/aws.py --skip-corpus-upload
+```
+
+Do not use plain `python`/`python3` for that deploy unless you have confirmed
+the active interpreter has Studio's requirements installed; otherwise it will
+typically fail on missing packages such as `boto3`.
+
 ## Deployment
 
 `main` is pushed to GitHub. GitHub Pages deploys the static site from the web
