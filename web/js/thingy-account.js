@@ -55,7 +55,11 @@
         if (nameStatus) nameStatus.textContent = 'Saving...';
         try {
           const data = await session.postJson('/auth', { action: 'update_profile', preferred_name: nextName }, session.authHeaders());
-          session.updateStoredProfile({ ...(data.profile || {}), preferred_name: nextName });
+          const savedName = String(data?.profile?.preferred_name || '').trim();
+          if (savedName.toLowerCase() !== nextName.toLowerCase()) {
+            throw new Error('Thingy could not confirm that name was saved. Please try again.');
+          }
+          session.updateStoredProfile({ ...(data.profile || {}), preferred_name: savedName });
           onSaved(nextName, data);
           if (nameStatus) nameStatus.textContent = 'Saved.';
         } catch (error) {
