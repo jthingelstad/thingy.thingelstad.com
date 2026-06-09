@@ -501,6 +501,15 @@ permalink: "/chat/"
       return availableModes.find((mode) => mode.id === id)?.label || 'Thingy';
     }
 
+    function modeGlyph(id = activeMode) {
+      return {
+        thingy: '•',
+        thought_partner: '◐',
+        research_guide: '⌕',
+        trusted_circle: '◎'
+      }[normalizeModeId(id)] || '•';
+    }
+
     function modeClass(id) {
       return normalizeModeId(id).replace(/[^a-z0-9_]/g, '_');
     }
@@ -539,7 +548,7 @@ permalink: "/chat/"
       if (!modeControl || !modeSelect) return;
       const show = token() && availableModes.length > 1;
       modeControl.hidden = !show;
-      modeSelect.innerHTML = availableModes.map((mode) => `<option value="${escapeHtml(mode.id)}">${escapeHtml(mode.label)}</option>`).join('');
+      modeSelect.innerHTML = availableModes.map((mode) => `<option value="${escapeHtml(mode.id)}">${escapeHtml(`${modeGlyph(mode.id)} ${mode.label}`)}</option>`).join('');
       modeSelect.value = availableModes.some((mode) => mode.id === activeMode) ? activeMode : 'thingy';
       renderModeBanner();
     }
@@ -2031,7 +2040,9 @@ permalink: "/chat/"
         if (mode) {
           const modeEl = document.createElement('small');
           modeEl.className = 'rail-recent-mode';
-          modeEl.textContent = modeLabelText;
+          modeEl.setAttribute('aria-label', modeLabelText);
+          modeEl.title = modeLabelText;
+          modeEl.textContent = modeGlyph(entry.mode);
           openButton.appendChild(modeEl);
         }
 

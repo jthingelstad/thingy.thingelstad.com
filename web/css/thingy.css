@@ -2044,18 +2044,8 @@ a.thingy-exp-source:hover {
 }
 
 .rail-recent.has-mode {
-  overflow: hidden;
   border-color: transparent;
   background: transparent;
-}
-
-.rail-recent.has-mode::before {
-  content: "";
-  position: absolute;
-  inset: 9px auto 9px 5px;
-  width: 2px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mode-rail-accent, transparent) 78%, transparent);
 }
 
 .rail-recent.has-mode.is-active {
@@ -2065,10 +2055,6 @@ a.thingy-exp-source:hover {
 
 .rail-recent.has-mode:hover:not(.is-active) {
   background: color-mix(in srgb, var(--ink) 5%, transparent);
-}
-
-.rail-recent.has-mode.is-active::before {
-  opacity: 0;
 }
 
 .rail-recent[data-mode="thought_partner"] {
@@ -2105,6 +2091,12 @@ a.thingy-exp-source:hover {
   cursor: pointer;
 }
 
+.rail-recent.has-mode .rail-recent-open {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
 .rail-recent.is-active .rail-recent-open {
   color: var(--ink);
   font-weight: 800;
@@ -2130,16 +2122,24 @@ a.thingy-exp-source:hover {
 }
 
 .rail-recent-mode {
-  width: fit-content;
-  max-width: 100%;
-  padding: 1px 6px 2px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--mode-rail-accent, var(--muted)) 32%, transparent);
   border-radius: 999px;
   background: var(--mode-rail-chip-bg, color-mix(in srgb, var(--surface-2) 70%, var(--surface)));
   color: var(--mode-rail-chip-ink, var(--muted));
-  line-height: 1.25;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .rail-recent.is-active .rail-recent-mode {
+  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
   background: color-mix(in srgb, var(--surface) 82%, transparent);
   color: var(--ink-soft);
 }
