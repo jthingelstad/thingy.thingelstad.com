@@ -1,0 +1,608 @@
+/* Thingy — standalone stylesheet.
+   Started from the Weekly Thing librarian UI, then evolved into Thingy's
+   neutral agent/product surface. */
+
+/* --- Reset, tokens, base typography (style.css 6-273) --- */
+/* --- Reset & Base --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* --- Product surfaces: sign-in and Dispatch --- */
+.thingy-auth-page {
+  width: min(100% - 32px, var(--container-wide));
+  margin: 0 auto;
+  padding: clamp(32px, 6vw, 72px) 0;
+}
+
+.thingy-auth-card {
+  width: min(100%, 720px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow-agent);
+}
+
+.thingy-signin-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.thingy-signin-form label {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+
+.thingy-signin-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.thingy-signin-row input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.45;
+}
+
+.thingy-signin-row input {
+  min-height: 46px;
+  padding: 10px 12px;
+}
+
+.thingy-signin-row button,
+.thingy-signin-secondary button {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--accent-deep);
+  border-radius: 7px;
+  background: var(--accent-deep);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.thingy-signin-row button:disabled,
+.thingy-signin-secondary button:disabled {
+  cursor: wait;
+  opacity: .62;
+}
+
+.thingy-signin-message {
+  min-height: 1.5em;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.thingy-signin-message[data-kind="error"] { color: #b54730; }
+.thingy-signin-message[data-kind="success"] { color: var(--accent-deep); }
+
+.thingy-signin-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 760px) {
+  .thingy-auth-card {
+    grid-template-columns: 1fr;
+  }
+
+  .thingy-auth-card {
+    padding: 20px;
+  }
+
+  .thingy-auth-card .thingy-auth-mark {
+    width: 76px;
+  }
+
+  .thingy-signin-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+:root {
+  /* Colors */
+  --color-bg: #f6f8f5;
+  --color-surface: #ffffff;
+  --color-surface-2: #eef4f1;
+  --color-text: #17211f;
+  --color-text-soft: #3f4f4a;
+  --color-text-muted: #71817b;
+  --color-accent: #14776f;
+  --color-accent-hover: #0b4f4a;
+  --color-accent-soft: #dcf3ef;
+  --color-audio-accent: #b86131;
+  --color-border: #dfe7e3;
+  --color-border-light: #edf2ef;
+  --color-highlight: #d6f2ea;
+  --color-code-bg: #eaf1ee;
+  --source-newsletter: #2f6fda;
+  --source-blog: #b86131;
+  --source-podcast: #3f7f63;
+  --shadow-subtle: 0 1px 2px rgba(23, 33, 31, 0.05);
+  --shadow-agent: 0 22px 70px -42px rgba(14, 43, 38, 0.42);
+
+  /* Design-token aliases (preferred for new rules) */
+  --bg: var(--color-bg);
+  --surface: var(--color-surface);
+  --surface-2: var(--color-surface-2);
+  --ink: var(--color-text);
+  --ink-soft: var(--color-text-soft);
+  --muted: var(--color-text-muted);
+  --line: var(--color-border);
+  --line-soft: var(--color-border-light);
+  --accent: var(--color-accent);
+  --accent-deep: var(--color-accent-hover);
+  --accent-soft: var(--color-accent-soft);
+  --highlight: var(--color-highlight);
+  --code-bg: var(--color-code-bg);
+
+  /* Typography */
+  --serif: "Source Serif 4", "Charter", "Sitka Text", Cambria, Georgia, serif;
+  --sans: "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --font-body: var(--sans);
+  --font-heading: var(--sans);
+  --font-mono: var(--mono);
+  --font-ui: var(--sans);
+
+  /* Sizes */
+  --size-base: 1.0625rem;
+  --size-sm: 0.875rem;
+  --size-xs: 0.75rem;
+  --size-lg: 1.25rem;
+  --size-xl: 1.5rem;
+  --size-2xl: 2rem;
+  --size-3xl: 2.5rem;
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+
+  /* Layout */
+  --container-width: 48rem;
+  --container-wide: 68rem;
+  --sidebar-width: 14rem;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #101716;
+    --color-surface: #17211f;
+    --color-surface-2: #202c29;
+    --color-text: #eaf0ed;
+    --color-text-soft: #bcc8c3;
+    --color-text-muted: #899791;
+    --color-accent: #65c8bc;
+    --color-accent-hover: #8edbd2;
+    --color-accent-soft: rgba(101, 200, 188, 0.16);
+    --color-audio-accent: #d98a56;
+    --color-border: #2c3a36;
+    --color-border-light: #22302d;
+    --color-highlight: rgba(101, 200, 188, 0.22);
+    --color-code-bg: #202c29;
+    --source-newsletter: #73a7f3;
+    --source-blog: #d98a56;
+    --source-podcast: #6fcf9c;
+    --shadow-subtle: none;
+    --shadow-agent: none;
+  }
+}
+
+html {
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--size-base);
+  line-height: 1.65;
+  letter-spacing: 0;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+em, i {
+  font-style: italic;
+}
+
+/* --- Typography --- */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0;
+  margin-top: var(--space-2xl);
+  margin-bottom: var(--space-md);
+  text-wrap: pretty;
+}
+
+h1 { font-size: var(--size-3xl); }
+h2 { font-size: var(--size-2xl); }
+h3 { font-size: var(--size-xl); }
+h4 { font-size: var(--size-lg); }
+
+p { margin-bottom: var(--space-md); }
+
+a {
+  color: var(--color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+a:hover { color: var(--color-accent-hover); }
+
+.thingy-home {
+  width: min(100% - 32px, var(--container-wide));
+  margin: 0 auto;
+  padding: clamp(32px, 7vw, 80px) 0 48px;
+}
+
+.thingy-home-hero {
+  min-height: min(68dvh, 680px);
+  display: grid;
+  grid-template-columns: minmax(180px, 320px) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(28px, 6vw, 72px);
+}
+
+.thingy-home-image img {
+  width: min(100%, 320px);
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 28px 46px rgba(23, 33, 31, 0.18));
+}
+
+.thingy-home-copy {
+  max-width: 720px;
+}
+
+.thingy-home-copy h1 {
+  margin: 0;
+  font-size: clamp(46px, 9vw, 108px);
+  line-height: 0.92;
+}
+
+.thingy-home-lede {
+  margin: 22px 0 0;
+  max-width: 660px;
+  color: var(--ink-soft);
+  font-size: clamp(18px, 2.1vw, 25px);
+  line-height: 1.38;
+}
+
+.thingy-home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.thingy-home-actions a,
+.thingy-home-grid a {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.thingy-home-actions a.primary {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.thingy-home-actions a:hover,
+.thingy-home-grid a:hover {
+  border-color: var(--accent-deep);
+  color: var(--accent-deep);
+}
+
+.thingy-home-actions a.primary:hover {
+  background: var(--accent-deep);
+  color: var(--surface);
+}
+
+.thingy-home-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.thingy-home-grid article {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
+  box-shadow: var(--shadow-subtle);
+}
+
+.thingy-home-grid h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.thingy-home-grid p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.48;
+}
+
+.thingy-home-grid a {
+  width: fit-content;
+  margin-top: 4px;
+}
+
+.thingy-home-network {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.thingy-home-network a {
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.thingy-home-network a:hover {
+  color: var(--accent-deep);
+}
+
+@media (max-width: 560px) {
+  .thingy-home-hero,
+  .thingy-home-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .thingy-home-hero {
+    min-height: auto;
+  }
+
+  .thingy-home-image img {
+    width: min(70vw, 220px);
+  }
+}
+
+blockquote {
+  border-left: 3px solid var(--color-accent);
+  padding-left: var(--space-lg);
+  margin: var(--space-xl) 0;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+blockquote ol,
+blockquote ul {
+  padding-left: 1.5rem;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--color-code-bg);
+  padding: 0.15em 0.35em;
+  border-radius: 3px;
+}
+
+pre {
+  background: var(--color-code-bg);
+  padding: var(--space-lg);
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: var(--space-xl) 0;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: var(--space-2xl) 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--space-xl) 0;
+  font-size: var(--size-sm);
+}
+
+th, td {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+th {
+  font-weight: 700;
+  border-bottom-width: 2px;
+}
+
+/* --- Layout --- */
+.container {
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--space-md);
+  background: var(--color-accent);
+  color: #fff;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: 4px;
+  z-index: 1000;
+  text-decoration: none;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+}
+
+.skip-link:focus {
+  top: var(--space-sm);
+}
+
+/* --- Wide container variant (used by home, archive, issue, search, librarian) --- */
+.container-wide {
+  max-width: var(--container-wide);
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+}
+
+/* Narrow container (issue hero, search hero, librarian) */
+.container-narrow {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+}
+
+/* --- Shared design tokens / chrome --- */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+  margin: 0 0 var(--space-sm);
+}
+
+/* --- Subscriber form fields (style.css 557-625) --- */
+.subscribe-input {
+  flex: 1;
+  padding: 12px 16px;
+  font-family: var(--sans);
+  font-size: 15px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+}
+
+.subscribe-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.subscribe-input::placeholder {
+  color: var(--muted);
+}
+
+.subscribe-button {
+  padding: 12px 20px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bg);
+  background: var(--ink);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.subscribe-button:hover {
+  background: var(--accent);
+}
+
+.subscribe-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.subscribe-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.subscribe-field .subscribe-input {
+  flex: none;
+}
+
+.subscribe-input.invalid {
+  border-color: #c44d2b;
+}
+
+.subscribe-error {
+  font-size: var(--size-xs);
+  color: var(--color-audio-accent);
+  margin-top: var(--space-xs);
+  min-height: 0;
+}
+
+.subscribe-shell {
+  width: 100%;
+}
