@@ -371,8 +371,7 @@
   overflow: hidden;
 }
 
-.thingy-app-shell.is-collapsed .rail-surface-switch a:hover,
-.thingy-app-shell.is-collapsed .rail-surface-switch a.is-active {
+.thingy-app-shell.is-collapsed .rail-surface-switch a:is(:hover, .is-active) {
   border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
   background: color-mix(in srgb, var(--accent-soft) 35%, var(--surface));
   color: var(--ink);

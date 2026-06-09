@@ -1436,7 +1436,7 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
 
     updateQuestionState();
 
-    /* ---- Rail actions ---- */
+    /* Rail actions. */
     if (mobileNewChatButton) {
       mobileNewChatButton.addEventListener('click', async (event) => {
         event.stopPropagation();
@@ -1486,7 +1486,7 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       mobileDeleteConversation.addEventListener('click', deleteActiveConversation);
     }
 
-    /* ---- Account menu ---- */
+    /* Account menu. */
     const accountBtn = document.getElementById('account-btn');
     const accountMenu = document.getElementById('account-menu');
     const accountNameForm = document.getElementById('account-name-form');
@@ -1533,7 +1533,7 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       }
     });
 
-    /* ---- Recents list interactions ---- */
+    /* Recents list interactions. */
     const railRecentsEl = document.getElementById('rail-recents');
     if (railRecentsEl) {
       railRecentsEl.addEventListener('click', async (event) => {
@@ -1579,7 +1579,7 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       });
     }
 
-    /* ---- Conversation bootstrap ---- */
+    /* Conversation bootstrap. */
     resetMessages();
     const storedProfile = userProfile();
     preferredName = String(storedProfile.preferred_name || '').trim();
