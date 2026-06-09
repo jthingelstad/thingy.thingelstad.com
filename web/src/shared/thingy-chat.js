@@ -27,7 +27,7 @@ import { createAssistantStreamRenderer } from './thingy-chat-stream-renderer.js'
 import { createRailController } from './thingy-rail.js';
 import { normalizeScopeParam } from './thingy-scope.js';
 import { createSourcePicker } from './thingy-source-picker.js';
-import { read as readStream } from './thingy-stream.js';
+import { postJsonStream, read as readStream } from './thingy-stream.js';
 import {
   createDictationController,
   speechInputSupported as browserSpeechInputSupported
@@ -1229,40 +1229,23 @@ import {
       let requestId = '';
       let conversationId = isLocalConversationId(activeConversationId) ? '' : (activeConversationId || '');
       let conversation = null;
-      const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 190000);
-      const response = await fetch(`${streamBase}/chat`, {
-        method: 'POST',
+      const response = await postJsonStream({
+        baseUrl: streamBase,
+        path: '/chat',
+        timeoutMs: 190000,
+        abortMessage: 'Thingy spent too long in the archive. Please try again with a narrower angle.',
         headers: {
-          'content-type': 'application/json',
           authorization: `Bearer ${token()}`
         },
-        body: JSON.stringify({
+        payload: {
           message,
           scope,
           mode: currentConversationMode(),
           conversation_id: conversationId || undefined,
           client_context: userLocalContext(),
           user_profile: readerProfileContext()
-        }),
-        signal: controller.signal
-      }).catch((error) => {
-        if (error.name === 'AbortError') {
-          throw new Error('Thingy spent too long in the archive. Please try again with a narrower angle.');
         }
-        throw error;
-      }).finally(() => {
-        window.clearTimeout(timeout);
       });
-      if (!response.ok || !response.body) {
-        const requestId = response.headers.get('x-request-id') || '';
-        const data = await response.json().catch(() => ({}));
-        const message = data.error || 'Thingy is unavailable.';
-        const error = new Error(requestId ? `${message} Reference: ${requestId}` : message);
-        error.requestId = requestId;
-        error.status = response.status;
-        throw error;
-      }
 
       const renderer = createAssistantStreamRenderer({ pending, scroll: scheduleChatScroll });
 
@@ -1323,38 +1306,22 @@ import {
       }
 
       let requestId = '';
-      const controller = options.controller || new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 45000);
-      const response = await fetch(`${streamBase}/welcome`, {
-        method: 'POST',
+      const response = await postJsonStream({
+        baseUrl: streamBase,
+        path: '/welcome',
+        controller: options.controller,
+        timeoutMs: 45000,
+        abortMessage: 'Thingy took too long to get oriented. Please try asking a question.',
         headers: {
-          'content-type': 'application/json',
           authorization: `Bearer ${token()}`
         },
-        body: JSON.stringify({
+        payload: {
           scope,
           mode: currentConversationMode(),
           client_context: userLocalContext(),
           user_profile: readerProfileContext()
-        }),
-        signal: controller.signal
-      }).catch((error) => {
-        if (error.name === 'AbortError') {
-          throw new Error('Thingy took too long to get oriented. Please try asking a question.');
         }
-        throw error;
-      }).finally(() => {
-        window.clearTimeout(timeout);
       });
-      if (!response.ok || !response.body) {
-        const requestId = response.headers.get('x-request-id') || '';
-        const data = await response.json().catch(() => ({}));
-        const message = data.error || 'Thingy is unavailable.';
-        const error = new Error(requestId ? `${message} Reference: ${requestId}` : message);
-        error.requestId = requestId;
-        error.status = response.status;
-        throw error;
-      }
 
       const renderer = createAssistantStreamRenderer({
         pending,
