@@ -51,3 +51,9 @@
 .return-chip span {
   white-space: nowrap;
 }
+
+@media (max-width: 640px) {
+  .return-chip {
+    top: calc(64px + env(safe-area-inset-top));
+  }
+}

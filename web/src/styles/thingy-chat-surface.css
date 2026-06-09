@@ -330,3 +330,14 @@
   align-self: center;
   margin-left: 6px;
 }
+
+@media (max-width: 640px) {
+  .thingy-chat-scroll {
+    padding-top: 24px;
+  }
+
+  .thingy-input,
+  .composer-box.thingy-input {
+    border-radius: 28px;
+  }
+}

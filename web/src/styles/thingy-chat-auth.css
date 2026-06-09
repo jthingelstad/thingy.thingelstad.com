@@ -93,3 +93,52 @@
   border-radius: 8px;
   white-space: nowrap;
 }
+
+@media (max-width: 640px) {
+  .librarian-auth.thingy-auth {
+    grid-row: 2;
+    align-self: start;
+    width: min(100% - 28px, 28rem);
+    min-height: 0;
+    margin-top: 18px;
+  }
+
+  .thingy-app-shell.is-auth .librarian-auth.thingy-auth {
+    grid-row: 1;
+    align-self: center;
+    margin: 0;
+  }
+
+  .thingy-auth .librarian-form {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 12px;
+    padding: 22px;
+    text-align: center;
+  }
+
+  .thingy-auth-mark {
+    width: 116px;
+  }
+
+  .thingy-auth-content {
+    width: 100%;
+  }
+
+  .thingy-auth-title {
+    font-size: 34px;
+  }
+
+  .thingy-auth-copy {
+    margin: 12px auto 18px;
+    font-size: 15px;
+  }
+
+  .thingy-auth .librarian-form label {
+    text-align: left;
+  }
+
+  .thingy-auth .librarian-auth-row {
+    grid-template-columns: 1fr;
+  }
+}

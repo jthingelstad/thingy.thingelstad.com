@@ -42,8 +42,7 @@
   flex: 1 1 auto;
 }
 
-.composer-voice,
-.composer-map {
+:is(.composer-voice, .composer-map, .librarian-form button.composer-voice, .librarian-form button.composer-map) {
   height: 36px;
   min-height: 36px;
   flex: 0 0 auto;
@@ -55,6 +54,7 @@
   border-radius: 999px;
   background: transparent;
   color: color-mix(in srgb, var(--ink-soft) 88%, var(--muted));
+  font: inherit;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
@@ -62,13 +62,13 @@
   transition: background 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
 }
 
-.composer-voice {
+:is(.composer-voice, .librarian-form button.composer-voice) {
   width: 36px;
   min-width: 36px;
   padding: 0;
 }
 
-.composer-map {
+:is(.composer-map, .librarian-form button.composer-map) {
   width: auto;
   min-width: 62px;
   padding: 0 11px 0 10px;
@@ -79,52 +79,18 @@
   line-height: 1;
 }
 
-.librarian-form button.composer-voice,
-.librarian-form button.composer-map {
-  height: 36px;
-  min-height: 36px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: color-mix(in srgb, var(--ink-soft) 88%, var(--muted));
-  font: inherit;
-}
-
-.librarian-form button.composer-voice {
-  width: 36px;
-  min-width: 36px;
-  padding: 0;
-}
-
-.librarian-form button.composer-map {
-  width: auto;
-  min-width: 62px;
-  padding: 0 11px 0 10px;
-  font-family: var(--sans);
-  font-size: 13px;
-  font-weight: 750;
-  line-height: 1;
-}
-
-.composer-voice:hover:not(:disabled),
-.composer-map:hover:not(:disabled),
-.librarian-form button.composer-voice:hover:not(:disabled),
-.librarian-form button.composer-map:hover:not(:disabled) {
+:is(.composer-voice, .composer-map, .librarian-form button.composer-voice, .librarian-form button.composer-map):hover:not(:disabled) {
   color: var(--ink);
   background: color-mix(in srgb, var(--ink) 7%, transparent);
 }
 
-.composer-voice.is-listening,
-.librarian-form button.composer-voice.is-listening {
+:is(.composer-voice, .librarian-form button.composer-voice).is-listening {
   color: var(--accent-deep);
   background: color-mix(in srgb, var(--accent-soft) 72%, transparent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-soft) 62%, transparent);
 }
 
-.composer-voice:disabled,
-.composer-map:disabled,
-.librarian-form button.composer-voice:disabled,
-.librarian-form button.composer-map:disabled {
+:is(.composer-voice, .composer-map, .librarian-form button.composer-voice, .librarian-form button.composer-map):disabled {
   color: color-mix(in srgb, var(--muted) 64%, var(--surface));
   background: transparent;
   cursor: not-allowed;
@@ -180,7 +146,7 @@
   opacity: 0.7;
 }
 
-.composer-send {
+:is(.composer-send, .librarian-form button.composer-send) {
   width: 44px;
   height: 44px;
   min-width: 44px;
@@ -194,6 +160,7 @@
   border-radius: 999px;
   background: var(--ink);
   color: var(--surface);
+  font: inherit;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
@@ -203,41 +170,17 @@
   transition: background 0.14s ease, border-color 0.14s ease, transform 0.14s ease, opacity 0.14s ease;
 }
 
-.librarian-form button.composer-send {
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0;
-  border-radius: 999px;
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--surface);
-  font: inherit;
-}
-
-.composer-send:hover:not(:disabled) {
+:is(.composer-send, .librarian-form button.composer-send):hover:not(:disabled) {
   background: var(--accent-deep);
   border-color: var(--accent-deep);
 }
 
-.librarian-form button.composer-send:hover:not(:disabled) {
-  background: var(--accent-deep);
-  border-color: var(--accent-deep);
-}
-
-.composer-send:disabled {
+:is(.composer-send, .librarian-form button.composer-send):disabled {
   background: color-mix(in srgb, var(--muted) 22%, var(--surface-2));
   border-color: color-mix(in srgb, var(--muted) 22%, var(--surface-2));
   color: color-mix(in srgb, var(--muted) 70%, var(--surface));
   cursor: not-allowed;
   box-shadow: none;
-}
-
-.librarian-form button.composer-send:disabled {
-  background: color-mix(in srgb, var(--muted) 22%, var(--surface-2));
-  border-color: color-mix(in srgb, var(--muted) 22%, var(--surface-2));
-  color: color-mix(in srgb, var(--muted) 70%, var(--surface));
 }
 
 .composer-send svg {
@@ -255,7 +198,7 @@
   min-width: 0;
 }
 
-.srcpick-btn {
+:is(.srcpick-btn, .librarian-form button.srcpick-btn) {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -274,19 +217,6 @@
   transition: background 0.14s ease, color 0.14s ease;
 }
 
-.librarian-form button.srcpick-btn {
-  height: 36px;
-  max-width: min(100%, 18rem);
-  padding: 0 8px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: color-mix(in srgb, var(--ink-soft) 90%, var(--muted));
-  font-family: var(--sans);
-  font-size: 13px;
-  font-weight: 700;
-}
-
 .srcpick-label {
   min-width: 0;
   overflow: hidden;
@@ -294,12 +224,7 @@
   white-space: nowrap;
 }
 
-.srcpick-btn:hover {
-  color: var(--ink);
-  background: color-mix(in srgb, var(--ink) 7%, transparent);
-}
-
-.librarian-form button.srcpick-btn:hover {
+:is(.srcpick-btn, .librarian-form button.srcpick-btn):hover {
   color: var(--ink);
   background: color-mix(in srgb, var(--ink) 7%, transparent);
 }
@@ -327,12 +252,7 @@
   transition: transform 0.16s ease;
 }
 
-.srcpick-btn[aria-expanded="true"] {
-  color: var(--ink);
-  background: color-mix(in srgb, var(--ink) 7%, transparent);
-}
-
-.librarian-form button.srcpick-btn[aria-expanded="true"] {
+:is(.srcpick-btn, .librarian-form button.srcpick-btn)[aria-expanded="true"] {
   color: var(--ink);
   background: color-mix(in srgb, var(--ink) 7%, transparent);
 }
@@ -520,6 +440,27 @@
   font-size: 11px;
   line-height: 1.3;
   color: var(--muted);
+}
+
+@media (max-width: 640px) {
+  :is(.srcpick-btn, .librarian-form button.srcpick-btn) {
+    width: 70px;
+    max-width: 70px;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .srcpick-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 }
 
 .sr-only {

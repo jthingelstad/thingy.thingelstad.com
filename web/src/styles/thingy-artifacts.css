@@ -250,3 +250,31 @@ a.thingy-exp-source:hover {
   font-size: 0.72rem;
   line-height: 1.2;
 }
+
+@media (max-width: 640px) {
+  .thingy-map-canvas {
+    min-height: 20rem;
+    aspect-ratio: 0.92 / 1;
+  }
+
+  .thingy-map-node {
+    width: 5.9rem;
+    min-height: 2.2rem;
+    padding: 0.46rem 0.55rem;
+    font-size: 0.76rem;
+  }
+
+  .thingy-map-node.is-center {
+    width: 6.8rem;
+    min-height: 2.7rem;
+    font-size: 0.82rem;
+  }
+
+  .thingy-map-sources {
+    display: grid;
+  }
+
+  .thingy-map-source {
+    max-width: 100%;
+  }
+}
