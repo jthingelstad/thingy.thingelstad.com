@@ -59,12 +59,19 @@ async function copyText(value) {
   return false;
 }
 
+function discordSignInUrl(state = '') {
+  const url = new URL('/signin/', window.location.origin);
+  const cleanState = String(state || '').trim();
+  url.searchParams.set('return', `/discord/${cleanState ? `?state=${encodeURIComponent(cleanState)}` : ''}`);
+  return url.toString();
+}
+
 async function initDiscordLink() {
   const params = new URLSearchParams(window.location.search);
   const state = String(params.get('state') || '').trim();
 
   if (!session.token() || session.tokenExpired()) {
-    window.location.href = session.signInUrl(`/discord/${state ? `?state=${encodeURIComponent(state)}` : ''}`);
+    window.location.href = discordSignInUrl(state);
     return;
   }
 
@@ -121,5 +128,6 @@ if (copyCommandButton) {
 initDiscordLink();
 
 export {
-  discordConfirmCommand
+  discordConfirmCommand,
+  discordSignInUrl
 };
