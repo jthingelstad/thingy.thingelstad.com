@@ -1,24 +1,24 @@
 # thingy_bridge — Discord ↔ Thingy API bridge
 
-> Runs the Thingy Discord bot in `#ask-thingy` and posts operator
-> notifications to `#chatter`. Conversations, transcripts, summaries,
-> evals, and posting state are canonical in the Thingy/Librarian API;
-> this bridge is only a Discord connector.
+> Runs the Thingy Discord bot in `#ask-thingy` and posts startup notices
+> to `#chatter`. Conversations, transcripts, summaries, evals, Dispatches,
+> and posting state are canonical in the Thingy/Librarian API; this bridge
+> is only a Discord connector.
 
 ## Quick start
 
 ```bash
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
+python3 -m venv venv
+venv/bin/pip install -r requirements.txt
 cp .env.example .env  # then fill in the Discord token + bridge secret
-python -m apps.thingy_bridge.bot
+venv/bin/python -m apps.thingy_bridge.bot
 ```
 
 In normal use, run under `caffeinate` so the Mac doesn't sleep and drop
 the Discord gateway:
 
 ```bash
-caffeinate -is python -m apps.thingy_bridge.bot
+caffeinate -is venv/bin/python -m apps.thingy_bridge.bot
 ```
 
 ## What it does
@@ -30,13 +30,11 @@ Two surfaces, one process:
    back, rewrites `#NNN` issue citations into clickable Discord links,
    and adds 👍/👎 feedback reactions that POST to the Lambda's
    `/feedback` endpoint.
-2. **Operator-side visibility** — the Librarian API's background eval
-   Lambda posts reviewed conversation cards directly to `#chatter` via
-   Discord webhook, so the bridge can be down without delaying reader
-   answers or evals. Operator commands `/thingy {recent,show}` read
-   canonical API conversations; reader
-   commands `/thingy {new,scope}` manage the caller's session boundary and
-   corpus scope (Weekly Thing, blog, Another Thing, or all sources).
+2. **Member controls** — reader commands `/thingy {new,scope}` manage the
+   caller's session boundary and corpus scope (Weekly Thing, blog, Another
+   Thing, or all sources). Operator review and Dispatch visibility are
+   posted directly by the API through Discord webhooks and Operator Reports;
+   the bridge does not read or display other readers' conversations.
 
 ## Architecture
 
@@ -61,11 +59,10 @@ this bridge is the thin connector between Discord and the Lambda's HTTP API.
 |---|---|---|
 | `DISCORD_TOKEN_THINGY` | yes | Bot token for the Thingy Discord application |
 | `DISCORD_CHANNEL_ASK_THINGY` | yes | Reader-facing channel id |
-| `DISCORD_CHANNEL_CHATTER` | yes | Operator channel for startup notices and API-posted eval cards |
-| `DISCORD_OWNER_USER_ID` | yes | Discord user id authorized to use `/thingy` slash commands |
-| `LIBRARIAN_API_URL` | optional | Lambda auth/conversation API base URL (has a sane default) |
-| `LIBRARIAN_STREAM_URL` | optional | Lambda /chat SSE base URL (has a sane default) |
-| `LIBRARIAN_BRIDGE_SECRET` | yes | Shared secret for operator conversation API actions |
+| `DISCORD_CHANNEL_CHATTER` | yes | Channel for startup notices and API-posted cards |
+| `LIBRARIAN_API_URL` | yes | Lambda auth API base URL |
+| `LIBRARIAN_STREAM_URL` | yes | Lambda `/chat` SSE base URL |
+| `LIBRARIAN_BRIDGE_SECRET` | yes | Shared secret for Discord token minting |
 | `WEEKLY_THING_SITE_URL` | optional | For citation-link rewriting (defaults to `https://weekly.thingelstad.com`) |
 | `THINGY_BRIDGE_DB_PATH` | optional | SQLite path (defaults to `apps/thingy_bridge/data/thingy_bridge.db`) |
 | `THINGY_BRIDGE_LOG_FILE` | optional | Log path (defaults to `apps/thingy_bridge/logs/bridge.log`) |
@@ -77,5 +74,5 @@ See `.env.example` for the template.
 ## Tests
 
 ```bash
-python -m unittest discover -s apps/thingy_bridge/tests -t .
+apps/thingy_bridge/venv/bin/python -m unittest discover -s apps/thingy_bridge/tests -t .
 ```

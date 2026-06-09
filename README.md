@@ -113,15 +113,19 @@ real source metadata and the normal HTML/text email template.
 ```sh
 cd web
 npm install
-npm run serve
+LIBRARIAN_API_URL="$LIBRARIAN_API_URL" LIBRARIAN_STREAM_URL="$LIBRARIAN_STREAM_URL" npm run serve
 ```
 
 Build:
 
 ```sh
 cd web
-npm run build
+LIBRARIAN_API_URL="$LIBRARIAN_API_URL" LIBRARIAN_STREAM_URL="$LIBRARIAN_STREAM_URL" npm run build
 ```
+
+`LIBRARIAN_API_URL` and `LIBRARIAN_STREAM_URL` are required at build time.
+Production gets them from GitHub repository variables; local shells can export
+the same values from the Studio Librarian stack outputs.
 
 ## Tinylytics
 

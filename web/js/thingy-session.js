@@ -108,16 +108,18 @@
     if (emailValue) window.localStorage.setItem(userEmailKey, emailValue);
     const existingProfile = storedProfile();
     const incomingProfile = data.profile && typeof data.profile === 'object' ? data.profile : {};
+    const hasIncomingEntitlements = Array.isArray(data.entitlements) || Array.isArray(incomingProfile.entitlements);
     const incomingEntitlements = Array.isArray(data.entitlements) ? data.entitlements : incomingProfile.entitlements;
+    const entitlements = Array.isArray(incomingEntitlements) ? incomingEntitlements : existingProfile.entitlements;
     const profile = {
       ...existingProfile,
       ...incomingProfile,
       preferred_name: String(incomingProfile.preferred_name || existingProfile.preferred_name || '').trim(),
       status: data.status || incomingProfile.status || existingProfile.status || '',
-      supporting_member: data.status === 'premium'
-        || Boolean(incomingProfile.supporting_member || existingProfile.supporting_member)
-        || (Array.isArray(incomingEntitlements) && incomingEntitlements.includes('supporting_member')),
-      entitlements: Array.isArray(incomingEntitlements) ? incomingEntitlements : existingProfile.entitlements,
+      supporting_member: hasIncomingEntitlements
+        ? Boolean(data.status === 'premium' || incomingProfile.supporting_member || (Array.isArray(entitlements) && entitlements.includes('supporting_member')))
+        : Boolean(incomingProfile.supporting_member || existingProfile.supporting_member),
+      entitlements,
       modes: normalizeModes(data.modes || incomingProfile.modes || existingProfile.modes)
     };
     window.localStorage.setItem(userProfileKey, JSON.stringify(profile));

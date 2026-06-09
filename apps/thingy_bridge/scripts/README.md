@@ -20,7 +20,8 @@ apps/thingy_bridge/scripts/admin.sh backup    # invokes backup_db.py
 apps/thingy_bridge/scripts/admin.sh tail      # tail -F logs/bridge.{log,err}
 ```
 
-The plist runs `python -m apps.thingy_bridge.bot` with the repo root as working directory.
+The plist runs `apps/thingy_bridge/venv/bin/python -m apps.thingy_bridge.bot`
+with the repo root as working directory.
 
 **Venv resolution** — `admin.sh` looks (in order) at `$THINGY_BRIDGE_VENV`, `<repo>/venv`, `apps/thingy_bridge/venv`. If none exists, `install` and `upgrade` print the create-venv command and exit.
 

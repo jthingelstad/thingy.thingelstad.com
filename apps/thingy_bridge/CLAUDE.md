@@ -1,10 +1,10 @@
 # thingy_bridge — project memory
 
 > Discord ↔ Librarian Lambda bridge. Reader-facing answering bot in
-> `#ask-thingy` plus operator read commands for API-reviewed
-> conversations. The Librarian eval Lambda posts conversation cards
-> directly to Discord via webhook. Standalone Python process, single
-> Discord client, scheduler support but no registered Thingy poller.
+> `#ask-thingy` plus member commands for session reset and source scope.
+> The Librarian eval and Dispatch Lambdas post cards directly to Discord
+> via webhook. Standalone Python process, single Discord client, scheduler
+> support but no registered Thingy poller.
 > See [`README.md`](README.md) for the user-facing overview.
 
 ## Architecture: one process, two surfaces
@@ -25,16 +25,11 @@ The bridge's two surfaces:
   per-answer feedback that POSTs to the Lambda's `/feedback` endpoint.
   No agent loop in this process — the Lambda owns retrieval +
   reasoning.
-- **Operator conversation views** (`jobs/watch.py`) — reads reviewed
-  canonical conversations from the Lambda auth API for `/thingy recent`
-  and `/thingy show`. It does not run an LLM, group turns, mirror
-  transcripts, poll for new activity, or mark anything posted. New eval
-  cards are emitted by the API-side evaluator Lambda directly to
-  Discord via webhook.
+- **Member commands** (`commands.py`) — lets a Discord member start a fresh
+  Thingy session with `/thingy new` or set their preferred source scope with
+  `/thingy scope`. It does not expose other readers' conversations.
 
-The slash surface is small. Operator-only (gated on `DISCORD_OWNER_USER_ID`):
-`/thingy recent [count]` (last N reviewed API conversations), `/thingy show <id>`
-(canonical transcript attachment). Reader-facing (no gate, affects only the caller): `/thingy new`
+The slash surface is small and reader-facing: `/thingy new`
 (clear the caller's session boundary) and `/thingy scope <weekly_thing|blog|podcast|both|all>`
 (pick which corpus Thingy searches for the caller — persisted in the
 `thingy_scopes` table, threaded into the `/chat` body, disclosed in a
@@ -81,16 +76,17 @@ for author-flow code changes.
   team-mention/peer-reaction shape that the workshop_bot `PersonaBot`
   base assumes, and stubs `core()` as NotImplementedError. The
   reasoning agent lives in the Lambda.
-- **Eval is API-owned** — the Librarian eval Lambda reads canonical
-  conversations from DynamoDB, writes summaries/quality flags back to
-  the conversation row, and posts the operator card to Discord via
-  webhook. The bridge never assesses conversations locally.
+- **Operator visibility is API-owned** — the Librarian eval and Dispatch
+  Lambdas read canonical records from DynamoDB, write summaries/quality flags
+  back to the relevant rows, and post cards to Discord via webhook. The bridge
+  never assesses conversations locally and never reads other readers' private
+  transcripts.
 - **Citation rewriting** — `tools/thingy_render.format_for_discord()`
   rewrites `#NNN` references in the Lambda's answer to clickable
   Discord links (`[#NNN](https://weekly.thingelstad.com/archive/NNN/)`).
-- **Reader hashing** — readers are shown to the operator as
-  `reader·<hash6>` (the first 6 chars of the SHA256 hash of their
-  email — never the email itself). Stable per person, not reversible.
+- **Reader hashing** — API-posted cards identify readers as `reader·<hash6>`
+  (the first 6 chars of the SHA256 hash of their email — never the email
+  itself). Stable per person, not reversible.
 
 ## Known follow-ups
 

@@ -49,14 +49,14 @@ Web build:
 
 ```sh
 cd web
-npm run build
+LIBRARIAN_API_URL="$LIBRARIAN_API_URL" LIBRARIAN_STREAM_URL="$LIBRARIAN_STREAM_URL" npm run build
 ```
 
 Web local server:
 
 ```sh
 cd web
-npm run serve -- --port=8080
+LIBRARIAN_API_URL="$LIBRARIAN_API_URL" LIBRARIAN_STREAM_URL="$LIBRARIAN_STREAM_URL" npm run serve -- --port=8080
 ```
 
 Use port `8080` when testing auth or chat against the live backend. The
@@ -66,8 +66,7 @@ Other local ports may render the page but fail API calls with `Failed to fetch`.
 Bridge tests:
 
 ```sh
-cd apps/thingy_bridge
-python -m pytest
+apps/thingy_bridge/venv/bin/python -m unittest discover -s apps/thingy_bridge/tests -t .
 ```
 
 Only run bridge tests when bridge code changes.

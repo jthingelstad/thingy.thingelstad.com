@@ -16,7 +16,7 @@ concerns:
   collects 👍/👎 feedback. No server beyond GitHub Pages.
 - **`apps/thingy_bridge/`** — the Discord side of Thingy. A standalone Python
   process running one discord.py client + APScheduler support: answers
-  questions in `#ask-thingy` and provides operator follow-up commands.
+  questions in `#ask-thingy` and provides member session/source commands.
   Conversation eval cards are posted by the API-side webhook, not by polling
   in the bridge. See `apps/thingy_bridge/CLAUDE.md`.
 
@@ -61,8 +61,8 @@ schema break this repo. Version before changing.
   conversations, conversation modes, curiosity maps, source controls, audio
   input/playback, and richer chat UX have since shipped.
 - **`apps/thingy_bridge/`** is no longer the primary user surface. Discord is
-  useful for operator notices and follow-up commands, while nuanced
-  multi-conversation UX belongs in the authenticated web app.
+  useful for member presence, lightweight chat, and API-posted notices, while
+  nuanced multi-conversation UX belongs in the authenticated web app.
 
 Conversation modes are backend-enforced and conversation-scoped. Current modes
 are default Thingy, Research Guide, Thought Partner, and Trusted Circle. Start
@@ -74,4 +74,4 @@ Jamie explicitly makes that a separate product decision.
 Start at `ROADMAP.md` for direction and `studio-thing/ALIGNMENT.md`
 for the cross-repo map. If a task would alter the Librarian API contract,
 add a new conversation mode, or change entitlement behavior, make sure the
-backend remains authoritative and the operator loop can see what happened.
+backend remains authoritative and the API-side reports can see what happened.

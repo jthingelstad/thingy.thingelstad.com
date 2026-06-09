@@ -1,7 +1,7 @@
 """HTTP/SSE client for the Thingy Lambda.
 
 Bridges the Discord workshop bot to the production Librarian Lambda. The
-bot owns four functions here:
+bot owns three functions here:
 
   - ``get_or_refresh_token(discord_user_id)`` — mints a session token via
     the Lambda's ``/auth?action=discord_bridge`` action and caches it
@@ -28,9 +28,6 @@ from . import db
 
 logger = logging.getLogger("workshop.thingy_client")
 
-DEFAULT_API_URL = "https://k0yklt9vg3.execute-api.us-east-1.amazonaws.com"
-DEFAULT_STREAM_URL = "https://jcvud66qqpq53frvno5stoqntm0zqntw.lambda-url.us-east-1.on.aws/"
-
 # Refresh tokens this many seconds before they actually expire so an
 # in-flight chat request never trips an "expired" rejection mid-stream.
 REFRESH_BUFFER_SECS = 600
@@ -47,11 +44,17 @@ class ThingyError(Exception):
 
 
 def _api_base() -> str:
-    return (os.environ.get("LIBRARIAN_API_URL") or DEFAULT_API_URL).rstrip("/")
+    value = (os.environ.get("LIBRARIAN_API_URL") or "").strip().rstrip("/")
+    if not value:
+        raise ThingyError("LIBRARIAN_API_URL is not set; bridge disabled")
+    return value
 
 
 def _stream_base() -> str:
-    return (os.environ.get("LIBRARIAN_STREAM_URL") or DEFAULT_STREAM_URL).rstrip("/")
+    value = (os.environ.get("LIBRARIAN_STREAM_URL") or "").strip().rstrip("/")
+    if not value:
+        raise ThingyError("LIBRARIAN_STREAM_URL is not set; bridge disabled")
+    return value
 
 
 def _bridge_secret() -> str:
@@ -234,76 +237,6 @@ def _parse_sse_block(block: str) -> Optional[tuple[str, dict[str, Any]]]:
     if not isinstance(data, dict):
         return event_name, {"value": data}
     return event_name, data
-
-
-async def fetch_operator_conversations(
-    *,
-    since_iso: Optional[str] = None,
-    limit: int = 150,
-    eval_status: Optional[str] = None,
-) -> list[dict[str, Any]]:
-    """Pull canonical server-side Thingy conversation summaries.
-
-    The API owns grouping, summarization, eval, and posting state; the
-    bridge only displays rows returned here.
-    """
-    payload: dict[str, Any] = {
-        "action": "list_operator_conversations",
-        "bridge_secret": _bridge_secret(),
-        "limit": int(limit),
-    }
-    if since_iso:
-        payload["since"] = since_iso
-    if eval_status:
-        payload["eval_status"] = eval_status
-    url = f"{_api_base()}/auth"
-    try:
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
-            resp = await client.post(url, json=payload)
-    except httpx.RequestError as exc:
-        raise ThingyError(f"Could not reach Thingy conversation index: {exc}") from exc
-    if resp.status_code != 200:
-        try:
-            err = (resp.json() or {}).get("error") or f"HTTP {resp.status_code}"
-        except Exception:  # noqa: BLE001
-            err = f"HTTP {resp.status_code}"
-        raise ThingyError(f"Thingy conversation index rejected: {err}")
-    data = resp.json() or {}
-    conversations = data.get("conversations")
-    if not isinstance(conversations, list):
-        raise ThingyError("Thingy conversation index returned an unexpected shape")
-    if data.get("truncated"):
-        logger.warning("thingy: canonical conversation index response truncated (since=%s)", data.get("since"))
-    return [c for c in conversations if isinstance(c, dict)]
-
-
-async def fetch_operator_conversation(
-    *, conversation_id: str, subscriber_hash: Optional[str] = None
-) -> dict[str, Any]:
-    """Fetch one canonical server-side conversation with turn records."""
-    payload: dict[str, Any] = {
-        "action": "get_operator_conversation",
-        "bridge_secret": _bridge_secret(),
-        "conversation_id": conversation_id,
-    }
-    if subscriber_hash:
-        payload["subscriber_hash"] = subscriber_hash
-    url = f"{_api_base()}/auth"
-    try:
-        async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
-            resp = await client.post(url, json=payload)
-    except httpx.RequestError as exc:
-        raise ThingyError(f"Could not reach Thingy conversation: {exc}") from exc
-    if resp.status_code != 200:
-        try:
-            err = (resp.json() or {}).get("error") or f"HTTP {resp.status_code}"
-        except Exception:  # noqa: BLE001
-            err = f"HTTP {resp.status_code}"
-        raise ThingyError(f"Thingy conversation rejected: {err}")
-    data = resp.json() or {}
-    if not isinstance(data.get("conversation"), dict) or not isinstance(data.get("turns"), list):
-        raise ThingyError("Thingy conversation returned an unexpected shape")
-    return data
 
 
 # ---------- feedback ----------

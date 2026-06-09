@@ -204,6 +204,7 @@ permalink: "/chat/"
 <script src="/js/thingy-session.js?v={{ site.assetVersion }}"></script>
 <script src="/js/thingy-composer.js?v={{ site.assetVersion }}"></script>
 <script src="/js/thingy-markdown.js?v={{ site.assetVersion }}"></script>
+<script src="/js/thingy-stream.js?v={{ site.assetVersion }}"></script>
 <script src="/js/thingy-rail.js?v={{ site.assetVersion }}"></script>
 <script src="/js/thingy-account.js?v={{ site.assetVersion }}"></script>
 <script>
@@ -2275,9 +2276,6 @@ permalink: "/chat/"
         throw error;
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
       let renderFrame = 0;
       let activitySteps = [];
       let activityCommentary = [];
@@ -2352,28 +2350,7 @@ permalink: "/chat/"
         }
       }
 
-      function consumeEvent(rawEvent) {
-        const lines = rawEvent.split('\n');
-        let eventName = 'message';
-        const data = [];
-        for (const line of lines) {
-          if (line.startsWith('event:')) eventName = line.slice(6).trim();
-          if (line.startsWith('data:')) data.push(line.slice(5).trimStart());
-        }
-        if (!data.length) return;
-        applyEvent(eventName, JSON.parse(data.join('\n')));
-      }
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const events = buffer.split(/\n\n/);
-        buffer = events.pop() || '';
-        events.filter(Boolean).forEach(consumeEvent);
-      }
-      buffer += decoder.decode();
-      if (buffer.trim()) consumeEvent(buffer);
+      await window.ThingyStream.read(response, applyEvent);
       if (renderFrame) {
         window.cancelAnimationFrame(renderFrame);
         renderPendingAnswer();
@@ -2422,9 +2399,6 @@ permalink: "/chat/"
         throw error;
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
       let renderFrame = 0;
       let activitySteps = [];
       let activityCommentary = [];
@@ -2481,28 +2455,7 @@ permalink: "/chat/"
         }
       }
 
-      function consumeEvent(rawEvent) {
-        const lines = rawEvent.split('\n');
-        let eventName = 'message';
-        const data = [];
-        for (const line of lines) {
-          if (line.startsWith('event:')) eventName = line.slice(6).trim();
-          if (line.startsWith('data:')) data.push(line.slice(5).trimStart());
-        }
-        if (!data.length) return;
-        applyEvent(eventName, JSON.parse(data.join('\n')));
-      }
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const events = buffer.split(/\n\n/);
-        buffer = events.pop() || '';
-        events.filter(Boolean).forEach(consumeEvent);
-      }
-      buffer += decoder.decode();
-      if (buffer.trim()) consumeEvent(buffer);
+      await window.ThingyStream.read(response, applyEvent);
       if (renderFrame) {
         window.cancelAnimationFrame(renderFrame);
         renderPendingWelcome();

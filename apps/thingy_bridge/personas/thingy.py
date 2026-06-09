@@ -30,8 +30,7 @@ from ..tools import db, discord_io, thingy_client, thingy_render
 from .base import PersonaBot
 
 # Walking #ask-thingy history backward, stop once we hit a gap larger
-# than this. Matches the bridge's conversation-grouping heuristic in
-# jobs/watch.py — a >30-min pause is treated as a fresh session, so
+# than this. A >30-min pause is treated as a fresh Discord session, so
 # yesterday's CTO chat doesn't get dragged into today's RSS question.
 SESSION_GAP = timedelta(minutes=30)
 

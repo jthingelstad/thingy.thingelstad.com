@@ -2,12 +2,17 @@
 //
 // The front-end is a thin client of the Librarian API (see ROADMAP.md /
 // STANDALONE_BUILD.md). The two URLs below are the only runtime coupling to the
-// backend. Defaults point at the live Lambdas; override per-environment with
-// LIBRARIAN_API_URL / LIBRARIAN_STREAM_URL for local dev or staging.
+// backend and must be supplied by the build environment.
 
 function env(name, fallback) {
   const v = process.env[name];
   return v && v.trim() ? v.trim() : fallback;
+}
+
+function requiredEnv(name) {
+  const v = process.env[name];
+  if (v && v.trim()) return v.trim();
+  throw new Error(`${name} is required to build Thingy.`);
 }
 
 function assetVersion() {
@@ -45,14 +50,8 @@ module.exports = {
   ],
 
   // Librarian API endpoints owned by Studio.
-  librarianApiUrl: env(
-    "LIBRARIAN_API_URL",
-    "https://k0yklt9vg3.execute-api.us-east-1.amazonaws.com"
-  ),
-  librarianStreamUrl: env(
-    "LIBRARIAN_STREAM_URL",
-    "https://jcvud66qqpq53frvno5stoqntm0zqntw.lambda-url.us-east-1.on.aws/"
-  ),
+  librarianApiUrl: requiredEnv("LIBRARIAN_API_URL"),
+  librarianStreamUrl: requiredEnv("LIBRARIAN_STREAM_URL"),
 
   // Tinylytics site profile for standalone Thingy. Override with TINYLYTICS_SITE_UID;
   // the client's event hooks no-op when empty. The embed loader (base.njk)

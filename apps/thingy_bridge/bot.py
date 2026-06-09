@@ -1,6 +1,7 @@
 """thingy_bridge entrypoint.
 
-Run with ``python -m apps.thingy_bridge.bot`` from the repo root.
+Run with ``apps/thingy_bridge/venv/bin/python -m apps.thingy_bridge.bot``
+from the repo root.
 
 Spins up a single discord.py Client (the Thingy bot), runs DB
 migrations, registers the ``/thingy`` slash tree, and starts the

@@ -282,7 +282,7 @@ def lookup_thingy_request_by_response(
     return dict(row) if row else None
 
 
-# ---------- Job locks (single-asset serialization for the watch job) ----------
+# ---------- Job locks (single-asset serialization for future bridge jobs) ----------
 
 def _pid_alive(pid: int) -> bool:
     """True if ``pid`` looks like a live process. A nonexistent pid is

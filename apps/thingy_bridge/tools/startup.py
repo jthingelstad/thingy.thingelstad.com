@@ -16,7 +16,7 @@ A single-shot ``_startup_announced`` flag on the bot guards against
 discord.py's reconnection-fires-on_ready behaviour, so a transient
 gateway blip doesn't spam #chatter with repeat "online" cards. Post
 failures (e.g. Thingy not yet permissioned into #chatter) are caught
-and logged — same shape as ``jobs/watch._try_post_card``.
+and logged so startup problems are visible without crashing the bot.
 """
 
 from __future__ import annotations
@@ -42,7 +42,7 @@ CHANNELS: list[tuple[str, str]] = [
 
 REQUIRED_PERMS = ("view_channel", "send_messages", "read_message_history")
 
-COMMANDS_SUMMARY = "/thingy recent · /thingy show · /thingy new · /thingy scope"
+COMMANDS_SUMMARY = "/thingy new · /thingy scope"
 
 
 def git_hash() -> str:

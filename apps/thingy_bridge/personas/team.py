@@ -1,5 +1,4 @@
-"""Minimal team registry — the bridge has one bot, but JobContext.post
-expects ``persona=…`` routing so the watch job's signatures stay clean.
+"""Minimal team registry — the bridge has one bot today.
 
 If a second persona ever ships in this app, this is where shared
 orchestration would live (claim semantics, round counters, etc).
