@@ -204,6 +204,8 @@ permalink: "/chat/"
 <script src="/js/thingy-session.js?v={{ site.assetVersion }}"></script>
 <script src="/js/thingy-composer.js?v={{ site.assetVersion }}"></script>
 <script src="/js/thingy-markdown.js?v={{ site.assetVersion }}"></script>
+<script src="/js/thingy-rail.js?v={{ site.assetVersion }}"></script>
+<script src="/js/thingy-account.js?v={{ site.assetVersion }}"></script>
 <script>
   (() => {
     const session = window.ThingySession;
@@ -213,6 +215,7 @@ permalink: "/chat/"
     const streamBase = String(streamBaseSource || '').replace(/\/$/, '');
     const authPanel = document.getElementById('librarian-auth');
     const chatPanel = document.getElementById('librarian-chat');
+    const appShell = document.getElementById('thingy-app-shell');
     const authForm = document.getElementById('librarian-auth-form');
     const questionForm = document.getElementById('librarian-question-form');
     const emailInput = document.getElementById('librarian-email');
@@ -241,10 +244,6 @@ permalink: "/chat/"
     const composerZone = document.querySelector('.thingy-composer-zone');
     const rail = document.querySelector('.rail');
     const prompts = document.getElementById('librarian-prompts');
-    const storageKey = 'weeklyThingLibrarianToken';
-    const userEmailKey = 'thingyUserEmail';
-    const userProfileKey = 'thingyUserProfile';
-    const railCollapsedKey = 'thingyRailCollapsed';
     const activeConvKey = 'thingyActiveConversation';
     const localConversationPrefix = 'local-chat-';
     const mobileConversationTitle = document.getElementById('mobile-conversation-title');
@@ -255,7 +254,15 @@ permalink: "/chat/"
     const mobileRenameConversation = document.getElementById('mobile-rename-conversation');
     const mobileDeleteConversation = document.getElementById('mobile-delete-conversation');
     const railScrim = document.getElementById('rail-scrim');
-    const sessionRefreshWindowSeconds = 60 * 60 * 24 * 3;
+    const railControls = window.ThingyRail.createRailController({
+      shell: appShell,
+      mobileToggle: mobileConversationsToggle,
+      scrim: railScrim,
+      collapseButton: document.getElementById('rail-collapse'),
+      collapsedKey: 'thingyRailCollapsed',
+      showLabel: 'Show conversations',
+      hideLabel: 'Hide conversations'
+    });
     const maxRecents = 20;
     let activeConversationId = null;
     let conversations = [];
@@ -366,7 +373,7 @@ permalink: "/chat/"
     }
 
     function normalizeEmail(value) {
-      return session?.normalizeEmail ? session.normalizeEmail(value) : String(value || '').trim().toLowerCase();
+      return session.normalizeEmail(value);
     }
 
     function normalizeInitialPrompt(value) {
@@ -421,38 +428,23 @@ permalink: "/chat/"
     }
 
     function token() {
-      return session?.token ? session.token() : window.localStorage.getItem(storageKey);
+      return session.token();
     }
 
     function tokenPayload(value = token()) {
-      if (session?.tokenPayload) return session.tokenPayload(value);
-      const encoded = String(value || '').split('.')[0] || '';
-      if (!encoded) return null;
-      try {
-        const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
-        const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
-        return JSON.parse(atob(padded));
-      } catch (error) {
-        return null;
-      }
+      return session.tokenPayload(value);
     }
 
     function tokenExpired(value = token(), skewSeconds = 60) {
-      if (session?.tokenExpired) return session.tokenExpired(value, skewSeconds);
-      const payload = tokenPayload(value);
-      const expiresAt = Number(payload?.exp || 0);
-      return !expiresAt || expiresAt <= Math.floor(Date.now() / 1000) + skewSeconds;
+      return session.tokenExpired(value, skewSeconds);
     }
 
     function tokenNeedsRefresh(value = token()) {
-      if (session?.tokenNeedsRefresh) return session.tokenNeedsRefresh(value);
-      const payload = tokenPayload(value);
-      const expiresAt = Number(payload?.exp || 0);
-      return Boolean(expiresAt) && expiresAt <= Math.floor(Date.now() / 1000) + sessionRefreshWindowSeconds;
+      return session.tokenNeedsRefresh(value);
     }
 
     function storedEmail() {
-      const stored = window.localStorage.getItem(userEmailKey) || '';
+      const stored = session.storedEmail();
       const entered = emailInput && emailInput.value ? emailInput.value.trim() : '';
       return normalizeEmail(entered || stored);
     }
@@ -462,40 +454,18 @@ permalink: "/chat/"
     }
 
     function setUserProfile(data) {
-      const existing = userProfile();
-      const profile = session?.mergeProfile ? session.mergeProfile(data || {}, storedEmail()) : (() => {
-        const incomingProfile = data?.profile && typeof data.profile === 'object' ? data.profile : {};
-        const fallback = {
-          ...existing,
-          ...incomingProfile,
-          preferred_name: String(incomingProfile.preferred_name || existing.preferred_name || '').trim(),
-          status: data?.status || incomingProfile.status || existing.status || '',
-          supporting_member: data?.status === 'premium'
-            || Boolean(incomingProfile.supporting_member || existing.supporting_member)
-            || (Array.isArray(data?.entitlements) && data.entitlements.includes('supporting_member')),
-          entitlements: Array.isArray(data?.entitlements) ? data.entitlements : existing.entitlements,
-          modes: normalizeModes(data?.modes || data?.profile?.modes || [])
-        };
-        try { window.localStorage.setItem(userProfileKey, JSON.stringify(fallback)); } catch (error) { /* ignore */ }
-        return fallback;
-      })();
+      const profile = session.mergeProfile(data || {}, storedEmail());
       const modes = normalizeModes(profile.modes || data?.modes || data?.profile?.modes || []);
       availableModes = modes.length ? modes : [{ id: 'thingy', label: 'Thingy' }];
       if (!availableModes.some((mode) => mode.id === activeMode)) activeMode = 'thingy';
       preferredName = String(profile.preferred_name || '').trim();
-      if (session?.updateStoredProfile) session.updateStoredProfile({ ...profile, modes: availableModes });
+      session.updateStoredProfile({ ...profile, modes: availableModes });
       renderModeControl();
       return profile;
     }
 
     function userProfile() {
-      if (session?.storedProfile) return session.storedProfile();
-      try {
-        const parsed = JSON.parse(window.localStorage.getItem(userProfileKey) || '{}');
-        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
-      } catch (error) {
-        return {};
-      }
+      return session.storedProfile();
     }
 
     function hasSupportingAccess() {
@@ -590,12 +560,7 @@ permalink: "/chat/"
       const cleanName = String(name || '').trim();
       if (!cleanName) return;
       preferredName = cleanName;
-      if (session?.updateStoredProfile) {
-        session.updateStoredProfile({ preferred_name: cleanName });
-      } else {
-        const profile = { ...userProfile(), preferred_name: cleanName };
-        try { window.localStorage.setItem(userProfileKey, JSON.stringify(profile)); } catch (error) { /* ignore */ }
-      }
+      session.updateStoredProfile({ preferred_name: cleanName });
       const accountNameInput = document.getElementById('account-name-input');
       if (accountNameInput) accountNameInput.value = cleanName;
     }
@@ -798,18 +763,9 @@ permalink: "/chat/"
     }
 
     function persistToken(value, data = {}) {
-      if (session?.persistAuth) {
-        session.persistAuth({ ...data, token: value }, data.email || storedEmail());
-        setUserProfile(data);
-      } else {
-        window.localStorage.setItem(storageKey, value);
-        setUserProfile(data);
-      }
+      session.persistAuth({ ...data, token: value }, data.email || storedEmail());
+      setUserProfile(data);
       if (data.email && emailInput) emailInput.value = normalizeEmail(data.email);
-      const emailValue = normalizeEmail(data.email) || storedEmail();
-      if (emailValue) {
-        try { window.localStorage.setItem(userEmailKey, emailValue); } catch (error) { /* ignore */ }
-      }
       refreshAccountIdentity();
     }
 
@@ -866,17 +822,9 @@ permalink: "/chat/"
       const message = String(config.message || '').trim();
       const existingMessage = authMessage ? authMessage.textContent : '';
       const emailValue = storedEmail();
-      if (session?.clearAuth) {
-        session.clearAuth();
-      } else {
-        window.localStorage.removeItem(storageKey);
-        try { window.localStorage.removeItem(userProfileKey); } catch (error) { /* ignore */ }
-      }
+      session.clearAuth();
       if (config.preserveEmail && emailValue) {
         if (emailInput) emailInput.value = emailValue;
-        try { window.localStorage.setItem(userEmailKey, emailValue); } catch (error) { /* ignore */ }
-      } else {
-        try { window.localStorage.removeItem(userEmailKey); } catch (error) { /* ignore */ }
       }
       if (config.scrubAuthParams) scrubUrlParams(['login_token', 'magic_token', 'email']);
       conversations = [];
@@ -904,7 +852,7 @@ permalink: "/chat/"
       const accountBtnEl = document.getElementById('account-btn');
       const accountCaretEl = document.querySelector('.rail-account-caret');
       const accountNameInputEl = document.getElementById('account-name-input');
-      const stored = window.localStorage.getItem(userEmailKey) || '';
+      const stored = session.storedEmail();
       const value = (emailInput && emailInput.value ? emailInput.value.trim() : '') || stored;
       const signedIn = Boolean(token());
       if (accountEmailEl) accountEmailEl.textContent = signedIn ? (value || 'Signed in') : 'Sign in';
@@ -1079,211 +1027,19 @@ permalink: "/chat/"
     window.addEventListener('tinylytics:loaded', flushTinylyticsEvents, { once: true });
 
     function escapeHtml(value) {
-      return String(value || '').replace(/[&<>"']/g, (char) => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-      })[char]);
+      return window.ThingyMarkdown.escapeHtml(value);
     }
 
     function safeMarkdownUrl(url) {
-      if (window.ThingyMarkdown?.safeMarkdownUrl) return window.ThingyMarkdown.safeMarkdownUrl(url);
-      const value = String(url || '').trim();
-      if (/^https?:/i.test(value) || /^mailto:/i.test(value)) return escapeHtml(value);
-      if (/^\/archive\//i.test(value)) return escapeHtml(`https://weekly.thingelstad.com${value}`);
-      if (/^\//.test(value)) return escapeHtml(value);
-      return '#';
-    }
-
-    function citationMap(citations) {
-      const map = new Map();
-      (citations || []).forEach((citation) => {
-        const issue = String(citation.issue_number || '').trim();
-        if (issue && citation.url && !map.has(issue)) map.set(issue, citation);
-      });
-      return map;
-    }
-
-    function citationTitle(citation) {
-      const parts = [`WT${citation.issue_number}: ${citation.subject || 'Weekly Thing'}`];
-      if (citation.publish_date) parts.push(String(citation.publish_date).slice(0, 10));
-      if (citation.section) parts.push(citation.section);
-      return parts.join(' | ');
-    }
-
-    function linkIssueReferences(html, citationsByIssue) {
-      if (!citationsByIssue || citationsByIssue.size === 0) return html;
-      return html.split(/(<[^>]+>)/g).map((part) => {
-        if (part.startsWith('<')) return part;
-        return part.replace(/(^|[^\w&])(?:WT|#)(\d{1,4})\b/g, (match, prefix, issue) => {
-          const citation = citationsByIssue.get(issue);
-          if (!citation) return match;
-          return `${prefix}<a href="${safeMarkdownUrl(citation.url)}" title="${escapeHtml(citationTitle(citation))}" data-tinylytics-event="librarian.source_click" data-tinylytics-event-value="${escapeHtml(issue)}">WT${escapeHtml(issue)}</a>`;
-        });
-      }).join('');
+      return window.ThingyMarkdown.safeMarkdownUrl(url);
     }
 
     function renderInlineMarkdown(text, citationsByIssue) {
-      if (window.ThingyMarkdown?.renderInlineMarkdown) return window.ThingyMarkdown.renderInlineMarkdown(text, citationsByIssue);
-      let html = escapeHtml(text);
-      const code = [];
-      html = html.replace(/`([^`]+)`/g, (_, value) => {
-        const token = `@@CODE${code.length}@@`;
-        code.push(`<code>${value}</code>`);
-        return token;
-      });
-      html = html.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, label, url) => `<a href="${safeMarkdownUrl(url)}">${label}</a>`);
-      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-      html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
-      html = html.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
-      html = html.replace(/(^|[^_])_([^_\n]+)_/g, '$1<em>$2</em>');
-      html = linkIssueReferences(html, citationsByIssue);
-      code.forEach((value, index) => {
-        html = html.replace(`@@CODE${index}@@`, value);
-      });
-      return html;
+      return window.ThingyMarkdown.renderInlineMarkdown(text, citationsByIssue);
     }
 
     function renderMarkdown(markdown, citations = []) {
-      if (window.ThingyMarkdown?.renderMarkdown) return window.ThingyMarkdown.renderMarkdown(markdown, citations);
-      const text = String(markdown || '').trim();
-      if (!text) return '<p>Thingy is thinking...</p>';
-      const citationsByIssue = citationMap(citations);
-      const lines = text.split(/\r?\n/);
-      const html = [];
-      let paragraph = [];
-      let listType = null;
-      let blockquote = [];
-
-      function flushParagraph() {
-        if (!paragraph.length) return;
-        html.push(`<p>${renderInlineMarkdown(paragraph.join(' '), citationsByIssue)}</p>`);
-        paragraph = [];
-      }
-
-      function flushList() {
-        if (!listType) return;
-        html.push(`</${listType}>`);
-        listType = null;
-      }
-
-      function flushBlockquote() {
-        if (!blockquote.length) return;
-        html.push(`<blockquote>${renderMarkdown(blockquote.join('\n'), citations)}</blockquote>`);
-        blockquote = [];
-      }
-
-      function openList(type) {
-        if (listType === type) return;
-        flushParagraph();
-        flushBlockquote();
-        flushList();
-        listType = type;
-        html.push(`<${type}>`);
-      }
-
-      function isTableRow(value) {
-        const trimmed = String(value || '').trim();
-        return trimmed.startsWith('|') && trimmed.endsWith('|') && trimmed.slice(1, -1).includes('|');
-      }
-
-      function isTableSeparator(value) {
-        if (!isTableRow(value)) return false;
-        return tableCells(value).every((cell) => /^:?-{3,}:?$/.test(cell));
-      }
-
-      function tableCells(value) {
-        return String(value || '').trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim());
-      }
-
-      function renderTableCell(tag, value) {
-        return `<${tag}>${renderInlineMarkdown(value, citationsByIssue)}</${tag}>`;
-      }
-
-      for (let index = 0; index < lines.length; index += 1) {
-        const line = lines[index];
-        const trimmed = line.trim();
-        if (!trimmed) {
-          flushParagraph();
-          flushBlockquote();
-          flushList();
-          continue;
-        }
-
-        if (/^(?:-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
-          flushParagraph();
-          flushBlockquote();
-          flushList();
-          html.push('<hr>');
-          continue;
-        }
-
-        if (isTableRow(trimmed) && isTableSeparator(lines[index + 1])) {
-          flushParagraph();
-          flushBlockquote();
-          flushList();
-          const headers = tableCells(trimmed);
-          index += 2;
-          const rows = [];
-          while (index < lines.length && isTableRow(lines[index])) {
-            rows.push(tableCells(lines[index]));
-            index += 1;
-          }
-          index -= 1;
-          html.push('<div class="librarian-table-wrap"><table>');
-          html.push(`<thead><tr>${headers.map((cell) => renderTableCell('th', cell)).join('')}</tr></thead>`);
-          html.push('<tbody>');
-          for (const row of rows) {
-            const normalized = headers.map((_, cellIndex) => row[cellIndex] || '');
-            html.push(`<tr>${normalized.map((cell) => renderTableCell('td', cell)).join('')}</tr>`);
-          }
-          html.push('</tbody></table></div>');
-          continue;
-        }
-
-        const heading = /^(#{2,4})\s+(.+)$/.exec(trimmed);
-        if (heading) {
-          flushParagraph();
-          flushBlockquote();
-          flushList();
-          const level = heading[1].length;
-          html.push(`<h${level}>${renderInlineMarkdown(heading[2], citationsByIssue)}</h${level}>`);
-          continue;
-        }
-
-        const unordered = /^[-*]\s+(.+)$/.exec(trimmed);
-        if (unordered) {
-          openList('ul');
-          html.push(`<li>${renderInlineMarkdown(unordered[1], citationsByIssue)}</li>`);
-          continue;
-        }
-
-        const ordered = /^\d+\.\s+(.+)$/.exec(trimmed);
-        if (ordered) {
-          openList('ol');
-          html.push(`<li>${renderInlineMarkdown(ordered[1], citationsByIssue)}</li>`);
-          continue;
-        }
-
-        const quote = /^>\s?(.+)$/.exec(trimmed);
-        if (quote) {
-          flushParagraph();
-          flushList();
-          blockquote.push(quote[1]);
-          continue;
-        }
-
-        flushList();
-        flushBlockquote();
-        paragraph.push(trimmed);
-      }
-
-      flushParagraph();
-      flushBlockquote();
-      flushList();
-      return html.join('');
+      return window.ThingyMarkdown.renderMarkdown(markdown, citations);
     }
 
     function sourceAccentClass(kind) {
@@ -1843,32 +1599,7 @@ permalink: "/chat/"
     }
 
     async function postJson(path, payload, headers = {}) {
-      if (!apiBase) throw new Error('Thingy has not been connected to the archive API yet.');
-      const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 60000);
-      const response = await fetch(`${apiBase}${path}`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', ...headers },
-        body: JSON.stringify(payload),
-        signal: controller.signal
-      }).catch((error) => {
-        if (error.name === 'AbortError') {
-          throw new Error('Thingy took too long to respond. Please try again.');
-        }
-        throw error;
-      }).finally(() => {
-        window.clearTimeout(timeout);
-      });
-      const requestId = response.headers.get('x-request-id');
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        const message = data.error || 'Thingy is unavailable.';
-        const error = new Error(requestId ? `${message} Reference: ${requestId}` : message);
-        error.requestId = requestId;
-        error.status = response.status;
-        throw error;
-      }
-      return data;
+      return session.postJson(path, payload, headers);
     }
 
     async function postStreamJson(path, payload, headers = {}) {
@@ -1900,7 +1631,7 @@ permalink: "/chat/"
     }
 
     function authHeaders() {
-      return token() ? { authorization: `Bearer ${token()}` } : {};
+      return session.authHeaders();
     }
 
     async function conversationAction(payload) {
@@ -2009,14 +1740,7 @@ permalink: "/chat/"
     }
 
     function setMobileRailOpen(open) {
-      if (!appShell) return;
-      appShell.classList.toggle('is-mobile-rail-open', Boolean(open));
-      if (mobileConversationsToggle) {
-        mobileConversationsToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-        mobileConversationsToggle.setAttribute('aria-label', open ? 'Hide conversations' : 'Show conversations');
-        mobileConversationsToggle.title = open ? 'Hide conversations' : 'Show conversations';
-      }
-      if (railScrim) railScrim.hidden = !open;
+      railControls.setMobileOpen(open);
     }
 
     async function renameActiveConversation() {
@@ -2260,7 +1984,7 @@ permalink: "/chat/"
       if (!railRecents || !railRecentsEmpty) return;
       const list = conversations.filter((entry) => entry && entry.id).slice(0, maxRecents);
       if (!list.length) {
-        railRecents.innerHTML = '';
+        railRecents.replaceChildren();
         railRecents.hidden = true;
         railRecentsEmpty.hidden = false;
         updateMobileConversationTitle();
@@ -2268,21 +1992,48 @@ permalink: "/chat/"
       }
       railRecentsEmpty.hidden = true;
       railRecents.hidden = false;
-      railRecents.innerHTML = list.map((entry) => {
-        const title = escapeHtml(entry.title || 'Untitled chat');
-        const id = escapeHtml(entry.id);
+      const rows = list.map((entry) => {
+        const title = entry.title || 'Untitled chat';
+        const id = String(entry.id || '');
         const mode = entry.mode && entry.mode !== 'thingy' ? modeClass(entry.mode) : '';
-        const modeClassName = mode ? ' has-mode' : '';
-        const modeAttr = mode ? ` data-mode="${escapeHtml(mode)}"` : '';
-        const modeLabelText = mode ? escapeHtml(modeLabel(entry.mode)) : '';
+        const modeLabelText = mode ? modeLabel(entry.mode) : '';
         const modeTitle = mode ? `${title} - ${modeLabelText}` : title;
-        const active = entry.id === activeConversationId ? ' is-active' : '';
-        const activeAttr = entry.id === activeConversationId ? ' aria-current="true"' : '';
-        return `<div class="rail-recent${active}${modeClassName}"${modeAttr} role="listitem">`
-          + `<button type="button" class="rail-recent-open" data-id="${id}" title="${modeTitle}"${activeAttr}><span class="rail-recent-title">${title}</span>${mode ? `<small class="rail-recent-mode">${modeLabelText}</small>` : ''}</button>`
-          + `<button type="button" class="rail-recent-del" data-action="delete-conv" data-id="${id}" aria-label="Delete conversation" title="Delete conversation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>`
-          + `</div>`;
-      }).join('');
+        const row = document.createElement('div');
+        row.className = `rail-recent${entry.id === activeConversationId ? ' is-active' : ''}${mode ? ' has-mode' : ''}`;
+        row.setAttribute('role', 'listitem');
+        if (mode) row.dataset.mode = mode;
+
+        const openButton = document.createElement('button');
+        openButton.type = 'button';
+        openButton.className = 'rail-recent-open';
+        openButton.dataset.id = id;
+        openButton.title = modeTitle;
+        if (entry.id === activeConversationId) openButton.setAttribute('aria-current', 'true');
+
+        const titleEl = document.createElement('span');
+        titleEl.className = 'rail-recent-title';
+        titleEl.textContent = title;
+        openButton.appendChild(titleEl);
+        if (mode) {
+          const modeEl = document.createElement('small');
+          modeEl.className = 'rail-recent-mode';
+          modeEl.textContent = modeLabelText;
+          openButton.appendChild(modeEl);
+        }
+
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.className = 'rail-recent-del';
+        deleteButton.dataset.action = 'delete-conv';
+        deleteButton.dataset.id = id;
+        deleteButton.setAttribute('aria-label', 'Delete conversation');
+        deleteButton.title = 'Delete conversation';
+        deleteButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
+
+        row.append(openButton, deleteButton);
+        return row;
+      });
+      railRecents.replaceChildren(...rows);
       updateMobileConversationTitle();
     }
 
@@ -2806,12 +2557,6 @@ permalink: "/chat/"
     resendConfirmationButton.addEventListener('click', () => {
       submitAuthAction('resend_confirmation', resendConfirmationButton);
     });
-
-    logoutButton.addEventListener('click', () => {
-      clearToken({ scrubAuthParams: true });
-      trackTinylyticsEvent('librarian.logout');
-    });
-
     clearChatButton.addEventListener('click', async () => {
       if (interactionBusy()) return;
       const shell = clearConversation();
@@ -2944,27 +2689,7 @@ permalink: "/chat/"
 
     updateQuestionState();
 
-    /* ---- Rail collapse ---- */
-    const appShell = document.getElementById('thingy-app-shell');
-    const railCollapseBtn = document.getElementById('rail-collapse');
-    if (appShell && window.localStorage.getItem(railCollapsedKey) === '1') {
-      appShell.classList.add('is-collapsed');
-      if (railCollapseBtn) railCollapseBtn.setAttribute('aria-label', 'Expand sidebar');
-    }
-    if (railCollapseBtn && appShell) {
-      railCollapseBtn.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const collapsed = appShell.classList.toggle('is-collapsed');
-        try { window.localStorage.setItem(railCollapsedKey, collapsed ? '1' : '0'); } catch (error) { /* ignore */ }
-        railCollapseBtn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
-      });
-    }
-    if (mobileConversationsToggle) {
-      mobileConversationsToggle.addEventListener('click', (event) => {
-        event.stopPropagation();
-        setMobileRailOpen(!appShell?.classList.contains('is-mobile-rail-open'));
-      });
-    }
+    /* ---- Rail actions ---- */
     if (mobileNewChatButton) {
       mobileNewChatButton.addEventListener('click', async (event) => {
         event.stopPropagation();
@@ -3013,9 +2738,6 @@ permalink: "/chat/"
     if (mobileDeleteConversation) {
       mobileDeleteConversation.addEventListener('click', deleteActiveConversation);
     }
-    if (railScrim) {
-      railScrim.addEventListener('click', () => setMobileRailOpen(false));
-    }
 
     /* ---- Account menu ---- */
     const accountBtn = document.getElementById('account-btn');
@@ -3023,43 +2745,30 @@ permalink: "/chat/"
     const accountNameForm = document.getElementById('account-name-form');
     const accountNameInput = document.getElementById('account-name-input');
     const accountNameStatus = document.getElementById('account-name-status');
-    function toggleAccountMenu(force) {
-      if (!accountMenu) return;
-      const open = force === undefined ? accountMenu.hasAttribute('hidden') : force;
-      accountMenu.toggleAttribute('hidden', !open);
-      if (accountBtn) accountBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    }
-    if (accountBtn) accountBtn.addEventListener('click', (event) => {
-      event.stopPropagation();
-      if (!token()) {
-        toggleAccountMenu(false);
-        if (emailInput) emailInput.focus();
-        return;
-      }
-      toggleAccountMenu();
-    });
-    if (accountMenu) accountMenu.addEventListener('click', (event) => event.stopPropagation());
     if (accountNameInput) accountNameInput.value = preferredName;
-    if (accountNameForm) {
-      accountNameForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        if (!token()) return;
-        const nextName = extractPreferredName(accountNameInput?.value || '');
-        if (!nextName) {
-          if (accountNameStatus) accountNameStatus.textContent = 'Enter a name Thingy should use.';
-          return;
-        }
-        if (accountNameStatus) accountNameStatus.textContent = 'Saving...';
-        try {
-          await postJson('/auth', { action: 'update_profile', preferred_name: nextName }, { authorization: `Bearer ${token()}` });
-          rememberPreferredName(nextName);
-          refreshAccountIdentity();
-          if (accountNameStatus) accountNameStatus.textContent = 'Saved.';
-        } catch (error) {
-          if (accountNameStatus) accountNameStatus.textContent = error.message || 'Could not save that right now.';
-        }
-      });
-    }
+    const accountControls = window.ThingyAccount.createAccountMenu({
+      session,
+      button: accountBtn,
+      menu: accountMenu,
+      nameForm: accountNameForm,
+      nameInput: accountNameInput,
+      nameStatus: accountNameStatus,
+      logoutButton,
+      normalizeName: extractPreferredName,
+      signedIn: () => Boolean(token()),
+      returnTo: '/chat/',
+      onSignedOutClick: () => {
+        if (emailInput) emailInput.focus();
+      },
+      onLogout: () => {
+        clearToken({ scrubAuthParams: true });
+        trackTinylyticsEvent('librarian.logout');
+      },
+      onSaved: (nextName) => {
+        rememberPreferredName(nextName);
+        refreshAccountIdentity();
+      }
+    });
 
     /* ---- Source picker popover ---- */
     const srcpickBtn = document.getElementById('srcpick-btn');
@@ -3185,13 +2894,13 @@ permalink: "/chat/"
       const target = event.target instanceof Element ? event.target : event.target?.parentElement;
       if (target && (srcpickBtn?.contains(target) || srcpickPop?.contains(target))) return;
       toggleSrcPick(false);
-      toggleAccountMenu(false);
+      accountControls.close();
       toggleMobileConversationMenu(false);
     });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
         toggleSrcPick(false);
-        toggleAccountMenu(false);
+        accountControls.close();
         toggleMobileConversationMenu(false);
         setMobileRailOpen(false);
       }

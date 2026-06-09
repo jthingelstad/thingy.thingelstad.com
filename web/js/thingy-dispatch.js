@@ -25,7 +25,15 @@
   const railScrim = document.getElementById('dispatch-rail-scrim');
   const railCollapseBtn = document.getElementById('dispatch-rail-collapse');
   const activeKey = 'thingyActiveDispatchDraft';
-  const railCollapsedKey = 'thingyRailCollapsed';
+  const railControls = window.ThingyRail.createRailController({
+    shell,
+    mobileToggle,
+    scrim: railScrim,
+    collapseButton: railCollapseBtn,
+    collapsedKey: 'thingyRailCollapsed',
+    showLabel: 'Show Dispatches',
+    hideLabel: 'Hide Dispatches'
+  });
   const welcomeText = "What should this Dispatch explore? Give me a topic, question, or thread from Jamie's archive and I'll help shape it before you send it.";
   const maxInputChars = Number(input && input.getAttribute('maxlength') || 1200);
   const dispatchTestMode = (() => {
@@ -41,12 +49,7 @@
   let composerControls = null;
 
   function escapeHtml(value) {
-    if (window.ThingyMarkdown?.escapeHtml) return window.ThingyMarkdown.escapeHtml(value);
-    return String(value || '')
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;');
+    return window.ThingyMarkdown.escapeHtml(value);
   }
 
   function nowIso() {
@@ -244,23 +247,6 @@
     return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   }
 
-  function updateStoredProfile(patch = {}) {
-    return session.updateStoredProfile
-      ? session.updateStoredProfile(patch)
-      : (() => {
-        const profile = { ...session.storedProfile(), ...patch };
-        try { window.localStorage.setItem(session.userProfileKey, JSON.stringify(profile)); } catch (error) { /* ignore */ }
-        return profile;
-      })();
-  }
-
-  function toggleAccountMenu(force) {
-    if (!accountMenu) return;
-    const open = force === undefined ? accountMenu.hasAttribute('hidden') : Boolean(force);
-    accountMenu.toggleAttribute('hidden', !open);
-    if (accountBtn) accountBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-  }
-
   async function dispatchPost(action, extra) {
     if (!(await session.ensureFreshToken())) {
       session.clearAuth();
@@ -325,21 +311,12 @@
   }
 
   function setMobileRailOpen(open) {
-    if (!shell) return;
-    shell.classList.toggle('is-mobile-rail-open', Boolean(open));
-    if (mobileToggle) {
-      mobileToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-      mobileToggle.setAttribute('aria-label', open ? 'Hide Dispatches' : 'Show Dispatches');
-      mobileToggle.title = open ? 'Hide Dispatches' : 'Show Dispatches';
-    }
-    if (railScrim) railScrim.hidden = !open;
+    railControls.setMobileOpen(open);
   }
 
   function renderMessage(message) {
     const role = message.role === 'user' ? 'user' : message.role === 'system' ? 'system' : 'assistant';
-    const body = window.ThingyMarkdown?.renderMarkdown
-      ? window.ThingyMarkdown.renderMarkdown(message.text || '')
-      : String(message.text || '').split(/\n{2,}/).map((part) => `<p>${escapeHtml(part)}</p>`).join('');
+    const body = window.ThingyMarkdown.renderMarkdown(message.text || '');
     return `<article class="librarian-message librarian-message-${role} dispatch-message">${body}</article>`;
   }
 
@@ -369,15 +346,40 @@
     if (emptyEl) emptyEl.hidden = Boolean(rows.length);
     if (!recentsEl) return;
     recentsEl.hidden = !rows.length;
-    recentsEl.innerHTML = rows.map((row) => `
-      <div class="rail-recent dispatch-rail-item ${row.id === activeId ? 'is-active' : ''} is-${escapeHtml(row.status)}" role="listitem">
-        <button class="rail-recent-open" type="button" data-id="${escapeHtml(row.id)}">
-          <span class="rail-recent-title">${escapeHtml(row.title)}</span>
-          <span class="dispatch-state-glyph" aria-label="${escapeHtml(stageLabel(row.status))}" title="${escapeHtml(stageLabel(row.status))}">${escapeHtml(stageGlyph(row.status))}</span>
-        </button>
-        <button type="button" class="rail-recent-del" data-action="delete-dispatch" data-id="${escapeHtml(row.id)}" aria-label="Delete Dispatch" title="Delete Dispatch"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
-      </div>
-    `).join('');
+    const elements = rows.map((row) => {
+      const item = document.createElement('div');
+      item.className = `rail-recent dispatch-rail-item ${row.id === activeId ? 'is-active' : ''} is-${String(row.status || '').replace(/[^a-z0-9_-]/gi, '')}`;
+      item.setAttribute('role', 'listitem');
+
+      const openButton = document.createElement('button');
+      openButton.className = 'rail-recent-open';
+      openButton.type = 'button';
+      openButton.dataset.id = row.id;
+
+      const title = document.createElement('span');
+      title.className = 'rail-recent-title';
+      title.textContent = row.title;
+
+      const glyph = document.createElement('span');
+      glyph.className = 'dispatch-state-glyph';
+      glyph.setAttribute('aria-label', stageLabel(row.status));
+      glyph.title = stageLabel(row.status);
+      glyph.textContent = stageGlyph(row.status);
+      openButton.append(title, glyph);
+
+      const deleteButton = document.createElement('button');
+      deleteButton.type = 'button';
+      deleteButton.className = 'rail-recent-del';
+      deleteButton.dataset.action = 'delete-dispatch';
+      deleteButton.dataset.id = row.id;
+      deleteButton.setAttribute('aria-label', 'Delete Dispatch');
+      deleteButton.title = 'Delete Dispatch';
+      deleteButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
+
+      item.append(openButton, deleteButton);
+      return item;
+    });
+    recentsEl.replaceChildren(...elements);
   }
 
   function render() {
@@ -757,20 +759,6 @@
     setMobileRailOpen(false);
   }));
 
-  if (shell && window.localStorage.getItem(railCollapsedKey) === '1') {
-    shell.classList.add('is-collapsed');
-    if (railCollapseBtn) railCollapseBtn.setAttribute('aria-label', 'Expand sidebar');
-  }
-  if (railCollapseBtn && shell) {
-    railCollapseBtn.addEventListener('click', (event) => {
-      event.stopPropagation();
-      const collapsed = shell.classList.toggle('is-collapsed');
-      try { window.localStorage.setItem(railCollapsedKey, collapsed ? '1' : '0'); } catch (error) { /* ignore */ }
-      railCollapseBtn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
-      railCollapseBtn.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
-    });
-  }
-
   if (recentsEl) {
     recentsEl.addEventListener('click', (event) => {
       const deleteBtn = event.target.closest('[data-action="delete-dispatch"]');
@@ -787,59 +775,24 @@
     });
   }
 
-  if (mobileToggle) {
-    mobileToggle.addEventListener('click', (event) => {
-      event.preventDefault();
-      setMobileRailOpen(!shell?.classList.contains('is-mobile-rail-open'));
-    });
-  }
+  const accountControls = window.ThingyAccount.createAccountMenu({
+    session,
+    button: accountBtn,
+    menu: accountMenu,
+    nameForm: accountNameForm,
+    nameInput: accountNameInput,
+    nameStatus: accountNameStatus,
+    logoutButton,
+    normalizeName: normalizePreferredName,
+    signedIn,
+    returnTo: '/dispatch/',
+    onSaved: () => refreshIdentity()
+  });
 
-  if (railScrim) {
-    railScrim.addEventListener('click', () => setMobileRailOpen(false));
-  }
-
-  if (accountBtn) {
-    accountBtn.addEventListener('click', (event) => {
-      event.stopPropagation();
-      toggleAccountMenu();
-    });
-  }
-
-  if (accountMenu) {
-    accountMenu.addEventListener('click', (event) => event.stopPropagation());
-  }
-
-  if (accountNameForm) {
-    accountNameForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const nextName = normalizePreferredName(accountNameInput?.value || '');
-      if (!nextName) {
-        if (accountNameStatus) accountNameStatus.textContent = 'Enter a name Thingy should use.';
-        return;
-      }
-      if (accountNameStatus) accountNameStatus.textContent = 'Saving...';
-      try {
-        const data = await session.postJson('/auth', { action: 'update_profile', preferred_name: nextName }, session.authHeaders());
-        updateStoredProfile({ ...(data.profile || {}), preferred_name: nextName });
-        refreshIdentity();
-        if (accountNameStatus) accountNameStatus.textContent = 'Saved.';
-      } catch (error) {
-        if (accountNameStatus) accountNameStatus.textContent = error.message || 'Could not save that right now.';
-      }
-    });
-  }
-
-  if (logoutButton) {
-    logoutButton.addEventListener('click', () => {
-      session.clearAuth();
-      window.location.href = session.signInUrl('/dispatch/');
-    });
-  }
-
-  document.addEventListener('click', () => toggleAccountMenu(false));
+  document.addEventListener('click', () => accountControls.close());
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
-      toggleAccountMenu(false);
+      accountControls.close();
       setMobileRailOpen(false);
     }
   });
