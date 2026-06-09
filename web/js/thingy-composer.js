@@ -10,6 +10,7 @@
     const maxChars = Number(options.maxChars || input?.getAttribute('maxlength') || 0);
     const isBusy = typeof options.isBusy === 'function' ? options.isBusy : defaultBusy;
     const onSubmit = typeof options.onSubmit === 'function' ? options.onSubmit : null;
+    const onError = typeof options.onError === 'function' ? options.onError : null;
     const onInput = typeof options.onInput === 'function' ? options.onInput : null;
     const autoSizeEnabled = options.autoSize !== false;
     const maxHeight = Number(options.maxHeight || 240);
@@ -37,7 +38,16 @@
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         if (isBusy()) return;
-        if (onSubmit) await onSubmit(event);
+        if (!onSubmit) return;
+        try {
+          await onSubmit(event);
+        } catch (error) {
+          if (onError) {
+            onError(error);
+          } else {
+            console.error(error);
+          }
+        }
       });
     }
 

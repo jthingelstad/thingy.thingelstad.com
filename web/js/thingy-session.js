@@ -49,18 +49,32 @@
   }
 
   async function postJson(path, payload, headers) {
+    if (!apiUrl()) throw new Error('Thingy has not been connected to the archive API yet.');
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 60000);
     const response = await window.fetch(`${apiUrl()}${path}`, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
         ...(headers || {})
       },
-      body: JSON.stringify(payload || {})
+      body: JSON.stringify(payload || {}),
+      signal: controller.signal
+    }).catch((error) => {
+      if (error.name === 'AbortError') {
+        throw new Error('Thingy took too long to respond. Please try again.');
+      }
+      throw error;
+    }).finally(() => {
+      window.clearTimeout(timeout);
     });
+    const requestId = response.headers.get('x-request-id');
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const error = new Error(data.error || data.message || `Request failed (${response.status})`);
+      const message = data.error || data.message || `Request failed (${response.status})`;
+      const error = new Error(requestId ? `${message} Reference: ${requestId}` : message);
       error.status = response.status;
+      error.requestId = requestId;
       error.data = data;
       throw error;
     }
@@ -89,13 +103,12 @@
     return Array.isArray(modes) ? modes.filter((mode) => mode && mode.id) : [];
   }
 
-  function persistAuth(data, email) {
-    if (!data || !data.token) return null;
-    window.localStorage.setItem(storageKey, data.token);
+  function mergeProfile(data = {}, email = '') {
     const emailValue = normalizeEmail(data.email || email);
     if (emailValue) window.localStorage.setItem(userEmailKey, emailValue);
     const existingProfile = storedProfile();
     const incomingProfile = data.profile && typeof data.profile === 'object' ? data.profile : {};
+    const incomingEntitlements = Array.isArray(data.entitlements) ? data.entitlements : incomingProfile.entitlements;
     const profile = {
       ...existingProfile,
       ...incomingProfile,
@@ -103,12 +116,25 @@
       status: data.status || incomingProfile.status || existingProfile.status || '',
       supporting_member: data.status === 'premium'
         || Boolean(incomingProfile.supporting_member || existingProfile.supporting_member)
-        || (data.entitlements || []).includes('supporting_member'),
-      entitlements: Array.isArray(data.entitlements) ? data.entitlements : incomingProfile.entitlements || existingProfile.entitlements,
+        || (Array.isArray(incomingEntitlements) && incomingEntitlements.includes('supporting_member')),
+      entitlements: Array.isArray(incomingEntitlements) ? incomingEntitlements : existingProfile.entitlements,
       modes: normalizeModes(data.modes || incomingProfile.modes || existingProfile.modes)
     };
     window.localStorage.setItem(userProfileKey, JSON.stringify(profile));
     return profile;
+  }
+
+  function updateStoredProfile(patch = {}) {
+    const existingProfile = storedProfile();
+    const profile = { ...existingProfile, ...(patch || {}) };
+    window.localStorage.setItem(userProfileKey, JSON.stringify(profile));
+    return profile;
+  }
+
+  function persistAuth(data, email) {
+    if (!data || !data.token) return null;
+    window.localStorage.setItem(storageKey, data.token);
+    return mergeProfile(data, email);
   }
 
   function clearAuth() {
@@ -159,6 +185,8 @@
     postJson,
     refreshAuth,
     ensureFreshToken,
+    mergeProfile,
+    updateStoredProfile,
     persistAuth,
     clearAuth,
     storedEmail,

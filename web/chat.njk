@@ -196,10 +196,17 @@ permalink: "/chat/"
 
 </section>
 
+<script>
+  window.ThingyConfig = {
+    librarianApiUrl: "{{ site.librarianApiUrl }}"
+  };
+</script>
+<script src="/js/thingy-session.js?v={{ site.assetVersion }}"></script>
 <script src="/js/thingy-composer.js?v={{ site.assetVersion }}"></script>
 <script src="/js/thingy-markdown.js?v={{ site.assetVersion }}"></script>
 <script>
   (() => {
+    const session = window.ThingySession;
     const apiBaseSource = window.WEEKLY_THING_LIBRARIAN_API === undefined ? '{{ site.librarianApiUrl }}' : window.WEEKLY_THING_LIBRARIAN_API;
     const streamBaseSource = window.WEEKLY_THING_LIBRARIAN_STREAM_API === undefined ? '{{ site.librarianStreamUrl }}' : window.WEEKLY_THING_LIBRARIAN_STREAM_API;
     const apiBase = String(apiBaseSource || '').replace(/\/$/, '');
@@ -359,7 +366,7 @@ permalink: "/chat/"
     }
 
     function normalizeEmail(value) {
-      return String(value || '').trim();
+      return session?.normalizeEmail ? session.normalizeEmail(value) : String(value || '').trim().toLowerCase();
     }
 
     function normalizeInitialPrompt(value) {
@@ -414,10 +421,11 @@ permalink: "/chat/"
     }
 
     function token() {
-      return window.localStorage.getItem(storageKey);
+      return session?.token ? session.token() : window.localStorage.getItem(storageKey);
     }
 
     function tokenPayload(value = token()) {
+      if (session?.tokenPayload) return session.tokenPayload(value);
       const encoded = String(value || '').split('.')[0] || '';
       if (!encoded) return null;
       try {
@@ -430,12 +438,14 @@ permalink: "/chat/"
     }
 
     function tokenExpired(value = token(), skewSeconds = 60) {
+      if (session?.tokenExpired) return session.tokenExpired(value, skewSeconds);
       const payload = tokenPayload(value);
       const expiresAt = Number(payload?.exp || 0);
       return !expiresAt || expiresAt <= Math.floor(Date.now() / 1000) + skewSeconds;
     }
 
     function tokenNeedsRefresh(value = token()) {
+      if (session?.tokenNeedsRefresh) return session.tokenNeedsRefresh(value);
       const payload = tokenPayload(value);
       const expiresAt = Number(payload?.exp || 0);
       return Boolean(expiresAt) && expiresAt <= Math.floor(Date.now() / 1000) + sessionRefreshWindowSeconds;
@@ -453,29 +463,33 @@ permalink: "/chat/"
 
     function setUserProfile(data) {
       const existing = userProfile();
-      const modes = normalizeModes(data?.modes || data?.profile?.modes || []);
+      const profile = session?.mergeProfile ? session.mergeProfile(data || {}, storedEmail()) : (() => {
+        const incomingProfile = data?.profile && typeof data.profile === 'object' ? data.profile : {};
+        const fallback = {
+          ...existing,
+          ...incomingProfile,
+          preferred_name: String(incomingProfile.preferred_name || existing.preferred_name || '').trim(),
+          status: data?.status || incomingProfile.status || existing.status || '',
+          supporting_member: data?.status === 'premium'
+            || Boolean(incomingProfile.supporting_member || existing.supporting_member)
+            || (Array.isArray(data?.entitlements) && data.entitlements.includes('supporting_member')),
+          entitlements: Array.isArray(data?.entitlements) ? data.entitlements : existing.entitlements,
+          modes: normalizeModes(data?.modes || data?.profile?.modes || [])
+        };
+        try { window.localStorage.setItem(userProfileKey, JSON.stringify(fallback)); } catch (error) { /* ignore */ }
+        return fallback;
+      })();
+      const modes = normalizeModes(profile.modes || data?.modes || data?.profile?.modes || []);
       availableModes = modes.length ? modes : [{ id: 'thingy', label: 'Thingy' }];
       if (!availableModes.some((mode) => mode.id === activeMode)) activeMode = 'thingy';
-      const entitlements = Array.isArray(data?.entitlements) ? data.entitlements : data?.profile?.entitlements;
-      const incomingProfile = data?.profile && typeof data.profile === 'object' ? data.profile : {};
-      const profile = {
-        ...existing,
-        ...incomingProfile,
-        preferred_name: String(incomingProfile.preferred_name || existing.preferred_name || '').trim(),
-        status: data?.status || incomingProfile.status || existing.status || '',
-        supporting_member: data?.status === 'premium'
-          || Boolean(incomingProfile.supporting_member || existing.supporting_member)
-          || (Array.isArray(entitlements) && entitlements.includes('supporting_member')),
-        entitlements: Array.isArray(entitlements) ? entitlements : existing.entitlements,
-        modes: availableModes
-      };
       preferredName = String(profile.preferred_name || '').trim();
-      try { window.localStorage.setItem(userProfileKey, JSON.stringify(profile)); } catch (error) { /* ignore */ }
+      if (session?.updateStoredProfile) session.updateStoredProfile({ ...profile, modes: availableModes });
       renderModeControl();
       return profile;
     }
 
     function userProfile() {
+      if (session?.storedProfile) return session.storedProfile();
       try {
         const parsed = JSON.parse(window.localStorage.getItem(userProfileKey) || '{}');
         return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
@@ -576,8 +590,12 @@ permalink: "/chat/"
       const cleanName = String(name || '').trim();
       if (!cleanName) return;
       preferredName = cleanName;
-      const profile = { ...userProfile(), preferred_name: cleanName };
-      try { window.localStorage.setItem(userProfileKey, JSON.stringify(profile)); } catch (error) { /* ignore */ }
+      if (session?.updateStoredProfile) {
+        session.updateStoredProfile({ preferred_name: cleanName });
+      } else {
+        const profile = { ...userProfile(), preferred_name: cleanName };
+        try { window.localStorage.setItem(userProfileKey, JSON.stringify(profile)); } catch (error) { /* ignore */ }
+      }
       const accountNameInput = document.getElementById('account-name-input');
       if (accountNameInput) accountNameInput.value = cleanName;
     }
@@ -780,8 +798,13 @@ permalink: "/chat/"
     }
 
     function persistToken(value, data = {}) {
-      window.localStorage.setItem(storageKey, value);
-      setUserProfile(data);
+      if (session?.persistAuth) {
+        session.persistAuth({ ...data, token: value }, data.email || storedEmail());
+        setUserProfile(data);
+      } else {
+        window.localStorage.setItem(storageKey, value);
+        setUserProfile(data);
+      }
       if (data.email && emailInput) emailInput.value = normalizeEmail(data.email);
       const emailValue = normalizeEmail(data.email) || storedEmail();
       if (emailValue) {
@@ -843,14 +866,18 @@ permalink: "/chat/"
       const message = String(config.message || '').trim();
       const existingMessage = authMessage ? authMessage.textContent : '';
       const emailValue = storedEmail();
-      window.localStorage.removeItem(storageKey);
+      if (session?.clearAuth) {
+        session.clearAuth();
+      } else {
+        window.localStorage.removeItem(storageKey);
+        try { window.localStorage.removeItem(userProfileKey); } catch (error) { /* ignore */ }
+      }
       if (config.preserveEmail && emailValue) {
         if (emailInput) emailInput.value = emailValue;
         try { window.localStorage.setItem(userEmailKey, emailValue); } catch (error) { /* ignore */ }
       } else {
         try { window.localStorage.removeItem(userEmailKey); } catch (error) { /* ignore */ }
       }
-      try { window.localStorage.removeItem(userProfileKey); } catch (error) { /* ignore */ }
       if (config.scrubAuthParams) scrubUrlParams(['login_token', 'magic_token', 'email']);
       conversations = [];
       availableModes = [{ id: 'thingy', label: 'Thingy' }];

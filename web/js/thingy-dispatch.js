@@ -24,7 +24,6 @@
   const mobileToggle = document.getElementById('dispatch-mobile-toggle');
   const railScrim = document.getElementById('dispatch-rail-scrim');
   const railCollapseBtn = document.getElementById('dispatch-rail-collapse');
-  const draftKey = 'thingyDispatchDrafts';
   const activeKey = 'thingyActiveDispatchDraft';
   const railCollapsedKey = 'thingyRailCollapsed';
   const welcomeText = "What should this Dispatch explore? Give me a topic, question, or thread from Jamie's archive and I'll help shape it before you send it.";
@@ -34,7 +33,7 @@
     const value = String(params.get('dispatch_test') || params.get('test') || '').trim().toLowerCase();
     return value === 'template' || value === 'template_test';
   })();
-  let drafts = loadDrafts();
+  let drafts = [];
   let activeId = window.localStorage.getItem(activeKey) || '';
   let busy = false;
   let pollTimer = 0;
@@ -67,6 +66,8 @@
       upgrade: 'Ready',
       queued: 'Queued',
       generating: 'Generating',
+      ready_to_send: 'Sending',
+      sending: 'Sending',
       sent: 'Sent',
       failed: 'Failed'
     }[value] || 'Draft';
@@ -100,37 +101,10 @@
     return '';
   }
 
-  function draftIdentity(draft) {
-    return serverDispatchId(draft) || String(draft?.id || '');
-  }
-
   function hasDraftContent(draft) {
     if (!draft) return false;
     if (draft.prompt || draft.direction || draft.currentQuestion || draft.clarificationAnswer) return true;
     return (draft.messages || []).some((message) => String(message.text || '') && message.text !== welcomeText);
-  }
-
-  function isInFlightStage(stage) {
-    return ['shaping', 'needs_clarification', 'ready', 'upgrade', 'queued', 'generating', 'sent', 'failed'].includes(stage);
-  }
-
-  function draftTime(draft) {
-    const time = Date.parse(draft?.updatedAt || '');
-    return Number.isFinite(time) ? time : 0;
-  }
-
-  function shouldPreferLocalDraft(localDraft, serverDraft) {
-    if (!localDraft || !hasDraftContent(localDraft) || !isInFlightStage(localDraft.stage)) return false;
-    return draftTime(localDraft) >= draftTime(serverDraft);
-  }
-
-  function keepLocalDraftWhenMissingFromServer(draft, serverIds) {
-    if (draft?.id && draft.id === activeId && !serverDispatchId(draft)) return true;
-    if (!hasDraftContent(draft)) return false;
-    const id = draftIdentity(draft);
-    if (!id) return true;
-    if (serverIds.has(id)) return false;
-    return isInFlightStage(draft.stage);
   }
 
   function draftStageFromRow(row) {
@@ -140,7 +114,7 @@
 
   function fallbackMessagesForRow(row) {
     if (Array.isArray(row.messages) && row.messages.length) return row.messages;
-    if (row.status === 'queued' || row.status === 'generating') {
+    if (['queued', 'generating', 'ready_to_send', 'sending'].includes(row.status)) {
       return [{ role: 'assistant', text: 'This Dispatch is queued and I am preparing it now.' }];
     }
     if (row.status === 'sent') {
@@ -172,18 +146,9 @@
     });
   }
 
-  function loadDrafts() {
-    try {
-      const parsed = JSON.parse(window.localStorage.getItem(draftKey) || '[]');
-      return Array.isArray(parsed) ? parsed.map(normalizeDraft) : [];
-    } catch (error) {
-      return [];
-    }
-  }
-
   function saveDrafts() {
     drafts.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
-    window.localStorage.setItem(draftKey, JSON.stringify(drafts.slice(0, 20)));
+    drafts = drafts.slice(0, 24);
   }
 
   function activeDraft() {
@@ -264,9 +229,13 @@
   }
 
   function updateStoredProfile(patch = {}) {
-    const profile = { ...session.storedProfile(), ...patch };
-    try { window.localStorage.setItem(session.userProfileKey, JSON.stringify(profile)); } catch (error) { /* ignore */ }
-    return profile;
+    return session.updateStoredProfile
+      ? session.updateStoredProfile(patch)
+      : (() => {
+        const profile = { ...session.storedProfile(), ...patch };
+        try { window.localStorage.setItem(session.userProfileKey, JSON.stringify(profile)); } catch (error) { /* ignore */ }
+        return profile;
+      })();
   }
 
   function toggleAccountMenu(force) {
@@ -498,29 +467,15 @@
     try {
       const data = await dispatchPost('list', { limit: 12 });
       const serverDrafts = (data.dispatches || []).map(draftFromServerRow);
-      const localById = new Map(drafts.map((draft) => [draftIdentity(draft), draft]).filter(([id]) => id));
-      const mergedServerDrafts = serverDrafts.map((serverDraft) => {
-        const localDraft = localById.get(draftIdentity(serverDraft));
-        return shouldPreferLocalDraft(localDraft, serverDraft) ? localDraft : serverDraft;
-      });
-      const serverIds = new Set(mergedServerDrafts.map((draft) => draftIdentity(draft)));
-      const localUnsynced = drafts.filter((draft) => !serverDispatchId(draft) && hasDraftContent(draft));
-      const localFallbacks = drafts.filter((draft) => keepLocalDraftWhenMissingFromServer(draft, serverIds));
+      const activeLocal = draftById(activeId);
+      const keepActiveLocal = activeLocal && !serverDispatchId(activeLocal) && hasDraftContent(activeLocal);
       drafts = [
-        ...mergedServerDrafts,
-        ...localFallbacks.filter((draft) => !serverIds.has(draftIdentity(draft)))
+        ...(keepActiveLocal ? [activeLocal] : []),
+        ...serverDrafts
       ].sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))).slice(0, 24);
       if (!drafts.some((draft) => draft.id === activeId)) {
         activeId = drafts[0]?.id || '';
         if (activeId) window.localStorage.setItem(activeKey, activeId);
-      }
-      saveDrafts();
-      for (const draft of localUnsynced) {
-        try {
-          await saveDraftToServer(draft, { status: draft.stage === 'empty' ? 'draft' : draft.stage });
-        } catch (error) {
-          // Local cache remains as a best-effort fallback if migration fails.
-        }
       }
       saveDrafts();
       if (data.entitlements || data.supporting_member) {
@@ -890,6 +845,6 @@
   render();
   loadHistory().then(() => {
     const draft = activeDraft();
-    if (draft.dispatchId && (draft.stage === 'queued' || draft.stage === 'generating')) startPolling();
+    if (draft.dispatchId && ['queued', 'generating', 'ready_to_send', 'sending'].includes(draft.stage)) startPolling();
   });
 }());
