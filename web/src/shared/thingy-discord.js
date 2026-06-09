@@ -5,6 +5,14 @@ const copy = document.getElementById('thingy-discord-copy');
 const message = document.getElementById('thingy-discord-message');
 const codeWrap = document.getElementById('thingy-discord-code');
 const codeValue = document.getElementById('thingy-discord-code-value');
+const commandWrap = document.getElementById('thingy-discord-command');
+const commandValue = document.getElementById('thingy-discord-command-value');
+const copyCommandButton = document.getElementById('thingy-discord-copy-command');
+
+function discordConfirmCommand(code) {
+  const clean = String(code || '').trim();
+  return clean ? `/thingy confirm ${clean}` : '';
+}
 
 function setMessage(text, kind = '') {
   if (!message) return;
@@ -17,8 +25,38 @@ function setCopy(text) {
 }
 
 async function refreshProfile() {
-  if (!(await session.ensureFreshToken())) return session.storedProfile();
+  if (!session.token() || session.tokenExpired()) return session.storedProfile();
+  try {
+    const data = await session.postJson('/auth', { action: 'refresh_session' }, session.authHeaders());
+    session.persistAuth(data, session.storedEmail());
+  } catch (error) {
+    // Fall back to the cached profile; the code request below will surface auth failures.
+  }
   return session.storedProfile();
+}
+
+function renderDiscordCommand(code) {
+  const command = discordConfirmCommand(code);
+  if (!command) {
+    if (codeWrap) codeWrap.hidden = true;
+    if (commandWrap) commandWrap.hidden = true;
+    if (codeValue) codeValue.textContent = '';
+    if (commandValue) commandValue.textContent = '';
+    return '';
+  }
+  if (codeWrap) codeWrap.hidden = false;
+  if (codeValue) codeValue.textContent = code;
+  if (commandWrap) commandWrap.hidden = false;
+  if (commandValue) commandValue.textContent = command;
+  return command;
+}
+
+async function copyText(value) {
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    await navigator.clipboard.writeText(value);
+    return true;
+  }
+  return false;
 }
 
 async function initDiscordLink() {
@@ -54,15 +92,34 @@ async function initDiscordLink() {
       state,
       email: session.storedEmail()
     }, session.authHeaders());
-    if (codeWrap) codeWrap.hidden = false;
-    if (codeValue) codeValue.textContent = data.code || '';
-    setCopy('Paste this code back into Discord with /thingy confirm.');
+    const code = String(data.code || '').trim();
+    const command = renderDiscordCommand(code);
+    if (!command) throw new Error('Thingy did not return a Discord verification code. Run /thingy verify again.');
+    setCopy('Paste this command back into Discord.');
     setMessage('The code expires soon and only works for the Discord account that started verification.', 'success');
     if (data.profile) session.updateStoredProfile(data.profile);
   } catch (error) {
+    renderDiscordCommand('');
     setCopy('Thingy could not create a Discord verification code.');
     setMessage(error.message || 'Run /thingy verify again in Discord.', 'error');
   }
 }
 
+if (copyCommandButton) {
+  copyCommandButton.addEventListener('click', async () => {
+    const command = String(commandValue?.textContent || '').trim();
+    if (!command) return;
+    try {
+      const copied = await copyText(command);
+      setMessage(copied ? 'Copied the Discord command.' : 'Copy is not available in this browser. Select the command and copy it manually.', copied ? 'success' : 'error');
+    } catch (error) {
+      setMessage('Copy failed. Select the command and copy it manually.', 'error');
+    }
+  });
+}
+
 initDiscordLink();
+
+export {
+  discordConfirmCommand
+};

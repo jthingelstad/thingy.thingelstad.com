@@ -105,6 +105,11 @@
   background: var(--surface-soft);
 }
 
+.thingy-discord-code[hidden],
+.thingy-discord-command[hidden] {
+  display: none;
+}
+
 .thingy-discord-code span {
   color: var(--muted);
   font-size: 12px;
@@ -117,6 +122,47 @@
   font-family: var(--mono);
   font-size: clamp(2rem, 7vw, 3.5rem);
   letter-spacing: 0.08em;
+}
+
+.thingy-discord-command {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--code-bg);
+}
+
+.thingy-discord-command span {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.thingy-discord-command code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 15px;
+}
+
+.thingy-discord-command button {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--accent-deep);
+  border-radius: 7px;
+  background: var(--accent-deep);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 .thingy-discord-actions {
@@ -144,6 +190,10 @@
   }
 
   .thingy-signin-row {
+    grid-template-columns: 1fr;
+  }
+
+  .thingy-discord-command {
     grid-template-columns: 1fr;
   }
 }
