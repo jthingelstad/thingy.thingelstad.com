@@ -4,7 +4,7 @@ Thingy is the standalone web home for Jamie Thingelstad's archive agent:
 `https://thingy.thingelstad.com/`.
 
 For product-surface alignment across the web app, Discord, and Studio, see
-[`THINGY_SURFACES.md`](THINGY_SURFACES.md).
+[`docs/THINGY_SURFACES.md`](docs/THINGY_SURFACES.md).
 
 ## URL Parameters
 

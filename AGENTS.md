@@ -1,13 +1,13 @@
 # AGENTS.md
 
-Use this file as the working playbook for agents in this repo. `CLAUDE.md`
-has deeper architectural context; `README.md` has user-facing operating notes;
-`ROADMAP.md` explains where Thingy is going.
+Use this file as the working playbook for agents in this repo. `README.md`
+has user-facing operating notes; `docs/ROADMAP.md` explains where Thingy is
+going.
 
 ## What This Repo Is
 
 Thingy is Jamie Thingelstad's public agent for interacting with his published
-online archive.
+online archive. This repo is the query surface for Thingy.
 
 This repo contains two public/client surfaces:
 
@@ -16,6 +16,43 @@ This repo contains two public/client surfaces:
 
 The brain is not here. Retrieval, embeddings, corpus intelligence, auth
 backend, feedback persistence, and the Librarian API live in `studio-thing`.
+Both apps are live clients of the Librarian API.
+
+## Architecture Context
+
+This repo is one of four that work together. The short version:
+
+- **Studio (`studio-thing`)** is the brain: authoring agents, production
+  pipeline, editorial source of truth, the Librarian Lambda, and the corpus.
+- **Weekly (`weekly.thingelstad.com`)** renders the newsletter site from inputs
+  Studio commits in.
+- **Another (`another.thingelstad.com`)** publishes the podcast; Studio imports
+  its episode transcripts for the podcast corpus.
+- **Thingy (this repo)** is the query surface, web plus Discord, that talks to
+  Studio's Librarian Lambda at runtime.
+
+The repo boundary matters: because Thingy is a live client across a repo
+boundary, the Librarian API `/auth`, `/chat`, `/retrieve`, `/feedback`,
+`/conversations`, and `/dispatch` are versioned runtime contracts, not internal
+functions. Casual schema changes break this repo. Version before changing.
+
+## Surface Responsibilities
+
+`web/` is a Vite-built static app served by GitHub Pages. It handles auth UI,
+streams `/chat` SSE from the Librarian Lambda, shapes Dispatch drafts, renders
+citations, collects feedback, and runs browser-only UX. It has no server beyond
+GitHub Pages.
+
+`apps/thingy_bridge/` is the Discord side of Thingy. It is a standalone Python
+process running one `discord.py` client plus APScheduler support. It answers
+questions in the configured member channel and provides member session/source
+commands. Conversation eval cards, Dispatch cards, and operator visibility are
+posted by API-side webhooks/reports, not by bridge polling.
+
+Conversation modes are backend-enforced and conversation-scoped. Current modes
+are default Thingy, Research Guide, Thought Partner, and Trusted Circle. Start
+with the published archive only; do not introduce a hidden private corpus unless
+Jamie explicitly makes that a separate product decision.
 
 ## First Checks
 
@@ -31,7 +68,8 @@ For web work, also inspect:
 
 ```sh
 sed -n '1,220p' README.md
-sed -n '1,220p' CLAUDE.md
+sed -n '1,220p' AGENTS.md
+sed -n '1,220p' docs/ROADMAP.md
 sed -n '1,220p' web/vite.config.js
 sed -n '1,220p' web/src/pages/chat.js
 sed -n '1,220p' web/src/pages/dispatch.js
@@ -195,6 +233,16 @@ Stop and confirm before changing anything that affects:
 
 Backend changes belong in `studio-thing`, not here.
 
+Hard constraints:
+
+- `web/` is a static site. No server-side runtime, no secrets in the client.
+  Anything that needs a secret goes through the Lambda, not the page.
+- CORS is configured in Studio, not here. The
+  `apps/librarian/infra/cloudformation.yaml` `AllowedOrigin` parameter must
+  include `https://thingy.thingelstad.com`.
+- Do not grow a second backend here. If a feature needs server logic, add it to
+  the Librarian Lambda in Studio. This repo stays front-ends only.
+
 When you do need to deploy Studio's Librarian Lambdas, use Studio's repo-local
 virtualenv:
 
@@ -256,3 +304,9 @@ Ask before:
 
 Private/sparring Thingy belongs in Studio's owner-gated Discord surface, not
 on the public web app.
+
+When in doubt, start at `docs/ROADMAP.md` for direction and
+`../studio-thing/ALIGNMENT.md` for the cross-repo map. If a task would alter the
+Librarian API contract, add a new conversation mode, or change entitlement
+behavior, make sure the backend remains authoritative and the API-side reports
+can see what happened.

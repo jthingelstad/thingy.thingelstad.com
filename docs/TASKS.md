@@ -27,5 +27,5 @@ Concrete follow-ups for the web surface and bridge. Backend/API tasks live in th
 
 ## Docs
 
-- [ ] Keep this repo's `ROADMAP.md` aligned with Studio's `ROADMAP.md` and `reference/librarian.md` when backend capabilities change.
-- [ ] Keep URL parameter docs aligned with `web/_data/site.js` and `web/index.njk`.
+- [ ] Keep this repo's `docs/ROADMAP.md` aligned with Studio's `ROADMAP.md` and `reference/librarian.md` when backend capabilities change.
+- [ ] Keep URL parameter docs aligned with `web/vite.config.js` and the route HTML files in `web/`.
