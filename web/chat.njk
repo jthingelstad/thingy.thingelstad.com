@@ -1882,8 +1882,21 @@ permalink: "/chat/"
       const id = String(conversationId || '').trim();
       if (!id) return;
       const replaceId = isLocalConversationId(activeConversationId) ? activeConversationId : '';
-      if (!replaceId && conversations.some((entry) => entry.id === id || entry.conversation_id === id)) return;
       const now = new Date().toISOString();
+      const existing = conversations.find((entry) => entry.id === id || entry.conversation_id === id);
+      if (!replaceId && existing) {
+        upsertConversationSummary({
+          ...existing,
+          id,
+          conversation_id: id,
+          title: existing.title || title || 'New chat',
+          scope: existing.scope || scope || currentScope(),
+          mode: normalizeModeId(existing.mode || mode || currentConversationMode()),
+          updated_at: now,
+          last_message_at: now
+        });
+        return;
+      }
       upsertConversationSummary({
         id,
         conversation_id: id,
