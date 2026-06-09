@@ -30,6 +30,12 @@
   text-transform: uppercase;
 }
 
+.thingy-mode-banner-icon {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2.2;
+}
+
 .thingy-mode-banner strong {
   padding: 6px 12px;
   border-radius: 6px;

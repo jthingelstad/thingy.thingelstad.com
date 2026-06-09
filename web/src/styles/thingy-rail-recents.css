@@ -182,6 +182,24 @@
   line-height: 1;
 }
 
+.rail-recent-mode .thingy-icon,
+.dispatch-state-glyph .thingy-icon {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.25;
+}
+
+.dispatch-state-glyph .lucide-loader-circle {
+  animation: thingy-spin 1.1s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes thingy-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .dispatch-rail-item.is-ready .dispatch-state-glyph,
 .dispatch-rail-item.is-upgrade .dispatch-state-glyph {
   border-color: color-mix(in srgb, var(--accent) 38%, transparent);

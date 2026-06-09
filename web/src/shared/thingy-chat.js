@@ -10,10 +10,11 @@ import { applyReturnChip } from './thingy-from.js';
 import { postJsonRequest } from './thingy-http.js';
 import {
   modeClass,
-  modeGlyph,
+  modeIcon,
   normalizeModeId,
   normalizeModes
 } from './thingy-modes.js';
+import { iconSvg } from './thingy-icons.js';
 import {
   escapeHtml as escapeMarkup,
 } from './thingy-markdown.js';
@@ -86,6 +87,7 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
     const clearChatButton = document.getElementById('librarian-clear-chat');
     const curiosityMapButton = document.getElementById('thingy-curiosity-map');
     const modeControl = document.getElementById('thingy-mode-control');
+    const modeIconEl = document.getElementById('thingy-mode-icon');
     const modeSelect = document.getElementById('thingy-mode-select');
     const modeBanner = document.getElementById('thingy-mode-banner');
     const questionInput = document.getElementById('librarian-question');
@@ -295,15 +297,16 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       const label = modeLabel(mode);
       modeBanner.dataset.mode = modeClass(mode);
       modeBanner.setAttribute('aria-label', `${label} mode`);
-      modeBanner.innerHTML = `<span class="thingy-mode-banner-kicker">Mode</span><strong>${escapeHtml(label)}</strong>`;
+      modeBanner.innerHTML = `${iconSvg(modeIcon(mode), { className: 'thingy-mode-banner-icon' })}<span class="thingy-mode-banner-kicker">Mode</span><strong>${escapeHtml(label)}</strong>`;
     }
 
     function renderModeControl() {
       if (!modeControl || !modeSelect) return;
       const show = token() && availableModes.length > 1;
       modeControl.hidden = !show;
-      modeSelect.innerHTML = availableModes.map((mode) => `<option value="${escapeHtml(mode.id)}">${escapeHtml(`${modeGlyph(mode.id)} ${mode.label}`)}</option>`).join('');
+      modeSelect.innerHTML = availableModes.map((mode) => `<option value="${escapeHtml(mode.id)}">${escapeHtml(mode.label)}</option>`).join('');
       modeSelect.value = availableModes.some((mode) => mode.id === activeMode) ? activeMode : 'thingy';
+      if (modeIconEl) modeIconEl.innerHTML = iconSvg(modeIcon(modeSelect.value));
       renderModeBanner();
     }
 
@@ -1022,7 +1025,7 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
           metaTag: 'small',
           metaClass: 'rail-recent-mode',
           metaLabel: modeLabelText,
-          metaText: mode ? modeGlyph(entry.mode) : '',
+          metaIcon: mode ? modeIcon(entry.mode) : '',
           deleteAction: 'delete-conv',
           deleteLabel: 'Delete conversation'
         });

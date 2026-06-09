@@ -20,13 +20,13 @@ function normalizeModes(value) {
     return modes;
   }
 
-function modeGlyph(id) {
+function modeIcon(id) {
     return {
-      thingy: '•',
-      thought_partner: '◐',
-      research_guide: '⌕',
-      trusted_circle: '◎'
-    }[normalizeModeId(id)] || '•';
+      thingy: 'sparkles',
+      thought_partner: 'brain-circuit',
+      research_guide: 'search',
+      trusted_circle: 'users-round'
+    }[normalizeModeId(id)] || 'sparkles';
   }
 
 function modeClass(id) {
@@ -35,7 +35,7 @@ function modeClass(id) {
 
 export {
   modeClass,
-  modeGlyph,
+  modeIcon,
   normalizeModeId,
   normalizeModes
 };

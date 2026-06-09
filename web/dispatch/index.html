@@ -48,23 +48,23 @@
           <img class="rail-mark" src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager">
         </a>
         <button class="rail-iconbtn rail-collapse" id="dispatch-rail-collapse" type="button" aria-label="Collapse sidebar" title="Collapse sidebar">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"></rect><path d="M9 4v16"></path></svg>
+          <span data-thingy-icon="panel-left" aria-hidden="true"></span>
         </button>
       </div>
 
       <nav class="rail-surface-switch" aria-label="Thingy surfaces">
         <a href="/chat/">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path></svg>
+          <span data-thingy-icon="message-square" aria-hidden="true"></span>
           <span>Chat</span>
         </a>
         <a class="is-active" href="/dispatch/" aria-current="page">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"></path><path d="M8 9h8"></path><path d="M8 13h6"></path><path d="M8 17h4"></path></svg>
+          <span data-thingy-icon="newspaper" aria-hidden="true"></span>
           <span>Dispatch</span>
         </a>
       </nav>
 
       <button class="rail-newchat dispatch-new" type="button" id="dispatch-new" data-tinylytics-event="dispatch.new" title="New Dispatch">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+        <span data-thingy-icon="plus" aria-hidden="true"></span>
         <span class="label">New Dispatch</span>
       </button>
 
@@ -81,7 +81,7 @@
             <span class="rail-account-email" id="dispatch-account-email">Signed in</span>
             <span class="rail-account-sub" id="dispatch-account-sub">Weekly Thing reader</span>
           </span>
-          <span class="rail-account-caret" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"></path></svg></span>
+          <span class="rail-account-caret" aria-hidden="true" data-thingy-icon="chevron-down"></span>
         </button>
         <div class="rail-menu" id="dispatch-account-menu" hidden role="menu">
           <form class="rail-account-setting" id="dispatch-account-name-form">
@@ -99,7 +99,7 @@
           </div>
           <div class="rail-menu-sep" role="separator"></div>
           <button type="button" role="menuitem" class="danger" id="dispatch-logout">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path><path d="M9 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3"></path></svg>Logout
+            <span data-thingy-icon="log-out" aria-hidden="true"></span>Logout
           </button>
         </div>
       </div>
@@ -109,14 +109,14 @@
     <section class="thingy-conversation dispatch-conversation" aria-label="Thingy Dispatch">
       <div class="mobile-chatbar" id="dispatch-mobilebar" aria-label="Dispatch">
         <button class="mobile-chatbar-circle" id="dispatch-mobile-toggle" type="button" aria-label="Show Dispatches" aria-expanded="false" title="Show Dispatches">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+          <span data-thingy-icon="chevron-left" aria-hidden="true"></span>
         </button>
         <div class="mobile-chatbar-title">
           <span id="dispatch-mobile-title">Dispatch</span>
         </div>
         <div class="mobile-chatbar-actions">
           <button class="mobile-chatbar-action" id="dispatch-mobile-new" type="button" aria-label="New Dispatch" title="New Dispatch">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+            <span data-thingy-icon="plus" aria-hidden="true"></span>
           </button>
         </div>
       </div>
@@ -136,10 +136,7 @@
               <span class="composer-spacer"></span>
               <span class="composer-count" id="dispatch-count">0 / 1200</span>
               <button type="submit" class="composer-send" aria-label="Send to Thingy" title="Send to Thingy" data-tinylytics-event="dispatch.message">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 19V5"></path>
-                  <path d="m5 12 7-7 7 7"></path>
-                </svg>
+                <span data-thingy-icon="arrow-up" aria-hidden="true"></span>
               </button>
             </div>
           </form>

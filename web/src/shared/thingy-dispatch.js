@@ -11,7 +11,7 @@ import {
   hasDraftContent,
   normalizeDraft,
   serverDispatchId,
-  stageGlyph,
+  stageIcon,
   stageLabel
 } from './thingy-dispatch-drafts.js';
 import { dispatchEditable } from './thingy-dispatch-state.js';
@@ -287,7 +287,7 @@ import { dispatchEditable } from './thingy-dispatch-state.js';
       hasMeta: true,
       metaClass: 'dispatch-state-glyph',
       metaLabel: stageLabel(row.status),
-      metaText: stageGlyph(row.status),
+      metaIcon: stageIcon(row.status),
       deleteAction: 'delete-dispatch',
       deleteLabel: 'Delete Dispatch'
     }));

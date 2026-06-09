@@ -1,13 +1,15 @@
+import { iconSvg } from './thingy-icons.js';
+
 function actionIcon(name) {
-  const icons = {
-    copy: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
-    play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7-11-7z"></path></svg>',
-    pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14"></path><path d="M16 5v14"></path></svg>',
-    up: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10v11"></path><path d="M15 5.5 14 10h5.7a2 2 0 0 1 2 2.3l-1.2 7a2 2 0 0 1-2 1.7H7"></path><path d="M7 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"></path><path d="M14 10V5.5a2.5 2.5 0 0 0-5 0L7 10"></path></svg>',
-    down: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14V3"></path><path d="M15 18.5 14 14h5.7a2 2 0 0 0 2-2.3l-1.2-7A2 2 0 0 0 18.5 3H7"></path><path d="M7 14H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3"></path><path d="M14 14v4.5a2.5 2.5 0 0 1-5 0L7 14"></path></svg>',
-    share: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"></path><path d="M12 16V3"></path><path d="m7 8 5-5 5 5"></path></svg>'
+  const iconNames = {
+    copy: 'copy',
+    play: 'play',
+    pause: 'pause',
+    up: 'thumbs-up',
+    down: 'thumbs-down',
+    share: 'share'
   };
-  return icons[name] || '';
+  return iconSvg(iconNames[name]);
 }
 
 async function copyToClipboard(value) {

@@ -1,3 +1,5 @@
+import { iconSvg } from './thingy-icons.js';
+
 function safeStateClass(value) {
   return String(value || '').replace(/[^a-z0-9_-]/gi, '');
 }
@@ -29,14 +31,18 @@ function createRailRecentItem(options = {}) {
   titleEl.textContent = options.label || 'Untitled';
   openButton.appendChild(titleEl);
 
-  if (options.metaText) {
+  if (options.metaText || options.metaIcon) {
     const metaEl = document.createElement(options.metaTag || 'span');
     metaEl.className = options.metaClass || 'rail-recent-mode';
     if (options.metaLabel) {
       metaEl.setAttribute('aria-label', options.metaLabel);
       metaEl.title = options.metaLabel;
     }
-    metaEl.textContent = options.metaText;
+    if (options.metaIcon) {
+      metaEl.innerHTML = iconSvg(options.metaIcon);
+    } else {
+      metaEl.textContent = options.metaText;
+    }
     openButton.appendChild(metaEl);
   }
 
@@ -47,7 +53,7 @@ function createRailRecentItem(options = {}) {
   deleteButton.dataset.id = id;
   deleteButton.setAttribute('aria-label', options.deleteLabel || 'Delete');
   deleteButton.title = options.deleteLabel || 'Delete';
-  deleteButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
+  deleteButton.innerHTML = iconSvg('x');
 
   row.append(openButton, deleteButton);
   return row;

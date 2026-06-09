@@ -18,20 +18,20 @@ function stageLabel(value) {
   }[value] || 'Draft';
 }
 
-function stageGlyph(value) {
+function stageIcon(value) {
   return {
-    empty: '•',
-    shaping: '…',
-    needs_clarification: '?',
-    ready: '✓',
-    upgrade: '✓',
-    queued: '◷',
-    generating: '◌',
-    ready_to_send: '◷',
-    sending: '◷',
-    sent: '✓',
-    failed: '!'
-  }[value] || '•';
+    empty: 'file-pen',
+    shaping: 'wand-sparkles',
+    needs_clarification: 'circle-help',
+    ready: 'circle-check',
+    upgrade: 'circle-check',
+    queued: 'clock',
+    generating: 'loader-circle',
+    ready_to_send: 'clock',
+    sending: 'send-horizontal',
+    sent: 'check-check',
+    failed: 'triangle-alert'
+  }[value] || 'file-pen';
 }
 
 function normalizeDraft(raw) {
@@ -112,6 +112,6 @@ export {
   hasDraftContent,
   normalizeDraft,
   serverDispatchId,
-  stageGlyph,
+  stageIcon,
   stageLabel
 };
