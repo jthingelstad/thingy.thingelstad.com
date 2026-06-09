@@ -3,10 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "description": "Standalone Thingy web app — thin client of the Librarian API.",
+  "type": "module",
   "scripts": {
     "build": "vite build",
     "serve": "vite --host 0.0.0.0",
-    "clean": "rm -rf _site"
+    "clean": "rm -rf _site",
+    "smoke": "node scripts/smoke-browser.mjs",
+    "test": "node --test tests/*.test.mjs"
   },
   "devDependencies": {
     "vite": "^8.0.16"

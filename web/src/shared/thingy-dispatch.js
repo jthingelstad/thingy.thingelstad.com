@@ -17,6 +17,7 @@ import {
   stageGlyph,
   stageLabel
 } from './thingy-dispatch-drafts.js';
+import { dispatchEditable } from './thingy-dispatch-state.js';
 
 (function () {
   const shell = document.getElementById('dispatch-shell');
@@ -80,7 +81,7 @@ import {
   }
 
   function draftEditable(draft) {
-    return !['queued', 'generating', 'ready_to_send', 'sending', 'sent', 'failed'].includes(String(draft?.stage || ''));
+    return dispatchEditable(draft?.stage);
   }
 
   function saveDrafts() {
