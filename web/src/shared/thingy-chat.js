@@ -651,8 +651,11 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       return isEmptyConversationDraftEntry(entry, mode, modeLabel);
     }
 
-    function dedupeEmptyConversationDrafts(list = []) {
-      return dedupeConversationDrafts(list, { activeConversationId, labelForMode: modeLabel });
+    function dedupeEmptyConversationDrafts(list = [], options = {}) {
+      return dedupeConversationDrafts(list, {
+        activeConversationId: options.activeConversationId || activeConversationId,
+        labelForMode: modeLabel
+      });
     }
 
     function createLocalConversationShell(mode = activeMode) {
@@ -673,8 +676,8 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       });
       conversations = conversations.filter((entry) => !isEmptyConversationDraft(entry, normalized));
       conversations.unshift(shell);
-      conversations = dedupeEmptyConversationDrafts(conversations).slice(0, maxRecents);
-      setActiveConversation(id);
+      conversations = dedupeEmptyConversationDrafts(conversations, { activeConversationId: shell.id }).slice(0, maxRecents);
+      setActiveConversation(shell.id);
       return shell;
     }
 
