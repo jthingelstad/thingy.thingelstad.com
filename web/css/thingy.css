@@ -2020,53 +2020,74 @@ a.thingy-exp-source:hover {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
+  border: 1px solid transparent;
   border-radius: 8px;
-  transition: background 0.12s ease;
+  transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
 }
 
-.rail-recent:hover,
 .rail-recent.is-active {
-  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+  background: color-mix(in srgb, var(--accent-soft) 72%, var(--surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--surface) 66%, transparent);
+}
+
+.rail-recent:hover:not(.is-active) {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.rail-recent.is-active::after {
+  content: "";
+  position: absolute;
+  inset: 6px auto 6px 4px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--accent);
 }
 
 .rail-recent.has-mode {
   overflow: hidden;
-  border: 1px solid var(--mode-rail-line, transparent);
-  background: var(--mode-rail-bg);
+  border-color: transparent;
+  background: transparent;
 }
 
 .rail-recent.has-mode::before {
   content: "";
   position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: var(--mode-rail-accent, transparent);
+  inset: 9px auto 9px 5px;
+  width: 2px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mode-rail-accent, transparent) 78%, transparent);
 }
 
-.rail-recent.has-mode:hover,
 .rail-recent.has-mode.is-active {
-  background: var(--mode-rail-bg-active, var(--mode-rail-bg));
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+  background: color-mix(in srgb, var(--accent-soft) 72%, var(--surface));
+}
+
+.rail-recent.has-mode:hover:not(.is-active) {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.rail-recent.has-mode.is-active::before {
+  opacity: 0;
 }
 
 .rail-recent[data-mode="thought_partner"] {
   --mode-rail-accent: #d39b18;
-  --mode-rail-line: color-mix(in srgb, #d39b18 24%, var(--line));
-  --mode-rail-bg: color-mix(in srgb, #f4c95b 18%, var(--rail-bg));
-  --mode-rail-bg-active: color-mix(in srgb, #f4c95b 28%, var(--surface));
+  --mode-rail-chip-bg: color-mix(in srgb, #f4c95b 26%, var(--surface));
+  --mode-rail-chip-ink: #6d4d09;
 }
 
 .rail-recent[data-mode="research_guide"] {
   --mode-rail-accent: #2f74b5;
-  --mode-rail-line: color-mix(in srgb, #2f74b5 24%, var(--line));
-  --mode-rail-bg: color-mix(in srgb, #cce5ff 36%, var(--rail-bg));
-  --mode-rail-bg-active: color-mix(in srgb, #cce5ff 50%, var(--surface));
+  --mode-rail-chip-bg: color-mix(in srgb, #cce5ff 42%, var(--surface));
+  --mode-rail-chip-ink: #285f92;
 }
 
 .rail-recent[data-mode="trusted_circle"] {
   --mode-rail-accent: #2f8066;
-  --mode-rail-line: color-mix(in srgb, #2f8066 24%, var(--line));
-  --mode-rail-bg: color-mix(in srgb, #d7efe3 36%, var(--rail-bg));
-  --mode-rail-bg-active: color-mix(in srgb, #d7efe3 50%, var(--surface));
+  --mode-rail-chip-bg: color-mix(in srgb, #d7efe3 42%, var(--surface));
+  --mode-rail-chip-ink: #2f8066;
 }
 
 .rail-recent-open {
@@ -2074,7 +2095,7 @@ a.thingy-exp-source:hover {
   gap: 2px;
   min-width: 0;
   width: 100%;
-  padding: 8px 4px 8px 10px;
+  padding: 8px 4px 8px 12px;
   border: 0;
   background: transparent;
   color: var(--ink-soft);
@@ -2087,6 +2108,7 @@ a.thingy-exp-source:hover {
 
 .rail-recent.is-active .rail-recent-open {
   color: var(--ink);
+  font-weight: 800;
 }
 
 .rail-recent-title {
@@ -2108,22 +2130,73 @@ a.thingy-exp-source:hover {
   font-weight: 800;
 }
 
-.dispatch-rail-item.is-ready,
-.dispatch-rail-item.is-upgrade {
-  background: color-mix(in srgb, var(--accent-soft) 40%, transparent);
+.rail-recent-mode {
+  width: fit-content;
+  max-width: 100%;
+  padding: 1px 6px 2px;
+  border-radius: 999px;
+  background: var(--mode-rail-chip-bg, color-mix(in srgb, var(--surface-2) 70%, var(--surface)));
+  color: var(--mode-rail-chip-ink, var(--muted));
+  line-height: 1.25;
 }
 
-.dispatch-rail-item.is-generating,
-.dispatch-rail-item.is-queued {
-  background: color-mix(in srgb, #d6e8f8 45%, transparent);
+.rail-recent.is-active .rail-recent-mode {
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  color: var(--ink-soft);
 }
 
-.dispatch-rail-item.is-sent {
-  background: color-mix(in srgb, #d8eadf 45%, transparent);
+.dispatch-rail-item .rail-recent-open {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
 }
 
-.dispatch-rail-item.is-failed {
-  background: color-mix(in srgb, #f8dfd6 55%, transparent);
+.dispatch-state-glyph {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid color-mix(in srgb, var(--muted) 24%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.dispatch-rail-item.is-ready .dispatch-state-glyph,
+.dispatch-rail-item.is-upgrade .dispatch-state-glyph {
+  border-color: color-mix(in srgb, var(--accent) 38%, transparent);
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
+  color: var(--accent-deep);
+}
+
+.dispatch-rail-item.is-generating .dispatch-state-glyph,
+.dispatch-rail-item.is-queued .dispatch-state-glyph,
+.dispatch-rail-item.is-ready_to_send .dispatch-state-glyph,
+.dispatch-rail-item.is-sending .dispatch-state-glyph {
+  border-color: color-mix(in srgb, #2f74b5 32%, transparent);
+  background: color-mix(in srgb, #d6e8f8 58%, var(--surface));
+  color: #2f5f8a;
+}
+
+.dispatch-rail-item.is-sent .dispatch-state-glyph {
+  border-color: color-mix(in srgb, #2f8066 36%, transparent);
+  background: color-mix(in srgb, #d8eadf 64%, var(--surface));
+  color: #2f8066;
+}
+
+.dispatch-rail-item.is-failed .dispatch-state-glyph {
+  border-color: color-mix(in srgb, #b54730 36%, transparent);
+  background: color-mix(in srgb, #f8dfd6 64%, var(--surface));
+  color: #9a341f;
+}
+
+.dispatch-rail-item.is-active .dispatch-state-glyph {
+  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
 }
 
 .rail-recent-del {

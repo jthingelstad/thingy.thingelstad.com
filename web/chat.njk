@@ -2274,11 +2274,12 @@ permalink: "/chat/"
         const mode = entry.mode && entry.mode !== 'thingy' ? modeClass(entry.mode) : '';
         const modeClassName = mode ? ' has-mode' : '';
         const modeAttr = mode ? ` data-mode="${escapeHtml(mode)}"` : '';
-        const modeTitle = mode ? `${title} - ${escapeHtml(modeLabel(entry.mode))}` : title;
+        const modeLabelText = mode ? escapeHtml(modeLabel(entry.mode)) : '';
+        const modeTitle = mode ? `${title} - ${modeLabelText}` : title;
         const active = entry.id === activeConversationId ? ' is-active' : '';
         const activeAttr = entry.id === activeConversationId ? ' aria-current="true"' : '';
         return `<div class="rail-recent${active}${modeClassName}"${modeAttr} role="listitem">`
-          + `<button type="button" class="rail-recent-open" data-id="${id}" title="${modeTitle}"${activeAttr}><span class="rail-recent-title">${title}</span></button>`
+          + `<button type="button" class="rail-recent-open" data-id="${id}" title="${modeTitle}"${activeAttr}><span class="rail-recent-title">${title}</span>${mode ? `<small class="rail-recent-mode">${modeLabelText}</small>` : ''}</button>`
           + `<button type="button" class="rail-recent-del" data-action="delete-conv" data-id="${id}" aria-label="Delete conversation" title="Delete conversation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>`
           + `</div>`;
       }).join('');

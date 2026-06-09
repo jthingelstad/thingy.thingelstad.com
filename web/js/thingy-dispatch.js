@@ -73,6 +73,22 @@
     }[value] || 'Draft';
   }
 
+  function stageGlyph(value) {
+    return {
+      empty: '•',
+      shaping: '…',
+      needs_clarification: '?',
+      ready: '✓',
+      upgrade: '✓',
+      queued: '◷',
+      generating: '◌',
+      ready_to_send: '◷',
+      sending: '◷',
+      sent: '✓',
+      failed: '!'
+    }[value] || '•';
+  }
+
   function normalizeDraft(raw) {
     const draft = raw && typeof raw === 'object' ? raw : {};
     return {
@@ -357,7 +373,7 @@
       <div class="rail-recent dispatch-rail-item ${row.id === activeId ? 'is-active' : ''} is-${escapeHtml(row.status)}" role="listitem">
         <button class="rail-recent-open" type="button" data-id="${escapeHtml(row.id)}">
           <span class="rail-recent-title">${escapeHtml(row.title)}</span>
-          <small>${escapeHtml(stageLabel(row.status))}</small>
+          <span class="dispatch-state-glyph" aria-label="${escapeHtml(stageLabel(row.status))}" title="${escapeHtml(stageLabel(row.status))}">${escapeHtml(stageGlyph(row.status))}</span>
         </button>
         <button type="button" class="rail-recent-del" data-action="delete-dispatch" data-id="${escapeHtml(row.id)}" aria-label="Delete Dispatch" title="Delete Dispatch"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
       </div>
