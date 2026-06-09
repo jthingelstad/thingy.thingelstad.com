@@ -105,9 +105,30 @@
   background: var(--surface-soft);
 }
 
+.thingy-discord-signin[hidden],
 .thingy-discord-code[hidden],
 .thingy-discord-command[hidden] {
   display: none;
+}
+
+.thingy-discord-signin {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.thingy-discord-signin a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--accent-deep);
+  border-radius: 7px;
+  background: var(--accent-deep);
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
 }
 
 .thingy-discord-code span {

@@ -3,6 +3,8 @@ import { hasSupportingAccess } from './thingy-account.js';
 
 const copy = document.getElementById('thingy-discord-copy');
 const message = document.getElementById('thingy-discord-message');
+const signInWrap = document.getElementById('thingy-discord-signin');
+const signInLink = document.getElementById('thingy-discord-signin-link');
 const codeWrap = document.getElementById('thingy-discord-code');
 const codeValue = document.getElementById('thingy-discord-code-value');
 const commandWrap = document.getElementById('thingy-discord-command');
@@ -22,6 +24,15 @@ function setMessage(text, kind = '') {
 
 function setCopy(text) {
   if (copy) copy.textContent = text || '';
+}
+
+function renderSignIn(state = '') {
+  if (signInWrap) signInWrap.hidden = false;
+  if (signInLink) signInLink.href = discordSignInUrl(state);
+}
+
+function hideSignIn() {
+  if (signInWrap) signInWrap.hidden = true;
 }
 
 async function refreshProfile() {
@@ -66,15 +77,26 @@ function discordSignInUrl(state = '') {
   return url.toString();
 }
 
+function authStateReason() {
+  if (!session.token()) return 'No Thingy session was found in this browser.';
+  if (session.tokenExpired()) return 'Your Thingy session in this browser is expired.';
+  return '';
+}
+
 async function initDiscordLink() {
   const params = new URLSearchParams(window.location.search);
   const state = String(params.get('state') || '').trim();
 
-  if (!session.token() || session.tokenExpired()) {
-    window.location.href = discordSignInUrl(state);
+  const authReason = authStateReason();
+  if (authReason) {
+    renderDiscordCommand('');
+    renderSignIn(state);
+    setCopy('Sign in to Thingy in this browser to finish connecting Discord.');
+    setMessage(`${authReason} The sign-in link will return here with your Discord verification state preserved.`, 'error');
     return;
   }
 
+  hideSignIn();
   const profile = await refreshProfile();
   if (!hasSupportingAccess(profile)) {
     setCopy('Discord is available to Weekly Thing Supporting Members.');
