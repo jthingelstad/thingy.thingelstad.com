@@ -179,7 +179,8 @@ Document behavior changes in `README.md` when touching these.
 
 Privacy requirement: after the app reads these params, the Tinylytics loader
 strips `email`, `prompt`, `from`, `scope`, `corpus`, `dispatch_test`, and
-`test` from the browser URL before analytics loads. Preserve this.
+`test`, plus Discord verification params such as `state` and `code`, from the
+browser URL before analytics loads. Preserve this.
 
 ## Tinylytics
 

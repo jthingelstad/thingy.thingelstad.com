@@ -50,6 +50,7 @@ class PersonaBot(discord.Client):
         intents = discord.Intents.default()
         intents.message_content = True
         intents.guilds = True
+        intents.members = True
         super().__init__(intents=intents)
         self.ready_event = asyncio.Event()
         self._home_channel_id: Optional[int] = (

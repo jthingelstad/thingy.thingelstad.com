@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   normalizePreferredName,
+  renderAccountIdentity,
   savePreferredName
 } from '../src/shared/thingy-account.js';
 
@@ -44,4 +45,42 @@ test('savePreferredName rejects names the API does not confirm', async () => {
     savePreferredName(fakeSession, 'Jamie', normalizePreferredName),
     /could not confirm/i
   );
+});
+
+test('account panel hides Discord linking for normal subscribers', () => {
+  const elements = {
+    discordRow: { hidden: false },
+    discordLink: { href: '', textContent: '' },
+    discordStatus: { textContent: '' }
+  };
+
+  renderAccountIdentity({
+    signedIn: true,
+    profile: { entitlements: ['reader'] },
+    elements
+  });
+
+  assert.equal(elements.discordRow.hidden, true);
+});
+
+test('account panel shows Discord linking for supporting members', () => {
+  const elements = {
+    discordRow: { hidden: true },
+    discordLink: { href: '', textContent: '' },
+    discordStatus: { textContent: '' }
+  };
+
+  renderAccountIdentity({
+    signedIn: true,
+    profile: {
+      entitlements: ['reader', 'supporting_member'],
+      discord_connection: { display_name: 'thingy_user' }
+    },
+    elements
+  });
+
+  assert.equal(elements.discordRow.hidden, false);
+  assert.equal(elements.discordLink.href, '/discord/');
+  assert.equal(elements.discordLink.textContent, 'Refresh Discord Connection');
+  assert.match(elements.discordStatus.textContent, /thingy_user/);
 });

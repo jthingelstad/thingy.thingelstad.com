@@ -2,9 +2,8 @@
 
 On boot, after the Discord gateway is ready and the ``/thingy`` slash
 tree is synced, the bridge audits the channels it actually uses
-(Thingy's member channel + ``#chatter``) and posts a one-line readiness card
-to ``#chatter`` under Thingy's avatar — mirroring the per-persona
-pattern in :mod:`apps.workshop_bot.tools.discord.startup`.
+(validation, #general, and #chatter) and posts a one-line readiness card
+to ``#chatter`` under Thingy's avatar.
 
 The card includes the bridge's deployment header (git short hash + a
 "dirty" flag if the working tree has uncommitted changes) so a restart
@@ -33,16 +32,15 @@ logger = logging.getLogger("thingy_bridge.startup")
 
 REPO = Path(__file__).resolve().parents[3]
 
-# (env_var, friendly_label). Thingy operates in the member channel (reader-facing)
-# and posts conversation cards / startup heartbeats to #chatter.
 CHANNELS: list[tuple[str, str]] = [
-    ("DISCORD_CHANNEL_ASK_THINGY", "primary"),
+    ("DISCORD_VALIDATION_CHANNEL_ID", "validation"),
+    ("DISCORD_GENERAL_CHANNEL_ID", "general"),
     ("DISCORD_CHANNEL_CHATTER", "chatter"),
 ]
 
 REQUIRED_PERMS = ("view_channel", "send_messages", "read_message_history")
 
-COMMANDS_SUMMARY = "/thingy new · /thingy scope"
+COMMANDS_SUMMARY = "/thingy verify · /thingy confirm"
 
 
 def git_hash() -> str:
@@ -95,8 +93,38 @@ def _check_one(bot, env_key: str) -> tuple[str, Optional[str], list[str]]:
 
 
 def audit(bot) -> list[tuple[str, Optional[str], list[str]]]:
-    """Audit Thingy's two channels."""
-    return [_check_one(bot, env_key) for env_key, _ in CHANNELS]
+    """Audit Thingy's configured channels and supporter role."""
+    rows = [_check_one(bot, env_key) for env_key, _ in CHANNELS]
+    role_issues: list[str] = []
+    role_raw = (os.environ.get("DISCORD_SUPPORTER_ROLE_ID") or "").strip()
+    guild_raw = (os.environ.get("DISCORD_GUILD_ID") or "").strip()
+    if not role_raw:
+        role_issues.append("DISCORD_SUPPORTER_ROLE_ID is not set in .env")
+    if not guild_raw:
+        role_issues.append("DISCORD_GUILD_ID is not set in .env")
+    try:
+        role_id = int(role_raw) if role_raw else None
+        guild_id = int(guild_raw) if guild_raw else None
+    except ValueError:
+        role_issues.append("supporter role or guild id is not a valid integer")
+        role_id = guild_id = None
+    if role_id and guild_id:
+        guild = bot.get_guild(guild_id)
+        if guild is None:
+            role_issues.append(f"guild id {guild_id} not visible to Thingy")
+        else:
+            role = guild.get_role(role_id)
+            me = guild.me
+            if role is None:
+                role_issues.append(f"role id {role_id} not visible to Thingy")
+            if me is None:
+                role_issues.append("could not resolve bot member in guild")
+            elif not getattr(me.guild_permissions, "manage_roles", False):
+                role_issues.append("missing guild perm: manage_roles")
+            elif role is not None and getattr(me.top_role, "position", 0) <= getattr(role, "position", 0):
+                role_issues.append("bot role must be above supporter role")
+    rows.append(("DISCORD_SUPPORTER_ROLE_ID", "supporter-role", role_issues))
+    return rows
 
 
 def format_line(

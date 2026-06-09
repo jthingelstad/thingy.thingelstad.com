@@ -1,4 +1,4 @@
-"""Tests for the reader-facing ``/thingy`` command surface."""
+"""Tests for the Supporting Member ``/thingy`` command surface."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ _stubs.install()
 
 
 class SlashCommandShapeTests(unittest.TestCase):
-    def test_reader_commands_are_the_only_slash_surface(self):
+    def test_validation_commands_are_the_only_slash_surface(self):
         from apps.thingy_bridge import commands
 
         class Bot:
@@ -26,7 +26,7 @@ class SlashCommandShapeTests(unittest.TestCase):
         thingy = next(g for g in root.groups if getattr(g, "_cmd_name", None) == "thingy")
 
         self.assertIsNone(getattr(thingy, "default_permissions", None))
-        self.assertEqual({getattr(c, "_cmd_name", None) for c in thingy.commands}, {"new", "scope"})
+        self.assertEqual({getattr(c, "_cmd_name", None) for c in thingy.commands}, {"verify", "confirm"})
 
 
 if __name__ == "__main__":

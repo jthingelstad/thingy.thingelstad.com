@@ -43,7 +43,10 @@ import { dispatchEditable } from './thingy-dispatch-state.js';
     sub: accountSub,
     button: accountBtn,
     caret: document.querySelector('#dispatch-account-btn .rail-account-caret'),
-    nameInput: accountNameInput
+    nameInput: accountNameInput,
+    discordRow: document.getElementById('dispatch-account-discord-row'),
+    discordLink: document.getElementById('dispatch-account-discord-link'),
+    discordStatus: document.getElementById('dispatch-account-discord-status')
   };
   const mobileTitle = document.getElementById('dispatch-mobile-title');
   const mobileToggle = document.getElementById('dispatch-mobile-toggle');

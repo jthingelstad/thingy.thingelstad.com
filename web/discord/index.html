@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connect Discord · Thingy</title>
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="Connect a Weekly Thing Supporting Membership to the Thingy Discord.">
+  <link rel="canonical" href="https://thingy.thingelstad.com/discord/">
+  <link rel="icon" href="/img/thingy.png">
+  <script>window.ThingyConfig = __THINGY_DISCORD_CONFIG__;</script>
+</head>
+<body>
+  <main class="thingy-auth-page thingy-discord-page">
+    <section class="thingy-auth-card thingy-discord-card" aria-labelledby="thingy-discord-title">
+      <a class="thingy-auth-mark" href="/" aria-label="Thingy home">
+        <img src="/img/thingy.png" alt="" width="1022" height="1022">
+      </a>
+      <p class="thingy-auth-kicker">Thingy Discord</p>
+      <h1 id="thingy-discord-title">Connect Discord</h1>
+      <p id="thingy-discord-copy">Thingy is checking your account.</p>
+      <div class="thingy-discord-code" id="thingy-discord-code" hidden>
+        <span>Verification code</span>
+        <strong id="thingy-discord-code-value"></strong>
+      </div>
+      <p class="thingy-signin-message" id="thingy-discord-message" aria-live="polite"></p>
+      <p class="thingy-discord-actions">
+        <a href="/chat/">Back to Chat</a>
+      </p>
+    </section>
+  </main>
+  <script type="module" src="/src/pages/discord.js"></script>
+</body>
+</html>

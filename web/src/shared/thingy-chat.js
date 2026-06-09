@@ -78,7 +78,10 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       sub: document.getElementById('account-sub'),
       button: accountBtn,
       caret: document.querySelector('#account-btn .rail-account-caret'),
-      nameInput: accountNameInput
+      nameInput: accountNameInput,
+      discordRow: document.getElementById('account-discord-row'),
+      discordLink: document.getElementById('account-discord-link'),
+      discordStatus: document.getElementById('account-discord-status')
     };
     const clearChatButton = document.getElementById('librarian-clear-chat');
     const curiosityMapButton = document.getElementById('thingy-curiosity-map');

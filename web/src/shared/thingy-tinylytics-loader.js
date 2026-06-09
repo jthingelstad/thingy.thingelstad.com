@@ -6,7 +6,7 @@ export function loadTinylytics() {
 
   try {
     const url = new URL(window.location.href);
-    ['email', 'prompt', 'from', 'scope', 'corpus', 'dispatch_test', 'test', 'login_token', 'magic_token'].forEach((name) => {
+    ['email', 'prompt', 'from', 'scope', 'corpus', 'dispatch_test', 'test', 'login_token', 'magic_token', 'state', 'code'].forEach((name) => {
       url.searchParams.delete(name);
     });
     if (url.href !== window.location.href) {

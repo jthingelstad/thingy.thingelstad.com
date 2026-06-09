@@ -141,6 +141,34 @@
   font-size: 12px;
 }
 
+.rail-account-discord {
+  border-top: 1px solid var(--line);
+  margin-top: 6px;
+  padding-top: 10px;
+}
+
+.rail-account-discord > span {
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.rail-menu-link {
+  color: var(--accent-strong);
+  display: inline-flex;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.rail-menu-link:hover {
+  text-decoration: underline;
+}
+
 .rail-menu button {
   width: 100%;
   display: flex;

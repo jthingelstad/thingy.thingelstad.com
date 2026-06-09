@@ -1,103 +1,135 @@
-"""Reader-facing ``/thingy …`` slash commands.
-
-The bridge keeps the Discord command surface intentionally small:
-
-- ``/thingy new`` — clear this user's member-channel session boundary so
-  their next question is not pulled into the prior conversation.
-- ``/thingy scope`` — choose which public sources Thingy searches for
-  that user's questions.
-
-Operator review now lives in the API-side Operator Report and Dispatch
-webhooks. This module should never expose other readers' conversation
-content.
-"""
+"""Supporting Member validation commands for Thingy's Discord bridge."""
 
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+import os
+from typing import TYPE_CHECKING, Optional
 
 import discord
 from discord import app_commands
 
-from .tools import db
+from .tools import thingy_client
 
 if TYPE_CHECKING:
     from .personas.base import PersonaBot
 
 logger = logging.getLogger("thingy_bridge.commands")
 
+
 def _clip(text: str) -> str:
-    # Discord ephemeral followup cap is 2000 chars; leave headroom.
-    _MSG_CAP = 1900
-    return text if len(text) <= _MSG_CAP else text[: _MSG_CAP - 1] + "…"
+    return text if len(text) <= 1900 else text[:1899] + "…"
+
+
+def _env_int(name: str) -> Optional[int]:
+    raw = (os.environ.get(name) or "").strip()
+    if not raw:
+        return None
+    try:
+        return int(raw)
+    except ValueError:
+        return None
+
+
+def _discord_identity(user: discord.abc.User, guild_id: Optional[int]) -> dict[str, str]:
+    return {
+        "discord_user_id": str(user.id),
+        "username": str(getattr(user, "name", "") or ""),
+        "global_name": str(getattr(user, "global_name", "") or ""),
+        "display_name": str(getattr(user, "display_name", "") or getattr(user, "global_name", "") or getattr(user, "name", "") or ""),
+        "guild_id": str(guild_id or ""),
+    }
+
+
+def _in_validation_channel(interaction: discord.Interaction) -> bool:
+    validation_channel_id = _env_int("DISCORD_VALIDATION_CHANNEL_ID")
+    if validation_channel_id is None:
+        return True
+    return int(getattr(interaction, "channel_id", 0) or 0) == validation_channel_id
+
+
+async def _ack(interaction: discord.Interaction, text: str) -> None:
+    try:
+        await interaction.followup.send(_clip(text), ephemeral=True)
+    except discord.HTTPException:
+        logger.warning("/thingy: couldn't ack invoker (interaction expired?)")
+
+
+async def _sync_supporter_role(interaction: discord.Interaction, *, add: bool) -> bool:
+    guild = interaction.guild
+    role_id = _env_int("DISCORD_SUPPORTER_ROLE_ID")
+    if guild is None or role_id is None:
+        return False
+    role = guild.get_role(role_id)
+    if role is None:
+        return False
+    member = interaction.user if isinstance(interaction.user, discord.Member) else guild.get_member(interaction.user.id)
+    if member is None:
+        return False
+    try:
+        if add and role not in member.roles:
+            await member.add_roles(role, reason="Thingy Supporting Member verification")
+        elif not add and role in member.roles:
+            await member.remove_roles(role, reason="Thingy Supporting Member entitlement no longer verified")
+    except discord.DiscordException:
+        logger.exception("Thingy could not sync Discord supporter role")
+        return False
+    return True
 
 
 def register_thingy_commands(bot: "PersonaBot") -> app_commands.CommandTree:
-    """Attach the ``/thingy`` command tree to the host bot.
-
-    Returns the ``CommandTree`` so the host bot's ``on_ready`` can sync it.
-    """
+    """Attach the ``/thingy`` validation command tree to the host bot."""
     tree = app_commands.CommandTree(bot)
 
     thingy = app_commands.Group(
         name="thingy",
-        description="Manage your Thingy Discord chat session",
+        description="Connect your Supporting Membership to Thingy in Discord",
     )
 
-    async def _ack(interaction, text: str, *, file: discord.File | None = None) -> None:
-        """Send an ephemeral followup, swallowing an expired-token error."""
+    @thingy.command(
+        name="verify",
+        description="Start Supporting Member verification for this Discord account.",
+    )
+    async def thingy_verify_cmd(interaction: discord.Interaction) -> None:  # type: ignore[misc]
+        await interaction.response.defer(ephemeral=True, thinking=False)
+        if not _in_validation_channel(interaction):
+            await _ack(interaction, "Use `/thingy verify` in the validation channel so Thingy can keep the flow tidy.")
+            return
+        guild_id = getattr(interaction.guild, "id", None)
         try:
-            if file is not None:
-                await interaction.followup.send(_clip(text), ephemeral=True, file=file)
-            else:
-                await interaction.followup.send(_clip(text), ephemeral=True)
-        except discord.HTTPException:
-            logger.warning("/thingy: couldn't ack invoker (interaction expired?)")
-
-    @thingy.command(
-        name="new",
-        description="Start a fresh Thingy session — your next question won't carry prior context.",
-    )
-    async def thingy_new_cmd(interaction: discord.Interaction) -> None:  # type: ignore[misc]
-        await interaction.response.defer(ephemeral=True, thinking=False)
-        ok = db.mark_session_reset(str(interaction.user.id))
-        if ok:
-            await _ack(
-                interaction,
-                "🆕 Started a fresh session. Your next question to Thingy starts clean.",
-            )
-        else:
-            await _ack(
-                interaction,
-                "There's nothing to reset yet — you haven't talked to Thingy in this server. "
-                "Ask anything in Thingy's member channel and we'll start clean from there.",
-            )
-
-    @thingy.command(
-        name="scope",
-        description="Choose which sources Thingy searches for your questions.",
-    )
-    @app_commands.describe(source="Weekly Thing issues, Jamie's blog, Another Thing, or all sources")
-    @app_commands.choices(source=[
-        app_commands.Choice(name="Weekly Thing", value="weekly_thing"),
-        app_commands.Choice(name="Jamie's blog", value="blog"),
-        app_commands.Choice(name="Another Thing", value="podcast"),
-        app_commands.Choice(name="Both", value="both"),
-        app_commands.Choice(name="All sources", value="all"),
-    ])
-    async def thingy_scope_cmd(  # type: ignore[misc]
-        interaction: discord.Interaction,
-        source: app_commands.Choice[str],
-    ) -> None:
-        await interaction.response.defer(ephemeral=True, thinking=False)
-        db.set_thingy_scope(str(interaction.user.id), source.value)
-        label = db.SCOPE_LABELS.get(source.value, source.value)
+            result = await thingy_client.start_discord_link(_discord_identity(interaction.user, guild_id))
+        except thingy_client.ThingyError as exc:
+            await _ack(interaction, f"Thingy could not start Discord verification: `{exc}`")
+            return
         await _ack(
             interaction,
-            f"🔭 Thingy will now search **{label}** for your questions. "
-            "Run `/thingy scope` again any time to change it.",
+            "Open this link, sign in with your Supporting Member email, then bring the code back here:\n"
+            f"{result.get('link')}",
         )
+
+    @thingy.command(
+        name="confirm",
+        description="Confirm the one-time code Thingy gave you on the website.",
+    )
+    @app_commands.describe(code="The one-time code from thingy.thingelstad.com/discord/")
+    async def thingy_confirm_cmd(interaction: discord.Interaction, code: str) -> None:  # type: ignore[misc]
+        await interaction.response.defer(ephemeral=True, thinking=False)
+        if not _in_validation_channel(interaction):
+            await _ack(interaction, "Use `/thingy confirm` in the validation channel.")
+            return
+        guild_id = getattr(interaction.guild, "id", None)
+        try:
+            result = await thingy_client.confirm_discord_link(
+                code=code,
+                identity=_discord_identity(interaction.user, guild_id),
+            )
+        except thingy_client.ThingyError as exc:
+            await _ack(interaction, f"Thingy could not confirm that code: `{exc}`")
+            return
+        role_ok = await _sync_supporter_role(interaction, add=True)
+        name = result.get("discord_connection", {}).get("display_name") or "your Discord account"
+        suffix = "" if role_ok else "\n\nThingy verified you, but could not add the Discord role. Jamie may need to check bot permissions."
+        await _ack(interaction, f"Connected {name}. Welcome in.{suffix}")
 
     tree.add_command(thingy)
     return tree

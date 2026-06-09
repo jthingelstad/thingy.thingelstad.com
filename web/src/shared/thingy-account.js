@@ -37,6 +37,23 @@ function renderAccountIdentity(options = {}) {
     }
     if (elements.avatar) elements.avatar.textContent = signedIn && display ? display[0].toUpperCase() : 'T';
     if (elements.nameInput) elements.nameInput.value = preferredName;
+    if (elements.discordRow) {
+      const visible = signedIn && hasSupportingAccess(profile);
+      elements.discordRow.hidden = !visible;
+      const connection = profile.discord_connection && typeof profile.discord_connection === 'object'
+        ? profile.discord_connection
+        : null;
+      const connectedName = String(connection?.display_name || connection?.global_name || connection?.username || '').trim();
+      if (elements.discordStatus) {
+        elements.discordStatus.textContent = connectedName
+          ? `Connected as ${connectedName}`
+          : 'Supporting Members can connect Discord.';
+      }
+      if (elements.discordLink) {
+        elements.discordLink.textContent = connectedName ? 'Refresh Discord Connection' : 'Link to Discord';
+        elements.discordLink.href = '/discord/';
+      }
+    }
     if (elements.caret) elements.caret.hidden = !signedIn;
     if (elements.button) {
       elements.button.setAttribute('aria-haspopup', signedIn ? 'true' : 'false');

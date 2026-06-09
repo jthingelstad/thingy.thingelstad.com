@@ -30,6 +30,7 @@ def _install_stubs() -> None:
         class _Intents:
             message_content = False
             guilds = False
+            members = False
 
             @staticmethod
             def default():
@@ -38,10 +39,12 @@ def _install_stubs() -> None:
         discord.Client = _Client  # type: ignore[attr-defined]
         discord.Intents = _Intents  # type: ignore[attr-defined]
         discord.Message = object  # type: ignore[attr-defined]
+        discord.Member = object  # type: ignore[attr-defined]
         discord.RawReactionActionEvent = object  # type: ignore[attr-defined]
         discord.DiscordException = Exception  # type: ignore[attr-defined]
         abc_mod = types.ModuleType("discord.abc")
         abc_mod.Messageable = object  # type: ignore[attr-defined]
+        abc_mod.User = object  # type: ignore[attr-defined]
         sys.modules["discord"] = discord
         sys.modules["discord.abc"] = abc_mod
 
@@ -307,7 +310,7 @@ class SseParserTests(unittest.TestCase):
 
 
 class ThingyDbHelperTests(unittest.TestCase):
-    """End-to-end DB exercise of thingy_tokens + thingy_requests."""
+    """Bridge DB now keeps only generic local job locks."""
 
     def setUp(self):
         self._tmpdir = tempfile.TemporaryDirectory()
@@ -322,149 +325,16 @@ class ThingyDbHelperTests(unittest.TestCase):
             os.environ["THINGY_BRIDGE_DB_PATH"] = self._orig_path
         self._tmpdir.cleanup()
 
-    def test_token_roundtrip(self):
-        self.assertIsNone(db.get_thingy_token("user-1"))
-        db.upsert_thingy_token(
-            discord_user_id="user-1", token="abc.xyz", expires_at=1700000000,
-        )
-        row = db.get_thingy_token("user-1")
-        assert row is not None
-        self.assertEqual(row["token"], "abc.xyz")
-        self.assertEqual(row["expires_at"], 1700000000)
-        # Upsert overwrites.
-        db.upsert_thingy_token(
-            discord_user_id="user-1", token="new.tok", expires_at=1800000000,
-        )
-        row = db.get_thingy_token("user-1")
-        assert row is not None
-        self.assertEqual(row["token"], "new.tok")
-        self.assertEqual(row["expires_at"], 1800000000)
-
-    def test_request_roundtrip(self):
-        rid = db.insert_thingy_request(
-            discord_user_id="user-1",
-            discord_message_id="111",
-            question="what is RSS?",
-        )
-        self.assertGreater(rid, 0)
-        db.update_thingy_request(
-            rid, status="ok", request_id="lambda-req-1",
-            bot_response_message_id="222", duration_ms=1234,
-        )
-        found = db.lookup_thingy_request_by_response("222")
-        assert found is not None
-        self.assertEqual(found["request_id"], "lambda-req-1")
-        self.assertEqual(found["status"], "ok")
-        self.assertEqual(found["discord_user_id"], "user-1")
-
-    def test_lookup_unknown_response(self):
-        self.assertIsNone(db.lookup_thingy_request_by_response("nonexistent"))
-
-    def test_partial_update_only_changes_supplied_fields(self):
-        rid = db.insert_thingy_request(
-            discord_user_id="user-2", discord_message_id="aaa", question="?",
-        )
-        db.update_thingy_request(rid, status="ok")
-        # Should not error if no fields supplied (safe no-op).
-        db.update_thingy_request(rid)
-
-
-class ProfileRoundtripTests(unittest.TestCase):
-    """Profile snapshots are stored as JSON; reading back must hand
-    back a dict (or None when never set)."""
-
-    def setUp(self):
-        self._tmpdir = tempfile.TemporaryDirectory()
-        self._orig_path = os.environ.get("THINGY_BRIDGE_DB_PATH")
-        os.environ["THINGY_BRIDGE_DB_PATH"] = str(Path(self._tmpdir.name) / "test.db")
-        db.run_migrations()
-
-    def tearDown(self):
-        if self._orig_path is None:
-            os.environ.pop("THINGY_BRIDGE_DB_PATH", None)
-        else:
-            os.environ["THINGY_BRIDGE_DB_PATH"] = self._orig_path
-        self._tmpdir.cleanup()
-
-    def test_no_profile_round_trips_as_none(self):
-        db.upsert_thingy_token(
-            discord_user_id="u1", token="t", expires_at=1700000000,
-        )
-        row = db.get_thingy_token("u1")
-        assert row is not None
-        self.assertIsNone(row.get("profile"))
-
-    def test_profile_round_trips(self):
-        profile = {
-            "returning": True,
-            "turn_count": 3,
-            "prior_session_summaries": [{"summary": "RSS week"}],
-        }
-        db.upsert_thingy_token(
-            discord_user_id="u2", token="t", expires_at=1700000000,
-            profile=profile,
-        )
-        row = db.get_thingy_token("u2")
-        assert row is not None
-        self.assertEqual(row["profile"], profile)
+    def test_job_lock_roundtrip(self):
+        self.assertIsNone(db.acquire_job_lock(asset="job:test", job="test", pid=os.getpid()))
+        locked = db.acquire_job_lock(asset="job:test", job="test", pid=os.getpid())
+        assert locked is not None
+        self.assertEqual(locked["asset"], "job:test")
+        self.assertTrue(db.release_job_lock("job:test"))
 
     def test_run_migrations_idempotent(self):
-        # Running migrations twice on the same DB shouldn't fail or
-        # duplicate columns.
         db.run_migrations()
         db.run_migrations()
-        # Token table still works.
-        db.upsert_thingy_token(
-            discord_user_id="u-migr", token="t", expires_at=1700000000,
-        )
-        self.assertIsNotNone(db.get_thingy_token("u-migr"))
-
-
-class ThingyScopeTests(unittest.TestCase):
-    """Per-reader source scope persists in its own table, decoupled from
-    the token row so it can be set before a reader's first question."""
-
-    def setUp(self):
-        self._tmpdir = tempfile.TemporaryDirectory()
-        self._orig_path = os.environ.get("THINGY_BRIDGE_DB_PATH")
-        os.environ["THINGY_BRIDGE_DB_PATH"] = str(Path(self._tmpdir.name) / "test.db")
-        db.run_migrations()
-
-    def tearDown(self):
-        if self._orig_path is None:
-            os.environ.pop("THINGY_BRIDGE_DB_PATH", None)
-        else:
-            os.environ["THINGY_BRIDGE_DB_PATH"] = self._orig_path
-        self._tmpdir.cleanup()
-
-    def test_default_when_unset(self):
-        self.assertEqual(db.get_thingy_scope("nobody"), db.DEFAULT_SCOPE)
-        self.assertEqual(db.DEFAULT_SCOPE, "weekly_thing")
-
-    def test_roundtrip_and_overwrite(self):
-        db.set_thingy_scope("u1", "blog")
-        self.assertEqual(db.get_thingy_scope("u1"), "blog")
-        db.set_thingy_scope("u1", "podcast")
-        self.assertEqual(db.get_thingy_scope("u1"), "podcast")
-        db.set_thingy_scope("u1", "both")
-        self.assertEqual(db.get_thingy_scope("u1"), "both")
-        db.set_thingy_scope("u1", "all")
-        self.assertEqual(db.get_thingy_scope("u1"), "all")
-
-    def test_set_before_token_exists(self):
-        # No token row for this user — scope must still persist (the
-        # whole reason scope lives in its own table).
-        self.assertIsNone(db.get_thingy_token("fresh"))
-        db.set_thingy_scope("fresh", "blog")
-        self.assertEqual(db.get_thingy_scope("fresh"), "blog")
-
-    def test_invalid_scope_falls_back_to_default(self):
-        db.set_thingy_scope("u2", "garbage")
-        self.assertEqual(db.get_thingy_scope("u2"), db.DEFAULT_SCOPE)
-
-    def test_labels_cover_every_valid_scope(self):
-        for scope in db.VALID_SCOPES:
-            self.assertIn(scope, db.SCOPE_LABELS)
 
 
 if __name__ == "__main__":

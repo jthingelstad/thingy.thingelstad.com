@@ -40,6 +40,7 @@ def _install_discord() -> None:
     class _Intents:
         message_content = False
         guilds = False
+        members = False
 
         @staticmethod
         def default():
@@ -64,6 +65,7 @@ def _install_discord() -> None:
     discord.Permissions = _Permissions  # type: ignore[attr-defined]
     discord.Object = _Object  # type: ignore[attr-defined]
     discord.Message = object  # type: ignore[attr-defined]
+    discord.Member = object  # type: ignore[attr-defined]
     discord.Interaction = object  # type: ignore[attr-defined]
     discord.RawReactionActionEvent = object  # type: ignore[attr-defined]
     discord.DiscordException = _DiscordException  # type: ignore[attr-defined]
@@ -72,6 +74,7 @@ def _install_discord() -> None:
 
     abc_mod = types.ModuleType("discord.abc")
     abc_mod.Messageable = object  # type: ignore[attr-defined]
+    abc_mod.User = object  # type: ignore[attr-defined]
 
     # discord.app_commands surface — minimal shape that workshop_bot's
     # commands module actually touches (Group, CommandTree.add_command,

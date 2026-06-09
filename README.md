@@ -87,6 +87,13 @@ One-time magic-link token created by the Librarian API. When present, Thingy
 redeems it with `/auth` and removes it from the browser URL after the attempt.
 These links are sent by email from `thingy@thingelstad.com`.
 
+### `state` / `code`
+
+Hidden Discord verification parameters. `state` is used on `/discord/` after a
+Supporting Member starts `/thingy verify` in Discord. `code` is reserved for
+one-time verification flows. These should not be used in public links and are
+stripped before analytics loads.
+
 ### `dispatch_test`
 
 Hidden owner-only Dispatch testing mode. Use this on `/dispatch/` when shaping
@@ -163,7 +170,12 @@ browser URL after the app has read them:
 - `from`
 - `scope`
 - `corpus`
+- `dispatch_test`
+- `test`
 - `login_token`
+- `magic_token`
+- `state`
+- `code`
 
 This keeps Tinylytics page URLs clean and avoids recording typed emails or
 prompts in analytics.
