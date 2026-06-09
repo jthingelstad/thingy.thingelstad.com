@@ -1,4 +1,4 @@
-/* --- Chat-client app shell --- */
+/* App shell. */
 .thingy-page {
   min-height: 100dvh;
   padding: 0;
@@ -45,7 +45,7 @@
   display: none;
 }
 
-/* ---- Light rail (token-derived, calm) ---- */
+/* Rail frame. */
 .rail {
   position: sticky;
   top: 0;

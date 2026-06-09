@@ -72,7 +72,7 @@
   display: none;
 }
 
-/* Final phone shell: ChatGPT/Claude-style header + conversations drawer. */
+/* Phone shell: mobile header and rail drawer. */
 @media (max-width: 640px) {
   .thingy-app-shell,
   .thingy-app-shell.is-collapsed {
@@ -290,8 +290,7 @@
     width: var(--rail-mark-size);
   }
 
-  .rail .rail-surface-switch,
-  .thingy-app-shell.is-collapsed .rail-surface-switch {
+  :is(.rail .rail-surface-switch, .thingy-app-shell.is-collapsed .rail-surface-switch) {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     width: 100%;
     gap: 6px;
@@ -303,8 +302,7 @@
     box-shadow: var(--shadow-subtle);
   }
 
-  .rail .rail-surface-switch a,
-  .thingy-app-shell.is-collapsed .rail-surface-switch a {
+  :is(.rail .rail-surface-switch, .thingy-app-shell.is-collapsed .rail-surface-switch) a {
     width: auto;
     height: auto;
     min-height: 34px;
@@ -315,21 +313,16 @@
     overflow: visible;
   }
 
-  .rail .rail-surface-switch a:hover,
-  .rail .rail-surface-switch a.is-active,
-  .thingy-app-shell.is-collapsed .rail-surface-switch a:hover,
-  .thingy-app-shell.is-collapsed .rail-surface-switch a.is-active {
+  :is(.rail .rail-surface-switch, .thingy-app-shell.is-collapsed .rail-surface-switch) a:is(:hover, .is-active) {
     background: var(--ink);
     color: var(--surface);
   }
 
-  .rail .rail-surface-switch a span,
-  .thingy-app-shell.is-collapsed .rail-surface-switch a span {
+  :is(.rail .rail-surface-switch, .thingy-app-shell.is-collapsed .rail-surface-switch) a span {
     display: inline;
   }
 
-  .rail .rail-surface-switch svg,
-  .thingy-app-shell.is-collapsed .rail-surface-switch svg {
+  :is(.rail .rail-surface-switch, .thingy-app-shell.is-collapsed .rail-surface-switch) svg {
     width: 15px;
     height: 15px;
   }
