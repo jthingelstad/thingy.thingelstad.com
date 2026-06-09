@@ -142,6 +142,9 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
         onSaved: (nextName) => {
           rememberPreferredName(nextName);
           refreshAccountIdentity();
+        },
+        onOpen: () => {
+          refreshAccountProfile({ force: true });
         }
       }
     });
@@ -168,6 +171,8 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
     let conversationCreateInFlight = false;
     let dictationControls = null;
     let authRequestGeneration = 0;
+    let accountProfileRefreshAt = 0;
+    let accountProfileRefreshPromise = null;
     const emailRe = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
     const params = new URLSearchParams(window.location.search);
@@ -363,19 +368,33 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       refreshAccountIdentity();
     }
 
-    async function refreshStoredAuth() {
+    async function refreshStoredAuth(options = {}) {
       if (!token() || tokenExpired()) return false;
+      const shouldTrack = options.track !== false;
       try {
         const data = await postJson('/auth', { action: 'refresh_session' }, authHeaders());
         if (!data.token) return false;
         persistToken(data.token, data);
         refreshAccountIdentity();
-        trackTinylyticsEvent('librarian.auth_refresh_success');
+        if (shouldTrack) trackTinylyticsEvent('librarian.auth_refresh_success');
         return true;
       } catch (error) {
-        trackTinylyticsEvent('librarian.auth_refresh_error');
+        if (shouldTrack) trackTinylyticsEvent('librarian.auth_refresh_error');
         return false;
       }
+    }
+
+    async function refreshAccountProfile(options = {}) {
+      if (!token() || tokenExpired()) return false;
+      const now = Date.now();
+      if (!options.force && now - accountProfileRefreshAt < 30000) return false;
+      if (accountProfileRefreshPromise) return accountProfileRefreshPromise;
+      accountProfileRefreshAt = now;
+      accountProfileRefreshPromise = refreshStoredAuth({ track: false })
+        .finally(() => {
+          accountProfileRefreshPromise = null;
+        });
+      return accountProfileRefreshPromise;
     }
 
     async function ensureFreshToken() {
@@ -1511,6 +1530,12 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
         setMobileRailOpen(false);
       }
     });
+    window.addEventListener('focus', () => {
+      refreshAccountProfile();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) refreshAccountProfile();
+    });
 
     /* Recents list interactions. */
     const railRecentsEl = document.getElementById('rail-recents');
@@ -1588,6 +1613,7 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
         authPanel.hidden = true;
         chatPanel.hidden = false;
         scheduleComposerReserveUpdate();
+        refreshAccountProfile({ force: true });
         const savedActiveId = savedActiveConversation();
         refreshConversations().then((list) => {
           if (hasInitialPrompt) {

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  createAccountMenu,
   normalizePreferredName,
   renderAccountIdentity,
   savePreferredName
@@ -83,4 +84,40 @@ test('account panel shows Discord linking for supporting members', () => {
   assert.equal(elements.discordLink.href, '/discord/');
   assert.equal(elements.discordLink.textContent, 'Refresh Discord Connection');
   assert.match(elements.discordStatus.textContent, /thingy_user/);
+});
+
+test('account menu refresh hook runs when a signed-in account opens', () => {
+  let clickHandler = null;
+  let isHidden = true;
+  let openCalls = 0;
+  const button = {
+    addEventListener: (event, handler) => {
+      if (event === 'click') clickHandler = handler;
+    },
+    setAttribute: () => {}
+  };
+  const menu = {
+    addEventListener: () => {},
+    hasAttribute: (name) => name === 'hidden' && isHidden,
+    toggleAttribute: (name, force) => {
+      if (name === 'hidden') isHidden = Boolean(force);
+    }
+  };
+
+  createAccountMenu({
+    button,
+    menu,
+    signedIn: () => true,
+    onOpen: () => {
+      openCalls += 1;
+    }
+  });
+
+  clickHandler({ stopPropagation: () => {} });
+  assert.equal(isHidden, false);
+  assert.equal(openCalls, 1);
+
+  clickHandler({ stopPropagation: () => {} });
+  assert.equal(isHidden, true);
+  assert.equal(openCalls, 1);
 });

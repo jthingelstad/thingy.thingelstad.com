@@ -92,22 +92,41 @@
 }
 
 .thingy-discord-card {
-  max-width: 620px;
+  width: min(100%, 660px);
+  max-width: 660px;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+.thingy-discord-card .thingy-auth-mark {
+  width: 92px;
+}
+
+.thingy-discord-card h1 {
+  margin: 0;
+  font-size: clamp(2.3rem, 7vw, 4rem);
+  line-height: 1.02;
+}
+
+.thingy-discord-card > p {
+  margin: 0;
+  max-width: 40rem;
 }
 
 .thingy-discord-code {
   display: grid;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
   margin-top: 18px;
-  padding: 14px;
+  padding: 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface-soft);
 }
 
 .thingy-discord-signin[hidden],
-.thingy-discord-code[hidden],
-.thingy-discord-command[hidden] {
+.thingy-discord-code[hidden] {
   display: none;
 }
 
@@ -132,6 +151,7 @@
 }
 
 .thingy-discord-code span {
+  grid-column: 1 / -1;
   color: var(--muted);
   font-size: 12px;
   font-weight: 800;
@@ -141,39 +161,13 @@
 .thingy-discord-code strong {
   color: var(--ink);
   font-family: var(--mono);
-  font-size: clamp(2rem, 7vw, 3.5rem);
+  font-size: clamp(2.1rem, 8vw, 3.8rem);
   letter-spacing: 0.08em;
-}
-
-.thingy-discord-command {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: center;
-  margin-top: 12px;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--code-bg);
-}
-
-.thingy-discord-command span {
-  grid-column: 1 / -1;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.thingy-discord-command code {
-  min-width: 0;
+  line-height: 1;
   overflow-wrap: anywhere;
-  color: var(--ink);
-  font-family: var(--mono);
-  font-size: 15px;
 }
 
-.thingy-discord-command button {
+.thingy-discord-code button {
   min-height: 40px;
   padding: 8px 12px;
   border: 1px solid var(--accent-deep);
@@ -183,6 +177,7 @@
   font: inherit;
   font-size: 14px;
   font-weight: 800;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -214,7 +209,11 @@
     grid-template-columns: 1fr;
   }
 
-  .thingy-discord-command {
+  .thingy-discord-card .thingy-auth-mark {
+    width: 76px;
+  }
+
+  .thingy-discord-code {
     grid-template-columns: 1fr;
   }
 }

@@ -7,13 +7,10 @@ const signInWrap = document.getElementById('thingy-discord-signin');
 const signInLink = document.getElementById('thingy-discord-signin-link');
 const codeWrap = document.getElementById('thingy-discord-code');
 const codeValue = document.getElementById('thingy-discord-code-value');
-const commandWrap = document.getElementById('thingy-discord-command');
-const commandValue = document.getElementById('thingy-discord-command-value');
-const copyCommandButton = document.getElementById('thingy-discord-copy-command');
+const copyCodeButton = document.getElementById('thingy-discord-copy-code');
 
-function discordConfirmCommand(code) {
-  const clean = String(code || '').trim();
-  return clean ? `/thingy confirm ${clean}` : '';
+function normalizeDiscordCode(code) {
+  return String(code || '').trim();
 }
 
 function setMessage(text, kind = '') {
@@ -46,20 +43,16 @@ async function refreshProfile() {
   return session.storedProfile();
 }
 
-function renderDiscordCommand(code) {
-  const command = discordConfirmCommand(code);
-  if (!command) {
+function renderDiscordCode(code) {
+  const clean = normalizeDiscordCode(code);
+  if (!clean) {
     if (codeWrap) codeWrap.hidden = true;
-    if (commandWrap) commandWrap.hidden = true;
     if (codeValue) codeValue.textContent = '';
-    if (commandValue) commandValue.textContent = '';
     return '';
   }
   if (codeWrap) codeWrap.hidden = false;
-  if (codeValue) codeValue.textContent = code;
-  if (commandWrap) commandWrap.hidden = false;
-  if (commandValue) commandValue.textContent = command;
-  return command;
+  if (codeValue) codeValue.textContent = clean;
+  return clean;
 }
 
 async function copyText(value) {
@@ -89,7 +82,7 @@ async function initDiscordLink() {
 
   const authReason = authStateReason();
   if (authReason) {
-    renderDiscordCommand('');
+    renderDiscordCode('');
     renderSignIn(state);
     setCopy('Sign in to Thingy in this browser to finish connecting Discord.');
     setMessage(`${authReason} The sign-in link will return here with your Discord verification state preserved.`, 'error');
@@ -121,28 +114,27 @@ async function initDiscordLink() {
       state,
       email: session.storedEmail()
     }, session.authHeaders());
-    const code = String(data.code || '').trim();
-    const command = renderDiscordCommand(code);
-    if (!command) throw new Error('Thingy did not return a Discord verification code. Run /thingy verify again.');
-    setCopy('Paste this command back into Discord.');
+    const code = renderDiscordCode(data.code);
+    if (!code) throw new Error('Thingy did not return a Discord verification code. Run /thingy verify again.');
+    setCopy('Copy this code, then use /thingy confirm in Discord and paste it into the code field.');
     setMessage('The code expires soon and only works for the Discord account that started verification.', 'success');
     if (data.profile) session.updateStoredProfile(data.profile);
   } catch (error) {
-    renderDiscordCommand('');
+    renderDiscordCode('');
     setCopy('Thingy could not create a Discord verification code.');
     setMessage(error.message || 'Run /thingy verify again in Discord.', 'error');
   }
 }
 
-if (copyCommandButton) {
-  copyCommandButton.addEventListener('click', async () => {
-    const command = String(commandValue?.textContent || '').trim();
-    if (!command) return;
+if (copyCodeButton) {
+  copyCodeButton.addEventListener('click', async () => {
+    const code = normalizeDiscordCode(codeValue?.textContent);
+    if (!code) return;
     try {
-      const copied = await copyText(command);
-      setMessage(copied ? 'Copied the Discord command.' : 'Copy is not available in this browser. Select the command and copy it manually.', copied ? 'success' : 'error');
+      const copied = await copyText(code);
+      setMessage(copied ? 'Copied the verification code.' : 'Copy is not available in this browser. Select the code and copy it manually.', copied ? 'success' : 'error');
     } catch (error) {
-      setMessage('Copy failed. Select the command and copy it manually.', 'error');
+      setMessage('Copy failed. Select the code and copy it manually.', 'error');
     }
   });
 }
@@ -150,6 +142,6 @@ if (copyCommandButton) {
 initDiscordLink();
 
 export {
-  discordConfirmCommand,
+  normalizeDiscordCode,
   discordSignInUrl
 };

@@ -15,13 +15,13 @@ function installDom() {
   };
 }
 
-test('discordConfirmCommand formats the exact Discord slash command', async () => {
+test('normalizeDiscordCode trims the code used for Discord confirmation', async () => {
   installDom();
-  const { discordConfirmCommand } = await import('../src/shared/thingy-discord.js');
+  const { normalizeDiscordCode } = await import('../src/shared/thingy-discord.js');
 
-  assert.equal(discordConfirmCommand('ABC123'), '/thingy confirm ABC123');
-  assert.equal(discordConfirmCommand('  ABC123  '), '/thingy confirm ABC123');
-  assert.equal(discordConfirmCommand(''), '');
+  assert.equal(normalizeDiscordCode('ABC123'), 'ABC123');
+  assert.equal(normalizeDiscordCode('  ABC123  '), 'ABC123');
+  assert.equal(normalizeDiscordCode(''), '');
 });
 
 test('discordSignInUrl preserves verification state in the return parameter', async () => {

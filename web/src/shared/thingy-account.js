@@ -89,6 +89,7 @@ function createAccountMenu(options = {}) {
       ? options.signedIn
       : () => Boolean(session?.token?.());
     const onSaved = typeof options.onSaved === 'function' ? options.onSaved : () => {};
+    const onOpen = typeof options.onOpen === 'function' ? options.onOpen : () => {};
     const onSignedOutClick = typeof options.onSignedOutClick === 'function' ? options.onSignedOutClick : () => {};
     const onLogout = typeof options.onLogout === 'function'
       ? options.onLogout
@@ -102,6 +103,7 @@ function createAccountMenu(options = {}) {
       const open = force === undefined ? menu.hasAttribute('hidden') : Boolean(force);
       menu.toggleAttribute('hidden', !open);
       if (button) button.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) onOpen();
     }
 
     if (button) {
