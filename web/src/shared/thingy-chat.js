@@ -1099,15 +1099,6 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       });
     }
 
-    function readAttribution() {
-      try {
-        if (typeof window.weeklyThingAttribution === 'function') {
-          return window.weeklyThingAttribution() || undefined;
-        }
-      } catch (err) { /* ignore */ }
-      return undefined;
-    }
-
     async function submitAuthAction(action, button) {
       if (!validateEmail()) return;
       const generation = authRequestGeneration;
@@ -1116,10 +1107,6 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       setAuthMessage(action === 'subscribe' ? 'Adding you to the Weekly Thing...' : 'Sending the confirmation email...');
       try {
         const payload = { email: emailInput.value, action, source: 'thingy' };
-        if (action === 'subscribe' || action === 'resend_confirmation') {
-          const attribution = readAttribution();
-          if (attribution) payload.attribution = attribution;
-        }
         const data = await postJson('/auth', payload);
         if (generation !== authRequestGeneration) return;
         handleAuthResponse(data);

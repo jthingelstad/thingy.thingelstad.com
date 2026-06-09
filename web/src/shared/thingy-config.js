@@ -4,18 +4,12 @@ function publicConfig() {
 
 function librarianApiUrl() {
   const config = publicConfig();
-  const source = window.WEEKLY_THING_LIBRARIAN_API === undefined
-    ? config.librarianApiUrl
-    : window.WEEKLY_THING_LIBRARIAN_API;
-  return String(source || '').replace(/\/$/, '');
+  return String(config.librarianApiUrl || '').replace(/\/$/, '');
 }
 
 function librarianStreamUrl() {
   const config = publicConfig();
-  const source = window.WEEKLY_THING_LIBRARIAN_STREAM_API === undefined
-    ? config.librarianStreamUrl
-    : window.WEEKLY_THING_LIBRARIAN_STREAM_API;
-  return String(source || '').replace(/\/$/, '');
+  return String(config.librarianStreamUrl || '').replace(/\/$/, '');
 }
 
 function tinylyticsId() {
