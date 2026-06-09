@@ -206,10 +206,6 @@ import { userLocalContext } from './thingy-local-context.js';
       return session.token();
     }
 
-    function tokenPayload(value = token()) {
-      return session.tokenPayload(value);
-    }
-
     function tokenExpired(value = token(), skewSeconds = 60) {
       return session.tokenExpired(value, skewSeconds);
     }
@@ -321,10 +317,6 @@ import { userLocalContext } from './thingy-local-context.js';
 
     function currentScope() {
       return sourceControls.currentScope();
-    }
-
-    function selectedSources() {
-      return sourceControls.selectedSources();
     }
 
     function sourceCount() {
