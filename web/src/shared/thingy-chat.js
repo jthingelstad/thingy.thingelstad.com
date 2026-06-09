@@ -1,7 +1,7 @@
 import * as session from './thingy-session.js';
 import {
   createAccountMenu,
-  hasSupportingAccess,
+  hasSupportingAccess as profileHasSupportingAccess,
   normalizePreferredName,
   renderAccountIdentity
 } from './thingy-account.js';
@@ -30,7 +30,7 @@ import { createSourcePicker } from './thingy-source-picker.js';
 import { read as readStream } from './thingy-stream.js';
 import {
   createDictationController,
-  speechInputSupported
+  speechInputSupported as browserSpeechInputSupported
 } from './thingy-voice.js';
 import { createChatMessageActions } from './thingy-chat-actions.js';
 import {
@@ -38,6 +38,14 @@ import {
   librarianStreamUrl,
   tinylyticsId
 } from './thingy-config.js';
+import {
+  conversationTitle,
+  createLocalConversation,
+  dedupeEmptyConversationDrafts as dedupeConversationDrafts,
+  isEmptyConversationDraft as isEmptyConversationDraftEntry,
+  isLocalConversationId as isLocalConversationIdValue
+} from './thingy-conversations.js';
+import { userLocalContext } from './thingy-local-context.js';
 
 (() => {
     applyReturnChip();
@@ -162,44 +170,6 @@ import {
       return url.toString();
     }
 
-    function userLocalContext() {
-      const now = new Date();
-      const locale = navigator.language || 'en-US';
-      let timeZone = '';
-      try {
-        timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-      } catch (error) {
-        timeZone = '';
-      }
-      const offsetMinutes = -now.getTimezoneOffset();
-      const offsetSign = offsetMinutes >= 0 ? '+' : '-';
-      const offsetAbs = Math.abs(offsetMinutes);
-      const offset = `${offsetSign}${String(Math.floor(offsetAbs / 60)).padStart(2, '0')}:${String(offsetAbs % 60).padStart(2, '0')}`;
-      const localIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}${offset}`;
-      const hour = now.getHours();
-      const dayPeriod = hour < 5 ? 'night' : hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : hour < 21 ? 'evening' : 'night';
-      const localDate = new Intl.DateTimeFormat(locale, {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric'
-      }).format(now);
-      const localTime = new Intl.DateTimeFormat(locale, {
-        hour: 'numeric',
-        minute: '2-digit',
-        timeZoneName: 'short'
-      }).format(now);
-      return {
-        locale,
-        time_zone: timeZone,
-        utc_offset_minutes: offsetMinutes,
-        local_iso: localIso,
-        local_date: localDate,
-        local_time: localTime,
-        day_period: dayPeriod
-      };
-    }
-
     function resetMessages() {
       messages.innerHTML = '';
     }
@@ -274,7 +244,7 @@ import {
     }
 
     function hasSupportingAccess() {
-      return hasSupportingAccess(userProfile());
+      return profileHasSupportingAccess(userProfile());
     }
 
     function modeLabel(id = activeMode) {
@@ -286,12 +256,11 @@ import {
     }
 
     function isLocalConversationId(id) {
-      return String(id || '').startsWith(localConversationPrefix);
+      return isLocalConversationIdValue(id, localConversationPrefix);
     }
 
     function newConversationTitle(mode = activeMode) {
-      const normalized = normalizeModeId(mode);
-      return normalized === 'thingy' ? 'New chat' : `${modeLabel(normalized)} chat`;
+      return conversationTitle(mode, modeLabel);
     }
 
     function renderModeBanner() {
@@ -363,7 +332,7 @@ import {
     }
 
     function speechInputSupported() {
-      return speechInputSupported() || false;
+      return browserSpeechInputSupported() || false;
     }
 
     function updateVoiceButtonState() {
@@ -722,47 +691,11 @@ import {
     }
 
     function isEmptyConversationDraft(entry, mode = '') {
-      if (!entry?.id) return false;
-      const normalized = normalizeModeId(mode || entry.mode || 'thingy');
-      return normalizeModeId(entry.mode || 'thingy') === normalized
-        && Number(entry.turn_count || 0) === 0
-        && String(entry.title || '') === newConversationTitle(normalized);
-    }
-
-    function emptyConversationDraftKey(entry) {
-      if (!entry?.id) return '';
-      const normalized = normalizeModeId(entry.mode || 'thingy');
-      const title = String(entry.title || '');
-      return title === newConversationTitle(normalized) ? `${normalized}:${title}` : '';
+      return isEmptyConversationDraftEntry(entry, mode, modeLabel);
     }
 
     function dedupeEmptyConversationDrafts(list = []) {
-      const nonEmptyDraftKeys = new Set(
-        list
-          .filter((entry) => Number(entry?.turn_count || 0) > 0)
-          .map(emptyConversationDraftKey)
-          .filter(Boolean)
-      );
-      const seen = new Map();
-      const out = [];
-      for (const entry of list) {
-        if (!isEmptyConversationDraft(entry)) {
-          out.push(entry);
-          continue;
-        }
-        const key = emptyConversationDraftKey(entry);
-        if (nonEmptyDraftKeys.has(key)) continue;
-        const existingIndex = seen.get(key);
-        if (existingIndex === undefined) {
-          seen.set(key, out.length);
-          out.push(entry);
-          continue;
-        }
-        if (entry.id === activeConversationId && out[existingIndex]?.id !== activeConversationId) {
-          out[existingIndex] = entry;
-        }
-      }
-      return out;
+      return dedupeConversationDrafts(list, { activeConversationId, labelForMode: modeLabel });
     }
 
     function createLocalConversationShell(mode = activeMode) {
@@ -775,21 +708,12 @@ import {
         setActiveConversation(existing.id);
         return existing;
       }
-      const now = new Date().toISOString();
-      const id = `${localConversationPrefix}${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      const shell = {
-        id,
-        conversation_id: id,
-        title: newConversationTitle(normalized),
-        preview: '',
-        scope: currentScope(),
+      const shell = createLocalConversation({
         mode: normalized,
-        created_at: now,
-        updated_at: now,
-        last_message_at: now,
-        turn_count: 0,
-        local: true
-      };
+        scope: currentScope(),
+        prefix: localConversationPrefix,
+        labelForMode: modeLabel
+      });
       conversations = conversations.filter((entry) => !isEmptyConversationDraft(entry, normalized));
       conversations.unshift(shell);
       conversations = dedupeEmptyConversationDrafts(conversations).slice(0, maxRecents);

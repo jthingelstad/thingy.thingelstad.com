@@ -1,7 +1,7 @@
 import * as session from './thingy-session.js';
 import {
   createAccountMenu,
-  hasSupportingAccess,
+  hasSupportingAccess as profileHasSupportingAccess,
   normalizePreferredName,
   renderAccountIdentity
 } from './thingy-account.js';
@@ -145,7 +145,7 @@ import {
   }
 
   function hasSupportingAccess() {
-    return hasSupportingAccess(session.storedProfile());
+    return profileHasSupportingAccess(session.storedProfile());
   }
 
   async function dispatchPost(action, extra) {
