@@ -1929,8 +1929,7 @@ a.thingy-exp-source:hover {
   grid-column: 1;
   position: relative;
   min-width: 0;
-  padding: 0 7px 7px;
-  border-top: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
+  padding: 3px 7px 7px;
 }
 
 .rail-newchat-mode[hidden] {
