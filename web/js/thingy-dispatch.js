@@ -232,19 +232,7 @@
   }
 
   function hasSupportingAccess() {
-    const profile = session.storedProfile();
-    const entitlements = Array.isArray(profile.entitlements) ? profile.entitlements : [];
-    return Boolean(profile.supporting_member || entitlements.includes('supporting_member') || entitlements.includes('owner'));
-  }
-
-  function normalizePreferredName(value) {
-    const candidate = String(value || '').trim().replace(/[.!]+$/, '').replace(/\s+/g, ' ');
-    if (!/^[a-z][a-z .'’-]{0,78}$/i.test(candidate)) return '';
-    const words = candidate.split(/\s+/).filter(Boolean);
-    if (words.length < 1 || words.length > 4) return '';
-    const blocked = new Set(['hello', 'hi', 'hey', 'there', 'thingy', 'thanks', 'thank', 'yes', 'no', 'ok', 'okay']);
-    if (words.some((word) => blocked.has(word.toLowerCase()))) return '';
-    return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    return window.ThingyAccount.hasSupportingAccess(session.storedProfile());
   }
 
   async function dispatchPost(action, extra) {
@@ -302,12 +290,20 @@
   function refreshIdentity() {
     const email = session.storedEmail();
     const profile = session.storedProfile();
-    if (accountEmail) accountEmail.textContent = email || 'Signed in';
-    if (accountSub) accountSub.textContent = hasSupportingAccess() ? 'Supporting Member' : 'Weekly Thing reader';
-    if (accountAvatar) accountAvatar.textContent = email ? email[0].toUpperCase() : 'T';
+    window.ThingyAccount.renderAccountIdentity({
+      signedIn: signedIn(),
+      email,
+      profile,
+      elements: {
+        email: accountEmail,
+        avatar: accountAvatar,
+        sub: accountSub,
+        button: accountBtn,
+        caret: document.querySelector('#dispatch-account-btn .rail-account-caret'),
+        nameInput: accountNameInput
+      }
+    });
     if (mobileTitle) mobileTitle.textContent = draftTitle(activeDraft());
-    if (profile && profile.preferred_name && accountEmail && !email) accountEmail.textContent = profile.preferred_name;
-    if (accountNameInput) accountNameInput.value = profile.preferred_name || '';
   }
 
   function setMobileRailOpen(open) {
@@ -783,7 +779,7 @@
     nameInput: accountNameInput,
     nameStatus: accountNameStatus,
     logoutButton,
-    normalizeName: normalizePreferredName,
+    normalizeName: window.ThingyAccount.normalizePreferredName,
     signedIn,
     returnTo: '/dispatch/',
     onSaved: () => refreshIdentity()

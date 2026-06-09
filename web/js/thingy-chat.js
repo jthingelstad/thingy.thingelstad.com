@@ -248,9 +248,7 @@
     }
 
     function hasSupportingAccess() {
-      const profile = userProfile();
-      const entitlements = Array.isArray(profile.entitlements) ? profile.entitlements : [];
-      return Boolean(profile.supporting_member || entitlements.includes('supporting_member') || entitlements.includes('owner'));
+      return window.ThingyAccount.hasSupportingAccess(userProfile());
     }
 
     function modeLabel(id = activeMode) {
@@ -458,18 +456,20 @@
       const stored = session.storedEmail();
       const value = (emailInput && emailInput.value ? emailInput.value.trim() : '') || stored;
       const signedIn = Boolean(token());
-      if (accountEmailEl) accountEmailEl.textContent = signedIn ? (value || 'Signed in') : 'Sign in';
-      if (accountSubEl) accountSubEl.textContent = signedIn
-        ? hasSupportingAccess() ? 'Supporting Member' : 'Weekly Thing reader'
-        : 'Weekly Thing readers';
-      if (accountAvatarEl) accountAvatarEl.textContent = signedIn && value ? value[0].toUpperCase() : 'T';
-      if (accountNameInputEl) accountNameInputEl.value = preferredName || userProfile().preferred_name || '';
-      if (accountCaretEl) accountCaretEl.hidden = !signedIn;
-      if (accountBtnEl) {
-        accountBtnEl.setAttribute('aria-haspopup', signedIn ? 'true' : 'false');
-        accountBtnEl.setAttribute('aria-expanded', 'false');
-        accountBtnEl.title = signedIn ? 'Account' : 'Sign in';
-      }
+      window.ThingyAccount.renderAccountIdentity({
+        signedIn,
+        email: value,
+        profile: userProfile(),
+        preferredName,
+        elements: {
+          email: accountEmailEl,
+          avatar: accountAvatarEl,
+          sub: accountSubEl,
+          button: accountBtnEl,
+          caret: accountCaretEl,
+          nameInput: accountNameInputEl
+        }
+      });
       renderModeControl();
     }
 
@@ -2331,7 +2331,7 @@
       nameInput: accountNameInput,
       nameStatus: accountNameStatus,
       logoutButton,
-      normalizeName: extractPreferredName,
+      normalizeName: window.ThingyAccount.normalizePreferredName,
       signedIn: () => Boolean(token()),
       returnTo: '/chat/',
       onSignedOutClick: () => {

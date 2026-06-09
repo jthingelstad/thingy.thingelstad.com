@@ -1,4 +1,42 @@
 (function () {
+  function hasSupportingAccess(profile = {}) {
+    const entitlements = Array.isArray(profile.entitlements) ? profile.entitlements : [];
+    return Boolean(profile.supporting_member || entitlements.includes('supporting_member') || entitlements.includes('owner'));
+  }
+
+  function normalizePreferredName(value) {
+    const candidate = String(value || '').trim().replace(/[.!]+$/, '').replace(/\s+/g, ' ');
+    if (!/^[a-z][a-z .'’-]{0,78}$/i.test(candidate)) return '';
+    const words = candidate.split(/\s+/).filter(Boolean);
+    if (words.length < 1 || words.length > 4) return '';
+    const blocked = new Set(['hello', 'hi', 'hey', 'there', 'thingy', 'thanks', 'thank', 'yes', 'no', 'ok', 'okay']);
+    if (words.some((word) => blocked.has(word.toLowerCase()))) return '';
+    return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  }
+
+  function renderAccountIdentity(options = {}) {
+    const profile = options.profile || {};
+    const elements = options.elements || {};
+    const signedIn = Boolean(options.signedIn);
+    const email = String(options.email || '').trim();
+    const preferredName = String(options.preferredName || profile.preferred_name || '').trim();
+    const display = email || preferredName;
+    if (elements.email) elements.email.textContent = signedIn ? (display || 'Signed in') : (options.signedOutEmail || 'Sign in');
+    if (elements.sub) {
+      elements.sub.textContent = signedIn
+        ? hasSupportingAccess(profile) ? 'Supporting Member' : 'Weekly Thing reader'
+        : (options.signedOutSub || 'Weekly Thing readers');
+    }
+    if (elements.avatar) elements.avatar.textContent = signedIn && display ? display[0].toUpperCase() : 'T';
+    if (elements.nameInput) elements.nameInput.value = preferredName;
+    if (elements.caret) elements.caret.hidden = !signedIn;
+    if (elements.button) {
+      elements.button.setAttribute('aria-haspopup', signedIn ? 'true' : 'false');
+      elements.button.setAttribute('aria-expanded', 'false');
+      elements.button.title = signedIn ? 'Account' : 'Sign in';
+    }
+  }
+
   function createAccountMenu(options = {}) {
     const session = options.session || window.ThingySession;
     const button = options.button || null;
@@ -78,5 +116,10 @@
     };
   }
 
-  window.ThingyAccount = { createAccountMenu };
+  window.ThingyAccount = {
+    createAccountMenu,
+    hasSupportingAccess,
+    normalizePreferredName,
+    renderAccountIdentity
+  };
 }());
