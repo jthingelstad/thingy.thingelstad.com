@@ -51,6 +51,7 @@ import {
   scrubUrlParams,
   signInReturnUrl
 } from './thingy-url.js';
+import { updateChatComposerState } from './thingy-chat-composer-state.js';
 
 (() => {
     applyReturnChip();
@@ -513,29 +514,25 @@ import {
     }
 
     function updateQuestionState() {
-      const length = questionInput.value.length;
-      const hasSources = sourceCount() > 0;
-      const busy = interactionBusy();
-      questionCount.textContent = `${length} / ${maxQuestionChars}`;
-      questionCount.classList.toggle('warning', length > maxQuestionChars * 0.9);
-      if (sourceError) sourceError.textContent = hasSources ? '' : 'Switch on at least one source.';
-      questionForm.classList.toggle('is-busy', busy);
-      questionButton.disabled = busy || !hasSources || !questionInput.value.trim() || length > maxQuestionChars;
-      questionButton.setAttribute('aria-label', busy ? 'Thingy is answering' : 'Ask Thingy');
-      questionButton.title = busy ? 'Thingy is answering' : 'Ask Thingy';
-      if (composerMapButton) {
-        const canMapDraft = Boolean(questionInput.value.trim()) && length <= maxQuestionChars && hasSources && token();
-        composerMapButton.disabled = busy || !canMapDraft;
-        composerMapButton.title = canMapDraft ? 'Seed curiosity map with this text' : 'Type a topic to seed a map';
-        composerMapButton.setAttribute('aria-label', canMapDraft ? 'Seed curiosity map with this text' : 'Type a topic to seed a map');
-      }
-      clearChatButton.disabled = busy;
-      if (curiosityMapButton) curiosityMapButton.disabled = busy || !token() || !hasSources;
-      if (modeSelect) modeSelect.disabled = busy;
-      sourceControls.setDisabled(busy);
-      updateVoiceButtonState();
-      updateMobileConversationTitle();
-      autoSizeQuestionInput();
+      updateChatComposerState({
+        input: questionInput,
+        count: questionCount,
+        maxChars: maxQuestionChars,
+        hasSources: sourceCount() > 0,
+        busy: interactionBusy(),
+        signedIn: Boolean(token()),
+        sourceError,
+        form: questionForm,
+        submitButton: questionButton,
+        mapDraftButton: composerMapButton,
+        newChatButton: clearChatButton,
+        curiosityMapButton,
+        modeSelect,
+        sourceControls,
+        onVoiceUpdate: updateVoiceButtonState,
+        onConversationTitleUpdate: updateMobileConversationTitle,
+        onAutoSize: autoSizeQuestionInput
+      });
     }
 
     function setAuthMessage(message) {
