@@ -20,11 +20,10 @@ import {
 } from './thingy-markdown.js';
 import {
   activityStepsFromToolNames,
-  appendActivityCommentary,
-  appendActivityStep,
   renderAssistantResponse,
   renderCuriosityMap
 } from './thingy-chat-rendering.js';
+import { createAssistantStreamRenderer } from './thingy-chat-stream-renderer.js';
 import { createRailController } from './thingy-rail.js';
 import { normalizeScopeParam } from './thingy-scope.js';
 import { createSourcePicker } from './thingy-source-picker.js';
@@ -1227,9 +1226,6 @@ import {
         throw new Error('Thingy has not been connected to the archive stream API yet.');
       }
 
-      let answer = '';
-      let citations = [];
-      let experience = null;
       let requestId = '';
       let conversationId = isLocalConversationId(activeConversationId) ? '' : (activeConversationId || '');
       let conversation = null;
@@ -1268,21 +1264,7 @@ import {
         throw error;
       }
 
-      let renderFrame = 0;
-      let activitySteps = [];
-      let activityCommentary = [];
-
-      function renderPendingAnswer() {
-        renderFrame = 0;
-        pending.classList.remove('librarian-message-pending');
-        pending.innerHTML = renderAssistantResponse(answer, citations, experience, activitySteps, activityCommentary);
-        scheduleChatScroll();
-      }
-
-      function schedulePendingRender() {
-        if (renderFrame) return;
-        renderFrame = window.requestAnimationFrame(renderPendingAnswer);
-      }
+      const renderer = createAssistantStreamRenderer({ pending, scroll: scheduleChatScroll });
 
       function applyEvent(eventName, data) {
         if (eventName === 'meta') {
@@ -1302,28 +1284,17 @@ import {
             setActiveConversation(conversationId);
           }
         } else if (eventName === 'status') {
-          activitySteps = appendActivityStep(activitySteps, data, 'Thingy is working...');
-          pending.classList.add('librarian-message-pending');
-          pending.innerHTML = renderAssistantResponse(answer, citations, experience, activitySteps, activityCommentary, { active: true });
-          scheduleChatScroll({ force: true });
+          renderer.status(data, 'Thingy is working...');
         } else if (eventName === 'commentary') {
-          activityCommentary = appendActivityCommentary(activityCommentary, data.message || data.delta || '');
-          pending.classList.add('librarian-message-pending');
-          pending.innerHTML = renderAssistantResponse(answer, citations, experience, activitySteps, activityCommentary, { active: true });
-          scheduleChatScroll({ force: true });
+          renderer.commentary(data.message || data.delta || '');
         } else if (eventName === 'answer_delta') {
-          answer += data.delta || '';
-          answer = answer.replace(/^\s+/, '');
-          schedulePendingRender();
+          renderer.appendDelta(data.delta);
         } else if (eventName === 'answer') {
-          answer = data.answer || '';
-          schedulePendingRender();
+          renderer.setAnswer(data.answer);
         } else if (eventName === 'citations') {
-          citations = data.citations || [];
-          schedulePendingRender();
+          renderer.setCitations(data.citations);
         } else if (eventName === 'experience') {
-          experience = data.experience || null;
-          schedulePendingRender();
+          renderer.setExperience(data.experience);
         } else if (eventName === 'done') {
           requestId = data.request_id || requestId;
           if (data.mode) {
@@ -1343,11 +1314,7 @@ import {
       }
 
       await readStream(response, applyEvent);
-      if (renderFrame) {
-        window.cancelAnimationFrame(renderFrame);
-        renderPendingAnswer();
-      }
-      return { answer, citations, experience, request_id: requestId, conversation_id: conversationId, conversation };
+      return { ...renderer.finish(), request_id: requestId, conversation_id: conversationId, conversation };
     }
 
     async function postStreamingWelcome(pending, scope, options = {}) {
@@ -1355,8 +1322,6 @@ import {
         throw new Error('Thingy has not been connected to the archive stream API yet.');
       }
 
-      let answer = '';
-      let experience = null;
       let requestId = '';
       const controller = options.controller || new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 45000);
@@ -1391,21 +1356,12 @@ import {
         throw error;
       }
 
-      let renderFrame = 0;
-      let activitySteps = [];
-      let activityCommentary = [];
-
-      function renderPendingWelcome() {
-        renderFrame = 0;
-        pending.classList.remove('librarian-message-pending');
-        pending.innerHTML = renderAssistantResponse(answer, [], experience, activitySteps, activityCommentary, { label: 'Session Setup' });
-        scheduleChatScroll();
-      }
-
-      function scheduleWelcomeRender() {
-        if (renderFrame) return;
-        renderFrame = window.requestAnimationFrame(renderPendingWelcome);
-      }
+      const renderer = createAssistantStreamRenderer({
+        pending,
+        scroll: scheduleChatScroll,
+        label: 'Session Setup',
+        statusFallback: 'Thingy is getting oriented...'
+      });
 
       function applyEvent(eventName, data) {
         if (eventName === 'meta') {
@@ -1415,25 +1371,15 @@ import {
             renderModeControl();
           }
         } else if (eventName === 'status') {
-          activitySteps = appendActivityStep(activitySteps, data, 'Thingy is getting oriented...');
-          pending.classList.add('librarian-message-pending');
-          pending.innerHTML = renderAssistantResponse(answer, [], experience, activitySteps, activityCommentary, { active: true, label: 'Session Setup' });
-          scheduleChatScroll({ force: true });
+          renderer.status(data, 'Thingy is getting oriented...');
         } else if (eventName === 'commentary') {
-          activityCommentary = appendActivityCommentary(activityCommentary, data.message || data.delta || '');
-          pending.classList.add('librarian-message-pending');
-          pending.innerHTML = renderAssistantResponse(answer, [], experience, activitySteps, activityCommentary, { active: true, label: 'Session Setup' });
-          scheduleChatScroll({ force: true });
+          renderer.commentary(data.message || data.delta || '');
         } else if (eventName === 'answer_delta') {
-          answer += data.delta || '';
-          answer = answer.replace(/^\s+/, '');
-          scheduleWelcomeRender();
+          renderer.appendDelta(data.delta);
         } else if (eventName === 'answer') {
-          answer = data.answer || '';
-          scheduleWelcomeRender();
+          renderer.setAnswer(data.answer);
         } else if (eventName === 'experience') {
-          experience = data.experience || null;
-          scheduleWelcomeRender();
+          renderer.setExperience(data.experience);
         } else if (eventName === 'done') {
           requestId = data.request_id || requestId;
           if (data.mode) {
@@ -1448,10 +1394,7 @@ import {
       }
 
       await readStream(response, applyEvent);
-      if (renderFrame) {
-        window.cancelAnimationFrame(renderFrame);
-        renderPendingWelcome();
-      }
+      const { answer, experience } = renderer.finish();
       return { answer, experience, request_id: requestId };
     }
 
