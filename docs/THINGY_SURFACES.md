@@ -234,6 +234,7 @@ Thingy should validate a Discord user as a supporting member and grant the
 server role that unlocks the member space.
 
 #validation channel ID: 1502436824151490611
+Supporter role id: 1502531258201276507
 
 Expected behavior:
 
@@ -245,6 +246,8 @@ Expected behavior:
 - The bridge records enough state to avoid repeated validation friction, but
   Studio remains authoritative for the entitlement.
 
+Expect that the URL that thingy gives would be to a special, unlisted page on thingy.thingelstad.com where the user can authenticate and receive a one time token that they can /thingy message back to confirm.
+
 Implementation note: role assignment requires a configured guild id, role id,
 and Discord bot permission to manage roles. The bot's role must be higher than
 the member role in Discord's role hierarchy.
@@ -252,6 +255,8 @@ the member role in Discord's role hierarchy.
 ### `#general` Mentions
 
 Thingy can respond when explicitly mentioned in `#general`.
+
+channel id: 1500830485360803842
 
 Expected behavior:
 
