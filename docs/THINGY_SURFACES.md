@@ -233,6 +233,8 @@ intentional feature set.
 Thingy should validate a Discord user as a supporting member and grant the
 server role that unlocks the member space.
 
+#validation channel ID: 1502436824151490611
+
 Expected behavior:
 
 - User joins Discord or requests access.
@@ -259,46 +261,6 @@ Expected behavior:
 - Link sources.
 - Include a web continuation link when the answer wants depth.
 - Avoid interrupting normal conversation.
-
-### Related Links
-
-A slash command, message action, or direct mention could ask Thingy for related
-archive material.
-
-Example jobs:
-
-- "What has Jamie written that relates to this?"
-- "Find a related Weekly Thing issue."
-- "Is there an older thread behind this idea?"
-
-This is likely more useful in Discord than long-form Q&A because it improves the
-member discussion already happening there.
-
-### New-Issue Companion
-
-When a Weekly Thing issue publishes, Thingy could post a companion card for
-supporting members:
-
-- Short issue summary.
-- Three discussion prompts.
-- Two or three older archive connections.
-- Link to continue in web Thingy.
-
-This should be event-driven and restrained. Discord should not become a noisy
-broadcast channel.
-
-### Question Queue For Jamie
-
-Members could react to a Thingy exchange to flag it for Jamie.
-
-Possible behavior:
-
-- Member reacts with a configured emoji.
-- Bridge records the question/conversation id.
-- Operator Report shows it as "member question for Jamie."
-
-This gives the member Discord a useful loop without requiring Jamie to watch
-every channel in real time.
 
 ## Mode Implications
 
