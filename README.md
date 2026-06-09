@@ -19,9 +19,9 @@ page they came from.
 
 Examples:
 
-- `https://thingy.thingelstad.com/?from=https%3A%2F%2Fwww.thingelstad.com%2F`
-- `https://thingy.thingelstad.com/?from=https%3A%2F%2Fweekly.thingelstad.com%2Farchive%2F`
-- `https://thingy.thingelstad.com/?from=https%3A%2F%2Fanother.thingelstad.com%2Fepisodes%2F`
+- `https://thingy.thingelstad.com/chat/?from=https%3A%2F%2Fwww.thingelstad.com%2F`
+- `https://thingy.thingelstad.com/chat/?from=https%3A%2F%2Fweekly.thingelstad.com%2Farchive%2F`
+- `https://thingy.thingelstad.com/chat/?from=https%3A%2F%2Fanother.thingelstad.com%2Fepisodes%2F`
 
 Known hostnames and legacy word aliases:
 
