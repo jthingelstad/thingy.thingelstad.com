@@ -30,13 +30,9 @@ import { createRailRecentItem } from './thingy-rail-recents.js';
 import { normalizeScopeParam } from './thingy-scope.js';
 import { createSourcePicker } from './thingy-source-picker.js';
 import { postJsonStream, read as readStream } from './thingy-stream.js';
-import {
-  createDictationController,
-  speechInputSupported as browserSpeechInputSupported
-} from './thingy-voice.js';
+import { createDictationController } from './thingy-voice.js';
 import { createChatMessageActions } from './thingy-chat-actions.js';
 import {
-  librarianApiUrl,
   librarianStreamUrl,
   tinylyticsId
 } from './thingy-config.js';
@@ -58,7 +54,6 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
 
 (() => {
     applyReturnChip();
-    const apiBase = librarianApiUrl();
     const streamBase = librarianStreamUrl();
     const authPanel = document.getElementById('librarian-auth');
     const chatPanel = document.getElementById('librarian-chat');
@@ -292,10 +287,6 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
 
     function sourceCount() {
       return sourceControls.sourceCount();
-    }
-
-    function speechInputSupported() {
-      return browserSpeechInputSupported() || false;
     }
 
     function updateVoiceButtonState() {
