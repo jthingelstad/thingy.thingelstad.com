@@ -1,14 +1,11 @@
 import * as session from './thingy-session.js';
 import {
-  createAccountMenu,
-  hasSupportingAccess as profileHasSupportingAccess,
   normalizePreferredName,
-  renderAccountIdentity
 } from './thingy-account.js';
 import { createComposer } from './thingy-composer.js';
-import { escapeHtml as escapeMarkup, renderMarkdown } from './thingy-markdown.js';
-import { createRailController } from './thingy-rail.js';
+import { renderMarkdown } from './thingy-markdown.js';
 import { createRailRecentItem } from './thingy-rail-recents.js';
+import { createThingyShell } from './thingy-shell.js';
 import {
   draftFromServerRow,
   hasDraftContent,
@@ -40,20 +37,46 @@ import { dispatchEditable } from './thingy-dispatch-state.js';
   const accountNameInput = document.getElementById('dispatch-account-name-input');
   const accountNameStatus = document.getElementById('dispatch-account-name-status');
   const logoutButton = document.getElementById('dispatch-logout');
+  const accountElements = {
+    email: accountEmail,
+    avatar: accountAvatar,
+    sub: accountSub,
+    button: accountBtn,
+    caret: document.querySelector('#dispatch-account-btn .rail-account-caret'),
+    nameInput: accountNameInput
+  };
   const mobileTitle = document.getElementById('dispatch-mobile-title');
   const mobileToggle = document.getElementById('dispatch-mobile-toggle');
   const railScrim = document.getElementById('dispatch-rail-scrim');
   const railCollapseBtn = document.getElementById('dispatch-rail-collapse');
   const activeKey = 'thingyActiveDispatchDraft';
-  const railControls = createRailController({
-    shell,
-    mobileToggle,
-    scrim: railScrim,
-    collapseButton: railCollapseBtn,
-    collapsedKey: 'thingyRailCollapsed',
-    showLabel: 'Show Dispatches',
-    hideLabel: 'Hide Dispatches'
+  const shellControls = createThingyShell({
+    rail: {
+      shell,
+      mobileToggle,
+      scrim: railScrim,
+      collapseButton: railCollapseBtn,
+      collapsedKey: 'thingyRailCollapsed',
+      showLabel: 'Show Dispatches',
+      hideLabel: 'Hide Dispatches'
+    },
+    account: {
+      session,
+      button: accountBtn,
+      menu: accountMenu,
+      nameForm: accountNameForm,
+      nameInput: accountNameInput,
+      nameStatus: accountNameStatus,
+      logoutButton,
+      normalizeName: normalizePreferredName,
+      signedIn,
+      returnTo: '/dispatch/',
+      elements: accountElements,
+      onSaved: () => refreshIdentity()
+    }
   });
+  const railControls = shellControls.rail;
+  const accountControls = shellControls.account;
   const welcomeText = "What should this Dispatch explore? Give me a topic, question, or thread from Jamie's archive and I'll help shape it before you send it.";
   const maxInputChars = Number(input && input.getAttribute('maxlength') || 1200);
   const dispatchTestMode = (() => {
@@ -67,10 +90,6 @@ import { dispatchEditable } from './thingy-dispatch-state.js';
   let pollTimer = 0;
   let pollingDraftId = '';
   let composerControls = null;
-
-  function escapeHtml(value) {
-    return escapeMarkup(value);
-  }
 
   function nowIso() {
     return new Date().toISOString();
@@ -150,10 +169,6 @@ import { dispatchEditable } from './thingy-dispatch-state.js';
     return false;
   }
 
-  function hasSupportingAccess() {
-    return profileHasSupportingAccess(session.storedProfile());
-  }
-
   async function dispatchPost(action, extra) {
     if (!(await session.ensureFreshToken())) {
       session.clearAuth();
@@ -216,20 +231,10 @@ import { dispatchEditable } from './thingy-dispatch-state.js';
   }
 
   function refreshIdentity() {
-    const email = session.storedEmail();
-    const profile = session.storedProfile();
-    renderAccountIdentity({
+    accountControls?.refresh({
       signedIn: signedIn(),
-      email,
-      profile,
-      elements: {
-        email: accountEmail,
-        avatar: accountAvatar,
-        sub: accountSub,
-        button: accountBtn,
-        caret: document.querySelector('#dispatch-account-btn .rail-account-caret'),
-        nameInput: accountNameInput
-      }
+      email: session.storedEmail(),
+      profile: session.storedProfile()
     });
     if (mobileTitle) mobileTitle.textContent = draftTitle(activeDraft());
   }
@@ -690,20 +695,6 @@ import { dispatchEditable } from './thingy-dispatch-state.js';
       setMobileRailOpen(false);
     });
   }
-
-  const accountControls = createAccountMenu({
-    session,
-    button: accountBtn,
-    menu: accountMenu,
-    nameForm: accountNameForm,
-    nameInput: accountNameInput,
-    nameStatus: accountNameStatus,
-    logoutButton,
-    normalizeName: normalizePreferredName,
-    signedIn,
-    returnTo: '/dispatch/',
-    onSaved: () => refreshIdentity()
-  });
 
   document.addEventListener('click', () => accountControls.close());
   document.addEventListener('keydown', (event) => {

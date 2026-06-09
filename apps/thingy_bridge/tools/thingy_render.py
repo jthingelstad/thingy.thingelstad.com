@@ -15,8 +15,8 @@ that — citation rewriting is the whole job. If the Lambda starts
 emitting markdown later, add a translator here.
 
 References:
-  - apps/site/librarian.njk:410-436   citation rewrite regex
-  - apps/site/librarian.njk:662-674   history compaction rules
+  - web/src/shared/thingy-chat-rendering.js   citation rendering patterns
+  - web/src/shared/thingy-chat.js             conversation context shape
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from __future__ import annotations
 import re
 from typing import Any, Iterable, Optional
 
-# The frontend uses essentially the same regex (apps/site/librarian.njk).
+# The web frontend uses essentially the same citation shape.
 # Matches both the canonical `WTNNN` form and the legacy bare `#NNN` form;
 # either way the rewrite normalizes to `WTNNN`. Allow up to 5 digits — the
 # archive will hit issue 10000 in many years but the bound is arbitrary;
@@ -118,7 +118,7 @@ def format_for_discord(
 def compact_history(
     raw: Iterable[dict[str, str]],
 ) -> list[dict[str, str]]:
-    """Mirror the JS frontend's history compaction (apps/site/librarian.njk:662-674).
+    """Mirror the web frontend's history compaction.
 
     Keep only ``user`` and ``assistant`` roles; truncate each message to
     700 chars; cap the whole list at 8 messages and 4000 total chars,

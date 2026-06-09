@@ -26,15 +26,14 @@ import httpx
 
 from . import db
 
-logger = logging.getLogger("workshop.thingy_client")
+logger = logging.getLogger("thingy_bridge.thingy_client")
 
 # Refresh tokens this many seconds before they actually expire so an
 # in-flight chat request never trips an "expired" rejection mid-stream.
 REFRESH_BUFFER_SECS = 600
 
 # Lambda streams take a few seconds to start. The end-to-end ceiling
-# matches what the JS frontend uses (75s read timeout, see
-# apps/site/librarian.njk:817).
+# matches what the web frontend uses for long Thingy turns.
 DEFAULT_TIMEOUT = httpx.Timeout(connect=10.0, read=90.0, write=10.0, pool=10.0)
 
 
@@ -165,7 +164,7 @@ async def chat_stream(
 
     ``scope`` selects which corpus the Lambda searches
     (``weekly_thing`` / ``blog`` / ``podcast`` / ``both`` / ``all``); omit it and the Lambda
-    defaults to the Weekly Thing archive.
+    defaults to the API's broad reader-facing corpus policy.
     """
     url = f"{_stream_base()}/chat"
     body: dict[str, Any] = {"message": message, "history": history or []}

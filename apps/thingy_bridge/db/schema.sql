@@ -16,13 +16,13 @@ CREATE TABLE IF NOT EXISTS thingy_tokens (
   -- the bridge avoid re-greeting on every fresh-token mint.
   last_welcomed_at TEXT,
   -- When the user last fired `/thingy new`. The history walker stops
-  -- walking #ask-thingy backward as soon as it crosses this timestamp,
+  -- walking member-channel history backward as soon as it crosses this timestamp,
   -- so a fresh question after a reset is not contaminated with the
   -- prior session's context. NULL = never reset.
   session_reset_at TEXT
 );
 
--- Per-reader source scope for #ask-thingy. Which body of writing Thingy
+-- Per-reader source scope for Thingy's Discord channel. Which body of writing Thingy
 -- searches for this user: 'weekly_thing' (the issue archive, default),
 -- 'blog' (thingelstad.com), 'podcast' (Another Thing), 'both'
 -- (weekly_thing + blog), or 'all'. Kept in its own table rather than on

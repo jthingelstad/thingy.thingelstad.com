@@ -2,7 +2,7 @@
 
 The bridge keeps the Discord command surface intentionally small:
 
-- ``/thingy new`` — clear this user's #ask-thingy session boundary so
+- ``/thingy new`` — clear this user's member-channel session boundary so
   their next question is not pulled into the prior conversation.
 - ``/thingy scope`` — choose which public sources Thingy searches for
   that user's questions.
@@ -71,7 +71,7 @@ def register_thingy_commands(bot: "PersonaBot") -> app_commands.CommandTree:
             await _ack(
                 interaction,
                 "There's nothing to reset yet — you haven't talked to Thingy in this server. "
-                "Ask anything in #ask-thingy and we'll start clean from there.",
+                "Ask anything in Thingy's member channel and we'll start clean from there.",
             )
 
     @thingy.command(

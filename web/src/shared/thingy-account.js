@@ -45,6 +45,18 @@ function renderAccountIdentity(options = {}) {
     }
   }
 
+async function savePreferredName(session, name, normalizeName = normalizePreferredName) {
+    const nextName = normalizeName(name);
+    if (!nextName) throw new Error('Enter a name Thingy should use.');
+    const data = await session.postJson('/auth', { action: 'update_profile', preferred_name: nextName }, session.authHeaders());
+    const savedName = String(data?.profile?.preferred_name || '').trim();
+    if (savedName.toLowerCase() !== nextName.toLowerCase()) {
+      throw new Error('Thingy could not confirm that name was saved. Please try again.');
+    }
+    session.updateStoredProfile({ ...(data.profile || {}), preferred_name: savedName });
+    return { data, savedName };
+  }
+
 function createAccountMenu(options = {}) {
     const session = options.session || defaultSession;
     const button = options.button || null;
@@ -93,20 +105,11 @@ function createAccountMenu(options = {}) {
       nameForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         if (!signedIn()) return;
-        const nextName = normalizeName(nameInput?.value || '');
-        if (!nextName) {
-          if (nameStatus) nameStatus.textContent = 'Enter a name Thingy should use.';
-          return;
-        }
+        const nextName = nameInput?.value || '';
         if (nameStatus) nameStatus.textContent = 'Saving...';
         try {
-          const data = await session.postJson('/auth', { action: 'update_profile', preferred_name: nextName }, session.authHeaders());
-          const savedName = String(data?.profile?.preferred_name || '').trim();
-          if (savedName.toLowerCase() !== nextName.toLowerCase()) {
-            throw new Error('Thingy could not confirm that name was saved. Please try again.');
-          }
-          session.updateStoredProfile({ ...(data.profile || {}), preferred_name: savedName });
-          onSaved(nextName, data);
+          const { data, savedName } = await savePreferredName(session, nextName, normalizeName);
+          onSaved(savedName, data);
           if (nameStatus) nameStatus.textContent = 'Saved.';
         } catch (error) {
           if (nameStatus) nameStatus.textContent = error.message || 'Could not save that right now.';
@@ -124,10 +127,28 @@ function createAccountMenu(options = {}) {
     };
   }
 
+function createAccountPanel(options = {}) {
+    const controls = createAccountMenu(options);
+    return {
+      ...controls,
+      refresh: (state = {}) => renderAccountIdentity({
+        signedIn: Boolean(state.signedIn),
+        email: state.email,
+        profile: state.profile,
+        preferredName: state.preferredName,
+        signedOutEmail: state.signedOutEmail,
+        signedOutSub: state.signedOutSub,
+        elements: options.elements || {}
+      })
+    };
+  }
+
 export {
+  createAccountPanel,
   createAccountMenu,
   extractPreferredNameFromMessage,
   hasSupportingAccess,
   normalizePreferredName,
-  renderAccountIdentity
+  renderAccountIdentity,
+  savePreferredName
 };

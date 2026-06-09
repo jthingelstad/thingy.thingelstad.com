@@ -16,7 +16,7 @@ concerns:
   renders citations, and collects feedback. No server beyond GitHub Pages.
 - **`apps/thingy_bridge/`** — the Discord side of Thingy. A standalone Python
   process running one discord.py client + APScheduler support: answers
-  questions in `#ask-thingy` and provides member session/source commands.
+  questions in the configured member channel and provides member session/source commands.
   Conversation eval cards are posted by the API-side webhook, not by polling
   in the bridge. See `apps/thingy_bridge/CLAUDE.md`.
 

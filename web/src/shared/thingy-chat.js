@@ -1,10 +1,8 @@
 import * as session from './thingy-session.js';
 import {
-  createAccountMenu,
   extractPreferredNameFromMessage,
-  hasSupportingAccess as profileHasSupportingAccess,
   normalizePreferredName,
-  renderAccountIdentity
+  savePreferredName
 } from './thingy-account.js';
 import { createTinylyticsTracker } from './thingy-analytics.js';
 import { createComposer } from './thingy-composer.js';
@@ -25,10 +23,10 @@ import {
   renderCuriosityMap
 } from './thingy-chat-rendering.js';
 import { createAssistantStreamRenderer } from './thingy-chat-stream-renderer.js';
-import { createRailController } from './thingy-rail.js';
 import { createRailRecentItem } from './thingy-rail-recents.js';
 import { normalizeScopeParam } from './thingy-scope.js';
 import { createSourcePicker } from './thingy-source-picker.js';
+import { createThingyShell } from './thingy-shell.js';
 import { postJsonStream, read as readStream } from './thingy-stream.js';
 import { createDictationController } from './thingy-voice.js';
 import { createChatMessageActions } from './thingy-chat-actions.js';
@@ -40,8 +38,10 @@ import {
   conversationTitle,
   createLocalConversation,
   dedupeEmptyConversationDrafts as dedupeConversationDrafts,
+  deleteConversationSummaryList,
   isEmptyConversationDraft as isEmptyConversationDraftEntry,
-  isLocalConversationId as isLocalConversationIdValue
+  isLocalConversationId as isLocalConversationIdValue,
+  upsertConversationSummaryList
 } from './thingy-conversations.js';
 import { userLocalContext } from './thingy-local-context.js';
 import {
@@ -67,6 +67,19 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
     const addSubscriberButton = document.getElementById('librarian-add-subscriber');
     const resendConfirmationButton = document.getElementById('librarian-resend-confirmation');
     const logoutButton = document.getElementById('librarian-logout');
+    const accountBtn = document.getElementById('account-btn');
+    const accountMenu = document.getElementById('account-menu');
+    const accountNameForm = document.getElementById('account-name-form');
+    const accountNameInput = document.getElementById('account-name-input');
+    const accountNameStatus = document.getElementById('account-name-status');
+    const accountElements = {
+      email: document.getElementById('account-email'),
+      avatar: document.getElementById('account-avatar'),
+      sub: document.getElementById('account-sub'),
+      button: accountBtn,
+      caret: document.querySelector('#account-btn .rail-account-caret'),
+      nameInput: accountNameInput
+    };
     const clearChatButton = document.getElementById('librarian-clear-chat');
     const curiosityMapButton = document.getElementById('thingy-curiosity-map');
     const modeControl = document.getElementById('thingy-mode-control');
@@ -83,7 +96,6 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
     const messages = document.getElementById('librarian-messages');
     const chatScroll = document.querySelector('.thingy-chat-scroll');
     const composerZone = document.querySelector('.thingy-composer-zone');
-    const rail = document.querySelector('.rail');
     const prompts = document.getElementById('librarian-prompts');
     const activeConvKey = 'thingyActiveConversation';
     const localConversationPrefix = 'local-chat-';
@@ -95,15 +107,43 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
     const mobileRenameConversation = document.getElementById('mobile-rename-conversation');
     const mobileDeleteConversation = document.getElementById('mobile-delete-conversation');
     const railScrim = document.getElementById('rail-scrim');
-    const railControls = createRailController({
-      shell: appShell,
-      mobileToggle: mobileConversationsToggle,
-      scrim: railScrim,
-      collapseButton: document.getElementById('rail-collapse'),
-      collapsedKey: 'thingyRailCollapsed',
-      showLabel: 'Show conversations',
-      hideLabel: 'Hide conversations'
+    const shellControls = createThingyShell({
+      rail: {
+        shell: appShell,
+        mobileToggle: mobileConversationsToggle,
+        scrim: railScrim,
+        collapseButton: document.getElementById('rail-collapse'),
+        collapsedKey: 'thingyRailCollapsed',
+        showLabel: 'Show conversations',
+        hideLabel: 'Hide conversations'
+      },
+      account: {
+        session,
+        button: accountBtn,
+        menu: accountMenu,
+        nameForm: accountNameForm,
+        nameInput: accountNameInput,
+        nameStatus: accountNameStatus,
+        logoutButton,
+        normalizeName: normalizePreferredName,
+        signedIn: () => Boolean(token()),
+        returnTo: '/chat/',
+        elements: accountElements,
+        onSignedOutClick: () => {
+          if (emailInput) emailInput.focus();
+        },
+        onLogout: () => {
+          clearToken({ scrubAuthParams: true });
+          trackTinylyticsEvent('librarian.logout');
+        },
+        onSaved: (nextName) => {
+          rememberPreferredName(nextName);
+          refreshAccountIdentity();
+        }
+      }
     });
+    const railControls = shellControls.rail;
+    const accountControls = shellControls.account;
     const maxRecents = 20;
     let activeConversationId = null;
     let conversations = [];
@@ -217,10 +257,6 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       return session.storedProfile();
     }
 
-    function hasSupportingAccess() {
-      return profileHasSupportingAccess(userProfile());
-    }
-
     function modeLabel(id = activeMode) {
       return availableModes.find((mode) => mode.id === id)?.label || 'Thingy';
     }
@@ -268,8 +304,14 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       if (!cleanName) return;
       preferredName = cleanName;
       session.updateStoredProfile({ preferred_name: cleanName });
-      const accountNameInput = document.getElementById('account-name-input');
       if (accountNameInput) accountNameInput.value = cleanName;
+    }
+
+    async function persistInferredPreferredName(name) {
+      const { savedName } = await savePreferredName(session, name, normalizePreferredName);
+      rememberPreferredName(savedName);
+      refreshAccountIdentity();
+      return savedName;
     }
 
     function readerProfileContext() {
@@ -395,28 +437,13 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
     }
 
     function refreshAccountIdentity() {
-      const accountEmailEl = document.getElementById('account-email');
-      const accountAvatarEl = document.getElementById('account-avatar');
-      const accountSubEl = document.getElementById('account-sub');
-      const accountBtnEl = document.getElementById('account-btn');
-      const accountCaretEl = document.querySelector('.rail-account-caret');
-      const accountNameInputEl = document.getElementById('account-name-input');
       const stored = session.storedEmail();
       const value = (emailInput && emailInput.value ? emailInput.value.trim() : '') || stored;
-      const signedIn = Boolean(token());
-      renderAccountIdentity({
-        signedIn,
+      accountControls?.refresh({
+        signedIn: Boolean(token()),
         email: value,
         profile: userProfile(),
-        preferredName,
-        elements: {
-          email: accountEmailEl,
-          avatar: accountAvatarEl,
-          sub: accountSubEl,
-          button: accountBtnEl,
-          caret: accountCaretEl,
-          nameInput: accountNameInputEl
-        }
+        preferredName
       });
       renderModeControl();
     }
@@ -726,14 +753,14 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       toggleMobileConversationMenu(false);
       if (!window.confirm('Delete this conversation?')) return;
       if (isLocalConversationId(active.id)) {
-        conversations = conversations.filter((entry) => entry.id !== active.id);
+        ({ conversations, activeConversationId } = deleteConversationSummaryList(conversations, active.id, { activeConversationId }));
         startBlankConversationView();
         setMobileRailOpen(false);
         return;
       }
       try {
         await conversationAction({ action: 'delete', conversation_id: active.id });
-        conversations = conversations.filter((entry) => entry.id !== active.id);
+        ({ conversations, activeConversationId } = deleteConversationSummaryList(conversations, active.id, { activeConversationId }));
         clearConversation();
         setMobileRailOpen(false);
         trackTinylyticsEvent('librarian.conversation_delete');
@@ -811,18 +838,17 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
 
     function upsertConversationSummary(conversation, options = {}) {
       if (!conversation || !(conversation.id || conversation.conversation_id)) return;
-      const id = conversation.id || conversation.conversation_id;
       const replaceId = String(options.replaceId || '').trim();
-      conversations = conversations.filter((entry) => {
-        const entryId = entry.id || entry.conversation_id;
-        return entryId !== id && (!replaceId || entryId !== replaceId);
+      const result = upsertConversationSummaryList(conversations, conversation, {
+        activeConversationId,
+        labelForMode: modeLabel,
+        maxRecents,
+        replaceId
       });
-      conversations.unshift({ ...conversation, id, conversation_id: id, local: false });
-      conversations.sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')));
-      conversations = dedupeEmptyConversationDrafts(conversations).slice(0, maxRecents);
-      if (replaceId && activeConversationId === replaceId) {
-        activeConversationId = id;
-        try { window.localStorage.setItem(activeConvKey, id); } catch (error) { /* ignore */ }
+      conversations = result.conversations;
+      if (result.activeConversationId && result.activeConversationId !== activeConversationId) {
+        activeConversationId = result.activeConversationId;
+        try { window.localStorage.setItem(activeConvKey, activeConversationId); } catch (error) { /* ignore */ }
       }
       renderRecents();
       updateMobileConversationTitle();
@@ -1098,32 +1124,6 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       }
     }
 
-    async function completeMagicLogin(value) {
-      const clean = String(value || '').trim();
-      if (!clean) return false;
-      const generation = authRequestGeneration;
-      authButton.disabled = true;
-      hideAuthActions();
-      setAuthMessage('Signing you in...');
-      try {
-        const data = await postJson('/auth', { action: 'complete_magic_link', login_token: clean, source: 'thingy' });
-        if (generation !== authRequestGeneration) return false;
-        handleAuthResponse(data);
-        scrubUrlParams(['login_token', 'magic_token']);
-        trackTinylyticsEvent('librarian.auth_magic_link_success');
-        return Boolean(data.token);
-      } catch (error) {
-        if (generation !== authRequestGeneration) return false;
-        scrubUrlParams(['login_token', 'magic_token']);
-        setAuthMessage(error.message || 'That sign-in link is invalid or expired. Enter your email to get a fresh link.');
-        trackTinylyticsEvent('librarian.auth_magic_link_error', error.requestId ? 'server' : 'client');
-        return false;
-      } finally {
-        authButton.disabled = false;
-        validateEmail();
-      }
-    }
-
     async function postStreamingChat(message, pending, scope) {
       if (!streamBase) {
         throw new Error('Thingy has not been connected to the archive stream API yet.');
@@ -1363,7 +1363,9 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       const questionSize = questionWordCount < 6 ? 'short' : questionWordCount < 18 ? 'medium' : 'long';
       if (awaitingName && !preferredName) {
         const suppliedName = extractPreferredNameFromMessage(message);
-        if (suppliedName) rememberPreferredName(suppliedName);
+        if (suppliedName) {
+          await persistInferredPreferredName(suppliedName).catch(() => {});
+        }
         awaitingName = false;
       }
       autoFollowChat = true;
@@ -1489,35 +1491,7 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
     }
 
     /* Account menu. */
-    const accountBtn = document.getElementById('account-btn');
-    const accountMenu = document.getElementById('account-menu');
-    const accountNameForm = document.getElementById('account-name-form');
-    const accountNameInput = document.getElementById('account-name-input');
-    const accountNameStatus = document.getElementById('account-name-status');
     if (accountNameInput) accountNameInput.value = preferredName;
-    const accountControls = createAccountMenu({
-      session,
-      button: accountBtn,
-      menu: accountMenu,
-      nameForm: accountNameForm,
-      nameInput: accountNameInput,
-      nameStatus: accountNameStatus,
-      logoutButton,
-      normalizeName: normalizePreferredName,
-      signedIn: () => Boolean(token()),
-      returnTo: '/chat/',
-      onSignedOutClick: () => {
-        if (emailInput) emailInput.focus();
-      },
-      onLogout: () => {
-        clearToken({ scrubAuthParams: true });
-        trackTinylyticsEvent('librarian.logout');
-      },
-      onSaved: (nextName) => {
-        rememberPreferredName(nextName);
-        refreshAccountIdentity();
-      }
-    });
 
     document.addEventListener('click', (event) => {
       const target = event.target instanceof Element ? event.target : event.target?.parentElement;
@@ -1548,8 +1522,9 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
           if (!window.confirm('Delete this conversation?')) return;
           deleteBtn.disabled = true;
           if (isLocalConversationId(id)) {
-            conversations = conversations.filter((entry) => entry.id !== id);
-            if (id === activeConversationId) {
+            const wasActive = id === activeConversationId;
+            ({ conversations, activeConversationId } = deleteConversationSummaryList(conversations, id, { activeConversationId }));
+            if (wasActive) {
               startBlankConversationView();
             } else {
               renderRecents();
@@ -1559,8 +1534,9 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
           }
           try {
             await conversationAction({ action: 'delete', conversation_id: id });
-            conversations = conversations.filter((entry) => entry.id !== id);
-            if (id === activeConversationId) {
+            const wasActive = id === activeConversationId;
+            ({ conversations, activeConversationId } = deleteConversationSummaryList(conversations, id, { activeConversationId }));
+            if (wasActive) {
               clearConversation();
             } else {
               renderRecents();

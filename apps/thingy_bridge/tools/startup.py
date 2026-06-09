@@ -2,7 +2,7 @@
 
 On boot, after the Discord gateway is ready and the ``/thingy`` slash
 tree is synced, the bridge audits the channels it actually uses
-(``#ask-thingy`` + ``#chatter``) and posts a one-line readiness card
+(Thingy's member channel + ``#chatter``) and posts a one-line readiness card
 to ``#chatter`` under Thingy's avatar — mirroring the per-persona
 pattern in :mod:`apps.workshop_bot.tools.discord.startup`.
 
@@ -33,7 +33,7 @@ logger = logging.getLogger("thingy_bridge.startup")
 
 REPO = Path(__file__).resolve().parents[3]
 
-# (env_var, friendly_label). Thingy operates in #ask-thingy (reader-facing)
+# (env_var, friendly_label). Thingy operates in the member channel (reader-facing)
 # and posts conversation cards / startup heartbeats to #chatter.
 CHANNELS: list[tuple[str, str]] = [
     ("DISCORD_CHANNEL_ASK_THINGY", "primary"),

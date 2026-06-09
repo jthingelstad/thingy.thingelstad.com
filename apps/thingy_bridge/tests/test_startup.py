@@ -69,12 +69,12 @@ class AuditTests(EnvCase):
     def test_clean_audit(self):
         os.environ["DISCORD_CHANNEL_ASK_THINGY"] = "111"
         os.environ["DISCORD_CHANNEL_CHATTER"] = "222"
-        bot = _fake_bot({111: _fake_channel("ask-thingy"),
+        bot = _fake_bot({111: _fake_channel("member-channel"),
                          222: _fake_channel("chatter")})
         rows = startup.audit(bot)
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0][0], "DISCORD_CHANNEL_ASK_THINGY")
-        self.assertEqual(rows[0][1], "ask-thingy")
+        self.assertEqual(rows[0][1], "member-channel")
         self.assertEqual(rows[0][2], [])
         self.assertEqual(rows[1][1], "chatter")
         self.assertEqual(rows[1][2], [])
@@ -121,29 +121,29 @@ class FormatTests(unittest.TestCase):
         list (operator noise), no command list."""
         bot = _fake_bot()
         line = startup.format_line(bot, [
-            ("DISCORD_CHANNEL_ASK_THINGY", "ask-thingy", []),
+            ("DISCORD_CHANNEL_ASK_THINGY", "member-channel", []),
             ("DISCORD_CHANNEL_CHATTER", "chatter", []),
         ])
         self.assertEqual(line, "✓ **Thingy** online")
-        self.assertNotIn("#ask-thingy", line)
+        self.assertNotIn("#member-channel", line)
         self.assertNotIn("#chatter", line)
 
     def test_issue_surfaces_only_the_broken_channel(self):
         bot = _fake_bot()
         line = startup.format_line(bot, [
-            ("DISCORD_CHANNEL_ASK_THINGY", "ask-thingy", []),
+            ("DISCORD_CHANNEL_ASK_THINGY", "member-channel", []),
             ("DISCORD_CHANNEL_CHATTER", None, ["channel id 222 not visible to Thingy (not a member?)"]),
         ])
         self.assertTrue(line.startswith("⚠️ **Thingy** online — "))
         self.assertIn("not visible", line)
-        # The clean #ask-thingy is NOT echoed — only the broken row is.
-        self.assertNotIn("#ask-thingy", line)
+        # The clean member channel is NOT echoed — only the broken row is.
+        self.assertNotIn("#member-channel", line)
 
     def test_header_prepended(self):
         bot = _fake_bot()
         out = startup.format_line(
             bot,
-            [("DISCORD_CHANNEL_ASK_THINGY", "ask-thingy", []),
+            [("DISCORD_CHANNEL_ASK_THINGY", "member-channel", []),
              ("DISCORD_CHANNEL_CHATTER", "chatter", [])],
             header="**thingy-bridge online** — `abc1234`",
         )
@@ -160,7 +160,7 @@ class FormatTests(unittest.TestCase):
         bot = _fake_bot()
         out = startup.format_line(
             bot,
-            [("DISCORD_CHANNEL_ASK_THINGY", "ask-thingy", []),
+            [("DISCORD_CHANNEL_ASK_THINGY", "member-channel", []),
              ("DISCORD_CHANNEL_CHATTER", "chatter", [])],
             commands_summary="/thingy recent",
         )
@@ -203,7 +203,7 @@ class PostStartupCardTests(EnvCase):
         os.environ["DISCORD_CHANNEL_ASK_THINGY"] = "111"
         os.environ["DISCORD_CHANNEL_CHATTER"] = "222"
         chatter = _fake_channel("chatter")
-        bot = _fake_bot({111: _fake_channel("ask-thingy"), 222: chatter})
+        bot = _fake_bot({111: _fake_channel("member-channel"), 222: chatter})
         # Don't depend on the working tree's git state.
         with patch.object(startup, "git_hash", return_value="abc1234"), \
              patch.object(startup, "git_dirty", return_value=False):
@@ -216,7 +216,7 @@ class PostStartupCardTests(EnvCase):
         # Slim card: no command list, no channel echo on a clean boot.
         self.assertNotIn(startup.COMMANDS_SUMMARY, message)
         self.assertNotIn("↳", message)
-        self.assertNotIn("#ask-thingy", message)
+        self.assertNotIn("#member-channel", message)
         self.assertNotIn("#chatter", message)
         # Second call — reconnection fired on_ready again — must NOT
         # re-post. Real Discord blips would otherwise spam #chatter.
@@ -227,7 +227,7 @@ class PostStartupCardTests(EnvCase):
         os.environ["DISCORD_CHANNEL_ASK_THINGY"] = "111"
         os.environ["DISCORD_CHANNEL_CHATTER"] = "222"
         chatter = _fake_channel("chatter")
-        bot = _fake_bot({111: _fake_channel("ask-thingy"), 222: chatter})
+        bot = _fake_bot({111: _fake_channel("member-channel"), 222: chatter})
         with patch.object(startup, "git_hash", return_value="abc1234"), \
              patch.object(startup, "git_dirty", return_value=True):
             asyncio.run(startup.post_startup_card(bot))

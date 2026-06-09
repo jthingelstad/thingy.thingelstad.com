@@ -16,12 +16,12 @@ Build and tests:
 
 ```sh
 cd web
+npm run lint
 npm test
 LIBRARIAN_API_URL="$LIBRARIAN_API_URL" LIBRARIAN_STREAM_URL="$LIBRARIAN_STREAM_URL" npm run build
 ```
 
-Optional browser smoke, when Playwright is installed and the local server is
-already running:
+Browser smoke, with the local server already running:
 
 ```sh
 cd web

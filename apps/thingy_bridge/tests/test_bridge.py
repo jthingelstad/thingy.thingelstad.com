@@ -182,7 +182,7 @@ class AssembleAndFormatTests(unittest.TestCase):
 
 
 class HistoryCompactionTests(unittest.TestCase):
-    """Mirrors apps/site/librarian.njk:662-674."""
+    """Mirrors the web chat history-compaction rules."""
 
     def test_drops_invalid_roles(self):
         out = thingy_render.compact_history([

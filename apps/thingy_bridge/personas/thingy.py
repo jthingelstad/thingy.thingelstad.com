@@ -2,7 +2,7 @@
 
 Unlike Eddy/Linky/Marky/Patty, Thingy is **not** a local agent — it's a
 thin pass-through to the production Librarian Lambda. Each user message
-in #ask-thingy is forwarded to the Lambda's /chat endpoint; the SSE
+in the configured member channel is forwarded to the Lambda's /chat endpoint; the SSE
 stream is collected, the answer's `#NNN` citations are rewritten into
 clickable Discord links, and the result is posted back.
 
@@ -29,7 +29,7 @@ import discord
 from ..tools import db, discord_io, thingy_client, thingy_render
 from .base import PersonaBot
 
-# Walking #ask-thingy history backward, stop once we hit a gap larger
+# Walking member-channel history backward, stop once we hit a gap larger
 # than this. A >30-min pause is treated as a fresh Discord session, so
 # yesterday's CTO chat doesn't get dragged into today's RSS question.
 SESSION_GAP = timedelta(minutes=30)
@@ -140,7 +140,7 @@ class _Progress:
 
 
 
-logger = logging.getLogger("workshop.thingy")
+logger = logging.getLogger("thingy_bridge.thingy")
 
 FEEDBACK_EMOJI = {"👍": "up", "👎": "down"}
 THUMBS_UP = "👍"
@@ -153,7 +153,7 @@ class ThingyBot(PersonaBot):
     name = "Thingy"
     home_channel_env = "DISCORD_CHANNEL_ASK_THINGY"
     tools = ()                  # bridge: no agent_loop tools
-    empty_greeting = "Ask me about the Weekly Thing archive."
+    empty_greeting = "Ask me about Jamie's archive."
     preferred_model = None      # bridge: no LLM call from this process
 
     async def core(
@@ -313,7 +313,7 @@ class ThingyBot(PersonaBot):
         )
         # Disclose a non-default scope on the public answer. The
         # `/thingy scope` confirmation is ephemeral, so onlookers in
-        # #ask-thingy can't otherwise tell a blog/both answer apart from
+        # Discord readers can't otherwise tell a blog/both answer apart from
         # a Weekly-Thing one. Default (weekly_thing) stays footer-free.
         if answer and scope != db.DEFAULT_SCOPE:
             scope_label = db.SCOPE_LABELS.get(scope, scope)

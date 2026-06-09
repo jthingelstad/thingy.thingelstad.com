@@ -53,6 +53,14 @@ cd web
 LIBRARIAN_API_URL="$LIBRARIAN_API_URL" LIBRARIAN_STREAM_URL="$LIBRARIAN_STREAM_URL" npm run build
 ```
 
+Web lint and unit tests:
+
+```sh
+cd web
+npm run lint
+npm test
+```
+
 Web local server:
 
 ```sh
@@ -63,6 +71,13 @@ LIBRARIAN_API_URL="$LIBRARIAN_API_URL" LIBRARIAN_STREAM_URL="$LIBRARIAN_STREAM_U
 Use port `8080` when testing auth or chat against the live backend. The
 Librarian CORS configuration is known to allow `http://localhost:8080`.
 Other local ports may render the page but fail API calls with `Failed to fetch`.
+
+Web browser smoke test, with the local server already running on port `8080`:
+
+```sh
+cd web
+THINGY_SMOKE_URL=http://localhost:8080 npm run smoke
+```
 
 Bridge tests:
 

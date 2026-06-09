@@ -3,7 +3,7 @@
 Operational utilities for `apps/thingy_bridge/`. The author-facing
 `workshop_bot` now lives in `studio-thing`; this bridge keeps its own launchd
 label, database, and backup directory so Studio bot restarts don't drop
-`#ask-thingy` and vice versa.
+Thingy's member channel and vice versa.
 
 ## `admin.sh`
 

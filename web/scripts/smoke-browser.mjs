@@ -102,9 +102,9 @@ async function main() {
     await authedPage.goto(`${baseUrl}/chat/`);
     await authedPage.waitForSelector('.mobile-chatbar');
     assert.equal(await authedPage.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
-    await authedPage.locator('.mobile-chatbar-menu-button').click();
+    await authedPage.locator('#mobile-conversations-toggle').click();
     await authedPage.waitForSelector('.thingy-app-shell.is-mobile-rail-open');
-    assert.equal(await authedPage.locator('.rail-surface-switch a.is-active').textContent(), 'Chat');
+    assert.equal((await authedPage.locator('.rail-surface-switch a.is-active').textContent()).trim(), 'Chat');
     assert.equal(await authedPage.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
 
     await authedContext.close();

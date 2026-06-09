@@ -1,7 +1,7 @@
 # thingy_bridge — project memory
 
 > Discord ↔ Librarian Lambda bridge. Reader-facing answering bot in
-> `#ask-thingy` plus member commands for session reset and source scope.
+> the configured member channel plus member commands for session reset and source scope.
 > The Librarian eval and Dispatch Lambdas post cards directly to Discord
 > via webhook. Standalone Python process, single Discord client, scheduler
 > support but no registered Thingy poller.
@@ -20,7 +20,7 @@ Lambda.
 The bridge's two surfaces:
 
 - **Live answering** (`personas/thingy.py`) — on every message in
-  `#ask-thingy`, forwards to the Lambda's `/chat` SSE stream and posts
+  the configured member channel, forwards to the Lambda's `/chat` SSE stream and posts
   the answer with rewritten citations. Adds 👍/👎 reactions for
   per-answer feedback that POSTs to the Lambda's `/feedback` endpoint.
   No agent loop in this process — the Lambda owns retrieval +
@@ -56,7 +56,7 @@ from `db/schema.sql` on every boot:
                           ↑↓ HTTP/SSE
                    apps/thingy_bridge/  ← THIS APP (reader bridge + notifications)
                           ↕ Discord
-                       #ask-thingy
+                       member channel
                        #chatter (cards posted here, read by everyone)
 
           studio-thing/apps/workshop_bot/  ← author-facing personas (Eddy/Linky/Marky/Patty)

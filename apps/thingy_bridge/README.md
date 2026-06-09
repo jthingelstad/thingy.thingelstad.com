@@ -1,6 +1,6 @@
 # thingy_bridge — Discord ↔ Thingy API bridge
 
-> Runs the Thingy Discord bot in `#ask-thingy` and posts startup notices
+> Runs the Thingy Discord bot in the configured member channel and posts startup notices
 > to `#chatter`. Conversations, transcripts, summaries, evals, Dispatches,
 > and posting state are canonical in the Thingy/Librarian API; this bridge
 > is only a Discord connector.
@@ -25,7 +25,7 @@ caffeinate -is venv/bin/python -m apps.thingy_bridge.bot
 
 Two surfaces, one process:
 
-1. **Reader-facing answering bot** — listens in `#ask-thingy`, forwards
+1. **Reader-facing answering bot** — listens in the configured member channel, forwards
    each message to the Lambda's `/chat` SSE endpoint, streams the answer
    back, rewrites `#NNN` issue citations into clickable Discord links,
    and adds 👍/👎 feedback reactions that POST to the Lambda's
@@ -42,7 +42,7 @@ Why this lives in its own repo/process (separate from Studio's `workshop_bot`):
 
 - The reader-facing answering bot has different availability needs from
   the author-facing personas. A workshop_bot restart (Marky/Patty/Eddy
-  code change) should not interrupt `#ask-thingy`.
+  code change) should not interrupt Thingy's member-channel presence.
 - The bridge has minimal dependencies — no BM25 corpus, no Stripe /
   Buttondown / Tinylytics clients, no S3 workspace access. Faster
   startup, smaller memory footprint.
@@ -58,7 +58,7 @@ this bridge is the thin connector between Discord and the Lambda's HTTP API.
 | Variable | Required | Purpose |
 |---|---|---|
 | `DISCORD_TOKEN_THINGY` | yes | Bot token for the Thingy Discord application |
-| `DISCORD_CHANNEL_ASK_THINGY` | yes | Reader-facing channel id |
+| `DISCORD_CHANNEL_ASK_THINGY` | yes | Reader-facing member channel id |
 | `DISCORD_CHANNEL_CHATTER` | yes | Channel for startup notices and API-posted cards |
 | `LIBRARIAN_API_URL` | yes | Lambda auth API base URL |
 | `LIBRARIAN_STREAM_URL` | yes | Lambda `/chat` SSE base URL |
