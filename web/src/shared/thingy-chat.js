@@ -46,8 +46,7 @@ import {
 import { userLocalContext } from './thingy-local-context.js';
 import {
   isAuthError,
-  scrubUrlParams,
-  signInReturnUrl
+  scrubUrlParams
 } from './thingy-url.js';
 import { updateChatComposerState } from './thingy-chat-composer-state.js';
 import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-response.js';
@@ -497,7 +496,6 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
     }
 
     function cancelWelcomeSetup() {
-      if (!welcomeInFlight) return;
       welcomeInFlight = false;
       if (welcomeAbortController) welcomeAbortController.abort();
       welcomeAbortController = null;
@@ -1202,7 +1200,11 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       }
 
       await readStream(response, applyEvent);
-      return { ...renderer.finish(), request_id: requestId, conversation_id: conversationId, conversation };
+      const result = renderer.finish();
+      if (!String(result.answer || '').trim() && !result.experience) {
+        throw new Error('Thingy did not return an answer. Please try again.');
+      }
+      return { ...result, request_id: requestId, conversation_id: conversationId, conversation };
     }
 
     async function postStreamingWelcome(pending, scope, options = {}) {
@@ -1590,10 +1592,10 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
     renderRecents();
 
     if (loginToken) {
-      window.location.href = signInReturnUrl();
+      window.location.href = session.signInUrl();
       trackTinylyticsEvent('librarian.auth_magic_link_start');
     } else if (email) {
-      window.location.href = signInReturnUrl();
+      window.location.href = session.signInUrl();
       trackTinylyticsEvent('librarian.auth_auto_start');
     } else if (token()) {
       if (tokenExpired()) {
@@ -1624,6 +1626,6 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
         trackTinylyticsEvent('librarian.session_resume');
       }
     } else {
-      window.location.href = signInReturnUrl();
+      window.location.href = session.signInUrl();
     }
   })();

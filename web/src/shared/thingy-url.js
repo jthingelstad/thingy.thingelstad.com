@@ -13,18 +13,11 @@ function scrubUrlParams(names = []) {
   }
 }
 
-function signInReturnUrl(defaultPath = '/chat/') {
-  const url = new URL('/signin/', window.location.origin);
-  url.searchParams.set('return', `${window.location.pathname}${window.location.search}${window.location.hash}` || defaultPath);
-  return url.toString();
-}
-
 function isAuthError(error) {
   return error?.status === 401 || /validate|subscriber|unauthorized/i.test(String(error?.message || ''));
 }
 
 export {
   isAuthError,
-  scrubUrlParams,
-  signInReturnUrl
+  scrubUrlParams
 };

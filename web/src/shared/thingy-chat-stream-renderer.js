@@ -63,8 +63,9 @@ function createAssistantStreamRenderer(options = {}) {
   function finish() {
     if (renderFrame) {
       window.cancelAnimationFrame(renderFrame);
-      render(false);
+      renderFrame = 0;
     }
+    render(false);
     return { answer, citations, experience };
   }
 

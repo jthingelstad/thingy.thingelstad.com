@@ -15,7 +15,7 @@ import * as session from './thingy-session.js';
 
   function destinationPath() {
     if (!returnTo || returnTo === '/signin/' || returnTo.startsWith('/signin/?')) return '/chat/';
-    return returnTo;
+    return session.restorePendingReturnParams(returnTo);
   }
 
   function continueToDestination() {
@@ -46,10 +46,17 @@ import * as session from './thingy-session.js';
     continueToDestination();
   }
 
+  function scrubMagicTokenParams() {
+    tokenParams.delete('login_token');
+    tokenParams.delete('magic_token');
+    window.history.replaceState(window.history.state, document.title, `${window.location.pathname}?${tokenParams.toString()}`.replace(/\?$/, ''));
+  }
+
   async function completeMagicLink() {
     if (!loginToken) return;
     setBusy(true);
     setMessage('Signing you in...', 'pending');
+    showSecondary('');
     try {
       const data = await session.postJson('/auth', {
         action: 'complete_magic_link',
@@ -57,11 +64,10 @@ import * as session from './thingy-session.js';
         source: 'thingy'
       });
       if (!data.token) throw new Error(data.message || 'That sign-in link did not return a session.');
-      tokenParams.delete('login_token');
-      tokenParams.delete('magic_token');
-      window.history.replaceState(window.history.state, document.title, `${window.location.pathname}?${tokenParams.toString()}`.replace(/\?$/, ''));
+      scrubMagicTokenParams();
       finish(data, data.email);
     } catch (error) {
+      scrubMagicTokenParams();
       setMessage(error.message || 'That sign-in link did not work.', 'error');
       session.clearAuth();
     } finally {

@@ -75,6 +75,13 @@ async function postJsonStream(options = {}) {
       error.status = response.status;
       throw error;
     }
+    if (/application\/json/i.test(response.headers.get('content-type') || '')) {
+      const data = await response.json().catch(() => ({}));
+      const message = data.errorMessage || data.error || data.message || 'Thingy returned an unexpected stream response.';
+      const error = new Error(message);
+      error.data = data;
+      throw error;
+    }
     return response;
   }
 

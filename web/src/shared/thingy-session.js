@@ -4,7 +4,9 @@ import { postJsonRequest } from './thingy-http.js';
 const storageKey = 'weeklyThingLibrarianToken';
 const userEmailKey = 'thingyUserEmail';
 const userProfileKey = 'thingyUserProfile';
+const pendingReturnParamsKey = 'thingyPendingReturnParams';
 const refreshWindowSeconds = 60 * 60 * 24 * 3;
+const privateReturnParams = ['email', 'prompt', 'from', 'scope', 'corpus', 'dispatch_test', 'test', 'login_token', 'magic_token'];
 
 function apiUrl() {
   return librarianApiUrl();
@@ -136,15 +138,61 @@ function hasEntitlement(name) {
   return Array.isArray(entitlements) && entitlements.includes(name);
 }
 
+function relativeUrl(value, defaultPath = '/') {
+  const raw = String(value || defaultPath || '/').trim();
+  if (!raw.startsWith('/') || raw.startsWith('//')) return new URL(defaultPath || '/', window.location.origin);
+  return new URL(raw, window.location.origin);
+}
+
+function pathFromUrl(url) {
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function stashPrivateReturnParams(url) {
+  const moved = [];
+  privateReturnParams.forEach((name) => {
+    const values = url.searchParams.getAll(name);
+    if (!values.length) return;
+    values.forEach((value) => moved.push([name, value]));
+    url.searchParams.delete(name);
+  });
+  if (!moved.length) return;
+  try {
+    window.sessionStorage.setItem(pendingReturnParamsKey, JSON.stringify({
+      path: url.pathname,
+      params: moved
+    }));
+  } catch (error) {
+    // If sessionStorage is unavailable, prefer a clean sign-in URL over leaking private params.
+  }
+}
+
 function returnPath(defaultPath) {
   const params = new URLSearchParams(window.location.search);
-  const value = String(params.get('return') || defaultPath || '/').trim();
-  return value.startsWith('/') && !value.startsWith('//') ? value : '/';
+  return pathFromUrl(relativeUrl(params.get('return'), defaultPath || '/'));
+}
+
+function restorePendingReturnParams(returnTo) {
+  const url = relativeUrl(returnTo, '/chat/');
+  try {
+    const pending = JSON.parse(window.sessionStorage.getItem(pendingReturnParamsKey) || '{}') || {};
+    if (pending.path === url.pathname && Array.isArray(pending.params)) {
+      pending.params.forEach(([name, value]) => {
+        if (name && !url.searchParams.has(name)) url.searchParams.append(name, value);
+      });
+      window.sessionStorage.removeItem(pendingReturnParamsKey);
+    }
+  } catch (error) {
+    window.sessionStorage.removeItem(pendingReturnParamsKey);
+  }
+  return pathFromUrl(url);
 }
 
 function signInUrl(returnTo) {
   const url = new URL('/signin/', window.location.origin);
-  url.searchParams.set('return', returnTo || `${window.location.pathname}${window.location.search}${window.location.hash}`);
+  const destination = relativeUrl(returnTo || `${window.location.pathname}${window.location.search}${window.location.hash}`, '/chat/');
+  stashPrivateReturnParams(destination);
+  url.searchParams.set('return', pathFromUrl(destination));
   return url.toString();
 }
 
@@ -152,6 +200,7 @@ export {
   storageKey,
   userEmailKey,
   userProfileKey,
+  pendingReturnParamsKey,
   apiUrl,
   normalizeEmail,
   token,
@@ -170,5 +219,6 @@ export {
   storedProfile,
   hasEntitlement,
   returnPath,
+  restorePendingReturnParams,
   signInUrl
 };

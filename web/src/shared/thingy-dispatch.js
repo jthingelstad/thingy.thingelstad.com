@@ -79,6 +79,10 @@ import {
     return draft.title || draft.prompt || draft.direction || 'New Dispatch';
   }
 
+  function draftEditable(draft) {
+    return !['queued', 'generating', 'ready_to_send', 'sending', 'sent', 'failed'].includes(String(draft?.stage || ''));
+  }
+
   function saveDrafts() {
     drafts.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
     drafts = drafts.slice(0, 24);
@@ -189,9 +193,7 @@ import {
 
   function setBusy(value, text = '') {
     busy = Boolean(value);
-    if (input) input.disabled = busy;
-    const button = form && form.querySelector('button[type="submit"]');
-    if (button) button.disabled = busy;
+    updateComposerState();
     setStatus(text || '');
   }
 
@@ -199,6 +201,17 @@ import {
     if (!statusEl) return;
     statusEl.textContent = text || '';
     statusEl.dataset.kind = kind || '';
+  }
+
+  function updateComposerState() {
+    const draft = activeDraft();
+    const editable = draftEditable(draft);
+    if (input) input.disabled = busy || !editable;
+    const submit = form && form.querySelector('button[type="submit"]');
+    if (submit) {
+      submit.disabled = busy || !editable || !input?.value.trim();
+      submit.title = editable ? 'Send to Thingy' : 'Start a new Dispatch to continue';
+    }
   }
 
   function refreshIdentity() {
@@ -286,11 +299,16 @@ import {
       if (scroll) scroll.scrollTop = scroll.scrollHeight;
     }
     if (input) {
-      input.placeholder = draft.stage === 'needs_clarification'
+      const editable = draftEditable(draft);
+      input.disabled = !editable;
+      input.placeholder = !editable
+        ? 'Start a new Dispatch to shape another request...'
+        : draft.stage === 'needs_clarification'
         ? 'Answer Thingy’s clarification question...'
         : draft.stage === 'ready' || draft.stage === 'upgrade'
           ? 'Adjust the direction, or generate when ready...'
           : 'Tell Thingy what this Dispatch should explore...';
+      updateComposerState();
     }
     renderActions(draft);
     renderRecents();
@@ -633,14 +651,21 @@ import {
       maxHeight: 240,
       onSubmit: async () => {
         if (busy || !input) return;
+        if (!draftEditable(activeDraft())) {
+          setStatus('Start a new Dispatch to shape another request.', 'notice');
+          render();
+          return;
+        }
         const text = input.value.trim();
         if (!text) return;
         input.value = '';
         updateCount();
+        updateComposerState();
         addMessage('user', text);
         await clarifyWithThingy(text);
         render();
-      }
+      },
+      onInput: updateComposerState
     });
   }
 
