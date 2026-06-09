@@ -1,6 +1,7 @@
 import * as session from './thingy-session.js';
 import {
   createAccountMenu,
+  extractPreferredNameFromMessage,
   hasSupportingAccess as profileHasSupportingAccess,
   normalizePreferredName,
   renderAccountIdentity
@@ -46,6 +47,11 @@ import {
   isLocalConversationId as isLocalConversationIdValue
 } from './thingy-conversations.js';
 import { userLocalContext } from './thingy-local-context.js';
+import {
+  isAuthError,
+  scrubUrlParams,
+  signInReturnUrl
+} from './thingy-url.js';
 
 (() => {
     applyReturnChip();
@@ -149,27 +155,6 @@ import { userLocalContext } from './thingy-local-context.js';
     let initialPromptSubmitted = false;
     if (email) emailInput.value = email;
 
-    function scrubUrlParams(names = []) {
-      if (!names.length) return;
-      const url = new URL(window.location.href);
-      let changed = false;
-      names.forEach((name) => {
-        if (url.searchParams.has(name)) {
-          url.searchParams.delete(name);
-          changed = true;
-        }
-      });
-      if (changed) {
-        window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
-      }
-    }
-
-    function signInReturnUrl() {
-      const url = new URL('/signin/', window.location.origin);
-      url.searchParams.set('return', `${window.location.pathname}${window.location.search}${window.location.hash}` || '/chat/');
-      return url.toString();
-    }
-
     function resetMessages() {
       messages.innerHTML = '';
     }
@@ -218,10 +203,6 @@ import { userLocalContext } from './thingy-local-context.js';
       const stored = session.storedEmail();
       const entered = emailInput && emailInput.value ? emailInput.value.trim() : '';
       return normalizeEmail(entered || stored);
-    }
-
-    function isAuthError(error) {
-      return error?.status === 401 || /validate|subscriber|unauthorized/i.test(String(error?.message || ''));
     }
 
     function setUserProfile(data) {
@@ -283,19 +264,6 @@ import { userLocalContext } from './thingy-local-context.js';
       modeSelect.innerHTML = availableModes.map((mode) => `<option value="${escapeHtml(mode.id)}">${escapeHtml(`${modeGlyph(mode.id)} ${mode.label}`)}</option>`).join('');
       modeSelect.value = availableModes.some((mode) => mode.id === activeMode) ? activeMode : 'thingy';
       renderModeBanner();
-    }
-
-    function extractPreferredName(message) {
-      const text = String(message || '').trim();
-      if (!text || text.length > 60 || /[?]/.test(text)) return '';
-      const direct = text.match(/^(?:my name is|i am|i'm|call me)\s+([a-z][a-z .'’-]{0,38})[.!]?$/i);
-      const candidate = (direct ? direct[1] : text).trim().replace(/[.!]+$/, '');
-      if (!/^[a-z][a-z .'’-]{0,38}$/i.test(candidate)) return '';
-      const words = candidate.split(/\s+/).filter(Boolean);
-      if (words.length < 1 || words.length > 3) return '';
-      const blocked = new Set(['hello', 'hi', 'hey', 'there', 'thingy', 'thanks', 'thank', 'yes', 'no', 'ok', 'okay']);
-      if (words.some((word) => blocked.has(word.toLowerCase()))) return '';
-      return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     }
 
     function rememberPreferredName(name) {
@@ -1577,7 +1545,7 @@ import { userLocalContext } from './thingy-local-context.js';
       const questionWordCount = message.split(/\s+/).filter(Boolean).length;
       const questionSize = questionWordCount < 6 ? 'short' : questionWordCount < 18 ? 'medium' : 'long';
       if (awaitingName && !preferredName) {
-        const suppliedName = extractPreferredName(message);
+        const suppliedName = extractPreferredNameFromMessage(message);
         if (suppliedName) rememberPreferredName(suppliedName);
         awaitingName = false;
       }

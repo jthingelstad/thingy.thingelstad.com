@@ -15,6 +15,13 @@ function normalizePreferredName(value) {
     return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   }
 
+function extractPreferredNameFromMessage(message) {
+    const text = String(message || '').trim();
+    if (!text || text.length > 80 || /[?]/.test(text)) return '';
+    const direct = text.match(/^(?:my name is|i am|i'm|call me)\s+(.+?)[.!]?$/i);
+    return normalizePreferredName(direct ? direct[1] : text);
+  }
+
 function renderAccountIdentity(options = {}) {
     const profile = options.profile || {};
     const elements = options.elements || {};
@@ -119,6 +126,7 @@ function createAccountMenu(options = {}) {
 
 export {
   createAccountMenu,
+  extractPreferredNameFromMessage,
   hasSupportingAccess,
   normalizePreferredName,
   renderAccountIdentity
