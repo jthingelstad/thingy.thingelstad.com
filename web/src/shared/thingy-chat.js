@@ -9,6 +9,7 @@ import {
 import { createTinylyticsTracker } from './thingy-analytics.js';
 import { createComposer } from './thingy-composer.js';
 import { applyReturnChip } from './thingy-from.js';
+import { postJsonRequest } from './thingy-http.js';
 import {
   modeClass,
   modeGlyph,
@@ -566,31 +567,15 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
     }
 
     async function postStreamJson(path, payload, headers = {}) {
-      if (!streamBase) throw new Error('Thingy has not been connected to the archive stream API yet.');
-      const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 60000);
-      const response = await fetch(`${streamBase}${path}`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', ...headers },
-        body: JSON.stringify(payload),
-        signal: controller.signal
-      }).catch((error) => {
-        if (error.name === 'AbortError') {
-          throw new Error('Thingy took too long to respond. Please try again.');
-        }
-        throw error;
-      }).finally(() => {
-        window.clearTimeout(timeout);
+      return postJsonRequest({
+        baseUrl: streamBase,
+        path,
+        payload,
+        headers,
+        missingMessage: 'Thingy has not been connected to the archive stream API yet.',
+        defaultErrorMessage: 'Thingy is unavailable.',
+        requestIdSource: 'data'
       });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        const message = data.error || 'Thingy is unavailable.';
-        const error = new Error(data.request_id ? `${message} Reference: ${data.request_id}` : message);
-        error.requestId = data.request_id;
-        error.status = response.status;
-        throw error;
-      }
-      return data;
     }
 
     function authHeaders() {
