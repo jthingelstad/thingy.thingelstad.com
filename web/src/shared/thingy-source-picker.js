@@ -1,14 +1,17 @@
-(function () {
-  const sourceMeta = {
-    weekly_thing: { name: 'Weekly Thing', cls: 'dot-wt' },
-    blog: { name: 'Blog', cls: 'dot-blog' },
-    podcast: { name: 'Another Thing', cls: 'dot-podcast' }
-  };
+import {
+  scopeForSources as defaultScopeForSources,
+  sourcesForScope as defaultSourcesForScope
+} from './thingy-scope.js';
 
-  function createSourcePicker(options = {}) {
-    const scopeTools = window.ThingyScope || {};
-    const scopeForSources = scopeTools.scopeForSources || (() => 'all');
-    const sourcesForScope = scopeTools.sourcesForScope || (() => ['weekly_thing', 'blog', 'podcast']);
+const sourceMeta = {
+  weekly_thing: { name: 'Weekly Thing', cls: 'dot-wt' },
+  blog: { name: 'Blog', cls: 'dot-blog' },
+  podcast: { name: 'Another Thing', cls: 'dot-podcast' }
+};
+
+function createSourcePicker(options = {}) {
+    const scopeForSources = options.scopeForSources || defaultScopeForSources;
+    const sourcesForScope = options.sourcesForScope || defaultSourcesForScope;
     const inputs = Array.isArray(options.inputs) ? options.inputs : [];
     const button = options.button || null;
     const popover = options.popover || null;
@@ -228,5 +231,4 @@
     };
   }
 
-  window.ThingySourcePicker = { createSourcePicker };
-}());
+export { createSourcePicker };

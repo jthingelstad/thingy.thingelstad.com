@@ -1,8 +1,7 @@
-(function () {
-  const storageKey = 'weeklyThingLibrarianToken';
-  const userEmailKey = 'thingyUserEmail';
-  const userProfileKey = 'thingyUserProfile';
-  const refreshWindowSeconds = 60 * 60 * 24 * 3;
+const storageKey = 'weeklyThingLibrarianToken';
+const userEmailKey = 'thingyUserEmail';
+const userProfileKey = 'thingyUserProfile';
+const refreshWindowSeconds = 60 * 60 * 24 * 3;
 
   function config() {
     return window.ThingyConfig || {};
@@ -173,28 +172,27 @@
     return url.toString();
   }
 
-  window.ThingySession = {
-    storageKey,
-    userEmailKey,
-    userProfileKey,
-    apiUrl,
-    normalizeEmail,
-    token,
-    tokenPayload,
-    tokenExpired,
-    tokenNeedsRefresh,
-    authHeaders,
-    postJson,
-    refreshAuth,
-    ensureFreshToken,
-    mergeProfile,
-    updateStoredProfile,
-    persistAuth,
-    clearAuth,
-    storedEmail,
-    storedProfile,
-    hasEntitlement,
-    returnPath,
-    signInUrl
-  };
-}());
+export {
+  storageKey,
+  userEmailKey,
+  userProfileKey,
+  apiUrl,
+  normalizeEmail,
+  token,
+  tokenPayload,
+  tokenExpired,
+  tokenNeedsRefresh,
+  authHeaders,
+  postJson,
+  refreshAuth,
+  ensureFreshToken,
+  mergeProfile,
+  updateStoredProfile,
+  persistAuth,
+  clearAuth,
+  storedEmail,
+  storedProfile,
+  hasEntitlement,
+  returnPath,
+  signInUrl
+};

@@ -1,7 +1,6 @@
-(function () {
-  const sourceOrder = ['weekly_thing', 'blog', 'podcast'];
+const sourceOrder = ['weekly_thing', 'blog', 'podcast'];
 
-  function normalizeScopeParam(value) {
+function normalizeScopeParam(value) {
     const raw = String(value || '').trim().toLowerCase();
     if (!raw) return '';
     const normalized = raw.replace(/[\s-]+/g, '_').replace(/^_+|_+$/g, '');
@@ -27,7 +26,7 @@
     return '';
   }
 
-  function scopeForSources(sources) {
+function scopeForSources(sources) {
     const selected = sourceOrder.filter((source) => sources.includes(source));
     if (selected.length === 3) return 'all';
     if (selected.length === 1) return selected[0];
@@ -37,7 +36,7 @@
     return '';
   }
 
-  function sourcesForScope(scope) {
+function sourcesForScope(scope) {
     switch (normalizeScopeParam(scope) || 'all') {
       case 'weekly_thing':
         return ['weekly_thing'];
@@ -57,10 +56,9 @@
     }
   }
 
-  window.ThingyScope = {
-    sourceOrder,
-    normalizeScopeParam,
-    scopeForSources,
-    sourcesForScope
-  };
-}());
+export {
+  normalizeScopeParam,
+  scopeForSources,
+  sourceOrder,
+  sourcesForScope
+};

@@ -1,5 +1,4 @@
-(function () {
-  function createRailController(options = {}) {
+function createRailController(options = {}) {
     const shell = options.shell || null;
     const mobileToggle = options.mobileToggle || null;
     const scrim = options.scrim || null;
@@ -51,5 +50,4 @@
     };
   }
 
-  window.ThingyRail = { createRailController };
-}());
+export { createRailController };

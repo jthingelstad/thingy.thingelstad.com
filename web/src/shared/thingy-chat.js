@@ -1,13 +1,37 @@
+import * as session from './thingy-session.js';
+import {
+  createAccountMenu,
+  hasSupportingAccess,
+  normalizePreferredName,
+  renderAccountIdentity
+} from './thingy-account.js';
+import { createTinylyticsTracker } from './thingy-analytics.js';
+import { createComposer } from './thingy-composer.js';
+import { applyReturnChip } from './thingy-from.js';
+import {
+  modeClass,
+  modeGlyph,
+  normalizeModeId,
+  normalizeModes
+} from './thingy-modes.js';
+import {
+  escapeHtml as escapeMarkup,
+  renderInlineMarkdown as renderInlineMarkup,
+  renderMarkdown as renderMarkdownMarkup,
+  safeMarkdownUrl as safeMarkupUrl
+} from './thingy-markdown.js';
+import { createRailController } from './thingy-rail.js';
+import { normalizeScopeParam } from './thingy-scope.js';
+import { createSourcePicker } from './thingy-source-picker.js';
+import { read as readStream } from './thingy-stream.js';
+import {
+  createDictationController,
+  speechInputSupported
+} from './thingy-voice.js';
+
 (() => {
-    const session = window.ThingySession;
+    applyReturnChip();
     const config = window.ThingyConfig || {};
-    const modeTools = window.ThingyModes || {};
-    const scopeTools = window.ThingyScope || {};
-    const normalizeModeId = modeTools.normalizeModeId || ((value) => String(value || '').trim().toLowerCase().replace(/[\s-]+/g, '_') || 'thingy');
-    const normalizeModes = modeTools.normalizeModes || ((value) => Array.isArray(value) ? value : []);
-    const modeGlyph = modeTools.modeGlyph || (() => '•');
-    const modeClass = modeTools.modeClass || normalizeModeId;
-    const normalizeScopeParam = scopeTools.normalizeScopeParam || (() => '');
     const apiBaseSource = window.WEEKLY_THING_LIBRARIAN_API === undefined ? config.librarianApiUrl : window.WEEKLY_THING_LIBRARIAN_API;
     const streamBaseSource = window.WEEKLY_THING_LIBRARIAN_STREAM_API === undefined ? config.librarianStreamUrl : window.WEEKLY_THING_LIBRARIAN_STREAM_API;
     const apiBase = String(apiBaseSource || '').replace(/\/$/, '');
@@ -53,7 +77,7 @@
     const mobileRenameConversation = document.getElementById('mobile-rename-conversation');
     const mobileDeleteConversation = document.getElementById('mobile-delete-conversation');
     const railScrim = document.getElementById('rail-scrim');
-    const railControls = window.ThingyRail.createRailController({
+    const railControls = createRailController({
       shell: appShell,
       mobileToggle: mobileConversationsToggle,
       scrim: railScrim,
@@ -70,7 +94,7 @@
     let activeMode = 'thingy';
     let availableModes = [{ id: 'thingy', label: 'Thingy' }];
     const maxQuestionChars = Number(questionInput.getAttribute('maxlength') || '1200');
-    const analytics = window.ThingyAnalytics.createTinylyticsTracker({
+    const analytics = createTinylyticsTracker({
       enabled: Boolean(config.tinylyticsId)
     });
     let answerInFlight = false;
@@ -97,7 +121,7 @@
     const hasInitialPrompt = Boolean(initialPrompt);
     const initialScope = normalizeScopeParam(params.get('scope')) || normalizeScopeParam(params.get('corpus'));
     let activeScope = initialScope || 'all';
-    const sourceControls = window.ThingySourcePicker.createSourcePicker({
+    const sourceControls = createSourcePicker({
       inputs: scopeInputs,
       button: document.getElementById('srcpick-btn'),
       popover: document.getElementById('srcpick-pop'),
@@ -248,7 +272,7 @@
     }
 
     function hasSupportingAccess() {
-      return window.ThingyAccount.hasSupportingAccess(userProfile());
+      return hasSupportingAccess(userProfile());
     }
 
     function modeLabel(id = activeMode) {
@@ -337,7 +361,7 @@
     }
 
     function speechInputSupported() {
-      return window.ThingyVoice?.speechInputSupported?.() || false;
+      return speechInputSupported() || false;
     }
 
     function updateVoiceButtonState() {
@@ -456,7 +480,7 @@
       const stored = session.storedEmail();
       const value = (emailInput && emailInput.value ? emailInput.value.trim() : '') || stored;
       const signedIn = Boolean(token());
-      window.ThingyAccount.renderAccountIdentity({
+      renderAccountIdentity({
         signedIn,
         email: value,
         profile: userProfile(),
@@ -605,19 +629,19 @@
     }
 
     function escapeHtml(value) {
-      return window.ThingyMarkdown.escapeHtml(value);
+      return escapeMarkup(value);
     }
 
     function safeMarkdownUrl(url) {
-      return window.ThingyMarkdown.safeMarkdownUrl(url);
+      return safeMarkupUrl(url);
     }
 
     function renderInlineMarkdown(text, citationsByIssue) {
-      return window.ThingyMarkdown.renderInlineMarkdown(text, citationsByIssue);
+      return renderInlineMarkup(text, citationsByIssue);
     }
 
     function renderMarkdown(markdown, citations = []) {
-      return window.ThingyMarkdown.renderMarkdown(markdown, citations);
+      return renderMarkdownMarkup(markdown, citations);
     }
 
     function sourceAccentClass(kind) {
@@ -1987,7 +2011,7 @@
         }
       }
 
-      await window.ThingyStream.read(response, applyEvent);
+      await readStream(response, applyEvent);
       if (renderFrame) {
         window.cancelAnimationFrame(renderFrame);
         renderPendingAnswer();
@@ -2092,7 +2116,7 @@
         }
       }
 
-      await window.ThingyStream.read(response, applyEvent);
+      await readStream(response, applyEvent);
       if (renderFrame) {
         window.cancelAnimationFrame(renderFrame);
         renderPendingWelcome();
@@ -2223,7 +2247,7 @@
       }
     }
 
-    composerControls = window.ThingyComposer?.createComposer({
+    composerControls = createComposer({
       form: questionForm,
       input: questionInput,
       count: questionCount,
@@ -2236,7 +2260,7 @@
       onAutoSize: updateComposerReserve
     });
 
-    dictationControls = window.ThingyVoice?.createDictationController({
+    dictationControls = createDictationController({
       input: questionInput,
       button: voiceButton,
       status: voiceStatus,
@@ -2323,7 +2347,7 @@
     const accountNameInput = document.getElementById('account-name-input');
     const accountNameStatus = document.getElementById('account-name-status');
     if (accountNameInput) accountNameInput.value = preferredName;
-    const accountControls = window.ThingyAccount.createAccountMenu({
+    const accountControls = createAccountMenu({
       session,
       button: accountBtn,
       menu: accountMenu,
@@ -2331,7 +2355,7 @@
       nameInput: accountNameInput,
       nameStatus: accountNameStatus,
       logoutButton,
-      normalizeName: window.ThingyAccount.normalizePreferredName,
+      normalizeName: normalizePreferredName,
       signedIn: () => Boolean(token()),
       returnTo: '/chat/',
       onSignedOutClick: () => {

@@ -1,8 +1,7 @@
-(function () {
-  const config = window.ThingyConfig || {};
-  const links = Array.isArray(config.networkLinks) ? config.networkLinks : [];
+const config = window.ThingyConfig || {};
+const links = Array.isArray(config.networkLinks) ? config.networkLinks : [];
 
-  function buildFromMap() {
+function buildFromMap() {
     const map = new Map();
     for (const link of links) {
       try {
@@ -19,7 +18,7 @@
     return map;
   }
 
-  function resolveFromValue(value) {
+function resolveFromValue(value) {
     if (!value) return null;
     const raw = String(value).trim();
     if (!raw) return null;
@@ -38,7 +37,7 @@
     return { name: match.name, href: href || match.href };
   }
 
-  function applyReturnChip() {
+function applyReturnChip() {
     const params = new URLSearchParams(window.location.search);
     const returnChip = document.getElementById('return-chip');
     const returnChipLabel = document.getElementById('return-chip-label');
@@ -50,11 +49,8 @@
     returnChip.hidden = false;
   }
 
-  window.ThingyFrom = {
-    buildFromMap,
-    resolveFromValue,
-    applyReturnChip
-  };
-
-  applyReturnChip();
-}());
+export {
+  applyReturnChip,
+  buildFromMap,
+  resolveFromValue
+};

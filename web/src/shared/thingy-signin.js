@@ -1,5 +1,5 @@
-(function () {
-  const session = window.ThingySession;
+import * as session from './thingy-session.js';
+
   const form = document.getElementById('thingy-signin-form');
   const emailInput = document.getElementById('thingy-signin-email');
   const submitButton = document.getElementById('thingy-signin-submit');
@@ -132,4 +132,3 @@
     if (!loginToken) continueToDestination();
   }
   completeMagicLink();
-}());

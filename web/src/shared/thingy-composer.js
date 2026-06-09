@@ -1,9 +1,8 @@
-(function () {
-  function defaultBusy() {
+function defaultBusy() {
     return false;
   }
 
-  function createComposer(options = {}) {
+function createComposer(options = {}) {
     const form = options.form || null;
     const input = options.input || null;
     const count = options.count || null;
@@ -71,5 +70,4 @@
     return { autoSize, sync, updateCount };
   }
 
-  window.ThingyComposer = { createComposer };
-}());
+export { createComposer };

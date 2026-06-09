@@ -1,5 +1,4 @@
-(function () {
-  function parseBlock(block) {
+function parseBlock(block) {
     let eventName = 'message';
     const dataLines = [];
     String(block || '').split('\n').forEach((line) => {
@@ -20,7 +19,7 @@
     }
   }
 
-  async function read(response, onEvent) {
+async function read(response, onEvent) {
     if (!response || !response.body) throw new Error('Thingy did not return a stream.');
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
@@ -46,5 +45,4 @@
     if (buffer.trim()) await consume(buffer);
   }
 
-  window.ThingyStream = { parseBlock, read };
-}());
+export { parseBlock, read };

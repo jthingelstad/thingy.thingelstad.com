@@ -1,5 +1,15 @@
+import * as session from './thingy-session.js';
+import {
+  createAccountMenu,
+  hasSupportingAccess,
+  normalizePreferredName,
+  renderAccountIdentity
+} from './thingy-account.js';
+import { createComposer } from './thingy-composer.js';
+import { escapeHtml as escapeMarkup, renderMarkdown } from './thingy-markdown.js';
+import { createRailController } from './thingy-rail.js';
+
 (function () {
-  const session = window.ThingySession;
   const shell = document.getElementById('dispatch-shell');
   const app = document.getElementById('dispatch-app');
   const messagesEl = document.getElementById('dispatch-messages');
@@ -25,7 +35,7 @@
   const railScrim = document.getElementById('dispatch-rail-scrim');
   const railCollapseBtn = document.getElementById('dispatch-rail-collapse');
   const activeKey = 'thingyActiveDispatchDraft';
-  const railControls = window.ThingyRail.createRailController({
+  const railControls = createRailController({
     shell,
     mobileToggle,
     scrim: railScrim,
@@ -49,7 +59,7 @@
   let composerControls = null;
 
   function escapeHtml(value) {
-    return window.ThingyMarkdown.escapeHtml(value);
+    return escapeMarkup(value);
   }
 
   function nowIso() {
@@ -232,7 +242,7 @@
   }
 
   function hasSupportingAccess() {
-    return window.ThingyAccount.hasSupportingAccess(session.storedProfile());
+    return hasSupportingAccess(session.storedProfile());
   }
 
   async function dispatchPost(action, extra) {
@@ -290,7 +300,7 @@
   function refreshIdentity() {
     const email = session.storedEmail();
     const profile = session.storedProfile();
-    window.ThingyAccount.renderAccountIdentity({
+    renderAccountIdentity({
       signedIn: signedIn(),
       email,
       profile,
@@ -312,7 +322,7 @@
 
   function renderMessage(message) {
     const role = message.role === 'user' ? 'user' : message.role === 'system' ? 'system' : 'assistant';
-    const body = window.ThingyMarkdown.renderMarkdown(message.text || '');
+    const body = renderMarkdown(message.text || '');
     return `<article class="librarian-message librarian-message-${role} dispatch-message">${body}</article>`;
   }
 
@@ -729,7 +739,7 @@
   if (app) app.hidden = false;
 
   if (form) {
-    composerControls = window.ThingyComposer?.createComposer({
+    composerControls = createComposer({
       form,
       input,
       count: countEl,
@@ -771,7 +781,7 @@
     });
   }
 
-  const accountControls = window.ThingyAccount.createAccountMenu({
+  const accountControls = createAccountMenu({
     session,
     button: accountBtn,
     menu: accountMenu,
@@ -779,7 +789,7 @@
     nameInput: accountNameInput,
     nameStatus: accountNameStatus,
     logoutButton,
-    normalizeName: window.ThingyAccount.normalizePreferredName,
+    normalizeName: normalizePreferredName,
     signedIn,
     returnTo: '/dispatch/',
     onSaved: () => refreshIdentity()

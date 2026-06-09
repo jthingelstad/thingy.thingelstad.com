@@ -1,9 +1,8 @@
-(function () {
-  function speechInputCtor() {
+function speechInputCtor() {
     return window.SpeechRecognition || window.webkitSpeechRecognition || null;
   }
 
-  function createDictationController(options = {}) {
+function createDictationController(options = {}) {
     const input = options.input || null;
     const button = options.button || null;
     const status = options.status || null;
@@ -136,8 +135,11 @@
     };
   }
 
-  window.ThingyVoice = {
-    createDictationController,
-    speechInputSupported: () => Boolean(speechInputCtor())
-  };
-}());
+function speechInputSupported() {
+  return Boolean(speechInputCtor());
+}
+
+export {
+  createDictationController,
+  speechInputSupported
+};

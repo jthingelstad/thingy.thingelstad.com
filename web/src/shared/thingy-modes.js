@@ -1,10 +1,9 @@
-(function () {
-  function normalizeModeId(value) {
+function normalizeModeId(value) {
     const key = String(value || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
     return key || 'thingy';
   }
 
-  function normalizeModes(value) {
+function normalizeModes(value) {
     const raw = Array.isArray(value) ? value : [];
     const modes = [];
     const seen = new Set();
@@ -21,7 +20,7 @@
     return modes;
   }
 
-  function modeGlyph(id) {
+function modeGlyph(id) {
     return {
       thingy: '•',
       thought_partner: '◐',
@@ -30,14 +29,13 @@
     }[normalizeModeId(id)] || '•';
   }
 
-  function modeClass(id) {
+function modeClass(id) {
     return normalizeModeId(id).replace(/[^a-z0-9_]/g, '_');
   }
 
-  window.ThingyModes = {
-    normalizeModeId,
-    normalizeModes,
-    modeGlyph,
-    modeClass
-  };
-}());
+export {
+  modeClass,
+  modeGlyph,
+  normalizeModeId,
+  normalizeModes
+};

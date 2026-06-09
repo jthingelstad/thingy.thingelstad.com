@@ -1,5 +1,4 @@
-(function () {
-  function escapeHtml(value) {
+function escapeHtml(value) {
     return String(value || '').replace(/[&<>"']/g, (char) => ({
       '&': '&amp;',
       '<': '&lt;',
@@ -9,7 +8,7 @@
     })[char]);
   }
 
-  function safeMarkdownUrl(url) {
+function safeMarkdownUrl(url) {
     const value = String(url || '').trim();
     if (/^https?:/i.test(value) || /^mailto:/i.test(value)) return escapeHtml(value);
     if (/^\/archive\//i.test(value)) return escapeHtml(`https://weekly.thingelstad.com${value}`);
@@ -17,7 +16,7 @@
     return '#';
   }
 
-  function citationMap(citations) {
+function citationMap(citations) {
     const map = new Map();
     (citations || []).forEach((citation) => {
       const issue = String(citation.issue_number || '').trim();
@@ -26,14 +25,14 @@
     return map;
   }
 
-  function citationTitle(citation) {
+function citationTitle(citation) {
     const parts = [`WT${citation.issue_number}: ${citation.subject || 'Weekly Thing'}`];
     if (citation.publish_date) parts.push(String(citation.publish_date).slice(0, 10));
     if (citation.section) parts.push(citation.section);
     return parts.join(' | ');
   }
 
-  function linkIssueReferences(html, citationsByIssue) {
+function linkIssueReferences(html, citationsByIssue) {
     if (!citationsByIssue || citationsByIssue.size === 0) return html;
     return html.split(/(<[^>]+>)/g).map((part) => {
       if (part.startsWith('<')) return part;
@@ -45,7 +44,7 @@
     }).join('');
   }
 
-  function renderInlineMarkdown(text, citationsByIssue = new Map()) {
+function renderInlineMarkdown(text, citationsByIssue = new Map()) {
     let html = escapeHtml(text);
     const code = [];
     html = html.replace(/`([^`]+)`/g, (_, value) => {
@@ -65,7 +64,7 @@
     return html;
   }
 
-  function renderMarkdown(markdown, citations = []) {
+function renderMarkdown(markdown, citations = []) {
     const text = String(markdown || '').trim();
     if (!text) return '<p>Thingy is thinking...</p>';
     const citationsByIssue = citationMap(citations);
@@ -204,11 +203,10 @@
     return html.join('');
   }
 
-  window.ThingyMarkdown = {
-    escapeHtml,
-    safeMarkdownUrl,
-    citationMap,
-    renderInlineMarkdown,
-    renderMarkdown
-  };
-}());
+export {
+  citationMap,
+  escapeHtml,
+  renderInlineMarkdown,
+  renderMarkdown,
+  safeMarkdownUrl
+};

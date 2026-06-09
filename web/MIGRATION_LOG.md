@@ -14,7 +14,10 @@ This file tracks the 11ty-to-Vite migration for Thingy.
 - Moved Tinylytics URL scrubbing/loading into a Vite module so app URL parameters are consumed before analytics strips them.
 - Verified Vite build output for `_site`, hashed assets, CNAME, `.nojekyll`, `robots.txt`, and `sitemap.xml`.
 - QA checked `/`, `/chat/`, `/dispatch/`, `/signin/` redirect behavior, cross-site `from` return links, route switching, and rail collapse on `http://localhost:8080`.
+- Converted shared browser helpers from `window.Thingy*` globals to ES module exports.
+- Simplified route entrypoints so each page imports its route initializer and lets Vite resolve dependencies.
+- Re-QA checked the refactored route modules on `http://localhost:8080`.
 
 ## Needs Attention
 
-- Future cleanup can continue converting shared browser modules from `window.Thingy*` globals to explicit ES module exports. The Vite cutover keeps the existing runtime contracts intact while bundling by route.
+- The only remaining `window.ThingyConfig` usage is the route HTML config bridge used for build-time public API/Tinylytics values.

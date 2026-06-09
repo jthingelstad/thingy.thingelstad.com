@@ -1,10 +1,11 @@
-(function () {
-  function hasSupportingAccess(profile = {}) {
+import * as defaultSession from './thingy-session.js';
+
+function hasSupportingAccess(profile = {}) {
     const entitlements = Array.isArray(profile.entitlements) ? profile.entitlements : [];
     return Boolean(profile.supporting_member || entitlements.includes('supporting_member') || entitlements.includes('owner'));
   }
 
-  function normalizePreferredName(value) {
+function normalizePreferredName(value) {
     const candidate = String(value || '').trim().replace(/[.!]+$/, '').replace(/\s+/g, ' ');
     if (!/^[a-z][a-z .'’-]{0,78}$/i.test(candidate)) return '';
     const words = candidate.split(/\s+/).filter(Boolean);
@@ -14,7 +15,7 @@
     return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   }
 
-  function renderAccountIdentity(options = {}) {
+function renderAccountIdentity(options = {}) {
     const profile = options.profile || {};
     const elements = options.elements || {};
     const signedIn = Boolean(options.signedIn);
@@ -37,8 +38,8 @@
     }
   }
 
-  function createAccountMenu(options = {}) {
-    const session = options.session || window.ThingySession;
+function createAccountMenu(options = {}) {
+    const session = options.session || defaultSession;
     const button = options.button || null;
     const menu = options.menu || null;
     const nameForm = options.nameForm || null;
@@ -116,10 +117,9 @@
     };
   }
 
-  window.ThingyAccount = {
-    createAccountMenu,
-    hasSupportingAccess,
-    normalizePreferredName,
-    renderAccountIdentity
-  };
-}());
+export {
+  createAccountMenu,
+  hasSupportingAccess,
+  normalizePreferredName,
+  renderAccountIdentity
+};

@@ -1,5 +1,4 @@
-(function () {
-  function createTinylyticsTracker(options = {}) {
+function createTinylyticsTracker(options = {}) {
     const enabled = Boolean(options.enabled);
     const sink = document.createElement('button');
     const pending = [];
@@ -46,5 +45,4 @@
     };
   }
 
-  window.ThingyAnalytics = { createTinylyticsTracker };
-}());
+export { createTinylyticsTracker };
