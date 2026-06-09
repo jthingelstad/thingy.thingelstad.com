@@ -73,13 +73,9 @@
     let activeMode = 'thingy';
     let availableModes = [{ id: 'thingy', label: 'Thingy' }];
     const maxQuestionChars = Number(questionInput.getAttribute('maxlength') || '1200');
-    const eventSink = document.createElement('button');
-    eventSink.type = 'button';
-    eventSink.hidden = true;
-    eventSink.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(eventSink);
-    const pendingTinylyticsEvents = [];
-    let tinylyticsReady = false;
+    const analytics = window.ThingyAnalytics.createTinylyticsTracker({
+      enabled: Boolean(config.tinylyticsId)
+    });
     let answerInFlight = false;
     let autoFollowChat = true;
     let scrollFrame = 0;
@@ -91,10 +87,7 @@
     let welcomeAbortController = null;
     let mapInFlight = false;
     let conversationCreateInFlight = false;
-    let speechRecognition = null;
-    let speechListening = false;
-    let speechBaseText = '';
-    let speechFinalText = '';
+    let dictationControls = null;
     let speechUtterance = null;
     let speechButton = null;
     let authRequestGeneration = 0;
@@ -352,113 +345,16 @@
       input.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    function speechInputCtor() {
-      return window.SpeechRecognition || window.webkitSpeechRecognition || null;
-    }
-
     function speechInputSupported() {
-      return Boolean(speechInputCtor());
-    }
-
-    function setVoiceStatus(message) {
-      if (!voiceStatus) return;
-      voiceStatus.textContent = message || '';
+      return window.ThingyVoice?.speechInputSupported?.() || false;
     }
 
     function updateVoiceButtonState() {
-      if (!voiceButton) return;
-      const supported = speechInputSupported();
-      const busy = interactionBusy();
-      voiceButton.disabled = !supported || (busy && !speechListening);
-      voiceButton.classList.toggle('is-listening', speechListening);
-      voiceButton.setAttribute('aria-pressed', speechListening ? 'true' : 'false');
-      if (!supported) {
-        voiceButton.title = 'Speech input not supported in this browser';
-        voiceButton.setAttribute('aria-label', 'Speech input not supported');
-      } else if (speechListening) {
-        voiceButton.title = 'Stop dictation';
-        voiceButton.setAttribute('aria-label', 'Stop dictation');
-      } else {
-        voiceButton.title = 'Dictate prompt';
-        voiceButton.setAttribute('aria-label', 'Dictate prompt');
-      }
+      dictationControls?.updateButtonState?.();
     }
 
     function stopDictation() {
-      if (speechRecognition) {
-        try { speechRecognition.stop(); } catch (error) { /* ignore */ }
-      }
-    }
-
-    function renderDictation(interim = '') {
-      const parts = [speechBaseText, speechFinalText, interim]
-        .map((part) => String(part || '').trim())
-        .filter(Boolean);
-      questionInput.value = parts.join(' ').slice(0, maxQuestionChars);
-      updateQuestionState();
-    }
-
-    function startDictation() {
-      const Recognition = speechInputCtor();
-      if (!Recognition) {
-        setVoiceStatus('Speech input is not supported in this browser.');
-        updateVoiceButtonState();
-        return;
-      }
-      if (speechListening) {
-        stopDictation();
-        return;
-      }
-      const recognition = new Recognition();
-      speechRecognition = recognition;
-      speechBaseText = questionInput.value.trim();
-      speechFinalText = '';
-      speechListening = true;
-      setVoiceStatus('Listening...');
-      updateVoiceButtonState();
-      recognition.lang = navigator.language || 'en-US';
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.maxAlternatives = 1;
-      recognition.onresult = (event) => {
-        let interim = '';
-        for (let i = event.resultIndex; i < event.results.length; i += 1) {
-          const result = event.results[i];
-          const transcript = result[0]?.transcript || '';
-          if (result.isFinal) {
-            speechFinalText = `${speechFinalText} ${transcript}`.trim();
-          } else {
-            interim = `${interim} ${transcript}`.trim();
-          }
-        }
-        renderDictation(interim);
-      };
-      recognition.onerror = (event) => {
-        const kind = event.error || '';
-        if (kind === 'not-allowed' || kind === 'service-not-allowed') {
-          setVoiceStatus('Microphone access was blocked.');
-        } else if (kind === 'no-speech') {
-          setVoiceStatus('No speech detected.');
-        } else {
-          setVoiceStatus('Dictation stopped.');
-        }
-      };
-      recognition.onend = () => {
-        speechListening = false;
-        speechRecognition = null;
-        if (voiceStatus && voiceStatus.textContent === 'Listening...') setVoiceStatus('');
-        updateVoiceButtonState();
-      };
-      try {
-        recognition.start();
-        trackTinylyticsEvent('librarian.voice_input_start');
-      } catch (error) {
-        speechListening = false;
-        speechRecognition = null;
-        setVoiceStatus('Could not start dictation.');
-        updateVoiceButtonState();
-        trackTinylyticsEvent('librarian.voice_input_error', 'start');
-      }
+      dictationControls?.stop?.();
     }
 
     function setActiveScope(value, options = {}) {
@@ -715,34 +611,9 @@
       resendConfirmationButton.hidden = action !== 'resend_confirmation';
     }
 
-    function sendTinylyticsEvent(name, value) {
-      if (!name || !config.tinylyticsId) return;
-      eventSink.setAttribute('data-tinylytics-event', name);
-      if (value) {
-        eventSink.setAttribute('data-tinylytics-event-value', value);
-      } else {
-        eventSink.removeAttribute('data-tinylytics-event-value');
-      }
-      eventSink.click();
-    }
-
-    function flushTinylyticsEvents() {
-      tinylyticsReady = true;
-      while (pendingTinylyticsEvents.length) {
-        const event = pendingTinylyticsEvents.shift();
-        sendTinylyticsEvent(event.name, event.value);
-      }
-    }
-
     function trackTinylyticsEvent(name, value) {
-      if (tinylyticsReady) {
-        sendTinylyticsEvent(name, value);
-      } else {
-        pendingTinylyticsEvents.push({ name, value });
-      }
+      analytics.track(name, value);
     }
-
-    window.addEventListener('tinylytics:loaded', flushTinylyticsEvents, { once: true });
 
     function escapeHtml(value) {
       return window.ThingyMarkdown.escapeHtml(value);
@@ -1556,7 +1427,7 @@
       if (interactionBusy()) return null;
       cancelWelcomeSetup();
       stopSpeaking();
-      if (speechListening) stopDictation();
+      if (dictationControls?.isListening?.()) stopDictation();
       welcomeShownThisVisit = true;
       activeMode = normalizeModeId(modeSelect?.value || activeMode);
       const shell = startNewConversationView(activeMode);
@@ -2322,7 +2193,7 @@
         clearToken();
         return;
       }
-      if (speechListening) stopDictation();
+      if (dictationControls?.isListening?.()) stopDictation();
       stopSpeaking();
       answerInFlight = true;
       updateQuestionState();
@@ -2376,12 +2247,15 @@
       onAutoSize: updateComposerReserve
     });
 
-    if (voiceButton) {
-      voiceButton.addEventListener('click', () => {
-        if (interactionBusy()) return;
-        startDictation();
-      });
-    }
+    dictationControls = window.ThingyVoice?.createDictationController({
+      input: questionInput,
+      button: voiceButton,
+      status: voiceStatus,
+      maxChars: maxQuestionChars,
+      isBusy: interactionBusy,
+      onInput: updateQuestionState,
+      onTrack: trackTinylyticsEvent
+    }) || null;
 
     scopeInputs.forEach((input) => {
       input.addEventListener('change', () => {
