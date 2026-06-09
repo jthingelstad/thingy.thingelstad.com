@@ -52,6 +52,7 @@ import {
   signInReturnUrl
 } from './thingy-url.js';
 import { updateChatComposerState } from './thingy-chat-composer-state.js';
+import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-response.js';
 
 (() => {
     applyReturnChip();
@@ -1089,51 +1090,13 @@ import { updateChatComposerState } from './thingy-chat-composer-state.js';
     }
 
     function handleAuthResponse(data, options = {}) {
-      if (data.token) {
-        setToken(data.token, data, options);
-        setAuthMessage('');
-        trackTinylyticsEvent('librarian.auth_success', data.status || 'active');
-        return;
-      }
-      if (data.status === 'not_found') {
-        setAuthMessage(data.message || 'That email is not subscribed. Would you like to be added?');
-        showAuthAction('subscribe');
-        trackTinylyticsEvent('librarian.auth_not_found');
-        return;
-      }
-      if (data.status === 'unconfirmed') {
-        setAuthMessage(data.message || 'Please confirm your email before using Thingy.');
-        showAuthAction('resend_confirmation');
-        trackTinylyticsEvent('librarian.auth_unconfirmed');
-        return;
-      }
-      if (data.status === 'subscribed') {
-        setAuthMessage(data.message || 'Check your inbox to confirm your subscription before using Thingy.');
-        hideAuthActions();
-        trackTinylyticsEvent('librarian.auth_subscribe_success');
-        return;
-      }
-      if (data.status === 'reminder_sent') {
-        setAuthMessage(data.message || 'Confirmation email sent. Check your inbox.');
-        hideAuthActions();
-        trackTinylyticsEvent('librarian.auth_reminder_success');
-        return;
-      }
-      if (data.status === 'magic_link_sent') {
-        setAuthMessage(data.message || 'Check your email for a sign-in link to Thingy.');
-        hideAuthActions();
-        trackTinylyticsEvent('librarian.auth_magic_link_sent');
-        return;
-      }
-      if (data.status === 'magic_link_invalid') {
-        setAuthMessage(data.error || data.message || 'That sign-in link is invalid or expired. Enter your email to get a fresh link.');
-        hideAuthActions();
-        trackTinylyticsEvent('librarian.auth_magic_link_invalid');
-        return;
-      }
-      setAuthMessage(data.message || 'I could not verify active subscriber access for that email.');
-      hideAuthActions();
-      trackTinylyticsEvent('librarian.auth_inactive');
+      return handleAuthResponseStatus(data, {
+        hideActions: hideAuthActions,
+        onToken: (authData) => setToken(authData.token, authData, options),
+        setMessage: setAuthMessage,
+        showAction: showAuthAction,
+        track: trackTinylyticsEvent
+      });
     }
 
     function readAttribution() {
