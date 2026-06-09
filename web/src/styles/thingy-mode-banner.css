@@ -1,0 +1,72 @@
+/* Owner-only/private-mode banner above chat. */
+.thingy-mode-banner {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 10px clamp(18px, 5vw, 72px);
+  border-bottom: 1px solid var(--mode-banner-line, color-mix(in srgb, var(--accent) 24%, var(--line)));
+  background: var(--mode-banner-bg, color-mix(in srgb, var(--accent-soft) 56%, var(--surface)));
+  color: var(--mode-banner-ink, var(--accent-deep));
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.thingy-mode-banner[hidden] {
+  display: none;
+}
+
+.thingy-mode-banner-kicker {
+  padding: 5px 7px;
+  border-radius: 5px;
+  background: var(--mode-banner-kicker-bg, color-mix(in srgb, var(--surface) 72%, transparent));
+  color: var(--mode-banner-kicker-ink, var(--muted));
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.thingy-mode-banner strong {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--mode-banner-label-bg, color-mix(in srgb, var(--surface) 84%, transparent));
+  box-shadow: 0 12px 30px -20px rgba(0, 0, 0, 0.5);
+  color: var(--mode-banner-label-ink, currentColor);
+  font-size: clamp(20px, 2.8vw, 31px);
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.thingy-mode-banner[data-mode="thought_partner"] {
+  --mode-banner-bg: #f1c85b;
+  --mode-banner-line: #c8951e;
+  --mode-banner-ink: #3c2b08;
+  --mode-banner-kicker-bg: rgba(60, 43, 8, 0.12);
+  --mode-banner-kicker-ink: #5a410d;
+  --mode-banner-label-bg: rgba(255, 255, 255, 0.72);
+  --mode-banner-label-ink: #3c2b08;
+}
+
+.thingy-mode-banner[data-mode="research_guide"] {
+  --mode-banner-bg: #d6e8f8;
+  --mode-banner-line: #8db8dc;
+  --mode-banner-ink: #10395f;
+  --mode-banner-kicker-bg: rgba(16, 57, 95, 0.1);
+  --mode-banner-kicker-ink: #2f5f8a;
+  --mode-banner-label-bg: rgba(255, 255, 255, 0.72);
+  --mode-banner-label-ink: #10395f;
+}
+
+.thingy-mode-banner[data-mode="trusted_circle"] {
+  --mode-banner-bg: #d8eadf;
+  --mode-banner-line: #9cc8b0;
+  --mode-banner-ink: #215d4d;
+  --mode-banner-kicker-bg: rgba(33, 93, 77, 0.1);
+  --mode-banner-kicker-ink: #356f60;
+  --mode-banner-label-bg: rgba(255, 255, 255, 0.72);
+  --mode-banner-label-ink: #215d4d;
+}

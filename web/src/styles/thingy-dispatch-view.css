@@ -1,0 +1,93 @@
+/* Dispatch conversation surface. */
+.dispatch-shell-page .thingy-app-shell {
+  background: var(--bg);
+}
+
+.dispatch-chat {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.dispatch-messages {
+  display: grid;
+}
+
+.dispatch-message p:last-child {
+  margin-bottom: 0;
+}
+
+.dispatch-actions {
+  width: min(100%, 50rem);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 auto 10px;
+}
+
+.dispatch-actions[hidden] {
+  display: none;
+}
+
+.dispatch-actions button,
+.dispatch-actions a {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 13px;
+  border-radius: 8px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 850;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dispatch-action-primary {
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.dispatch-action-primary:hover {
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
+}
+
+.dispatch-action-secondary {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-soft);
+}
+
+.dispatch-action-secondary:hover {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+  background: color-mix(in srgb, var(--accent-soft) 42%, var(--surface));
+  color: var(--ink);
+}
+
+.dispatch-status {
+  min-width: 0;
+  max-width: min(100%, 28rem);
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dispatch-status[data-kind="error"] {
+  color: #b54730;
+}
+
+.dispatch-status[data-kind="notice"] {
+  color: var(--accent-deep);
+}
+
+.dispatch-composer textarea {
+  min-height: 2.7rem;
+}

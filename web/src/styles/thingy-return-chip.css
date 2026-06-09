@@ -1,0 +1,53 @@
+/* Floating cross-site return chip. */
+.return-chip {
+  position: absolute;
+  top: 18px;
+  right: clamp(18px, 4vw, 40px);
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
+  -webkit-backdrop-filter: saturate(1.1) blur(6px);
+  backdrop-filter: saturate(1.1) blur(6px);
+  color: var(--ink-soft);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow-subtle);
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease, color 0.15s ease;
+}
+
+.return-chip:hover {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+  background: var(--surface);
+  color: var(--ink);
+  transform: translateY(-1px);
+}
+
+.return-chip svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.return-chip strong {
+  color: var(--accent-deep);
+  font-weight: 800;
+}
+
+.return-chip[hidden] {
+  display: none;
+}
+
+.return-chip span {
+  white-space: nowrap;
+}
