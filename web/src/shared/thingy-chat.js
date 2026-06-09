@@ -25,6 +25,7 @@ import {
 } from './thingy-chat-rendering.js';
 import { createAssistantStreamRenderer } from './thingy-chat-stream-renderer.js';
 import { createRailController } from './thingy-rail.js';
+import { createRailRecentItem } from './thingy-rail-recents.js';
 import { normalizeScopeParam } from './thingy-scope.js';
 import { createSourcePicker } from './thingy-source-picker.js';
 import { postJsonStream, read as readStream } from './thingy-stream.js';
@@ -989,42 +990,20 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
         const mode = entry.mode && entry.mode !== 'thingy' ? modeClass(entry.mode) : '';
         const modeLabelText = mode ? modeLabel(entry.mode) : '';
         const modeTitle = mode ? `${title} - ${modeLabelText}` : title;
-        const row = document.createElement('div');
-        row.className = `rail-recent${entry.id === activeConversationId ? ' is-active' : ''}${mode ? ' has-mode' : ''}`;
-        row.setAttribute('role', 'listitem');
-        if (mode) row.dataset.mode = mode;
-
-        const openButton = document.createElement('button');
-        openButton.type = 'button';
-        openButton.className = 'rail-recent-open';
-        openButton.dataset.id = id;
-        openButton.title = modeTitle;
-        if (entry.id === activeConversationId) openButton.setAttribute('aria-current', 'true');
-
-        const titleEl = document.createElement('span');
-        titleEl.className = 'rail-recent-title';
-        titleEl.textContent = title;
-        openButton.appendChild(titleEl);
-        if (mode) {
-          const modeEl = document.createElement('small');
-          modeEl.className = 'rail-recent-mode';
-          modeEl.setAttribute('aria-label', modeLabelText);
-          modeEl.title = modeLabelText;
-          modeEl.textContent = modeGlyph(entry.mode);
-          openButton.appendChild(modeEl);
-        }
-
-        const deleteButton = document.createElement('button');
-        deleteButton.type = 'button';
-        deleteButton.className = 'rail-recent-del';
-        deleteButton.dataset.action = 'delete-conv';
-        deleteButton.dataset.id = id;
-        deleteButton.setAttribute('aria-label', 'Delete conversation');
-        deleteButton.title = 'Delete conversation';
-        deleteButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
-
-        row.append(openButton, deleteButton);
-        return row;
+        return createRailRecentItem({
+          id,
+          label: title,
+          title: modeTitle,
+          active: entry.id === activeConversationId,
+          dataMode: mode,
+          hasMeta: Boolean(mode),
+          metaTag: 'small',
+          metaClass: 'rail-recent-mode',
+          metaLabel: modeLabelText,
+          metaText: mode ? modeGlyph(entry.mode) : '',
+          deleteAction: 'delete-conv',
+          deleteLabel: 'Delete conversation'
+        });
       });
       railRecents.replaceChildren(...rows);
       updateMobileConversationTitle();

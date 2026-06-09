@@ -8,6 +8,7 @@ import {
 import { createComposer } from './thingy-composer.js';
 import { escapeHtml as escapeMarkup, renderMarkdown } from './thingy-markdown.js';
 import { createRailController } from './thingy-rail.js';
+import { createRailRecentItem } from './thingy-rail-recents.js';
 import {
   draftFromServerRow,
   hasDraftContent,
@@ -255,39 +256,19 @@ import {
     if (emptyEl) emptyEl.hidden = Boolean(rows.length);
     if (!recentsEl) return;
     recentsEl.hidden = !rows.length;
-    const elements = rows.map((row) => {
-      const item = document.createElement('div');
-      item.className = `rail-recent dispatch-rail-item ${row.id === activeId ? 'is-active' : ''} is-${String(row.status || '').replace(/[^a-z0-9_-]/gi, '')}`;
-      item.setAttribute('role', 'listitem');
-
-      const openButton = document.createElement('button');
-      openButton.className = 'rail-recent-open';
-      openButton.type = 'button';
-      openButton.dataset.id = row.id;
-
-      const title = document.createElement('span');
-      title.className = 'rail-recent-title';
-      title.textContent = row.title;
-
-      const glyph = document.createElement('span');
-      glyph.className = 'dispatch-state-glyph';
-      glyph.setAttribute('aria-label', stageLabel(row.status));
-      glyph.title = stageLabel(row.status);
-      glyph.textContent = stageGlyph(row.status);
-      openButton.append(title, glyph);
-
-      const deleteButton = document.createElement('button');
-      deleteButton.type = 'button';
-      deleteButton.className = 'rail-recent-del';
-      deleteButton.dataset.action = 'delete-dispatch';
-      deleteButton.dataset.id = row.id;
-      deleteButton.setAttribute('aria-label', 'Delete Dispatch');
-      deleteButton.title = 'Delete Dispatch';
-      deleteButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
-
-      item.append(openButton, deleteButton);
-      return item;
-    });
+    const elements = rows.map((row) => createRailRecentItem({
+      id: row.id,
+      label: row.title,
+      active: row.id === activeId,
+      className: 'dispatch-rail-item',
+      state: row.status,
+      hasMeta: true,
+      metaClass: 'dispatch-state-glyph',
+      metaLabel: stageLabel(row.status),
+      metaText: stageGlyph(row.status),
+      deleteAction: 'delete-dispatch',
+      deleteLabel: 'Delete Dispatch'
+    }));
     recentsEl.replaceChildren(...elements);
   }
 
