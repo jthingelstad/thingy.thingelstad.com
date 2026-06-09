@@ -1,124 +1,10 @@
-/* Thingy — standalone stylesheet.
-   Started from the Weekly Thing librarian UI, then evolved into Thingy's
-   neutral agent/product surface. */
-
-/* --- Reset, tokens, base typography (style.css 6-273) --- */
-/* --- Reset & Base --- */
+/* Base reset, design tokens, typography, and layout utilities. */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-}
-
-/* --- Product surfaces: sign-in and Dispatch --- */
-.thingy-auth-page {
-  width: min(100% - 32px, var(--container-wide));
-  margin: 0 auto;
-  padding: clamp(32px, 6vw, 72px) 0;
-}
-
-.thingy-auth-card {
-  width: min(100%, 720px);
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 120px minmax(0, 1fr);
-  gap: 24px;
-  align-items: start;
-  padding: 28px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  box-shadow: var(--shadow-agent);
-}
-
-.thingy-signin-form {
-  display: grid;
-  gap: 8px;
-  margin-top: 20px;
-}
-
-.thingy-signin-form label {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--ink-soft);
-}
-
-.thingy-signin-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-}
-
-.thingy-signin-row input {
-  width: 100%;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: var(--surface);
-  color: var(--ink);
-  font: inherit;
-  line-height: 1.45;
-}
-
-.thingy-signin-row input {
-  min-height: 46px;
-  padding: 10px 12px;
-}
-
-.thingy-signin-row button,
-.thingy-signin-secondary button {
-  min-height: 44px;
-  padding: 10px 14px;
-  border: 1px solid var(--accent-deep);
-  border-radius: 7px;
-  background: var(--accent-deep);
-  color: #fff;
-  font: inherit;
-  font-weight: 800;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.thingy-signin-row button:disabled,
-.thingy-signin-secondary button:disabled {
-  cursor: wait;
-  opacity: .62;
-}
-
-.thingy-signin-message {
-  min-height: 1.5em;
-  margin-top: 12px;
-  color: var(--muted);
-  font-size: 15px;
-}
-
-.thingy-signin-message[data-kind="error"] { color: #b54730; }
-.thingy-signin-message[data-kind="success"] { color: var(--accent-deep); }
-
-.thingy-signin-secondary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-@media (max-width: 760px) {
-  .thingy-auth-card {
-    grid-template-columns: 1fr;
-  }
-
-  .thingy-auth-card {
-    padding: 20px;
-  }
-
-  .thingy-auth-card .thingy-auth-mark {
-    width: 76px;
-  }
-
-  .thingy-signin-row {
-    grid-template-columns: 1fr;
-  }
 }
 
 :root {
@@ -191,7 +77,6 @@
   --sidebar-width: 14rem;
 }
 
-/* Dark mode */
 @media (prefers-color-scheme: dark) {
   :root {
     --color-bg: #101716;
@@ -236,7 +121,6 @@ em, i {
   font-style: italic;
 }
 
-/* --- Typography --- */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 700;
@@ -262,153 +146,6 @@ a {
 }
 
 a:hover { color: var(--color-accent-hover); }
-
-.thingy-home {
-  width: min(100% - 32px, var(--container-wide));
-  margin: 0 auto;
-  padding: clamp(32px, 7vw, 80px) 0 48px;
-}
-
-.thingy-home-hero {
-  min-height: min(68dvh, 680px);
-  display: grid;
-  grid-template-columns: minmax(180px, 320px) minmax(0, 1fr);
-  align-items: center;
-  gap: clamp(28px, 6vw, 72px);
-}
-
-.thingy-home-image img {
-  width: min(100%, 320px);
-  height: auto;
-  display: block;
-  filter: drop-shadow(0 28px 46px rgba(23, 33, 31, 0.18));
-}
-
-.thingy-home-copy {
-  max-width: 720px;
-}
-
-.thingy-home-copy h1 {
-  margin: 0;
-  font-size: clamp(46px, 9vw, 108px);
-  line-height: 0.92;
-}
-
-.thingy-home-lede {
-  margin: 22px 0 0;
-  max-width: 660px;
-  color: var(--ink-soft);
-  font-size: clamp(18px, 2.1vw, 25px);
-  line-height: 1.38;
-}
-
-.thingy-home-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 28px;
-}
-
-.thingy-home-actions a,
-.thingy-home-grid a {
-  min-height: 42px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--ink);
-  font-weight: 850;
-  text-decoration: none;
-}
-
-.thingy-home-actions a.primary {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--surface);
-}
-
-.thingy-home-actions a:hover,
-.thingy-home-grid a:hover {
-  border-color: var(--accent-deep);
-  color: var(--accent-deep);
-}
-
-.thingy-home-actions a.primary:hover {
-  background: var(--accent-deep);
-  color: var(--surface);
-}
-
-.thingy-home-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 20px;
-}
-
-.thingy-home-grid article {
-  display: grid;
-  align-content: start;
-  gap: 10px;
-  padding: 20px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
-  box-shadow: var(--shadow-subtle);
-}
-
-.thingy-home-grid h2 {
-  margin: 0;
-  font-size: 22px;
-}
-
-.thingy-home-grid p {
-  margin: 0;
-  color: var(--ink-soft);
-  line-height: 1.48;
-}
-
-.thingy-home-grid a {
-  width: fit-content;
-  margin-top: 4px;
-}
-
-.thingy-home-network {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 22px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line-soft);
-}
-
-.thingy-home-network a {
-  color: var(--ink-soft);
-  font-size: 14px;
-  font-weight: 800;
-  text-decoration: none;
-}
-
-.thingy-home-network a:hover {
-  color: var(--accent-deep);
-}
-
-@media (max-width: 560px) {
-  .thingy-home-hero,
-  .thingy-home-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .thingy-home-hero {
-    min-height: auto;
-  }
-
-  .thingy-home-image img {
-    width: min(70vw, 220px);
-  }
-}
 
 blockquote {
   border-left: 3px solid var(--color-accent);
@@ -474,7 +211,6 @@ th {
   border-bottom-width: 2px;
 }
 
-/* --- Layout --- */
 .container {
   max-width: var(--container-width);
   margin: 0 auto;
@@ -511,21 +247,18 @@ th {
   top: var(--space-sm);
 }
 
-/* --- Wide container variant (used by home, archive, issue, search, librarian) --- */
 .container-wide {
   max-width: var(--container-wide);
   margin: 0 auto;
   padding: 0 var(--space-lg);
 }
 
-/* Narrow container (issue hero, search hero, librarian) */
 .container-narrow {
   max-width: 760px;
   margin: 0 auto;
   padding: 0 var(--space-lg);
 }
 
-/* --- Shared design tokens / chrome --- */
 .eyebrow {
   font-family: var(--mono);
   font-size: 11px;
@@ -534,75 +267,4 @@ th {
   color: var(--muted);
   font-weight: 500;
   margin: 0 0 var(--space-sm);
-}
-
-/* --- Subscriber form fields (style.css 557-625) --- */
-.subscribe-input {
-  flex: 1;
-  padding: 12px 16px;
-  font-family: var(--sans);
-  font-size: 15px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--ink);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  outline: none;
-}
-
-.subscribe-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-
-.subscribe-input::placeholder {
-  color: var(--muted);
-}
-
-.subscribe-button {
-  padding: 12px 20px;
-  font-family: var(--sans);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--bg);
-  background: var(--ink);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  white-space: nowrap;
-}
-
-.subscribe-button:hover {
-  background: var(--accent);
-}
-
-.subscribe-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.subscribe-field {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.subscribe-field .subscribe-input {
-  flex: none;
-}
-
-.subscribe-input.invalid {
-  border-color: #c44d2b;
-}
-
-.subscribe-error {
-  font-size: var(--size-xs);
-  color: var(--color-audio-accent);
-  margin-top: var(--space-xs);
-  min-height: 0;
-}
-
-.subscribe-shell {
-  width: 100%;
 }

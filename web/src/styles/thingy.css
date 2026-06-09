@@ -1,5 +1,8 @@
 /* Thingy stylesheet manifest. Keep imports in cascade order. */
 @import url("./thingy-base.css");
+@import url("./thingy-home.css");
+@import url("./thingy-auth.css");
+@import url("./thingy-forms.css");
 @import url("./thingy-messages.css");
 @import url("./thingy-shell.css");
 @import url("./thingy-chat-surface.css");

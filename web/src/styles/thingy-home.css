@@ -1,0 +1,147 @@
+/* Public landing page. */
+.thingy-home {
+  width: min(100% - 32px, var(--container-wide));
+  margin: 0 auto;
+  padding: clamp(32px, 7vw, 80px) 0 48px;
+}
+
+.thingy-home-hero {
+  min-height: min(68dvh, 680px);
+  display: grid;
+  grid-template-columns: minmax(180px, 320px) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(28px, 6vw, 72px);
+}
+
+.thingy-home-image img {
+  width: min(100%, 320px);
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 28px 46px rgba(23, 33, 31, 0.18));
+}
+
+.thingy-home-copy {
+  max-width: 720px;
+}
+
+.thingy-home-copy h1 {
+  margin: 0;
+  font-size: clamp(46px, 9vw, 108px);
+  line-height: 0.92;
+}
+
+.thingy-home-lede {
+  max-width: 660px;
+  margin: 22px 0 0;
+  color: var(--ink-soft);
+  font-size: clamp(18px, 2.1vw, 25px);
+  line-height: 1.38;
+}
+
+.thingy-home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.thingy-home-actions a,
+.thingy-home-grid a {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.thingy-home-actions a.primary {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.thingy-home-actions a:hover,
+.thingy-home-grid a:hover {
+  border-color: var(--accent-deep);
+  color: var(--accent-deep);
+}
+
+.thingy-home-actions a.primary:hover {
+  background: var(--accent-deep);
+  color: var(--surface);
+}
+
+.thingy-home-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.thingy-home-grid article {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
+  box-shadow: var(--shadow-subtle);
+}
+
+.thingy-home-grid h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.thingy-home-grid p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.48;
+}
+
+.thingy-home-grid a {
+  width: fit-content;
+  margin-top: 4px;
+}
+
+.thingy-home-network {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.thingy-home-network a {
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.thingy-home-network a:hover {
+  color: var(--accent-deep);
+}
+
+@media (max-width: 560px) {
+  .thingy-home-hero,
+  .thingy-home-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .thingy-home-hero {
+    min-height: auto;
+  }
+
+  .thingy-home-image img {
+    width: min(70vw, 220px);
+  }
+}
