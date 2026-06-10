@@ -48,3 +48,23 @@ test('returnPath rejects external and protocol-relative return targets', async (
   installWindow('http://localhost:8080/signin/?return=%2F%2Fevil.example%2F');
   assert.equal(session.returnPath('/dispatch/'), '/dispatch/');
 });
+
+test('mergeProfile preserves top-level Discord connection from auth responses', async () => {
+  installWindow();
+  const session = await import('../src/shared/thingy-session.js');
+
+  const profile = session.mergeProfile({
+    email: 'reader@example.com',
+    status: 'premium',
+    entitlements: ['supporting_member'],
+    profile: { preferred_name: 'Reader' },
+    discord_connection: {
+      connected: true,
+      username: 'reader',
+      display_name: 'Reader Discord'
+    }
+  });
+
+  assert.equal(profile.discord_connection.display_name, 'Reader Discord');
+  assert.equal(session.storedProfile().discord_connection.username, 'reader');
+});

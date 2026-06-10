@@ -28,6 +28,22 @@ cd web
 THINGY_SMOKE_URL=http://localhost:8080 npm run smoke
 ```
 
+Real API QA, with the local server already running and `LIBRARIAN_API_URL`,
+`LIBRARIAN_STREAM_URL`, and either `THINGY_SESSION_TOKEN` or a Fastmail JMAP
+token exported:
+
+```sh
+cd web
+THINGY_QA_EMAIL=thingy@thingelstad.com npm run qa:real
+```
+
+Cleanup only for QA-prefixed conversations and Dispatch drafts:
+
+```sh
+cd web
+npm run qa:real -- --cleanup-only
+```
+
 ## Auth
 
 - Visit `/chat/` signed out; it should redirect or show auth without leaking

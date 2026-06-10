@@ -9,6 +9,7 @@
     "serve": "vite --host 0.0.0.0",
     "clean": "rm -rf _site",
     "lint": "eslint .",
+    "qa:real": "node scripts/qa-real-api.mjs",
     "smoke": "node scripts/smoke-browser.mjs",
     "test": "node --test tests/*.test.mjs"
   },

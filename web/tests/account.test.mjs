@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+
 import {
+  discordConnection,
+  discordConnectionName,
   extractPreferredNameFromMessage,
-  hasSupportingAccess,
   normalizePreferredName,
-  savePreferredName
+  savePreferredName,
+  hasSupportingAccess
 } from '../src/shared/thingy-account.js';
 
 test('savePreferredName persists through the auth API before updating cached profile', async () => {
@@ -48,12 +51,39 @@ test('savePreferredName rejects names the API does not confirm', async () => {
   );
 });
 
+test('discordConnectionName accepts canonical Discord connection profile shape', () => {
+  assert.equal(discordConnectionName({
+    discord_connection: {
+      connected: true,
+      username: 'thingyuser',
+      global_name: 'Thingy User',
+      display_name: 'Thingy Display'
+    }
+  }), 'Thingy Display');
+});
+
+test('discordConnectionName accepts camelCase fallback profile shape', () => {
+  assert.equal(discordConnectionName({
+    discordConnection: {
+      connected: true,
+      username: 'thingyuser',
+      globalName: 'Thingy User'
+    }
+  }), 'Thingy User');
+});
+
+test('discordConnection ignores disconnected or empty Discord connection values', () => {
+  assert.equal(discordConnection({ discord_connection: { connected: false, display_name: 'Nope' } }), null);
+  assert.equal(discordConnection({ discord_connection: {} }), null);
+});
+
 test('hasSupportingAccess recognises supporting members and owners', () => {
   assert.equal(hasSupportingAccess({ entitlements: ['reader'] }), false);
   assert.equal(hasSupportingAccess({ entitlements: ['reader', 'supporting_member'] }), true);
   assert.equal(hasSupportingAccess({ entitlements: ['reader', 'owner'] }), true);
   assert.equal(hasSupportingAccess({ supporting_member: true }), true);
   assert.equal(hasSupportingAccess({}), false);
+  assert.equal(hasSupportingAccess({ entitlements: [] }), false);
 });
 
 test('normalizePreferredName trims, title-cases, and rejects blocked words', () => {

@@ -2,7 +2,7 @@ import { render } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import { useComputed } from '@preact/signals';
 import { iconSvg } from '../thingy-icons.js';
-import { hasSupportingAccess, savePreferredName } from '../thingy-account.js';
+import { discordConnectionName, hasSupportingAccess, savePreferredName } from '../thingy-account.js';
 import {
   accountMenuOpen,
   accountNameStatus,
@@ -106,10 +106,7 @@ function AccountMenu({
     window.location.href = session.signInUrl(returnTo);
   }
 
-  const connection = (profile && profile.discord_connection && typeof profile.discord_connection === 'object')
-    ? profile.discord_connection
-    : null;
-  const connectedName = String(connection?.display_name || connection?.global_name || connection?.username || '').trim();
+  const connectedName = discordConnectionName(profile);
 
   return (
     <>

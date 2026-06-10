@@ -1,5 +1,5 @@
 import * as session from './thingy-session.js';
-import { hasSupportingAccess } from './thingy-account.js';
+import { discordConnectionName, hasSupportingAccess } from './thingy-account.js';
 
 const copy = document.getElementById('thingy-discord-copy');
 const message = document.getElementById('thingy-discord-message');
@@ -94,8 +94,7 @@ async function initDiscordLink() {
   }
 
   if (!state) {
-    const connection = profile.discord_connection || {};
-    const connectedName = String(connection.display_name || connection.global_name || connection.username || '').trim();
+    const connectedName = discordConnectionName(profile);
     setCopy(connectedName
       ? `You are connected to Discord as ${connectedName}.`
       : 'To connect Discord, run /thingy verify in the validation channel and open the link Thingy gives you.');

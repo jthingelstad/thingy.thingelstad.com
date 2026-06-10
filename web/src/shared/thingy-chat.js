@@ -392,6 +392,14 @@ function bootChat() {
       return true;
     }
 
+    function redirectToSignIn(returnTo = '/chat/') {
+      const emailValue = storedEmail();
+      session.clearAuth();
+      signedInSignal.value = false;
+      if (emailValue) authEmailSignal.value = emailValue;
+      window.location.href = session.signInUrl(returnTo);
+    }
+
     async function refreshAccountProfile(options = {}) {
       if (!token() || tokenExpired()) return false;
       const now = Date.now();
@@ -408,13 +416,10 @@ function bootChat() {
     async function ensureFreshToken() {
       if (!token()) return false;
       if (!tokenExpired() && !tokenNeedsRefresh()) return true;
-      if (tokenNeedsRefresh()) return await refreshStoredAuth();
-      const emailValue = storedEmail();
-      clearToken({
-        message: "Your Thingy session expired. Enter your email and I'll send a fresh sign-in link.",
-        preserveEmail: Boolean(emailValue)
-      });
-      trackTinylyticsEvent('librarian.session_expired');
+      const refreshable = tokenNeedsRefresh();
+      if (refreshable && await refreshStoredAuth()) return true;
+      redirectToSignIn();
+      trackTinylyticsEvent(refreshable ? 'librarian.auth_refresh_error' : 'librarian.session_expired');
       return false;
     }
 
@@ -863,7 +868,6 @@ function bootChat() {
     async function showCuriosityMap(center = '', options = {}) {
       if (!token() || interactionBusy()) return;
       if (!(await ensureFreshToken())) {
-        clearToken();
         return;
       }
       const scope = currentScope();
@@ -911,7 +915,7 @@ function bootChat() {
         model.errorMessage.value = error.message;
         model.status.value = 'error';
         trackTinylyticsEvent('librarian.curiosity_map_error', error.requestId ? 'server' : 'client');
-        if (isAuthError(error)) clearToken();
+        if (isAuthError(error)) redirectToSignIn();
       } finally {
         mapInFlightSignal.value = false;
         updateQuestionState();
@@ -977,7 +981,6 @@ function bootChat() {
       if (!token() || normalized === 'thingy') return activeConversation();
       if (!state.availableModes.some((entry) => entry.id === normalized)) return null;
       if (!(await ensureFreshToken())) {
-        clearToken();
         return null;
       }
       const replaceId = String(options.replaceId || state.activeConversationId || '').trim();
@@ -999,7 +1002,7 @@ function bootChat() {
         }
       } catch (error) {
         if (isAuthError(error)) {
-          clearToken();
+          redirectToSignIn();
         } else {
           showNotice(`Could not start a ${modeLabel(normalized)} chat. Please try again.`);
         }
@@ -1018,7 +1021,6 @@ function bootChat() {
         return [];
       }
       if (!(await ensureFreshToken())) {
-        clearToken();
         return [];
       }
       try {
@@ -1050,7 +1052,7 @@ function bootChat() {
         }
         trackTinylyticsEvent('librarian.conversations_error', 'list');
         if (isAuthError(error)) {
-          clearToken();
+          redirectToSignIn();
           return [];
         }
         renderRecents();
@@ -1363,7 +1365,6 @@ function bootChat() {
     async function startAgentWelcome() {
       if (!token() || interactionBusy() || welcomeInFlightSignal.value || welcomeShownThisVisit || hasInitialPrompt) return;
       if (!(await ensureFreshToken())) {
-        clearToken();
         return;
       }
       hidePrompts();
@@ -1452,7 +1453,6 @@ function bootChat() {
         return;
       }
       if (!(await ensureFreshToken())) {
-        clearToken();
         return;
       }
       if (dictationControls?.isListening?.()) stopDictation();
@@ -1497,7 +1497,7 @@ function bootChat() {
         model.status.value = 'error';
         trackTinylyticsEvent('librarian.answer_error', error.requestId ? 'server' : 'client');
         if (isAuthError(error)) {
-          clearToken();
+          redirectToSignIn();
         }
       } finally {
         answerInFlightSignal.value = false;
@@ -1730,10 +1730,7 @@ function bootChat() {
       trackTinylyticsEvent('librarian.auth_auto_start');
     } else if (token()) {
       if (tokenExpired()) {
-        clearToken({
-          message: "Your Thingy session expired. Enter your email and I'll send a fresh sign-in link.",
-          preserveEmail: true
-        });
+        redirectToSignIn();
         trackTinylyticsEvent('librarian.session_expired_startup');
       } else {
         signedInSignal.value = true;

@@ -88,6 +88,9 @@ function mergeProfile(data = {}, email = '') {
   if (emailValue) window.localStorage.setItem(userEmailKey, emailValue);
   const existingProfile = storedProfile();
   const incomingProfile = data.profile && typeof data.profile === 'object' ? data.profile : {};
+  const incomingDiscordConnection = (data.discord_connection && typeof data.discord_connection === 'object')
+    ? data.discord_connection
+    : incomingProfile.discord_connection;
   const hasIncomingEntitlements = Array.isArray(data.entitlements) || Array.isArray(incomingProfile.entitlements);
   const incomingEntitlements = Array.isArray(data.entitlements) ? data.entitlements : incomingProfile.entitlements;
   const entitlements = Array.isArray(incomingEntitlements) ? incomingEntitlements : existingProfile.entitlements;
@@ -100,6 +103,7 @@ function mergeProfile(data = {}, email = '') {
       ? Boolean(data.status === 'premium' || incomingProfile.supporting_member || (Array.isArray(entitlements) && entitlements.includes('supporting_member')))
       : Boolean(incomingProfile.supporting_member || existingProfile.supporting_member),
     entitlements,
+    discord_connection: incomingDiscordConnection === undefined ? existingProfile.discord_connection : incomingDiscordConnection,
     modes: normalizeModes(data.modes || incomingProfile.modes || existingProfile.modes)
   };
   window.localStorage.setItem(userProfileKey, JSON.stringify(profile));

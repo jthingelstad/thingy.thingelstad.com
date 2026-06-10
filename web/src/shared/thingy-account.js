@@ -9,6 +9,31 @@ function hasSupportingAccess(profile = {}) {
   return Boolean(profile.supporting_member || entitlements.includes('supporting_member') || entitlements.includes('owner'));
 }
 
+function discordConnection(profile = {}) {
+  const candidates = [
+    profile.discord_connection,
+    profile.discordConnection,
+    profile.discord_user,
+    profile.discordUser
+  ];
+  const connection = candidates.find((value) => value && typeof value === 'object') || null;
+  if (!connection || connection.connected === false) return null;
+  const username = String(connection.username || connection.user_name || '').trim();
+  const globalName = String(connection.global_name || connection.globalName || '').trim();
+  const displayName = String(connection.display_name || connection.displayName || globalName || username).trim();
+  if (!displayName && !username && !globalName) return null;
+  return {
+    ...connection,
+    username,
+    global_name: globalName,
+    display_name: displayName || username || globalName
+  };
+}
+
+function discordConnectionName(profile = {}) {
+  return String(discordConnection(profile)?.display_name || '').trim();
+}
+
 function normalizePreferredName(value) {
   const candidate = String(value || '').trim().replace(/[.!]+$/, '').replace(/\s+/g, ' ');
   if (!/^[a-z][a-z .'’-]{0,78}$/i.test(candidate)) return '';
@@ -39,6 +64,8 @@ async function savePreferredName(session, name, normalizeName = normalizePreferr
 }
 
 export {
+  discordConnection,
+  discordConnectionName,
   extractPreferredNameFromMessage,
   hasSupportingAccess,
   normalizePreferredName,
