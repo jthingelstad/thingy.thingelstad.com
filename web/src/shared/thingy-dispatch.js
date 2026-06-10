@@ -17,7 +17,7 @@ import {
   dispatchStatusMessage as dispatchStatusMessageSignal,
   dispatchText as dispatchTextSignal,
   drafts as draftsSignal
-} from './stores/chat-store.js';
+} from './stores/dispatch-store.js';
 import {
   draftFromServerRow,
   hasDraftContent,

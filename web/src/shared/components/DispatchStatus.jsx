@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { dispatchStatusKind, dispatchStatusMessage } from '../stores/chat-store.js';
+import { dispatchStatusKind, dispatchStatusMessage } from '../stores/dispatch-store.js';
 
 function DispatchStatus() {
   const message = dispatchStatusMessage.value;

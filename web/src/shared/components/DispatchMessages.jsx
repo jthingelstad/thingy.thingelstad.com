@@ -1,7 +1,7 @@
 import { render } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import { renderMarkdown } from '../thingy-markdown.js';
-import { dispatchMessages } from '../stores/chat-store.js';
+import { dispatchMessages } from '../stores/dispatch-store.js';
 
 function DispatchMessage({ message }) {
   const role = message.role === 'user' ? 'user' : message.role === 'system' ? 'system' : 'assistant';

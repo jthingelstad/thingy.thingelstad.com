@@ -67,11 +67,11 @@ import {
   interactionBusy as interactionBusySignal,
   mapInFlight as mapInFlightSignal,
   questionText as questionTextSignal,
-  showNotice,
   signedIn as signedInSignal,
   stoppable as stoppableSignal,
   welcomeInFlight as welcomeInFlightSignal
 } from './stores/chat-store.js';
+import { showNotice } from './stores/ui-store.js';
 import { focusAuthEmail, mountAuthPanel } from './components/AuthPanel.jsx';
 import { mountComposerCount } from './components/ComposerCount.jsx';
 import { mountComposerSubmit } from './components/ComposerSubmit.jsx';

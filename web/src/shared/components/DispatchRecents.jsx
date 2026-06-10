@@ -1,7 +1,7 @@
 import { render } from 'preact';
 import { iconSvg } from '../thingy-icons.js';
 import { stageIcon, stageLabel } from '../thingy-dispatch-drafts.js';
-import { activeDraftId, drafts } from '../stores/chat-store.js';
+import { activeDraftId, drafts } from '../stores/dispatch-store.js';
 
 const EMPTY_LABEL = "Your Dispatches show up here. Start a new one and we'll keep track of it.";
 

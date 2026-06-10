@@ -5,7 +5,7 @@ import {
   noticeNonce,
   noticeText,
   showNotice
-} from '../src/shared/stores/chat-store.js';
+} from '../src/shared/stores/ui-store.js';
 
 test('showNotice updates the visible text and advances the nonce', () => {
   clearNotice();

@@ -1,7 +1,7 @@
 import { render } from 'preact';
 import { useSignal, useSignalEffect } from '@preact/signals';
 import { useEffect, useRef } from 'preact/hooks';
-import { clearNotice, noticeNonce, noticeText } from '../stores/chat-store.js';
+import { clearNotice, noticeNonce, noticeText } from '../stores/ui-store.js';
 
 const VISIBLE_MS = 4000;
 

@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { dispatchActions } from '../stores/chat-store.js';
+import { dispatchActions } from '../stores/dispatch-store.js';
 
 function DispatchActions({ onAction }) {
   const items = dispatchActions.value;
