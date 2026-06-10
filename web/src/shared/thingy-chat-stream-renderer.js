@@ -4,36 +4,22 @@ import {
 } from './thingy-chat-rendering.js';
 import { batch } from '@preact/signals';
 
-// Drives a streaming assistant message into a signal-backed model. Deltas
-// accumulate in local buffers and are flushed into the model once per
-// animation frame, so a fast stream doesn't re-render the message every
-// microtask.
+// Drives a streaming assistant message into a signal-backed model.
+//
+// Each delta is written into the model immediately rather than buffered
+// through requestAnimationFrame. The rAF approach was correct for the
+// old innerHTML renderer (where every write forced a layout), but with
+// signals Preact batches its own renders — rAF coalescing just means
+// the macrotask never fires while readStream's microtask chain is hot,
+// so every delta accumulates and the answer appears all at once.
 function createAssistantStreamRenderer(options = {}) {
   const model = options.model;
   if (!model) throw new Error('createAssistantStreamRenderer requires a model');
   const scroll = typeof options.scroll === 'function' ? options.scroll : () => {};
   const fallback = options.statusFallback || 'Thingy is working...';
-  let bufferedContent = String(model.content.peek() || '');
-  let bufferedFrame = 0;
 
   if (options.label) model.label.value = options.label;
   if (options.statusFallback) model.statusFallback.value = options.statusFallback;
-  if (model.status.peek() === 'pending') {
-    // first content/status/citation event will flip it to streaming
-  }
-
-  function flush() {
-    bufferedFrame = 0;
-    if (model.content.peek() !== bufferedContent) {
-      model.content.value = bufferedContent;
-    }
-    scroll();
-  }
-
-  function schedule() {
-    if (bufferedFrame) return;
-    bufferedFrame = window.requestAnimationFrame(flush);
-  }
 
   function ensureStreaming() {
     if (model.status.peek() === 'pending') model.status.value = 'streaming';
@@ -41,15 +27,16 @@ function createAssistantStreamRenderer(options = {}) {
 
   function appendDelta(delta) {
     if (!delta) return;
-    bufferedContent = (bufferedContent + delta).replace(/^\s+/, '');
+    const next = (model.content.peek() + delta).replace(/^\s+/, '');
+    model.content.value = next;
     ensureStreaming();
-    schedule();
+    scroll();
   }
 
   function setAnswer(value) {
-    bufferedContent = String(value || '');
+    model.content.value = String(value || '');
     ensureStreaming();
-    schedule();
+    scroll();
   }
 
   function setCitations(citations) {
@@ -77,12 +64,7 @@ function createAssistantStreamRenderer(options = {}) {
   }
 
   function finish(nextStatus = 'done') {
-    if (bufferedFrame) {
-      window.cancelAnimationFrame(bufferedFrame);
-      bufferedFrame = 0;
-    }
     batch(() => {
-      if (model.content.peek() !== bufferedContent) model.content.value = bufferedContent;
       model.status.value = nextStatus;
     });
     return {
@@ -93,12 +75,7 @@ function createAssistantStreamRenderer(options = {}) {
   }
 
   function fail(message, retryPrompt) {
-    if (bufferedFrame) {
-      window.cancelAnimationFrame(bufferedFrame);
-      bufferedFrame = 0;
-    }
     batch(() => {
-      if (model.content.peek() !== bufferedContent) model.content.value = bufferedContent;
       model.errorMessage.value = String(message || 'Thingy is unavailable.');
       if (retryPrompt) model.retryPrompt.value = retryPrompt;
       model.status.value = 'error';
