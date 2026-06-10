@@ -78,7 +78,7 @@ import { mountComposerSubmit } from './components/ComposerSubmit.jsx';
 import { mountNotice } from './components/Notice.jsx';
 import { mountRailRecents } from './components/RailRecents.jsx';
 
-(() => {
+function bootChat() {
     applyReturnChip();
     const streamBase = librarianStreamUrl();
     const authPanel = document.getElementById('librarian-auth');
@@ -1761,4 +1761,6 @@ import { mountRailRecents } from './components/RailRecents.jsx';
     } else {
       window.location.href = session.signInUrl();
     }
-  })();
+}
+
+export { bootChat };
