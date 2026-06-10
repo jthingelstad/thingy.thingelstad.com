@@ -6,9 +6,10 @@ import { dispatchMessages } from '../stores/dispatch-store.js';
 function DispatchMessage({ message }) {
   const role = message.role === 'user' ? 'user' : message.role === 'system' ? 'system' : 'assistant';
   const html = renderMarkdown(message.text || '');
+  const kind = message.kind ? ` is-${String(message.kind).replace(/[^a-z0-9_-]/gi, '')}` : '';
   return (
     <article
-      class={`librarian-message librarian-message-${role} dispatch-message`}
+      class={`librarian-message librarian-message-${role} dispatch-message${kind}`}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

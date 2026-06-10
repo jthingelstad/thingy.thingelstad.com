@@ -79,24 +79,6 @@
   background: color-mix(in srgb, var(--ink) 5%, transparent);
 }
 
-.rail-recent[data-mode="thought_partner"] {
-  --mode-rail-accent: #d39b18;
-  --mode-rail-chip-bg: color-mix(in srgb, #f4c95b 26%, var(--surface));
-  --mode-rail-chip-ink: #6d4d09;
-}
-
-.rail-recent[data-mode="research_guide"] {
-  --mode-rail-accent: #2f74b5;
-  --mode-rail-chip-bg: color-mix(in srgb, #cce5ff 42%, var(--surface));
-  --mode-rail-chip-ink: #285f92;
-}
-
-.rail-recent[data-mode="trusted_circle"] {
-  --mode-rail-accent: #2f8066;
-  --mode-rail-chip-bg: color-mix(in srgb, #d7efe3 42%, var(--surface));
-  --mode-rail-chip-ink: #2f8066;
-}
-
 .rail-recent-open {
   width: 100%;
   min-width: 0;
@@ -151,10 +133,10 @@
   display: grid;
   place-items: center;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--mode-rail-accent, var(--muted)) 32%, transparent);
+  border: 1px solid color-mix(in srgb, var(--muted) 24%, transparent);
   border-radius: 999px;
-  background: var(--mode-rail-chip-bg, color-mix(in srgb, var(--surface-2) 70%, var(--surface)));
-  color: var(--mode-rail-chip-ink, var(--muted));
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  color: var(--muted);
   font-family: var(--mono);
   font-size: 12px;
   font-weight: 900;
@@ -162,7 +144,7 @@
 }
 
 .rail-recent.is-active .rail-recent-mode {
-  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
+  border-color: color-mix(in srgb, var(--muted) 28%, transparent);
   background: color-mix(in srgb, var(--surface) 82%, transparent);
   color: var(--ink-soft);
 }

@@ -99,9 +99,11 @@ function iconSvg(name, options = {}) {
     ? `role="img" aria-label="${escapeAttribute(label)}"`
     : 'aria-hidden="true" focusable="false"';
   const svg = raw.replace(/<!--[\s\S]*?-->/g, '').trim();
-  return svg
-    .replace('<svg', `<svg ${aria}`)
-    .replace(/class="([^"]*)"/, `class="$1 thingy-icon${className ? ` ${escapeAttribute(className)}` : ''}"`);
+  const classes = `thingy-icon${className ? ` ${escapeAttribute(className)}` : ''}`;
+  const withAria = svg.replace('<svg', `<svg ${aria}`);
+  return /class="[^"]*"/.test(withAria)
+    ? withAria.replace(/class="([^"]*)"/, `class="$1 ${classes}"`)
+    : withAria.replace('<svg', `<svg class="${classes}"`);
 }
 
 function iconElement(name, options = {}) {

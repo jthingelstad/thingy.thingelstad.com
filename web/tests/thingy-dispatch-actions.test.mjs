@@ -183,6 +183,31 @@ test('clarifyWithThingy restores the previous stage when the API fails', async (
   assert.equal(lastMessage.text, 'boom');
 });
 
+test('generateDispatch writes progress into the Dispatch transcript', async () => {
+  dispatchBusy.value = false;
+  const session = fakeSession({
+    postJson: async (path, payload) => {
+      if (payload.action === 'create') return { dispatch: { id: 'srv-1', status: 'queued' } };
+      return { dispatch: { id: 'srv-1' } };
+    }
+  });
+  const actions = createDispatchActions({ session, onRender: () => {} });
+  const draft = actions.createDraft({ activate: true, render: false });
+  Object.assign(draft, {
+    stage: 'ready',
+    prompt: 'Write about RSS',
+    direction: 'A Dispatch about RSS'
+  });
+
+  await actions.generateDispatch();
+
+  const progress = dispatchMessages.value.filter((message) => message.kind === 'progress');
+  assert.deepEqual(progress.map((message) => message.id), ['generate-start', 'generate-save', 'generate-queue']);
+  assert.match(progress[0].text, /saving the current direction/i);
+  assert.match(progress[1].text, /generation request/i);
+  assert.match(progress[2].text, /checking the generation status/i);
+});
+
 test('deleteDispatch respects the confirmDelete hook', async () => {
   dispatchBusy.value = false;
   let confirmed = false;

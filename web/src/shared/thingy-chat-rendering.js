@@ -192,6 +192,7 @@ function renderActivityLog(steps = [], options = {}) {
   if (!list.length && !commentary.length) return '';
   const activeIndex = options.active ? list.length - 1 : -1;
   const activityLabel = options.label || 'Archive Work';
+  const elapsed = String(options.elapsedLabel || '').trim();
   const stepCount = list.length;
   const items = list.map((step, index) => {
     const state = index === activeIndex ? ' is-active' : ' is-complete';
@@ -212,7 +213,7 @@ function renderActivityLog(steps = [], options = {}) {
       + `</details>`;
   }
   return `<aside class="librarian-activity" aria-label="Thingy activity">`
-    + `<div class="librarian-activity-kicker">${escapeHtml(activityLabel)}</div>`
+    + `<div class="librarian-activity-kicker">${escapeHtml(activityLabel)}${elapsed ? `<span class="librarian-elapsed">${escapeHtml(elapsed)}</span>` : ''}</div>`
     + body
     + `</aside>`;
 }

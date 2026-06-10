@@ -203,6 +203,27 @@ function createDispatchActions(options = {}) {
     return draft;
   }
 
+  function upsertProgressMessage(id, text, targetDraft = activeDraft()) {
+    const draft = targetDraft;
+    const key = String(id || '').trim();
+    const existing = key ? draft.messages.find((message) => message.kind === 'progress' && message.id === key) : null;
+    const next = {
+      id: key || `progress-${Date.now()}`,
+      role: 'assistant',
+      text: String(text || ''),
+      time: nowIso(),
+      kind: 'progress'
+    };
+    if (existing) {
+      Object.assign(existing, next);
+    } else {
+      draft.messages.push(next);
+    }
+    draft.updatedAt = nowIso();
+    saveDrafts();
+    return draft;
+  }
+
   function setActiveDraft(id, opts = {}) {
     activeId = String(id || '');
     if (activeId) {
@@ -425,8 +446,14 @@ function createDispatchActions(options = {}) {
       return;
     }
     setBusy(true, dispatchTestMode ? 'Queueing template test...' : 'Queueing Dispatch...');
+    upsertProgressMessage('generate-start', dispatchTestMode
+      ? 'Preparing the template test and saving the current Dispatch direction.'
+      : 'Preparing this Dispatch and saving the current direction.');
+    render();
     try {
       await saveDraftToServer(draft, { status: draft.stage === 'upgrade' ? 'ready' : draft.stage });
+      upsertProgressMessage('generate-save', 'Saved the Dispatch direction. Sending the generation request now.');
+      render();
       const data = await dispatchPost('create', {
         dispatch_id: serverDispatchId(draft),
         prompt: draft.prompt,
@@ -443,9 +470,9 @@ function createDispatchActions(options = {}) {
         dispatchId: row.id || row.dispatch_id || '',
         statusText: dispatchTestMode ? 'Template test queued.' : 'Dispatch queued.'
       });
-      addMessage('assistant', dispatchTestMode
-        ? 'Done. I queued a Dispatch template test and will email it when it is ready.'
-        : 'Done. I queued this Dispatch and will email it when it is ready.');
+      upsertProgressMessage('generate-queue', dispatchTestMode
+        ? 'Template test queued. I am checking the generation status now.'
+        : 'Dispatch queued. I am checking the generation status now.');
       startPolling();
     } catch (error) {
       if (error.status === 403 && error.data && error.data.status === 'supporting_member_required') {
@@ -492,6 +519,7 @@ function createDispatchActions(options = {}) {
           updatedAt: nowIso()
         });
         if (!draft.messages.some((message) => message.kind === 'sent')) {
+          upsertProgressMessage('generate-status', 'Generation finished and the email handoff completed.', draft);
           draft.messages.push({
             role: 'assistant',
             text: 'Dispatch sent. Check your email.',
@@ -508,6 +536,7 @@ function createDispatchActions(options = {}) {
           statusText: row.error || 'Failed',
           updatedAt: nowIso()
         });
+        upsertProgressMessage('generate-status', 'Generation failed before the email could be sent.', draft);
         draft.messages.push({
           role: 'assistant',
           text: row.error || 'Dispatch failed while generating.',
@@ -521,6 +550,7 @@ function createDispatchActions(options = {}) {
           stage: row.status,
           updatedAt: nowIso()
         });
+        upsertProgressMessage('generate-status', `Thingy is ${String(row.status).replace(/_/g, ' ')} this Dispatch. I will keep checking until it is sent.`, draft);
         saveDrafts();
         render();
       }

@@ -18,6 +18,17 @@
   margin-bottom: 0;
 }
 
+.dispatch-message.is-progress {
+  max-width: min(42rem, 100%);
+  padding-left: 13px;
+  border-left: 3px solid color-mix(in srgb, var(--accent) 38%, var(--line));
+  color: var(--ink-soft);
+}
+
+.dispatch-message.is-progress p {
+  color: var(--ink-soft);
+}
+
 .dispatch-actions {
   width: min(100%, 50rem);
   display: flex;

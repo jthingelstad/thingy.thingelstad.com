@@ -97,7 +97,6 @@
 }
 
 .rail-account-setting {
-  min-width: 220px;
   display: grid;
   gap: 7px;
   padding: 8px 8px 6px;
@@ -113,8 +112,10 @@
 }
 
 .rail-account-setting-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 6px;
+  min-width: 0;
 }
 
 .rail-account-setting input {

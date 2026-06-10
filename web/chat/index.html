@@ -69,9 +69,12 @@
           <span class="kbd">⌘K</span>
         </button>
         <div class="rail-newchat-mode" id="thingy-mode-control" hidden>
-          <label for="thingy-mode-select" class="sr-only">New chat mode</label>
-          <span class="rail-newchat-mode-icon" id="thingy-mode-icon" aria-hidden="true"></span>
-          <select id="thingy-mode-select" aria-label="New chat mode"></select>
+          <button class="rail-newchat-mode-button" id="thingy-mode-select" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="thingy-mode-menu" aria-label="New chat mode">
+            <span class="rail-newchat-mode-icon" id="thingy-mode-icon" aria-hidden="true"></span>
+            <span class="rail-newchat-mode-label" id="thingy-mode-label">Thingy</span>
+            <span class="rail-newchat-mode-caret" data-thingy-icon="chevron-down" aria-hidden="true"></span>
+          </button>
+          <div class="rail-newchat-mode-menu" id="thingy-mode-menu" hidden role="listbox" aria-label="New chat mode"></div>
         </div>
       </div>
       <button class="rail-newchat rail-map" type="button" id="thingy-curiosity-map" data-tinylytics-event="librarian.curiosity_map" title="Curiosity map">
@@ -117,8 +120,8 @@
       <div class="librarian-auth thingy-auth" id="librarian-auth"></div>
 
       <div class="librarian-chat thingy-chat" id="librarian-chat" hidden>
-        <div class="thingy-mode-banner" id="thingy-mode-banner" hidden aria-live="polite"></div>
         <div class="thingy-chat-scroll">
+          <div class="thingy-mode-banner" id="thingy-mode-banner" hidden aria-live="polite"></div>
           <div class="librarian-messages" id="librarian-messages" aria-live="polite"></div>
         </div>
 

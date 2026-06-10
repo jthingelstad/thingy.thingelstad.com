@@ -78,6 +78,8 @@ function bootChat() {
     const modeControl = document.getElementById('thingy-mode-control');
     const modeIconEl = document.getElementById('thingy-mode-icon');
     const modeSelect = document.getElementById('thingy-mode-select');
+    const modeLabelEl = document.getElementById('thingy-mode-label');
+    const modeMenu = document.getElementById('thingy-mode-menu');
     const modeBanner = document.getElementById('thingy-mode-banner');
     const questionInput = document.getElementById('librarian-question');
     const questionButton = questionForm.querySelector('button[type="submit"]');
@@ -218,7 +220,7 @@ function bootChat() {
     function renderModeBanner() {
       if (!modeBanner) return;
       const mode = actions.currentConversationMode();
-      const show = actions.token() && mode && mode !== 'thingy';
+      const show = actions.token() && mode && state.availableModes.length > 1;
       modeBanner.hidden = !show;
       if (!show) {
         modeBanner.innerHTML = '';
@@ -229,17 +231,43 @@ function bootChat() {
       const label = actions.modeLabel(mode);
       modeBanner.dataset.mode = modeClass(mode);
       modeBanner.setAttribute('aria-label', `${label} mode`);
-      modeBanner.innerHTML = `${iconSvg(modeIcon(mode), { className: 'thingy-mode-banner-icon' })}<span class="thingy-mode-banner-kicker">Mode</span><strong>${escapeHtml(label)}</strong>`;
+      modeBanner.innerHTML = `${iconSvg(modeIcon(mode), { className: 'thingy-mode-banner-icon' })}<span>${escapeHtml(label)}</span>`;
     }
 
     function renderModeControl() {
       if (!modeControl || !modeSelect) return;
       const show = actions.token() && state.availableModes.length > 1;
       modeControl.hidden = !show;
-      modeSelect.innerHTML = state.availableModes.map((mode) => `<option value="${escapeHtml(mode.id)}">${escapeHtml(mode.label)}</option>`).join('');
-      modeSelect.value = state.availableModes.some((mode) => mode.id === state.activeMode) ? state.activeMode : 'thingy';
-      if (modeIconEl) modeIconEl.innerHTML = iconSvg(modeIcon(modeSelect.value));
+      const selectedMode = state.availableModes.some((mode) => mode.id === state.activeMode) ? state.activeMode : 'thingy';
+      const selectedLabel = actions.modeLabel(selectedMode);
+      modeSelect.dataset.value = selectedMode;
+      modeSelect.setAttribute('aria-label', `New chat mode: ${selectedLabel}`);
+      if (modeLabelEl) modeLabelEl.textContent = selectedLabel;
+      if (modeIconEl) modeIconEl.innerHTML = iconSvg(modeIcon(selectedMode));
+      if (modeMenu) {
+        modeMenu.innerHTML = state.availableModes.map((mode) => {
+          const selected = mode.id === selectedMode;
+          return `<button type="button" role="option" class="rail-newchat-mode-option" data-mode="${escapeHtml(mode.id)}" aria-selected="${selected ? 'true' : 'false'}">${iconSvg(modeIcon(mode.id), { className: 'rail-newchat-mode-option-icon' })}<span>${escapeHtml(mode.label)}</span></button>`;
+        }).join('');
+      }
+      closeModeMenu();
       renderModeBanner();
+    }
+
+    function openModeMenu() {
+      if (!modeMenu || !modeSelect || modeSelect.disabled) return;
+      modeMenu.hidden = false;
+      modeSelect.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeModeMenu() {
+      if (!modeMenu || !modeSelect) return;
+      modeMenu.hidden = true;
+      modeSelect.setAttribute('aria-expanded', 'false');
+    }
+
+    function modeMenuOpen() {
+      return Boolean(modeMenu && !modeMenu.hidden);
     }
 
     function updateVoiceButtonState() {
@@ -877,15 +905,15 @@ function bootChat() {
         setMobileRailOpen(false);
       });
     }
-    if (modeSelect) {
-      modeSelect.addEventListener('change', async () => {
+    async function chooseMode(value) {
+      if (!modeSelect) return;
         if (interactionBusy()) {
-          modeSelect.value = state.activeMode;
+          modeSelect.dataset.value = state.activeMode;
           return;
         }
-        const nextMode = normalizeModeId(modeSelect.value);
+        const nextMode = normalizeModeId(value);
         if (!state.availableModes.some((mode) => mode.id === nextMode)) {
-          modeSelect.value = state.activeMode;
+          modeSelect.dataset.value = state.activeMode;
           return;
         }
         if (nextMode === state.activeMode && !state.activeConversationId) return;
@@ -897,6 +925,46 @@ function bootChat() {
         if (window.matchMedia('(max-width: 640px)').matches) setMobileRailOpen(false);
         if (state.activeMode === 'thingy' || conversation) startAgentWelcome();
         trackTinylyticsEvent('librarian.mode_change', state.activeMode);
+    }
+    if (modeSelect) {
+      modeSelect.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (modeMenuOpen()) closeModeMenu();
+        else openModeMenu();
+      });
+      modeSelect.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          closeModeMenu();
+          return;
+        }
+        if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openModeMenu();
+          modeMenu?.querySelector('[aria-selected="true"]')?.focus();
+        }
+      });
+    }
+    if (modeMenu) {
+      modeMenu.addEventListener('click', async (event) => {
+        const option = event.target instanceof Element ? event.target.closest('[data-mode]') : null;
+        if (!option) return;
+        event.stopPropagation();
+        closeModeMenu();
+        await chooseMode(option.getAttribute('data-mode') || '');
+      });
+      modeMenu.addEventListener('keydown', async (event) => {
+        if (event.key === 'Escape') {
+          closeModeMenu();
+          modeSelect?.focus();
+          return;
+        }
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        const option = event.target instanceof Element ? event.target.closest('[data-mode]') : null;
+        if (!option) return;
+        event.preventDefault();
+        closeModeMenu();
+        await chooseMode(option.getAttribute('data-mode') || '');
+        modeSelect?.focus();
       });
     }
     if (mobileConversationMenuButton) {
@@ -920,13 +988,14 @@ function bootChat() {
        Account menu close is owned by AccountMenu's internal listener. */
     document.addEventListener('click', (event) => {
       const target = event.target instanceof Element ? event.target : event.target?.parentElement;
-      if (target && sourceControls.contains?.(target)) return;
-      sourceControls.close();
+      if (!target || !sourceControls.contains?.(target)) sourceControls.close();
+      if (!target || !target.closest('.rail-newchat-mode')) closeModeMenu();
       toggleMobileConversationMenu(false);
     });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
         sourceControls.close();
+        closeModeMenu();
         accountMenuOpenSignal.value = false;
         accountNameStatusSignal.value = '';
         toggleMobileConversationMenu(false);

@@ -72,6 +72,21 @@ test('discordConnectionName accepts camelCase fallback profile shape', () => {
   }), 'Thingy User');
 });
 
+test('discordConnection accepts linked records without a Discord display name', () => {
+  assert.deepEqual(discordConnection({
+    discord_connection: {
+      connected: true,
+      connected_at: '2026-06-10T19:30:00Z'
+    }
+  }), {
+    connected: true,
+    connected_at: '2026-06-10T19:30:00Z',
+    username: '',
+    global_name: '',
+    display_name: ''
+  });
+});
+
 test('discordConnection ignores disconnected or empty Discord connection values', () => {
   assert.equal(discordConnection({ discord_connection: { connected: false, display_name: 'Nope' } }), null);
   assert.equal(discordConnection({ discord_connection: {} }), null);

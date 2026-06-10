@@ -3,7 +3,12 @@ import { useEffect, useRef } from 'preact/hooks';
 import { useComputed } from '@preact/signals';
 import { iconSvg } from '../thingy-icons.js';
 import { buildId } from '../thingy-config.js';
-import { discordConnectionName, hasSupportingAccess, savePreferredName } from '../thingy-account.js';
+import {
+  discordConnection,
+  discordConnectionName,
+  hasSupportingAccess,
+  savePreferredName
+} from '../thingy-account.js';
 import {
   accountMenuOpen,
   accountNameStatus,
@@ -107,6 +112,7 @@ function AccountMenu({
     window.location.href = session.signInUrl(returnTo);
   }
 
+  const connection = discordConnection(profile);
   const connectedName = discordConnectionName(profile);
 
   return (
@@ -147,8 +153,8 @@ function AccountMenu({
         {supporting ? (
           <div class="rail-account-setting rail-account-discord">
             <span>Discord</span>
-            <p>{connectedName ? `Connected as ${connectedName}` : 'Supporting Members can connect Discord.'}</p>
-            <a class="rail-menu-link" href="/discord/">{connectedName ? 'Refresh Discord Connection' : 'Link to Discord'}</a>
+            <p>{connection ? (connectedName ? `Connected as ${connectedName}` : 'Connected to Discord.') : 'Supporting Members can connect Discord.'}</p>
+            <a class="rail-menu-link" href="/discord/">{connection ? 'Refresh Discord Connection' : 'Link to Discord'}</a>
           </div>
         ) : null}
         <div class="rail-menu-sep" role="separator" />

@@ -21,12 +21,14 @@ function discordConnection(profile = {}) {
   const username = String(connection.username || connection.user_name || '').trim();
   const globalName = String(connection.global_name || connection.globalName || '').trim();
   const displayName = String(connection.display_name || connection.displayName || globalName || username).trim();
-  if (!displayName && !username && !globalName) return null;
+  const connectedAt = String(connection.connected_at || connection.connectedAt || '').trim();
+  if (!displayName && !username && !globalName && connection.connected !== true && !connectedAt) return null;
   return {
     ...connection,
     username,
     global_name: globalName,
-    display_name: displayName || username || globalName
+    display_name: displayName || username || globalName,
+    connected_at: connectedAt
   };
 }
 

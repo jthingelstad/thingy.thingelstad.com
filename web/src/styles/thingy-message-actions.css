@@ -6,6 +6,20 @@
   color: var(--color-text-muted);
 }
 
+.librarian-elapsed {
+  display: inline-flex;
+  align-items: center;
+  min-height: 19px;
+  padding: 0 6px;
+  border: 1px solid color-mix(in srgb, var(--muted) 20%, transparent);
+  border-radius: 999px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+
 .librarian-activity {
   margin: 0 0 14px;
   padding: 12px 13px;
@@ -59,6 +73,9 @@
 }
 
 .librarian-activity-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   margin-bottom: 10px;
   color: var(--accent-deep);
   font-family: var(--mono);

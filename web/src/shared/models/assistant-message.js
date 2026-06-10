@@ -8,6 +8,14 @@ import { signal } from '@preact/signals';
 
 let counter = 0;
 
+function formatElapsedTime(seconds) {
+  const total = Math.max(0, Math.floor(Number(seconds) || 0));
+  if (total < 60) return `${total}s`;
+  const minutes = Math.floor(total / 60);
+  const remainder = total % 60;
+  return `${minutes}m ${remainder}s`;
+}
+
 function createAssistantMessageModel(options = {}) {
   counter += 1;
   return {
@@ -30,8 +38,10 @@ function createAssistantMessageModel(options = {}) {
     label: signal(options.label || ''),
     errorMessage: signal(''),
     retryPrompt: signal(''),
-    requestId: signal(String(options.requestId || ''))
+    requestId: signal(String(options.requestId || '')),
+    startedAt: signal(Number(options.startedAt || Date.now())),
+    elapsedSeconds: signal(Number(options.elapsedSeconds || 0))
   };
 }
 
-export { createAssistantMessageModel };
+export { createAssistantMessageModel, formatElapsedTime };

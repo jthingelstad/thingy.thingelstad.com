@@ -1,5 +1,5 @@
 import * as session from './thingy-session.js';
-import { discordConnectionName, hasSupportingAccess } from './thingy-account.js';
+import { discordConnection, discordConnectionName, hasSupportingAccess } from './thingy-account.js';
 
 const copy = document.getElementById('thingy-discord-copy');
 const message = document.getElementById('thingy-discord-message');
@@ -94,11 +94,12 @@ async function initDiscordLink() {
   }
 
   if (!state) {
+    const connection = discordConnection(profile);
     const connectedName = discordConnectionName(profile);
-    setCopy(connectedName
-      ? `You are connected to Discord as ${connectedName}.`
+    setCopy(connection
+      ? (connectedName ? `You are connected to Discord as ${connectedName}.` : 'You are connected to Discord.')
       : 'To connect Discord, run /thingy verify in the validation channel and open the link Thingy gives you.');
-    setMessage('Thingy will generate a one-time code after you start from Discord.', connectedName ? 'success' : '');
+    setMessage('Thingy will generate a one-time code after you start from Discord.', connection ? 'success' : '');
     return;
   }
 

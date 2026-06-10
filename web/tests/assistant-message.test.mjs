@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createAssistantMessageModel } from '../src/shared/models/assistant-message.js';
+import { createAssistantMessageModel, formatElapsedTime } from '../src/shared/models/assistant-message.js';
+
+test('formatElapsedTime matches chat-style elapsed labels', () => {
+  assert.equal(formatElapsedTime(0), '0s');
+  assert.equal(formatElapsedTime(35), '35s');
+  assert.equal(formatElapsedTime(72), '1m 12s');
+});
 
 test('createAssistantMessageModel starts at pending with empty content', () => {
   const model = createAssistantMessageModel();
@@ -14,6 +20,8 @@ test('createAssistantMessageModel starts at pending with empty content', () => {
   assert.equal(model.errorMessage.value, '');
   assert.equal(model.retryPrompt.value, '');
   assert.equal(model.requestId.value, '');
+  assert.equal(typeof model.startedAt.value, 'number');
+  assert.equal(model.elapsedSeconds.value, 0);
 });
 
 test('createAssistantMessageModel applies the passed options', () => {
