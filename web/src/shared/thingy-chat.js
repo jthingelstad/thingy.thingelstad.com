@@ -740,15 +740,23 @@ function bootChat() {
       });
     }
 
+    // Entries held by the conversations signal are treated as immutable:
+    // updating one means reassigning state.conversations with a new array
+    // and a new entry object, otherwise the signal never notifies and the
+    // rail renders stale data.
     function createLocalConversationShell(mode = state.activeMode) {
       const normalized = normalizeModeId(mode);
       const existing = activeConversation();
       if (existing?.id && isLocalConversationId(existing.id)) {
-        existing.mode = normalized;
-        existing.title = existing.title || newConversationTitle(normalized);
-        existing.updated_at = new Date().toISOString();
-        setActiveConversation(existing.id);
-        return existing;
+        const updated = {
+          ...existing,
+          mode: normalized,
+          title: existing.title || newConversationTitle(normalized),
+          updated_at: new Date().toISOString()
+        };
+        state.conversations = state.conversations.map((entry) => (entry.id === existing.id ? updated : entry));
+        setActiveConversation(updated.id);
+        return updated;
       }
       const shell = createLocalConversation({
         mode: normalized,
@@ -756,9 +764,8 @@ function bootChat() {
         prefix: localConversationPrefix,
         labelForMode: modeLabel
       });
-      state.conversations = state.conversations.filter((entry) => !isEmptyConversationDraft(entry, normalized));
-      state.conversations.unshift(shell);
-      state.conversations = dedupeEmptyConversationDrafts(state.conversations, { activeConversationId: shell.id }).slice(0, maxRecents);
+      const withoutDrafts = state.conversations.filter((entry) => !isEmptyConversationDraft(entry, normalized));
+      state.conversations = dedupeEmptyConversationDrafts([shell, ...withoutDrafts], { activeConversationId: shell.id }).slice(0, maxRecents);
       setActiveConversation(shell.id);
       return shell;
     }
@@ -812,10 +819,13 @@ function bootChat() {
       const trimmed = title.trim();
       if (!trimmed || trimmed === current) return;
       if (isLocalConversationId(active.id)) {
-        active.title = trimmed;
-        active.draft = false;
-        active.updated_at = new Date().toISOString();
-        renderRecents();
+        const updated = {
+          ...active,
+          title: trimmed,
+          draft: false,
+          updated_at: new Date().toISOString()
+        };
+        state.conversations = state.conversations.map((entry) => (entry.id === active.id ? updated : entry));
         updateMobileConversationTitle();
         return;
       }

@@ -1,5 +1,13 @@
 # Thingy Web Re-platform — Preact + Signals
 
+> **Status: COMPLETE (June 2026).** All six steps below shipped, plus the
+> follow-ups: shell/account components, signal-backed chat state (the
+> `state` Proxy in `bootChat`), and the extracted dispatch action layer
+> (`dispatch-actions.js`). Remaining intentionally-unmigrated surfaces:
+> the signin and discord pages (small, self-contained vanilla modules)
+> and the source picker / mode select / mobile title inside chat.
+> This document is retained as the design brief and architecture map.
+
 A build brief for moving the Thingy web app's two controller blobs
 (`thingy-chat.js`, ~1,700 lines; `thingy-dispatch.js`, ~730 lines) onto
 Preact + `@preact/signals`. The goal is to delete the hand-rolled

@@ -42,8 +42,9 @@ function ComposerSubmit({ maxChars, onStop }) {
 }
 
 function mountComposerSubmit(host, props = {}) {
-  if (!host) return;
+  if (!host) return () => {};
   render(<ComposerSubmit {...props} />, host);
+  return () => render(null, host);
 }
 
 export { ComposerSubmit, mountComposerSubmit };

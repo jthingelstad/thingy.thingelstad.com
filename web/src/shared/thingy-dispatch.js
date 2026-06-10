@@ -133,6 +133,9 @@ function bootDispatch() {
 
   mountDispatchRecents(recentsMount, {
     onOpen: (id) => {
+      // Switching drafts while clarify/generate is in flight would make the
+      // async flow save its result onto the wrong draft.
+      if (actions.isBusy()) return;
       actions.setActiveDraft(id);
       railControls.setMobileOpen(false);
     },

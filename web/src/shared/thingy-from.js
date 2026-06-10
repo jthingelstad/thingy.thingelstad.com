@@ -51,7 +51,5 @@ function applyReturnChip() {
   }
 
 export {
-  applyReturnChip,
-  buildFromMap,
-  resolveFromValue
+  applyReturnChip
 };

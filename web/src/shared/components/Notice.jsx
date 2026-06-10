@@ -41,8 +41,9 @@ function Notice() {
 }
 
 function mountNotice(host) {
-  if (!host) return;
+  if (!host) return () => {};
   render(<Notice />, host);
+  return () => render(null, host);
 }
 
 export { Notice, mountNotice };

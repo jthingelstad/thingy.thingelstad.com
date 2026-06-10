@@ -59,6 +59,5 @@ function sourcesForScope(scope) {
 export {
   normalizeScopeParam,
   scopeForSources,
-  sourceOrder,
   sourcesForScope
 };
