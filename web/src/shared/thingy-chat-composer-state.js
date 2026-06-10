@@ -1,3 +1,7 @@
+// Updates the parts of the composer that are still imperative (map, mode,
+// voice, source picker, new-chat, source error). The textarea count and the
+// send/stop button are driven by ComposerCount / ComposerSubmit signal
+// subscriptions instead.
 function updateChatComposerState(options = {}) {
   const input = options.input;
   const length = input ? input.value.length : 0;
@@ -7,23 +11,11 @@ function updateChatComposerState(options = {}) {
   const busy = Boolean(options.busy);
   const signedIn = Boolean(options.signedIn);
 
-  if (options.count) {
-    options.count.textContent = `${length} / ${maxChars}`;
-    options.count.classList.toggle('warning', length > maxChars * 0.9);
-  }
   if (options.sourceError) {
     options.sourceError.textContent = hasSources ? '' : 'Switch on at least one source.';
   }
   if (options.form) {
     options.form.classList.toggle('is-busy', busy);
-  }
-  if (options.submitButton) {
-    const stoppable = busy && Boolean(options.stoppable);
-    options.submitButton.disabled = stoppable ? false : (busy || !hasSources || !hasText || length > maxChars);
-    options.submitButton.classList.toggle('is-stop', stoppable);
-    const submitLabel = stoppable ? 'Stop answer' : busy ? 'Thingy is answering' : 'Ask Thingy';
-    options.submitButton.setAttribute('aria-label', submitLabel);
-    options.submitButton.title = submitLabel;
   }
   if (options.mapDraftButton) {
     const canMapDraft = hasText && length <= maxChars && hasSources && signedIn;

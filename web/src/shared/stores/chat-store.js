@@ -3,7 +3,7 @@
 // receiving end of the REPLATFORM.md migration — additions land here as
 // each island moves over.
 
-import { signal } from '@preact/signals';
+import { computed, signal } from '@preact/signals';
 
 // --- Conversations ----------------------------------------------------------
 
@@ -18,6 +18,34 @@ const activeConversationId = signal(null);
 // Modes the signed-in user is entitled to. Always contains at least
 // { id: 'thingy', label: 'Thingy' }.
 const availableModes = signal([{ id: 'thingy', label: 'Thingy' }]);
+
+// --- Composer ---------------------------------------------------------------
+
+// Current draft text in the composer textarea. The chat controller mirrors
+// the textarea's value into this signal so the count and submit button can
+// subscribe; writes to the signal are not the source of truth for the input.
+const questionText = signal('');
+
+// True when at least one source is selected in the source picker. The
+// source picker is still imperative; the controller mirrors its state.
+const hasSources = signal(true);
+
+// In-flight flags. Components read interactionBusy and stoppable; the chat
+// controller flips the underlying flags as each operation starts and ends.
+const answerInFlight = signal(false);
+const welcomeInFlight = signal(false);
+const mapInFlight = signal(false);
+const conversationCreateInFlight = signal(false);
+
+// True while an answer is streaming AND the user can abort it.
+const stoppable = signal(false);
+
+const interactionBusy = computed(() => (
+  answerInFlight.value
+  || welcomeInFlight.value
+  || mapInFlight.value
+  || conversationCreateInFlight.value
+));
 
 // --- Transient UI -----------------------------------------------------------
 
@@ -38,10 +66,18 @@ function clearNotice() {
 
 export {
   activeConversationId,
+  answerInFlight,
   availableModes,
   clearNotice,
+  conversationCreateInFlight,
   conversations,
+  hasSources,
+  interactionBusy,
+  mapInFlight,
   noticeNonce,
   noticeText,
-  showNotice
+  questionText,
+  showNotice,
+  stoppable,
+  welcomeInFlight
 };

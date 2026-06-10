@@ -52,10 +52,20 @@ import { updateChatComposerState } from './thingy-chat-composer-state.js';
 import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-response.js';
 import {
   activeConversationId as activeConversationIdSignal,
+  answerInFlight as answerInFlightSignal,
   availableModes as availableModesSignal,
+  conversationCreateInFlight as conversationCreateInFlightSignal,
   conversations as conversationsSignal,
-  showNotice
+  hasSources as hasSourcesSignal,
+  interactionBusy as interactionBusySignal,
+  mapInFlight as mapInFlightSignal,
+  questionText as questionTextSignal,
+  showNotice,
+  stoppable as stoppableSignal,
+  welcomeInFlight as welcomeInFlightSignal
 } from './stores/chat-store.js';
+import { mountComposerCount } from './components/ComposerCount.jsx';
+import { mountComposerSubmit } from './components/ComposerSubmit.jsx';
 import { mountNotice } from './components/Notice.jsx';
 import { mountRailRecents } from './components/RailRecents.jsx';
 
@@ -168,19 +178,15 @@ import { mountRailRecents } from './components/RailRecents.jsx';
     let availableModes = [{ id: 'thingy', label: 'Thingy' }];
     const maxQuestionChars = Number(questionInput.getAttribute('maxlength') || '1200');
     const analytics = createTinylyticsTracker({ enabled: Boolean(tinylyticsId()) });
-    let answerInFlight = false;
     let chatAbortController = null;
     let chatStopRequested = false;
     let autoFollowChat = true;
     let scrollFrame = 0;
     let composerReserveFrame = 0;
     let composerControls = null;
-    let welcomeInFlight = false;
     let welcomeShownThisVisit = false;
     let welcomeAbortController = null;
     let welcomePendingMessage = null;
-    let mapInFlight = false;
-    let conversationCreateInFlight = false;
     let dictationControls = null;
     let authRequestGeneration = 0;
     let accountProfileRefreshAt = 0;
@@ -552,12 +558,20 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       updateComposerReserve();
     });
 
+    // Thin wrapper around the store signal so the legacy createComposer /
+    // createDictationController APIs (which expect an `isBusy()` function)
+    // keep working without changes. Components read interactionBusy directly.
     function interactionBusy() {
-      return answerInFlight || mapInFlight || conversationCreateInFlight;
+      return interactionBusySignal.value;
+    }
+
+    function setQuestionInputValue(value) {
+      questionInput.value = value;
+      questionTextSignal.value = value;
     }
 
     function cancelWelcomeSetup() {
-      welcomeInFlight = false;
+      welcomeInFlightSignal.value = false;
       if (welcomeAbortController) welcomeAbortController.abort();
       welcomeAbortController = null;
       if (welcomePendingMessage && welcomePendingMessage.isConnected) welcomePendingMessage.remove();
@@ -572,17 +586,19 @@ import { mountRailRecents } from './components/RailRecents.jsx';
     }
 
     function updateQuestionState() {
+      const sourcesPicked = sourceCount() > 0;
+      hasSourcesSignal.value = sourcesPicked;
+      // Authoritative mirror — covers dictation and any code path that
+      // writes questionInput.value directly without going through setQuestionInputValue.
+      questionTextSignal.value = questionInput.value;
       updateChatComposerState({
         input: questionInput,
-        count: questionCount,
         maxChars: maxQuestionChars,
-        hasSources: sourceCount() > 0,
+        hasSources: sourcesPicked,
         busy: interactionBusy(),
-        stoppable: answerInFlight && Boolean(chatAbortController),
         signedIn: Boolean(token()),
         sourceError,
         form: questionForm,
-        submitButton: questionButton,
         mapDraftButton: composerMapButton,
         newChatButton: clearChatButton,
         curiosityMapButton,
@@ -675,7 +691,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
     }
 
     function resetConversationView() {
-      questionInput.value = '';
+      setQuestionInputValue('');
       resetMessages();
       updateQuestionState();
     }
@@ -850,8 +866,8 @@ import { mountRailRecents } from './components/RailRecents.jsx';
         setActiveConversation('');
         messages.innerHTML = '';
       }
-      questionInput.value = '';
-      mapInFlight = true;
+      setQuestionInputValue('');
+      mapInFlightSignal.value = true;
       updateQuestionState();
       autoFollowChat = true;
       const pending = addMessage('assistant', '<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>Thingy is drawing connections...</p>');
@@ -878,7 +894,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
         trackTinylyticsEvent('librarian.curiosity_map_error', error.requestId ? 'server' : 'client');
         if (isAuthError(error)) clearToken();
       } finally {
-        mapInFlight = false;
+        mapInFlightSignal.value = false;
         updateQuestionState();
       }
     }
@@ -946,7 +962,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
         return null;
       }
       const replaceId = String(options.replaceId || activeConversationId || '').trim();
-      conversationCreateInFlight = true;
+      conversationCreateInFlightSignal.value = true;
       updateQuestionState();
       try {
         const data = await conversationAction({
@@ -970,7 +986,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
         }
         trackTinylyticsEvent('librarian.conversations_error', 'create');
       } finally {
-        conversationCreateInFlight = false;
+        conversationCreateInFlightSignal.value = false;
         updateQuestionState();
       }
       return null;
@@ -1068,7 +1084,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
             if (!artifactHtml && (msg.request_id || msg.requestId)) addResponseActions(el, msg.request_id || msg.requestId);
           }
         }
-        questionInput.value = '';
+        setQuestionInputValue('');
         updateQuestionState();
         renderRecents();
         updateMobileConversationTitle();
@@ -1092,7 +1108,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       if (!initialPrompt || initialPromptSubmitted || interactionBusy() || !token()) return;
       initialPromptSubmitted = true;
       hidePrompts();
-      questionInput.value = initialPrompt;
+      setQuestionInputValue(initialPrompt);
       updateQuestionState();
       questionForm.requestSubmit();
     }
@@ -1160,6 +1176,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       let conversation = null;
       chatStopRequested = false;
       chatAbortController = new AbortController();
+      stoppableSignal.value = answerInFlightSignal.value;
       updateQuestionState();
       let response;
       try {
@@ -1317,7 +1334,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
     }
 
     async function startAgentWelcome() {
-      if (!token() || interactionBusy() || welcomeInFlight || welcomeShownThisVisit || hasInitialPrompt) return;
+      if (!token() || interactionBusy() || welcomeInFlightSignal.value || welcomeShownThisVisit || hasInitialPrompt) return;
       if (!(await ensureFreshToken())) {
         clearToken();
         return;
@@ -1325,7 +1342,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       hidePrompts();
       awaitingName = !preferredName;
       welcomeShownThisVisit = true;
-      welcomeInFlight = true;
+      welcomeInFlightSignal.value = true;
       welcomeAbortController = new AbortController();
       updateQuestionState();
       const pending = addMessage('assistant', '<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>Thingy is getting oriented...</p>');
@@ -1335,12 +1352,12 @@ import { mountRailRecents } from './components/RailRecents.jsx';
         await postStreamingWelcome(pending, currentScope(), { controller: welcomeAbortController });
         trackTinylyticsEvent('librarian.welcome_success');
       } catch (error) {
-        if (!welcomeInFlight || !pending.isConnected) return;
+        if (!welcomeInFlightSignal.value || !pending.isConnected) return;
         pending.innerHTML = '<p>Hi. I&rsquo;m Thingy. Ask me what you&rsquo;re curious about and I&rsquo;ll help you explore the archive.</p>';
         trackTinylyticsEvent('librarian.welcome_error', error.requestId ? 'server' : 'client');
       } finally {
         if (pending.isConnected) {
-          welcomeInFlight = false;
+          welcomeInFlightSignal.value = false;
           welcomeAbortController = null;
           welcomePendingMessage = null;
           updateQuestionState();
@@ -1433,7 +1450,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       }
       if (dictationControls?.isListening?.()) stopDictation();
       stopSpeaking();
-      answerInFlight = true;
+      answerInFlightSignal.value = true;
       updateQuestionState();
       hidePrompts();
       const questionWordCount = message.split(/\s+/).filter(Boolean).length;
@@ -1448,7 +1465,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       autoFollowChat = true;
       const userMessage = addMessage('user', `<p>${escapeHtml(message)}</p>`);
       addPromptActions(userMessage, message, scope);
-      questionInput.value = '';
+      setQuestionInputValue('');
       updateQuestionState();
       const pending = addMessage('assistant', '<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>Thingy is thinking...</p>');
       pending.classList.add('librarian-message-pending');
@@ -1480,25 +1497,35 @@ import { mountRailRecents } from './components/RailRecents.jsx';
           clearToken();
         }
       } finally {
-        answerInFlight = false;
+        answerInFlightSignal.value = false;
+        stoppableSignal.value = false;
         chatAbortController = null;
         chatStopRequested = false;
         updateQuestionState();
       }
     }
 
-    questionButton.addEventListener('click', (event) => {
-      if (answerInFlight && chatAbortController) {
-        event.preventDefault();
+    // Mount the composer islands. ComposerCount subscribes to questionText
+    // for character counting; ComposerSubmit subscribes to interactionBusy
+    // and stoppable for the morphing send/stop button.
+    questionCount.replaceChildren();
+    mountComposerCount(questionCount, { maxChars: maxQuestionChars });
+    const submitMount = document.createElement('span');
+    questionButton.parentElement.insertBefore(submitMount, questionButton);
+    mountComposerSubmit(submitMount, {
+      maxChars: maxQuestionChars,
+      onStop: () => {
         stopActiveAnswer();
         trackTinylyticsEvent('librarian.answer_stop_click');
       }
     });
+    // ComposerSubmit renders the real submit button; the placeholder in HTML
+    // is now redundant.
+    questionButton.remove();
 
     composerControls = createComposer({
       form: questionForm,
       input: questionInput,
-      count: questionCount,
       maxChars: maxQuestionChars,
       isBusy: interactionBusy,
       onSubmit: submitQuestion,
@@ -1524,7 +1551,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       if (retryButton && !interactionBusy()) {
         const failed = retryButton.closest('.librarian-message');
         const previous = failed ? failed.previousElementSibling : null;
-        questionInput.value = retryButton.dataset.retryPrompt || '';
+        setQuestionInputValue(retryButton.dataset.retryPrompt || '');
         if (failed) failed.remove();
         if (previous && previous.classList.contains('librarian-message-user')) previous.remove();
         updateQuestionState();
@@ -1534,7 +1561,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       }
       const button = target ? target.closest('button[data-experience-prompt], button[data-map-prompt]') : null;
       if (!button || interactionBusy()) return;
-      questionInput.value = button.dataset.experiencePrompt || button.dataset.mapPrompt || '';
+      setQuestionInputValue(button.dataset.experiencePrompt || button.dataset.mapPrompt || '');
       updateQuestionState();
       if (button.dataset.mapPrompt) {
         trackTinylyticsEvent('librarian.curiosity_map_prompt', 'map');
