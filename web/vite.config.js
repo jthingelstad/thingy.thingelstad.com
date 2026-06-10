@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
+import preact from '@preact/preset-vite';
 
 const SITE = {
   title: 'Thingy',
@@ -67,7 +68,7 @@ export default defineConfig({
   define: {
     __THINGY_TINYLYTICS_ID__: JSON.stringify(SITE.tinylyticsId)
   },
-  plugins: [htmlConfigPlugin()],
+  plugins: [preact(), htmlConfigPlugin()],
   build: {
     outDir: '_site',
     emptyOutDir: true,

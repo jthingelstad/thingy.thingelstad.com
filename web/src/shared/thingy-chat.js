@@ -51,6 +51,8 @@ import {
 } from './thingy-url.js';
 import { updateChatComposerState } from './thingy-chat-composer-state.js';
 import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-response.js';
+import { showNotice } from './stores/chat-store.js';
+import { mountNotice } from './components/Notice.jsx';
 
 (() => {
     applyReturnChip();
@@ -607,24 +609,9 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       analytics.track(name, value);
     }
 
-    let noticeTimer = 0;
-    function showNotice(message) {
-      let notice = document.getElementById('thingy-notice');
-      if (!notice) {
-        notice = document.createElement('div');
-        notice.id = 'thingy-notice';
-        notice.className = 'thingy-notice';
-        notice.setAttribute('role', 'status');
-        notice.setAttribute('aria-live', 'polite');
-        document.body.appendChild(notice);
-      }
-      notice.textContent = message;
-      notice.classList.add('is-visible');
-      if (noticeTimer) window.clearTimeout(noticeTimer);
-      noticeTimer = window.setTimeout(() => {
-        notice.classList.remove('is-visible');
-      }, 4000);
-    }
+    const noticeHost = document.createElement('div');
+    document.body.appendChild(noticeHost);
+    mountNotice(noticeHost);
 
     function escapeHtml(value) {
       return escapeMarkup(value);

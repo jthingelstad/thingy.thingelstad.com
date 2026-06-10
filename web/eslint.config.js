@@ -28,6 +28,21 @@ export default [
     rules: commonRules
   },
   {
+    files: ['src/**/*.jsx'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      parserOptions: {
+        ecmaFeatures: { jsx: true }
+      },
+      globals: {
+        ...globals.browser,
+        __THINGY_TINYLYTICS_ID__: 'readonly'
+      }
+    },
+    rules: commonRules
+  },
+  {
     files: ['tests/**/*.mjs'],
     languageOptions: {
       ecmaVersion: 'latest',
