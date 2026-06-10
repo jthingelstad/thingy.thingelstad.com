@@ -340,6 +340,10 @@
     display: grid;
   }
 
+  .thingy-app-shell.is-collapsed .rail-surface-switch a span[data-thingy-icon] {
+    display: grid;
+  }
+
   .rail .rail-newchat-mode[hidden],
   .thingy-app-shell.is-collapsed .rail-newchat-mode[hidden] {
     display: none;

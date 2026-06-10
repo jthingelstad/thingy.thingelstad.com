@@ -1,6 +1,5 @@
 import {
   escapeHtml,
-  renderInlineMarkdown,
   renderMarkdown,
   safeMarkdownUrl
 } from './thingy-markdown.js';
@@ -11,6 +10,13 @@ function sourceAccentClass(kind) {
   if (normalized === 'blog') return 'is-blog';
   if (normalized === 'podcast' || normalized === 'another_thing') return 'is-podcast';
   return '';
+}
+
+function experienceIcon(kind) {
+  if (kind === 'spark') {
+    return '<svg class="thingy-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v3"></path><path d="M12 18v3"></path><path d="m5.6 5.6 2.1 2.1"></path><path d="m16.3 16.3 2.1 2.1"></path><path d="M3 12h3"></path><path d="M18 12h3"></path><path d="m5.6 18.4 2.1-2.1"></path><path d="m16.3 7.7 2.1-2.1"></path><path d="M12 8l1.2 2.8L16 12l-2.8 1.2L12 16l-1.2-2.8L8 12l2.8-1.2L12 8z"></path></svg>';
+  }
+  return '<svg class="thingy-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 3v6"></path><path d="M18 3v6"></path><path d="M12 15v6"></path><path d="M6 9h12"></path><path d="M12 15 6 9"></path><path d="m12 15 6-6"></path><rect x="4" y="3" width="4" height="6" rx="1"></rect><rect x="16" y="3" width="4" height="6" rx="1"></rect><rect x="10" y="15" width="4" height="6" rx="1"></rect></svg>';
 }
 
 function renderExperience(experience) {
@@ -41,6 +47,7 @@ function renderExperience(experience) {
   return `
     <aside class="thingy-experience thingy-experience-${kind}" aria-label="${escapeHtml(title)}">
       <div class="thingy-exp-head">
+        <span class="thingy-exp-icon" aria-hidden="true">${experienceIcon(kind)}</span>
         <span class="thingy-exp-kicker">${kind === 'spark' ? 'Archive Spark' : 'Thingy Trail'}</span>
         <strong>${escapeHtml(title)}</strong>
       </div>
@@ -136,10 +143,13 @@ function activityMessageFromToolName(value) {
 
 function normalizeActivityCommentary(value) {
   return String(value || '')
-    .replace(/\s+/g, ' ')
-    .replace(/([.!?])(?=\S)/g, '$1 ')
-    .trim()
-    .slice(0, 700);
+    .replace(/\r\n?/g, '\n')
+    .split(/\n+/)
+    .map((line) => line.replace(/[^\S\n]+/g, ' ').replace(/([.!?])(?=\S)/g, '$1 ').trim())
+    .filter(Boolean)
+    .join('\n\n')
+    .slice(0, 700)
+    .trim();
 }
 
 function normalizeActivityStep(data, fallback = 'Thingy is working...') {
@@ -156,7 +166,7 @@ function appendActivityStep(steps, data, fallback) {
   const last = steps[steps.length - 1] || {};
   if (String(last.label || last).toLowerCase() === label.toLowerCase()) {
     if (note && !String(last.note || '').toLowerCase().includes(note.toLowerCase())) {
-      last.note = [last.note, note].filter(Boolean).join(' ');
+      last.note = [last.note, note].filter(Boolean).join('\n\n');
     }
     return steps;
   }
@@ -170,7 +180,7 @@ function appendActivityCommentary(items, value) {
   const last = items[items.length - 1];
   if (!last) return [{ label: 'Thinking through the path', note: text, kind: 'note' }];
   if (String(last.note || '').toLowerCase().includes(text.toLowerCase())) return items;
-  last.note = [last.note, text].filter(Boolean).join(' ');
+  last.note = [last.note, text].filter(Boolean).join('\n\n');
   return items;
 }
 
@@ -194,14 +204,19 @@ function renderActivityLog(steps = [], options = {}) {
   const elapsed = String(options.elapsedLabel || '').trim();
   const stepCount = list.length;
   const latest = list[list.length - 1] || {};
-  const activityLabel = String(latest.label || latest.note || options.label || 'Archive Work').trim();
+  const activityLabel = options.active
+    ? String(options.label || 'Archive Work').trim()
+    : String(latest.label || latest.note || options.label || 'Archive Work').trim();
   const items = list.map((step, index) => {
     const state = index === activeIndex ? ' is-active' : ' is-complete';
     const rawLabel = step.label || 'Thinking through the path';
     const label = index === activeIndex && rawLabel.startsWith('Checked ') ? `Checking ${rawLabel.slice(8)}` : rawLabel;
-    const note = step.note ? `<p class="librarian-activity-note">${renderInlineMarkdown(step.note, new Map())}</p>` : '';
+    const note = step.note
+      ? `<div class="librarian-activity-note">${renderMarkdown(step.note)}</div>`
+      : '';
+    const stepElapsed = index === activeIndex && elapsed ? `<span class="librarian-elapsed">${escapeHtml(elapsed)}</span>` : '';
     return `<li class="librarian-activity-step${state}">`
-      + `<div class="librarian-activity-step-main"><span class="librarian-activity-dot" aria-hidden="true"></span><span>${escapeHtml(label)}</span></div>`
+      + `<div class="librarian-activity-step-main"><span class="librarian-activity-dot" aria-hidden="true"></span><span>${escapeHtml(label)}</span>${stepElapsed}</div>`
       + note
       + `</li>`;
   }).join('');
@@ -213,7 +228,7 @@ function renderActivityLog(steps = [], options = {}) {
       + `</details>`;
   }
   return `<aside class="librarian-activity" aria-label="Thingy activity">`
-    + `<div class="librarian-activity-kicker">${escapeHtml(activityLabel)}${elapsed ? `<span class="librarian-elapsed">${escapeHtml(elapsed)}</span>` : ''}</div>`
+    + `<div class="librarian-activity-kicker">${escapeHtml(activityLabel)}</div>`
     + body
     + `</aside>`;
 }

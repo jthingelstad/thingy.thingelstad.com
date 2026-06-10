@@ -94,6 +94,9 @@
   border-radius: 12px;
   background: var(--surface);
   box-shadow: 0 14px 40px -18px rgba(14, 43, 38, 0.45), 0 2px 8px rgba(14, 43, 38, 0.08);
+  max-height: min(680px, calc(100vh - 38px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .rail-account-setting {
@@ -158,7 +161,7 @@
 }
 
 .rail-menu-link {
-  color: var(--accent-strong);
+  color: var(--accent-deep);
   display: inline-flex;
   font-family: var(--sans);
   font-size: 12.5px;
@@ -168,6 +171,144 @@
 
 .rail-menu-link:hover {
   text-decoration: underline;
+}
+
+.rail-account-memory {
+  display: grid;
+  gap: 10px;
+  margin: 4px 0 2px;
+  padding: 10px 8px 8px;
+  border-top: 1px solid var(--line);
+}
+
+.rail-account-memory-head {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.rail-account-memory-head > span {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  color: var(--accent-deep);
+}
+
+.rail-account-memory-head svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rail-account-memory-head strong,
+.rail-account-memory-block > span {
+  display: block;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.rail-account-memory-head small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 11.5px;
+  line-height: 1.25;
+}
+
+.rail-account-memory-list {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 10px;
+  margin: 0;
+  padding: 0;
+}
+
+.rail-account-memory-list dt {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10.5px;
+}
+
+.rail-account-memory-list dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rail-account-memory-block {
+  display: grid;
+  gap: 6px;
+}
+
+.rail-account-memory-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.rail-account-memory-tags i {
+  min-width: 0;
+  max-width: 100%;
+  padding: 3px 6px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-style: normal;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.rail-account-memory-block ul {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rail-account-memory-block li {
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.rail-account-memory-block b {
+  color: var(--ink);
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.rail-account-memory-block b::after {
+  content: ": ";
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.rail-account-memory-block em {
+  color: var(--muted);
+  font-style: normal;
 }
 
 .rail-menu button {

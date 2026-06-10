@@ -20,6 +20,115 @@ import {
 
 const LOG_OUT_ICON = iconSvg('log-out');
 
+function cleanText(value, max = 180) {
+  return String(value || '').trim().replace(/\s+/g, ' ').slice(0, max);
+}
+
+function profileList(value, mapper) {
+  return Array.isArray(value) ? value.map(mapper).filter(Boolean) : [];
+}
+
+function memoryFacts(profile) {
+  return profileList(profile.remembered_facts, (item) => {
+    const category = cleanText(item?.category || 'detail', 40);
+    const value = cleanText(item?.value || item, 160);
+    return value ? { category, value } : null;
+  }).slice(-6);
+}
+
+function memoryInterests(profile) {
+  return profileList(profile.interests, (item) => cleanText(item, 80)).slice(-8);
+}
+
+function memoryQuestions(profile) {
+  return profileList(profile.current_session_questions, (item) => cleanText(item?.question || item, 140)).slice(-4);
+}
+
+function memorySummaries(profile) {
+  return profileList(profile.prior_session_summaries, (item) => cleanText(item?.summary || item, 180)).slice(-3);
+}
+
+function MemoryPanel({ profile, preferredName, connectedName, supporting }) {
+  const facts = memoryFacts(profile);
+  const interests = memoryInterests(profile);
+  const questions = memoryQuestions(profile);
+  const summaries = memorySummaries(profile);
+  const hasProfile = Boolean(preferredName || connectedName || supporting);
+  const hasMemory = Boolean(facts.length || interests.length || questions.length || summaries.length);
+  if (!hasProfile && !hasMemory) return null;
+
+  return (
+    <section class="rail-account-memory" aria-label="Thingy memory">
+      <div class="rail-account-memory-head">
+        <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: iconSvg('brain-circuit') }} />
+        <div>
+          <strong>Thingy Memory</strong>
+          <small>Profile and context Thingy can use</small>
+        </div>
+      </div>
+      {hasProfile ? (
+        <dl class="rail-account-memory-list">
+          {preferredName ? (
+            <>
+              <dt>Name</dt>
+              <dd>{preferredName}</dd>
+            </>
+          ) : null}
+          {connectedName ? (
+            <>
+              <dt>Discord</dt>
+              <dd>{connectedName}</dd>
+            </>
+          ) : null}
+          {supporting ? (
+            <>
+              <dt>Access</dt>
+              <dd>Supporting Member</dd>
+            </>
+          ) : null}
+        </dl>
+      ) : null}
+      {interests.length ? (
+        <div class="rail-account-memory-block">
+          <span>Interests</span>
+          <div class="rail-account-memory-tags">
+            {interests.map((item) => <i key={item}>{item}</i>)}
+          </div>
+        </div>
+      ) : null}
+      {facts.length ? (
+        <div class="rail-account-memory-block">
+          <span>Remembered Details</span>
+          <ul>
+            {facts.map((item) => (
+              <li key={`${item.category}:${item.value}`}>
+                <b>{item.category}</b>
+                <em>{item.value}</em>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {summaries.length ? (
+        <div class="rail-account-memory-block">
+          <span>Prior Threads</span>
+          <ul>
+            {summaries.map((item) => <li key={item}>{item}</li>)}
+          </ul>
+        </div>
+      ) : null}
+      {questions.length ? (
+        <div class="rail-account-memory-block">
+          <span>Recent Questions</span>
+          <ul>
+            {questions.map((item) => <li key={item}>{item}</li>)}
+          </ul>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function AccountMenu({
   session,
   signedIn = sharedSignedIn,
@@ -157,6 +266,12 @@ function AccountMenu({
             <a class="rail-menu-link" href="/discord/">{connection ? 'Refresh Discord Connection' : 'Link to Discord'}</a>
           </div>
         ) : null}
+        <MemoryPanel
+          profile={profile}
+          preferredName={preferredName}
+          connectedName={connectedName}
+          supporting={supporting}
+        />
         <div class="rail-menu-sep" role="separator" />
         <button
           type="button"

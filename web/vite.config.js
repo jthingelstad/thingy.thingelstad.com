@@ -70,7 +70,7 @@ function htmlConfigPlugin() {
       return html
         .replaceAll('__THINGY_TINYLYTICS_ID__', tinylyticsId)
         .replace('__THINGY_CHAT_CONFIG__', JSON.stringify(config))
-        .replace('__THINGY_DISPATCH_CONFIG__', JSON.stringify({ librarianApiUrl }))
+        .replace('__THINGY_DISPATCH_CONFIG__', JSON.stringify(config))
         .replace('__THINGY_SIGNIN_CONFIG__', JSON.stringify({ librarianApiUrl }))
         .replace('__THINGY_DISCORD_CONFIG__', JSON.stringify({ librarianApiUrl }));
     }

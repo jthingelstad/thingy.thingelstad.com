@@ -220,7 +220,7 @@ function bootChat() {
     function renderModeBanner() {
       if (!modeBanner) return;
       const mode = actions.currentConversationMode();
-      const show = actions.token() && mode && state.availableModes.length > 1;
+      const show = actions.token() && mode && mode !== 'thingy' && state.availableModes.length > 1;
       modeBanner.hidden = !show;
       if (!show) {
         modeBanner.innerHTML = '';

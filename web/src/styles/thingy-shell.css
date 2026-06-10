@@ -476,8 +476,13 @@
   color: var(--ink);
 }
 
-.thingy-app-shell.is-collapsed .rail-surface-switch a span {
+.thingy-app-shell.is-collapsed .rail-surface-switch a span:not([data-thingy-icon]) {
   display: none;
+}
+
+.thingy-app-shell.is-collapsed .rail-surface-switch a span[data-thingy-icon] {
+  display: grid;
+  place-items: center;
 }
 
 .thingy-app-shell.is-collapsed .rail-surface-switch svg {

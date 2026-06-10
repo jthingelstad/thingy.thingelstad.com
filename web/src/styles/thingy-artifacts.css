@@ -1,15 +1,33 @@
 /* Rich artifacts rendered inside assistant messages. */
 .thingy-experience {
   margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--line-soft);
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--line-soft) 72%, transparent);
   font-family: var(--sans);
 }
 
 .thingy-exp-head {
   display: grid;
-  gap: 2px;
-  margin-bottom: 8px;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 9px;
+  row-gap: 2px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.thingy-exp-icon {
+  grid-row: 1 / span 2;
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.thingy-exp-icon .thingy-icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.1;
 }
 
 .thingy-exp-kicker {
@@ -36,30 +54,26 @@
 
 .thingy-exp-sources {
   display: grid;
-  gap: 7px;
+  gap: 0;
+  border-top: 1px solid color-mix(in srgb, var(--line-soft) 72%, transparent);
 }
 
 .thingy-exp-source {
   display: grid;
-  grid-template-columns: 26px minmax(0, 1fr);
-  gap: 9px;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
   align-items: start;
-  padding: 9px 10px;
-  border: 1px solid var(--line-soft);
-  border-left: 3px solid var(--accent);
-  border-radius: 7px;
-  background: color-mix(in srgb, var(--surface) 82%, var(--surface-2));
+  padding: 11px 0;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--line-soft) 72%, transparent);
+  border-radius: 0;
+  background: transparent;
   color: var(--ink);
   text-decoration: none;
 }
 
-.thingy-exp-source.is-wt { border-left-color: var(--source-newsletter); }
-.thingy-exp-source.is-blog { border-left-color: var(--source-blog); }
-.thingy-exp-source.is-podcast { border-left-color: var(--source-podcast); }
-
 a.thingy-exp-source:hover {
-  border-color: var(--accent);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface-2) 42%, transparent);
   color: var(--ink);
 }
 
@@ -70,7 +84,8 @@ a.thingy-exp-source:hover {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: var(--surface-2);
+  border: 1px solid color-mix(in srgb, var(--muted) 22%, transparent);
+  background: transparent;
   color: var(--muted);
   font: 800 0.74rem / 1 var(--mono);
 }
@@ -103,17 +118,17 @@ a.thingy-exp-source:hover {
 .thingy-exp-prompt {
   margin-top: 10px;
   padding: 7px 11px;
-  border: 1px solid var(--line);
+  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
   border-radius: 999px;
-  background: var(--surface);
-  color: var(--accent-deep);
+  background: transparent;
+  color: var(--ink-soft);
   font: 800 0.82rem / 1 var(--sans);
   cursor: pointer;
 }
 
 .thingy-exp-prompt:hover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  border-color: var(--muted);
+  color: var(--ink);
 }
 
 .thingy-curiosity-map {

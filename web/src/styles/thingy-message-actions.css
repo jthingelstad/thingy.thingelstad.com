@@ -10,9 +10,10 @@
   display: inline-flex;
   align-items: center;
   min-height: 19px;
-  padding: 0 6px;
-  border: 1px solid color-mix(in srgb, var(--muted) 20%, transparent);
-  border-radius: 999px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--muted);
   font-family: var(--mono);
   font-size: 10px;
@@ -147,6 +148,23 @@
   border: 1.5px solid var(--muted);
   background: var(--bg);
   box-shadow: inset 0 0 0 4px var(--bg);
+}
+
+.librarian-activity-step.is-complete .librarian-activity-dot {
+  display: grid;
+  place-items: center;
+  border-color: var(--muted);
+  box-shadow: none;
+}
+
+.librarian-activity-step.is-complete .librarian-activity-dot::before {
+  content: "";
+  width: 7px;
+  height: 4px;
+  border-left: 1.7px solid currentColor;
+  border-bottom: 1.7px solid currentColor;
+  color: var(--muted);
+  transform: translateY(-1px) rotate(-45deg);
 }
 
 .librarian-activity-step.is-active {

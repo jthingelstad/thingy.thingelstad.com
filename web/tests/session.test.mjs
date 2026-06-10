@@ -68,3 +68,25 @@ test('mergeProfile preserves top-level Discord connection from auth responses', 
   assert.equal(profile.discord_connection.display_name, 'Reader Discord');
   assert.equal(session.storedProfile().discord_connection.username, 'reader');
 });
+
+test('mergeProfile treats server Discord null as authoritative', async () => {
+  installWindow();
+  const session = await import('../src/shared/thingy-session.js');
+
+  session.mergeProfile({
+    email: 'reader@example.com',
+    discord_connection: {
+      connected: true,
+      username: 'reader',
+      display_name: 'Reader Discord'
+    }
+  });
+
+  const profile = session.mergeProfile({
+    email: 'reader@example.com',
+    profile: { discord_connection: null }
+  });
+
+  assert.equal(profile.discord_connection, null);
+  assert.equal(session.storedProfile().discord_connection, null);
+});
