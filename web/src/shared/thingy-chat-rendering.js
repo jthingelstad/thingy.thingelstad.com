@@ -191,9 +191,10 @@ function renderActivityLog(steps = [], options = {}) {
   }).filter((step) => step.label || step.note).concat(commentary);
   if (!list.length && !commentary.length) return '';
   const activeIndex = options.active ? list.length - 1 : -1;
-  const activityLabel = options.label || 'Archive Work';
   const elapsed = String(options.elapsedLabel || '').trim();
   const stepCount = list.length;
+  const latest = list[list.length - 1] || {};
+  const activityLabel = String(latest.label || latest.note || options.label || 'Archive Work').trim();
   const items = list.map((step, index) => {
     const state = index === activeIndex ? ' is-active' : ' is-complete';
     const rawLabel = step.label || 'Thinking through the path';
@@ -206,9 +207,8 @@ function renderActivityLog(steps = [], options = {}) {
   }).join('');
   const body = (items ? `<ol>${items}</ol>` : '');
   if (!options.active && options.collapsible) {
-    const summary = `${stepCount} ${stepCount === 1 ? 'step' : 'steps'} completed`;
     return `<details class="librarian-activity is-collapsed" aria-label="Thingy activity">`
-      + `<summary><span class="librarian-activity-kicker">${escapeHtml(activityLabel)}</span><span class="librarian-activity-summary">${escapeHtml(summary)}</span></summary>`
+      + `<summary><span class="librarian-activity-kicker">${escapeHtml(activityLabel)}</span> <span class="librarian-activity-summary">${stepCount} ${stepCount === 1 ? 'step' : 'steps'}</span></summary>`
       + body
       + `</details>`;
   }

@@ -113,6 +113,32 @@
   max-width: 40rem;
 }
 
+.thingy-discord-card code {
+  padding: 0.08em 0.32em;
+  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--surface-2) 76%, var(--surface));
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 0.9em;
+}
+
+.thingy-discord-card a:not(.thingy-discord-button) {
+  color: var(--accent-deep);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.thingy-discord-card a:not(.thingy-discord-button):hover {
+  text-decoration: underline;
+}
+
+.thingy-discord-benefit {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
 .thingy-discord-code {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -182,17 +208,40 @@
 }
 
 .thingy-discord-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin: 8px 0 0;
 }
 
-.thingy-discord-actions a {
-  color: var(--accent-strong);
+.thingy-discord-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
   font-weight: 800;
   text-decoration: none;
 }
 
-.thingy-discord-actions a:hover {
-  text-decoration: underline;
+.thingy-discord-button.primary {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.thingy-discord-button:hover {
+  border-color: var(--accent-deep);
+  color: var(--accent-deep);
+}
+
+.thingy-discord-button.primary:hover {
+  background: var(--accent-deep);
+  color: var(--surface);
 }
 
 @media (max-width: 760px) {

@@ -8,6 +8,7 @@ const signInLink = document.getElementById('thingy-discord-signin-link');
 const codeWrap = document.getElementById('thingy-discord-code');
 const codeValue = document.getElementById('thingy-discord-code-value');
 const copyCodeButton = document.getElementById('thingy-discord-copy-code');
+const connectCopy = 'To connect to the Weekly Thing Supporting Member special Discord, join the server, run <code>/thingy verify</code> in the validation channel, and open the link Thingy gives you.';
 
 function normalizeDiscordCode(code) {
   return String(code || '').trim();
@@ -21,6 +22,10 @@ function setMessage(text, kind = '') {
 
 function setCopy(text) {
   if (copy) copy.textContent = text || '';
+}
+
+function setCopyHtml(html) {
+  if (copy) copy.innerHTML = html || '';
 }
 
 function renderSignIn(state = '') {
@@ -88,7 +93,7 @@ async function initDiscordLink() {
   hideSignIn();
   const profile = await refreshProfile();
   if (!hasSupportingAccess(profile)) {
-    setCopy('Discord is available to Weekly Thing Supporting Members.');
+    setCopyHtml('The Weekly Thing Supporting Member special Discord is an exclusive benefit for <a href="https://weekly.thingelstad.com/members/">Supporting Members</a>. Join or manage your membership, then sign in again so Thingy can refresh your account.');
     setMessage('If you recently became a Supporting Member, sign out and sign back in so Thingy can refresh your account.', 'error');
     return;
   }
@@ -96,9 +101,11 @@ async function initDiscordLink() {
   if (!state) {
     const connection = discordConnection(profile);
     const connectedName = discordConnectionName(profile);
-    setCopy(connection
-      ? (connectedName ? `You are connected to Discord as ${connectedName}.` : 'You are connected to Discord.')
-      : 'To connect Discord, run /thingy verify in the validation channel and open the link Thingy gives you.');
+    if (connection) {
+      setCopy(connectedName ? `You are connected to Discord as ${connectedName}.` : 'You are connected to Discord.');
+    } else {
+      setCopyHtml(connectCopy);
+    }
     setMessage('Thingy will generate a one-time code after you start from Discord.', connection ? 'success' : '');
     return;
   }

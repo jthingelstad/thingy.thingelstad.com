@@ -51,6 +51,10 @@
   overflow: visible;
 }
 
+.thingy-app-shell:has(.rail-newchat-mode-menu:not([hidden])) {
+  overflow: visible;
+}
+
 .thingy-app-shell.is-booting .librarian-auth,
 .thingy-app-shell.is-booting .librarian-chat,
 .thingy-app-shell.is-booting .dispatch-chat {
@@ -193,6 +197,8 @@
 }
 
 .rail-newchat-combo {
+  position: relative;
+  z-index: 2;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto;
@@ -205,7 +211,7 @@
   border-radius: 10px;
   background: var(--surface);
   box-shadow: var(--shadow-subtle);
-  overflow: hidden;
+  overflow: visible;
   transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease;
 }
 
@@ -363,8 +369,8 @@
   position: absolute;
   left: 7px;
   right: 7px;
-  top: calc(100% - 3px);
-  z-index: 1300;
+  top: calc(100% + 3px);
+  z-index: 1600;
   display: grid;
   gap: 2px;
   padding: 5px;

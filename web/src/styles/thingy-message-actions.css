@@ -21,22 +21,22 @@
 }
 
 .librarian-activity {
-  margin: 0 0 14px;
-  padding: 12px 13px;
-  border: 1px solid color-mix(in srgb, var(--color-highlight) 58%, var(--line));
-  border-left-width: 3px;
-  border-radius: 7px;
-  background:
-    linear-gradient(180deg, rgba(20, 119, 111, 0.08), rgba(20, 119, 111, 0.025)),
-    var(--surface);
+  margin: 0 0 16px;
+  padding: 0 0 0 2px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   font-family: var(--sans);
 }
 
 .librarian-activity summary {
-  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-height: 24px;
+  color: var(--muted);
   cursor: pointer;
   list-style: none;
 }
@@ -47,42 +47,40 @@
 
 .librarian-activity summary::before {
   content: "";
-  width: 7px;
-  height: 7px;
-  flex: 0 0 7px;
-  border-right: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
-  color: var(--accent-deep);
-  transform: rotate(-45deg);
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-right: 1.4px solid currentColor;
+  border-bottom: 1.4px solid currentColor;
+  color: var(--muted);
+  transform: rotate(-45deg) translateY(-1px);
   transition: transform 0.18s ease;
 }
 
 .librarian-activity[open] summary {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .librarian-activity[open] summary::before {
-  transform: rotate(45deg);
+  transform: rotate(45deg) translateY(-1px);
 }
 
 .librarian-activity.is-collapsed {
-  padding: 8px 11px;
-  border-color: color-mix(in srgb, var(--accent) 25%, var(--line-soft));
-  border-left-width: 2px;
-  background: color-mix(in srgb, var(--surface-2) 82%, transparent);
+  margin-bottom: 12px;
+  padding: 0;
 }
 
 .librarian-activity-kicker {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin-bottom: 10px;
-  color: var(--accent-deep);
-  font-family: var(--mono);
-  font-size: 10px;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .librarian-activity summary .librarian-activity-kicker {
@@ -91,13 +89,13 @@
 
 .librarian-activity-summary {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 650;
 }
 
 .librarian-activity ol {
   display: grid;
-  gap: 9px;
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -107,44 +105,48 @@
   position: relative;
   display: block;
   margin: 0;
-  padding: 0 0 0 18px;
+  padding: 0 0 16px 38px;
   border: 0;
   background: transparent;
   color: var(--ink-soft);
-  font-size: 12px;
-  line-height: 1.3;
+  font-size: 15px;
+  line-height: 1.42;
 }
 
 .librarian-activity-step:not(:last-child)::before {
   content: "";
   position: absolute;
-  left: 4px;
-  top: 20px;
-  bottom: -11px;
+  left: 15px;
+  top: 28px;
+  bottom: 0;
   width: 1px;
-  background: color-mix(in srgb, var(--accent) 22%, var(--line-soft));
+  background: color-mix(in srgb, var(--muted) 28%, transparent);
 }
 
 .librarian-activity-step-main {
-  min-height: 25px;
+  min-height: 30px;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 4px 9px 4px 7px;
-  border: 1px solid var(--line-soft);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface-2) 68%, transparent);
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--ink-soft);
-  line-height: 1.2;
+  line-height: 1.35;
 }
 
 .librarian-activity-dot {
-  width: 8px;
-  height: 8px;
-  flex: 0 0 8px;
+  position: absolute;
+  left: 7px;
+  top: 7px;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
   border-radius: 999px;
-  background: var(--accent);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.65);
+  border: 1.5px solid var(--muted);
+  background: var(--bg);
+  box-shadow: inset 0 0 0 4px var(--bg);
 }
 
 .librarian-activity-step.is-active {
@@ -152,21 +154,21 @@
 }
 
 .librarian-activity-step.is-active .librarian-activity-step-main {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
-  background: var(--accent-soft);
   color: var(--ink);
 }
 
 .librarian-activity-step.is-active .librarian-activity-dot {
+  border-color: var(--accent);
+  background: var(--accent);
   box-shadow: 0 0 0 0 rgba(20, 119, 111, 0.34);
   animation: librarian-pulse 1.35s ease-in-out infinite;
 }
 
 .librarian-activity-note {
   max-width: 58rem;
-  margin: 5px 0 0 22px;
+  margin: 4px 0 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.45;
 }
 

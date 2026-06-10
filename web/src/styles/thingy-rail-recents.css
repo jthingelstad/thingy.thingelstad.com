@@ -127,15 +127,15 @@
 }
 
 .rail-recent-mode {
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
   display: grid;
   place-items: center;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--muted) 24%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--muted);
   font-family: var(--mono);
   font-size: 12px;
@@ -144,19 +144,18 @@
 }
 
 .rail-recent.is-active .rail-recent-mode {
-  border-color: color-mix(in srgb, var(--muted) 28%, transparent);
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  background: transparent;
   color: var(--ink-soft);
 }
 
 .dispatch-state-glyph {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   display: grid;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--muted) 24%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--muted);
   font-family: var(--mono);
   font-size: 12px;
@@ -166,9 +165,9 @@
 
 .rail-recent-mode .thingy-icon,
 .dispatch-state-glyph .thingy-icon {
-  width: 13px;
-  height: 13px;
-  stroke-width: 2.25;
+  width: 17px;
+  height: 17px;
+  stroke-width: 2.05;
 }
 
 .dispatch-state-glyph .lucide-loader-circle {
@@ -184,8 +183,6 @@
 
 .dispatch-rail-item.is-ready .dispatch-state-glyph,
 .dispatch-rail-item.is-upgrade .dispatch-state-glyph {
-  border-color: color-mix(in srgb, var(--accent) 38%, transparent);
-  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
   color: var(--accent-deep);
 }
 
@@ -193,26 +190,19 @@
 .dispatch-rail-item.is-queued .dispatch-state-glyph,
 .dispatch-rail-item.is-ready_to_send .dispatch-state-glyph,
 .dispatch-rail-item.is-sending .dispatch-state-glyph {
-  border-color: color-mix(in srgb, #2f74b5 32%, transparent);
-  background: color-mix(in srgb, #d6e8f8 58%, var(--surface));
   color: #2f5f8a;
 }
 
 .dispatch-rail-item.is-sent .dispatch-state-glyph {
-  border-color: color-mix(in srgb, #2f8066 36%, transparent);
-  background: color-mix(in srgb, #d8eadf 64%, var(--surface));
   color: #2f8066;
 }
 
 .dispatch-rail-item.is-failed .dispatch-state-glyph {
-  border-color: color-mix(in srgb, #b54730 36%, transparent);
-  background: color-mix(in srgb, #f8dfd6 64%, var(--surface));
   color: #9a341f;
 }
 
 .dispatch-rail-item.is-active .dispatch-state-glyph {
-  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
-  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  background: transparent;
 }
 
 .rail-recent-del {
