@@ -21,7 +21,14 @@ function networkLinks() {
   return Array.isArray(links) ? links : [];
 }
 
+// Build stamp injected by vite.config.js: "<git short hash> · <date>",
+// or 'dev' when serving locally without git metadata.
+function buildId() {
+  return String(publicConfig().buildId || 'dev');
+}
+
 export {
+  buildId,
   librarianApiUrl,
   librarianStreamUrl,
   networkLinks,

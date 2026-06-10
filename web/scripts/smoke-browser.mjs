@@ -119,6 +119,12 @@ async function checkChatIslands(browser) {
   assert.equal((await sendButton.getAttribute('aria-label')) || '', 'Ask Thingy', 'send button at rest');
   assert.equal(await sendButton.evaluate((el) => el.classList.contains('is-stop')), false, 'send button not in stop mode at rest');
 
+  // AccountMenu: opening it shows the build stamp injected at build time.
+  await page.locator('.rail-account-btn').click();
+  await page.waitForSelector('.rail-menu-build');
+  assert.match((await page.locator('.rail-menu-build').textContent()).trim(), /^Build .+/);
+  await page.keyboard.press('Escape');
+
   // Notice toast: showNotice via the store should reveal the .thingy-notice node.
   await page.evaluate(async () => {
     const mod = await import('/src/shared/stores/ui-store.js');

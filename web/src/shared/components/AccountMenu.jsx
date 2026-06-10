@@ -2,6 +2,7 @@ import { render } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import { useComputed } from '@preact/signals';
 import { iconSvg } from '../thingy-icons.js';
+import { buildId } from '../thingy-config.js';
 import { discordConnectionName, hasSupportingAccess, savePreferredName } from '../thingy-account.js';
 import {
   accountMenuOpen,
@@ -159,6 +160,7 @@ function AccountMenu({
         >
           <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: LOG_OUT_ICON }} />Logout
         </button>
+        <p class="rail-menu-build" title="Thingy build">Build {buildId()}</p>
       </div>
     </>
   );

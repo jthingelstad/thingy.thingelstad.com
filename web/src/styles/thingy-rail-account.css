@@ -221,3 +221,12 @@
   margin: 4px 6px;
   background: var(--line-soft);
 }
+
+.rail-menu-build {
+  margin: 4px 6px 2px;
+  padding: 0 6px;
+  color: var(--muted);
+  font-family: var(--mono, monospace);
+  font-size: 11px;
+  user-select: all;
+}
