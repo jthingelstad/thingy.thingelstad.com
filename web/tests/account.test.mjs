@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  createAccountMenu,
+  extractPreferredNameFromMessage,
+  hasSupportingAccess,
   normalizePreferredName,
-  renderAccountIdentity,
   savePreferredName
 } from '../src/shared/thingy-account.js';
 
@@ -48,76 +48,26 @@ test('savePreferredName rejects names the API does not confirm', async () => {
   );
 });
 
-test('account panel hides Discord linking for normal subscribers', () => {
-  const elements = {
-    discordRow: { hidden: false },
-    discordLink: { href: '', textContent: '' },
-    discordStatus: { textContent: '' }
-  };
-
-  renderAccountIdentity({
-    signedIn: true,
-    profile: { entitlements: ['reader'] },
-    elements
-  });
-
-  assert.equal(elements.discordRow.hidden, true);
+test('hasSupportingAccess recognises supporting members and owners', () => {
+  assert.equal(hasSupportingAccess({ entitlements: ['reader'] }), false);
+  assert.equal(hasSupportingAccess({ entitlements: ['reader', 'supporting_member'] }), true);
+  assert.equal(hasSupportingAccess({ entitlements: ['reader', 'owner'] }), true);
+  assert.equal(hasSupportingAccess({ supporting_member: true }), true);
+  assert.equal(hasSupportingAccess({}), false);
 });
 
-test('account panel shows Discord linking for supporting members', () => {
-  const elements = {
-    discordRow: { hidden: true },
-    discordLink: { href: '', textContent: '' },
-    discordStatus: { textContent: '' }
-  };
-
-  renderAccountIdentity({
-    signedIn: true,
-    profile: {
-      entitlements: ['reader', 'supporting_member'],
-      discord_connection: { display_name: 'thingy_user' }
-    },
-    elements
-  });
-
-  assert.equal(elements.discordRow.hidden, false);
-  assert.equal(elements.discordLink.href, '/discord/');
-  assert.equal(elements.discordLink.textContent, 'Refresh Discord Connection');
-  assert.match(elements.discordStatus.textContent, /thingy_user/);
+test('normalizePreferredName trims, title-cases, and rejects blocked words', () => {
+  assert.equal(normalizePreferredName(' jamie '), 'Jamie');
+  assert.equal(normalizePreferredName('jamie thingelstad'), 'Jamie Thingelstad');
+  assert.equal(normalizePreferredName('hi'), '');
+  assert.equal(normalizePreferredName('thingy'), '');
+  assert.equal(normalizePreferredName(''), '');
+  assert.equal(normalizePreferredName('a'.repeat(120)), '');
 });
 
-test('account menu refresh hook runs when a signed-in account opens', () => {
-  let clickHandler = null;
-  let isHidden = true;
-  let openCalls = 0;
-  const button = {
-    addEventListener: (event, handler) => {
-      if (event === 'click') clickHandler = handler;
-    },
-    setAttribute: () => {}
-  };
-  const menu = {
-    addEventListener: () => {},
-    hasAttribute: (name) => name === 'hidden' && isHidden,
-    toggleAttribute: (name, force) => {
-      if (name === 'hidden') isHidden = Boolean(force);
-    }
-  };
-
-  createAccountMenu({
-    button,
-    menu,
-    signedIn: () => true,
-    onOpen: () => {
-      openCalls += 1;
-    }
-  });
-
-  clickHandler({ stopPropagation: () => {} });
-  assert.equal(isHidden, false);
-  assert.equal(openCalls, 1);
-
-  clickHandler({ stopPropagation: () => {} });
-  assert.equal(isHidden, true);
-  assert.equal(openCalls, 1);
+test('extractPreferredNameFromMessage pulls names from natural phrasing', () => {
+  assert.equal(extractPreferredNameFromMessage('my name is Jamie.'), 'Jamie');
+  assert.equal(extractPreferredNameFromMessage("I'm Jamie Thingelstad"), 'Jamie Thingelstad');
+  assert.equal(extractPreferredNameFromMessage('What about RSS?'), '');
+  assert.equal(extractPreferredNameFromMessage('Jamie'), 'Jamie');
 });

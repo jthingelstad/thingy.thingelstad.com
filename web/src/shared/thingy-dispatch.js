@@ -3,7 +3,16 @@ import {
   normalizePreferredName,
 } from './thingy-account.js';
 import { createComposer } from './thingy-composer.js';
-import { createThingyShell } from './thingy-shell.js';
+import { attachRailState } from './rail-state.js';
+import { signedIn as signedInSignal } from './stores/chat-store.js';
+import {
+  accountMenuOpen as accountMenuOpenSignal,
+  accountNameStatus as accountNameStatusSignal,
+  displayEmail as displayEmailSignal,
+  displayPreferredName as displayPreferredNameSignal,
+  displayProfile as displayProfileSignal
+} from './stores/ui-store.js';
+import { mountAccountMenu } from './components/AccountMenu.jsx';
 import { mountComposerCount } from './components/ComposerCount.jsx';
 import { mountDispatchRecents } from './components/DispatchRecents.jsx';
 import { mountDispatchStatus } from './components/DispatchStatus.jsx';
@@ -37,58 +46,31 @@ function bootDispatch() {
   const input = document.getElementById('dispatch-input');
   const countEl = document.getElementById('dispatch-count');
   const newButtons = [document.getElementById('dispatch-new'), document.getElementById('dispatch-mobile-new')].filter(Boolean);
-  const accountEmail = document.getElementById('dispatch-account-email');
-  const accountSub = document.getElementById('dispatch-account-sub');
-  const accountAvatar = document.getElementById('dispatch-account-avatar');
-  const accountBtn = document.getElementById('dispatch-account-btn');
-  const accountMenu = document.getElementById('dispatch-account-menu');
-  const accountNameForm = document.getElementById('dispatch-account-name-form');
-  const accountNameInput = document.getElementById('dispatch-account-name-input');
-  const accountNameStatus = document.getElementById('dispatch-account-name-status');
-  const logoutButton = document.getElementById('dispatch-logout');
-  const accountElements = {
-    email: accountEmail,
-    avatar: accountAvatar,
-    sub: accountSub,
-    button: accountBtn,
-    caret: document.querySelector('#dispatch-account-btn .rail-account-caret'),
-    nameInput: accountNameInput,
-    discordRow: document.getElementById('dispatch-account-discord-row'),
-    discordLink: document.getElementById('dispatch-account-discord-link'),
-    discordStatus: document.getElementById('dispatch-account-discord-status')
-  };
+  const accountMount = document.getElementById('dispatch-rail-account-mount');
   const mobileTitle = document.getElementById('dispatch-mobile-title');
   const mobileToggle = document.getElementById('dispatch-mobile-toggle');
   const railScrim = document.getElementById('dispatch-rail-scrim');
   const railCollapseBtn = document.getElementById('dispatch-rail-collapse');
   const activeKey = 'thingyActiveDispatchDraft';
-  const shellControls = createThingyShell({
-    rail: {
-      shell,
-      mobileToggle,
-      scrim: railScrim,
-      collapseButton: railCollapseBtn,
-      collapsedKey: 'thingyRailCollapsed',
-      showLabel: 'Show Dispatches',
-      hideLabel: 'Hide Dispatches'
-    },
-    account: {
-      session,
-      button: accountBtn,
-      menu: accountMenu,
-      nameForm: accountNameForm,
-      nameInput: accountNameInput,
-      nameStatus: accountNameStatus,
-      logoutButton,
-      normalizeName: normalizePreferredName,
-      signedIn,
-      returnTo: '/dispatch/',
-      elements: accountElements,
-      onSaved: () => refreshIdentity()
-    }
+  const railControls = attachRailState({
+    shell,
+    mobileToggle,
+    scrim: railScrim,
+    collapseButton: railCollapseBtn,
+    collapsedKey: 'thingyRailCollapsed',
+    showLabel: 'Show Dispatches',
+    hideLabel: 'Hide Dispatches'
   });
-  const railControls = shellControls.rail;
-  const accountControls = shellControls.account;
+  // signedIn is the chat-store signal — same browser session, same answer
+  // for /chat/ and /dispatch/.
+  signedInSignal.value = signedIn();
+  mountAccountMenu(accountMount, {
+    session,
+    signedIn: signedInSignal,
+    returnTo: '/dispatch/',
+    normalizeName: normalizePreferredName,
+    onSaved: () => refreshIdentity()
+  });
   const welcomeText = "What should this Dispatch explore? Give me a topic, question, or thread from Jamie's archive and I'll help shape it before you send it.";
   const maxInputChars = Number(input && input.getAttribute('maxlength') || 1200);
   const dispatchTestMode = (() => {
@@ -242,11 +224,13 @@ function bootDispatch() {
   }
 
   function refreshIdentity() {
-    accountControls?.refresh({
-      signedIn: signedIn(),
-      email: session.storedEmail(),
-      profile: session.storedProfile()
-    });
+    // AccountMenu reads these signals; bootstrap and post-save flows push
+    // the latest stored identity into them.
+    const profile = session.storedProfile() || {};
+    signedInSignal.value = signedIn();
+    displayEmailSignal.value = session.storedEmail() || '';
+    displayProfileSignal.value = profile;
+    displayPreferredNameSignal.value = String(profile.preferred_name || '').trim();
     if (mobileTitle) mobileTitle.textContent = draftTitle(activeDraft());
   }
 
@@ -705,10 +689,12 @@ function bootDispatch() {
     setMobileRailOpen(false);
   }));
 
-  document.addEventListener('click', () => accountControls.close());
+  // AccountMenu owns its own outside-click + Escape close listeners. We
+  // still close the mobile rail on Escape here.
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
-      accountControls.close();
+      accountMenuOpenSignal.value = false;
+      accountNameStatusSignal.value = '';
       setMobileRailOpen(false);
     }
   });

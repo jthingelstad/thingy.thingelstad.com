@@ -28,7 +28,7 @@ import { mountAssistantMessage } from './components/AssistantMessage.jsx';
 import { effect } from '@preact/signals';
 import { normalizeScopeParam } from './thingy-scope.js';
 import { createSourcePicker } from './thingy-source-picker.js';
-import { createThingyShell } from './thingy-shell.js';
+import { attachRailState } from './rail-state.js';
 import { postJsonStream, read as readStream } from './thingy-stream.js';
 import { createDictationController } from './thingy-voice.js';
 import { createChatMessageActions } from './thingy-chat-actions.js';
@@ -71,8 +71,16 @@ import {
   stoppable as stoppableSignal,
   welcomeInFlight as welcomeInFlightSignal
 } from './stores/chat-store.js';
-import { showNotice } from './stores/ui-store.js';
+import {
+  accountMenuOpen as accountMenuOpenSignal,
+  accountNameStatus as accountNameStatusSignal,
+  displayEmail as displayEmailSignal,
+  displayPreferredName as displayPreferredNameSignal,
+  displayProfile as displayProfileSignal,
+  showNotice
+} from './stores/ui-store.js';
 import { focusAuthEmail, mountAuthPanel } from './components/AuthPanel.jsx';
+import { mountAccountMenu } from './components/AccountMenu.jsx';
 import { mountComposerCount } from './components/ComposerCount.jsx';
 import { mountComposerSubmit } from './components/ComposerSubmit.jsx';
 import { mountNotice } from './components/Notice.jsx';
@@ -85,23 +93,7 @@ function bootChat() {
     const chatPanel = document.getElementById('librarian-chat');
     const appShell = document.getElementById('thingy-app-shell');
     const questionForm = document.getElementById('librarian-question-form');
-    const logoutButton = document.getElementById('librarian-logout');
-    const accountBtn = document.getElementById('account-btn');
-    const accountMenu = document.getElementById('account-menu');
-    const accountNameForm = document.getElementById('account-name-form');
-    const accountNameInput = document.getElementById('account-name-input');
-    const accountNameStatus = document.getElementById('account-name-status');
-    const accountElements = {
-      email: document.getElementById('account-email'),
-      avatar: document.getElementById('account-avatar'),
-      sub: document.getElementById('account-sub'),
-      button: accountBtn,
-      caret: document.querySelector('#account-btn .rail-account-caret'),
-      nameInput: accountNameInput,
-      discordRow: document.getElementById('account-discord-row'),
-      discordLink: document.getElementById('account-discord-link'),
-      discordStatus: document.getElementById('account-discord-status')
-    };
+    const accountMount = document.getElementById('rail-account-mount');
     const clearChatButton = document.getElementById('librarian-clear-chat');
     const curiosityMapButton = document.getElementById('thingy-curiosity-map');
     const modeControl = document.getElementById('thingy-mode-control');
@@ -130,44 +122,33 @@ function bootChat() {
     const mobileRenameConversation = document.getElementById('mobile-rename-conversation');
     const mobileDeleteConversation = document.getElementById('mobile-delete-conversation');
     const railScrim = document.getElementById('rail-scrim');
-    const shellControls = createThingyShell({
-      rail: {
-        shell: appShell,
-        mobileToggle: mobileConversationsToggle,
-        scrim: railScrim,
-        collapseButton: document.getElementById('rail-collapse'),
-        collapsedKey: 'thingyRailCollapsed',
-        showLabel: 'Show conversations',
-        hideLabel: 'Hide conversations'
+    const railControls = attachRailState({
+      shell: appShell,
+      mobileToggle: mobileConversationsToggle,
+      scrim: railScrim,
+      collapseButton: document.getElementById('rail-collapse'),
+      collapsedKey: 'thingyRailCollapsed',
+      showLabel: 'Show conversations',
+      hideLabel: 'Hide conversations'
+    });
+    mountAccountMenu(accountMount, {
+      session,
+      signedIn: signedInSignal,
+      returnTo: '/chat/',
+      normalizeName: normalizePreferredName,
+      onSignedOutClick: () => focusAuthEmail(),
+      onLogout: () => {
+        clearToken({ scrubAuthParams: true });
+        trackTinylyticsEvent('librarian.logout');
       },
-      account: {
-        session,
-        button: accountBtn,
-        menu: accountMenu,
-        nameForm: accountNameForm,
-        nameInput: accountNameInput,
-        nameStatus: accountNameStatus,
-        logoutButton,
-        normalizeName: normalizePreferredName,
-        signedIn: () => Boolean(token()),
-        returnTo: '/chat/',
-        elements: accountElements,
-        onSignedOutClick: () => focusAuthEmail(),
-        onLogout: () => {
-          clearToken({ scrubAuthParams: true });
-          trackTinylyticsEvent('librarian.logout');
-        },
-        onSaved: (nextName) => {
-          rememberPreferredName(nextName);
-          refreshAccountIdentity();
-        },
-        onOpen: () => {
-          refreshAccountProfile({ force: true });
-        }
+      onSaved: (nextName) => {
+        rememberPreferredName(nextName);
+        refreshAccountIdentity();
+      },
+      onOpen: () => {
+        refreshAccountProfile({ force: true });
       }
     });
-    const railControls = shellControls.rail;
-    const accountControls = shellControls.account;
     const maxRecents = 20;
     let activeConversationId = null;
     let conversations = [];
@@ -325,7 +306,7 @@ function bootChat() {
       if (!cleanName) return;
       preferredName = cleanName;
       session.updateStoredProfile({ preferred_name: cleanName });
-      if (accountNameInput) accountNameInput.value = cleanName;
+      displayPreferredNameSignal.value = cleanName;
     }
 
     async function persistInferredPreferredName(name) {
@@ -458,14 +439,13 @@ function bootChat() {
     }
 
     function refreshAccountIdentity() {
+      // The AccountMenu component reads these signals; bootstrap and the
+      // refresh flows push the latest stored identity into them.
       const stored = session.storedEmail();
       const value = String(authEmailSignal.value || '').trim() || stored;
-      accountControls?.refresh({
-        signedIn: Boolean(token()),
-        email: value,
-        profile: userProfile(),
-        preferredName
-      });
+      displayEmailSignal.value = value;
+      displayProfileSignal.value = userProfile() || {};
+      displayPreferredNameSignal.value = preferredName;
       renderModeControl();
     }
 
@@ -1632,20 +1612,19 @@ function bootChat() {
       mobileDeleteConversation.addEventListener('click', deleteActiveConversation);
     }
 
-    /* Account menu. */
-    if (accountNameInput) accountNameInput.value = preferredName;
-
+    /* Source picker and conversation menu close on outside click / Escape.
+       Account menu close is owned by AccountMenu's internal listener. */
     document.addEventListener('click', (event) => {
       const target = event.target instanceof Element ? event.target : event.target?.parentElement;
       if (target && sourceControls.contains?.(target)) return;
       sourceControls.close();
-      accountControls.close();
       toggleMobileConversationMenu(false);
     });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
         sourceControls.close();
-        accountControls.close();
+        accountMenuOpenSignal.value = false;
+        accountNameStatusSignal.value = '';
         toggleMobileConversationMenu(false);
         setMobileRailOpen(false);
       }

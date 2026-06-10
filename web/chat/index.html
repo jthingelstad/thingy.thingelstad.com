@@ -84,35 +84,7 @@
         <div id="rail-recents-mount"></div>
       </div>
 
-      <div class="rail-account">
-        <button class="rail-account-btn" id="account-btn" type="button" aria-haspopup="true" aria-expanded="false">
-          <span class="rail-avatar" id="account-avatar" aria-hidden="true">T</span>
-          <span class="rail-account-meta">
-            <span class="rail-account-email" id="account-email">Sign in</span>
-            <span class="rail-account-sub" id="account-sub">Weekly Thing readers</span>
-          </span>
-          <span class="rail-account-caret" aria-hidden="true" data-thingy-icon="chevron-down"></span>
-        </button>
-        <div class="rail-menu" id="account-menu" hidden role="menu">
-          <form class="rail-account-setting" id="account-name-form">
-            <label for="account-name-input">Name</label>
-            <div class="rail-account-setting-row">
-              <input id="account-name-input" name="preferred_name" type="text" maxlength="80" autocomplete="name" placeholder="What should Thingy call you?">
-              <button type="submit">Save</button>
-            </div>
-            <p id="account-name-status" aria-live="polite"></p>
-          </form>
-          <div class="rail-account-setting rail-account-discord" id="account-discord-row" hidden>
-            <span>Discord</span>
-            <p id="account-discord-status">Supporting Members can connect Discord.</p>
-            <a class="rail-menu-link" id="account-discord-link" href="/discord/">Link to Discord</a>
-          </div>
-          <div class="rail-menu-sep" role="separator"></div>
-          <button type="button" role="menuitem" class="danger" id="librarian-logout">
-            <span data-thingy-icon="log-out" aria-hidden="true"></span>Logout
-          </button>
-        </div>
-      </div>
+      <div class="rail-account" id="rail-account-mount"></div>
     </aside>
     <div class="rail-scrim" id="rail-scrim" hidden></div>
 

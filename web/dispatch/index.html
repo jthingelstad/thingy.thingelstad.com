@@ -73,35 +73,7 @@
         <div id="dispatch-recents-mount"></div>
       </div>
 
-      <div class="rail-account">
-        <button class="rail-account-btn" id="dispatch-account-btn" type="button" aria-haspopup="true" aria-expanded="false">
-          <span class="rail-avatar" id="dispatch-account-avatar" aria-hidden="true">T</span>
-          <span class="rail-account-meta">
-            <span class="rail-account-email" id="dispatch-account-email">Signed in</span>
-            <span class="rail-account-sub" id="dispatch-account-sub">Weekly Thing reader</span>
-          </span>
-          <span class="rail-account-caret" aria-hidden="true" data-thingy-icon="chevron-down"></span>
-        </button>
-        <div class="rail-menu" id="dispatch-account-menu" hidden role="menu">
-          <form class="rail-account-setting" id="dispatch-account-name-form">
-            <label for="dispatch-account-name-input">Name</label>
-            <div class="rail-account-setting-row">
-              <input id="dispatch-account-name-input" name="preferred_name" type="text" maxlength="80" autocomplete="name" placeholder="What should Thingy call you?">
-              <button type="submit">Save</button>
-            </div>
-            <p id="dispatch-account-name-status" aria-live="polite"></p>
-          </form>
-          <div class="rail-account-setting rail-account-discord" id="dispatch-account-discord-row" hidden>
-            <span>Discord</span>
-            <p id="dispatch-account-discord-status">Supporting Members can connect Discord.</p>
-            <a class="rail-menu-link" id="dispatch-account-discord-link" href="/discord/">Link to Discord</a>
-          </div>
-          <div class="rail-menu-sep" role="separator"></div>
-          <button type="button" role="menuitem" class="danger" id="dispatch-logout">
-            <span data-thingy-icon="log-out" aria-hidden="true"></span>Logout
-          </button>
-        </div>
-      </div>
+      <div class="rail-account" id="dispatch-rail-account-mount"></div>
     </aside>
     <div class="rail-scrim" id="dispatch-rail-scrim" hidden></div>
 
