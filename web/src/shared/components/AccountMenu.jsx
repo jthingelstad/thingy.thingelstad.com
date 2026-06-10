@@ -1,5 +1,5 @@
-import { render } from 'preact';
-import { useEffect, useRef } from 'preact/hooks';
+import { Fragment, render } from 'preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { useComputed } from '@preact/signals';
 import { iconSvg } from '../thingy-icons.js';
 import { buildId } from '../thingy-config.js';
@@ -17,115 +17,282 @@ import {
   displayProfile,
   signedIn as sharedSignedIn
 } from '../stores/ui-store.js';
+import {
+  memoryFacts,
+  memoryInterestItems,
+  memoryLearnedItems,
+  memoryQuestionItems,
+  memorySignalCount,
+  memorySummaryItems
+} from '../thingy-memory-profile.js';
 
 const LOG_OUT_ICON = iconSvg('log-out');
+const BRAIN_ICON = iconSvg('brain-circuit');
+const CLOSE_ICON = iconSvg('x');
 
-function cleanText(value, max = 180) {
-  return String(value || '').trim().replace(/\s+/g, ' ').slice(0, max);
+function MemoryTrigger({ profile, onOpen }) {
+  const count = memorySignalCount(profile);
+  const detail = count > 0
+    ? `${count} remembered signal${count === 1 ? '' : 's'}`
+    : 'Profile, interests, and prior context';
+  return (
+    <button type="button" class="rail-memory-trigger" onClick={onOpen}>
+      <span class="rail-memory-trigger-icon" aria-hidden="true" dangerouslySetInnerHTML={{ __html: BRAIN_ICON }} />
+      <span class="rail-memory-trigger-copy">
+        <strong>View Thingy Memory</strong>
+        <small>{detail}</small>
+      </span>
+    </button>
+  );
 }
 
-function profileList(value, mapper) {
-  return Array.isArray(value) ? value.map(mapper).filter(Boolean) : [];
+function synthesisStatusText(status = {}) {
+  const pending = Number(status.pending_event_count || 0);
+  if (pending > 0) return `${pending} new interaction${pending === 1 ? '' : 's'} pending synthesis`;
+  if (status.last_synthesized_at) return `Memory current · Last synthesized ${new Date(status.last_synthesized_at).toLocaleString()}`;
+  return 'Memory current';
 }
 
-function memoryFacts(profile) {
-  return profileList(profile.remembered_facts, (item) => {
-    const category = cleanText(item?.category || 'detail', 40);
-    const value = cleanText(item?.value || item, 160);
-    return value ? { category, value } : null;
-  }).slice(-6);
-}
+function MemoryModal({ open, onClose, session, profile, email, preferredName, connectedName, supporting }) {
+  const [activeTab, setActiveTab] = useState('profile');
+  const [viewProfile, setViewProfile] = useState(profile || {});
+  const [busyAction, setBusyAction] = useState('');
+  const [memoryError, setMemoryError] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState('');
+  const facts = memoryFacts(viewProfile);
+  const interests = memoryInterestItems(viewProfile);
+  const learned = memoryLearnedItems(viewProfile);
+  const questions = memoryQuestionItems(viewProfile);
+  const summaries = memorySummaryItems(viewProfile);
+  const synthesis = viewProfile.memory_synthesis || {};
+  const profileRows = [
+    preferredName ? ['Name', preferredName] : null,
+    email ? ['Email', email] : null,
+    connectedName ? ['Discord', connectedName] : null,
+    supporting ? ['Access', 'Supporting Member'] : null
+  ].filter(Boolean);
+  const tabs = [
+    { id: 'profile', label: 'Profile', count: profileRows.length },
+    { id: 'details', label: 'Remembered', count: facts.length },
+    { id: 'learned', label: 'Learned', count: learned.length },
+    { id: 'interests', label: 'Interests', count: interests.length },
+    { id: 'threads', label: 'Threads', count: summaries.length },
+    { id: 'recent', label: 'Recent', count: questions.length }
+  ];
 
-function memoryInterests(profile) {
-  return profileList(profile.interests, (item) => cleanText(item, 80)).slice(-8);
-}
+  async function applyMemoryData(data) {
+    if (!data?.profile) return;
+    const nextProfile = typeof session?.updateStoredProfile === 'function'
+      ? session.updateStoredProfile(data.profile)
+      : data.profile;
+    displayProfile.value = nextProfile;
+    displayPreferredName.value = String(nextProfile.preferred_name || displayPreferredName.value || '').trim();
+    setViewProfile(nextProfile);
+  }
 
-function memoryQuestions(profile) {
-  return profileList(profile.current_session_questions, (item) => cleanText(item?.question || item, 140)).slice(-4);
-}
+  async function runMemoryAction(payload, actionName) {
+    if (!session?.postJson || !session?.authHeaders) return;
+    setBusyAction(actionName);
+    setMemoryError('');
+    try {
+      const data = await session.postJson('/memory', payload, session.authHeaders());
+      await applyMemoryData(data);
+      setConfirmDelete('');
+    } catch (error) {
+      setMemoryError(error.message || 'Thingy could not update memory right now.');
+    } finally {
+      setBusyAction('');
+    }
+  }
 
-function memorySummaries(profile) {
-  return profileList(profile.prior_session_summaries, (item) => cleanText(item?.summary || item, 180)).slice(-3);
-}
+  useEffect(() => {
+    if (!open) return undefined;
+    setViewProfile(profile || {});
+    setMemoryError('');
+    setConfirmDelete('');
+    runMemoryAction({ action: 'get' }, 'load');
+    function onKey(event) {
+      if (event.key === 'Escape') onClose();
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, onClose, profile]);
 
-function MemoryPanel({ profile, preferredName, connectedName, supporting }) {
-  const facts = memoryFacts(profile);
-  const interests = memoryInterests(profile);
-  const questions = memoryQuestions(profile);
-  const summaries = memorySummaries(profile);
-  const hasProfile = Boolean(preferredName || connectedName || supporting);
-  const hasMemory = Boolean(facts.length || interests.length || questions.length || summaries.length);
-  if (!hasProfile && !hasMemory) return null;
+  if (!open) return null;
+
+  function handleBackdropClick(event) {
+    if (event.target === event.currentTarget) onClose();
+  }
+
+  function deleteControl(type, item, label = 'Forget') {
+    const key = `${type}:${item.id || item.value || item.label}`;
+    const payload = {
+      action: 'delete',
+      type,
+      id: item.id || '',
+      value: item.value || item.summary || item.label || ''
+    };
+    if (confirmDelete === key) {
+      return (
+        <span class="thingy-memory-delete-confirm">
+          <button type="button" onClick={() => runMemoryAction(payload, 'delete')}>Confirm</button>
+          <button type="button" onClick={() => setConfirmDelete('')}>Cancel</button>
+        </span>
+      );
+    }
+    return (
+      <button type="button" class="thingy-memory-delete" onClick={() => setConfirmDelete(key)}>
+        {label}
+      </button>
+    );
+  }
+
+  function renderPanel() {
+    if (activeTab === 'profile') {
+      return profileRows.length ? (
+        <dl class="thingy-memory-dl">
+          {profileRows.map(([label, value]) => (
+            <Fragment key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </Fragment>
+          ))}
+        </dl>
+      ) : (
+        <p class="thingy-memory-empty">Thingy does not have profile metadata for this account yet.</p>
+      );
+    }
+    if (activeTab === 'details') {
+      return facts.length ? (
+        <ul class="thingy-memory-list">
+          {facts.map((item) => (
+            <li key={`${item.category}:${item.value}`}>
+              <div class="thingy-memory-row-head">
+                <b>{item.category}</b>
+                {deleteControl('remembered_fact', item)}
+              </div>
+              <span>{item.value}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="thingy-memory-empty">Thingy has not saved any explicit remembered details yet.</p>
+      );
+    }
+    if (activeTab === 'interests') {
+      return interests.length ? (
+        <ul class="thingy-memory-list">
+          {interests.map((item) => (
+            <li key={item.value}>
+              <div class="thingy-memory-row-head">
+                <span>{item.value}</span>
+                {deleteControl('interest', item)}
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="thingy-memory-empty">Thingy has not saved any explicit interests yet.</p>
+      );
+    }
+    if (activeTab === 'learned') {
+      return learned.length ? (
+        <ul class="thingy-memory-list">
+          {learned.map((item) => (
+            <li key={`${item.id}:${item.label}`}>
+              <div class="thingy-memory-row-head">
+                <b>{item.label}</b>
+                {deleteControl('learned', item, 'Remove')}
+              </div>
+              {item.summary ? <span>{item.summary}</span> : null}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="thingy-memory-empty">Thingy has not synthesized learned memory from engagement yet.</p>
+      );
+    }
+    if (activeTab === 'threads') {
+      return summaries.length ? (
+        <ul class="thingy-memory-list">
+          {summaries.map((item) => (
+            <li key={`${item.id}:${item.value}`}>
+              <div class="thingy-memory-row-head">
+                <span>{item.value}</span>
+                {deleteControl('thread', item, 'Remove')}
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="thingy-memory-empty">No useful prior thread summaries are available yet.</p>
+      );
+    }
+    return questions.length ? (
+      <ul class="thingy-memory-list">
+        {questions.map((item) => (
+          <li key={`${item.id}:${item.value}`}>
+            <div class="thingy-memory-row-head">
+              <span>{item.value}</span>
+              {deleteControl('recent', item, 'Remove')}
+            </div>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="thingy-memory-empty">No recent questions are available in this session yet.</p>
+    );
+  }
 
   return (
-    <section class="rail-account-memory" aria-label="Thingy memory">
-      <div class="rail-account-memory-head">
-        <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: iconSvg('brain-circuit') }} />
-        <div>
-          <strong>Thingy Memory</strong>
-          <small>Profile and context Thingy can use</small>
-        </div>
-      </div>
-      {hasProfile ? (
-        <dl class="rail-account-memory-list">
-          {preferredName ? (
-            <>
-              <dt>Name</dt>
-              <dd>{preferredName}</dd>
-            </>
-          ) : null}
-          {connectedName ? (
-            <>
-              <dt>Discord</dt>
-              <dd>{connectedName}</dd>
-            </>
-          ) : null}
-          {supporting ? (
-            <>
-              <dt>Access</dt>
-              <dd>Supporting Member</dd>
-            </>
-          ) : null}
-        </dl>
-      ) : null}
-      {interests.length ? (
-        <div class="rail-account-memory-block">
-          <span>Interests</span>
-          <div class="rail-account-memory-tags">
-            {interests.map((item) => <i key={item}>{item}</i>)}
+    <div class="thingy-memory-modal-backdrop" onClick={handleBackdropClick}>
+      <section class="thingy-memory-modal" role="dialog" aria-modal="true" aria-labelledby="thingy-memory-title">
+        <header class="thingy-memory-header">
+          <span class="thingy-memory-header-icon" aria-hidden="true" dangerouslySetInnerHTML={{ __html: BRAIN_ICON }} />
+          <div>
+            <h2 id="thingy-memory-title">Thingy Memory</h2>
+            <p>Profile metadata and bounded context Thingy can use.</p>
           </div>
+          <button type="button" class="thingy-memory-close" aria-label="Close Thingy Memory" onClick={onClose} dangerouslySetInnerHTML={{ __html: CLOSE_ICON }} />
+        </header>
+        <section class="thingy-memory-status" aria-live="polite">
+          <span>{busyAction === 'load' ? 'Loading memory...' : synthesisStatusText(synthesis)}</span>
+          <div>
+            <button type="button" disabled={Boolean(busyAction)} onClick={() => runMemoryAction({ action: 'synthesize' }, 'synthesize')}>
+              {busyAction === 'synthesize' ? 'Updating...' : 'Update Thingy Memory'}
+            </button>
+            <button type="button" disabled={Boolean(busyAction)} onClick={() => runMemoryAction({ action: 'resynthesize' }, 'resynthesize')}>
+              {busyAction === 'resynthesize' ? 'Resynthesizing...' : 'Resynthesize'}
+            </button>
+          </div>
+          {memoryError ? <small>{memoryError}</small> : null}
+        </section>
+        <nav class="thingy-memory-tabs" role="tablist" aria-label="Thingy memory categories">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id ? 'true' : 'false'}
+              aria-controls={`thingy-memory-${tab.id}`}
+              id={`thingy-memory-tab-${tab.id}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span>{tab.label}</span>
+              {tab.count ? <i>{tab.count}</i> : null}
+            </button>
+          ))}
+        </nav>
+        <div
+          class="thingy-memory-panel"
+          id={`thingy-memory-${activeTab}`}
+          role="tabpanel"
+          aria-labelledby={`thingy-memory-tab-${activeTab}`}
+        >
+          {renderPanel()}
         </div>
-      ) : null}
-      {facts.length ? (
-        <div class="rail-account-memory-block">
-          <span>Remembered Details</span>
-          <ul>
-            {facts.map((item) => (
-              <li key={`${item.category}:${item.value}`}>
-                <b>{item.category}</b>
-                <em>{item.value}</em>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-      {summaries.length ? (
-        <div class="rail-account-memory-block">
-          <span>Prior Threads</span>
-          <ul>
-            {summaries.map((item) => <li key={item}>{item}</li>)}
-          </ul>
-        </div>
-      ) : null}
-      {questions.length ? (
-        <div class="rail-account-memory-block">
-          <span>Recent Questions</span>
-          <ul>
-            {questions.map((item) => <li key={item}>{item}</li>)}
-          </ul>
-        </div>
-      ) : null}
-    </section>
+      </section>
+    </div>
   );
 }
 
@@ -158,6 +325,7 @@ function AccountMenu({
   const buttonRef = useRef(null);
   const formRef = useRef(null);
   const inputRef = useRef(null);
+  const [memoryOpen, setMemoryOpen] = useState(false);
 
   // Close on document click outside the menu, and on Escape.
   useEffect(() => {
@@ -213,6 +381,7 @@ function AccountMenu({
 
   function handleLogout() {
     accountMenuOpen.value = false;
+    setMemoryOpen(false);
     if (typeof onLogout === 'function') {
       onLogout();
       return;
@@ -223,6 +392,16 @@ function AccountMenu({
 
   const connection = discordConnection(profile);
   const connectedName = discordConnectionName(profile);
+
+  function handleMemoryOpen(event) {
+    event.stopPropagation();
+    setMemoryOpen(true);
+    accountMenuOpen.value = false;
+  }
+
+  function handleMemoryClose() {
+    setMemoryOpen(false);
+  }
 
   return (
     <>
@@ -266,12 +445,7 @@ function AccountMenu({
             <a class="rail-menu-link" href="/discord/">{connection ? 'Refresh Discord Connection' : 'Link to Discord'}</a>
           </div>
         ) : null}
-        <MemoryPanel
-          profile={profile}
-          preferredName={preferredName}
-          connectedName={connectedName}
-          supporting={supporting}
-        />
+        <MemoryTrigger profile={profile} onOpen={handleMemoryOpen} />
         <div class="rail-menu-sep" role="separator" />
         <button
           type="button"
@@ -283,6 +457,16 @@ function AccountMenu({
         </button>
         <p class="rail-menu-build" title="Thingy build">Build {buildId()}</p>
       </div>
+      <MemoryModal
+        open={memoryOpen}
+        onClose={handleMemoryClose}
+        session={session}
+        profile={profile}
+        email={email}
+        preferredName={preferredName}
+        connectedName={connectedName}
+        supporting={supporting}
+      />
     </>
   );
 }

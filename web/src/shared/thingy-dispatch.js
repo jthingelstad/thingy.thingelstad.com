@@ -9,6 +9,8 @@ import {
   normalizePreferredName,
 } from './thingy-account.js';
 import { createComposer } from './thingy-composer.js';
+import { createTinylyticsTracker } from './thingy-analytics.js';
+import { tinylyticsId } from './thingy-config.js';
 import { attachRailState } from './thingy-rail-state.js';
 import { createDispatchActions, draftTitle } from './thingy-dispatch-actions.js';
 import {
@@ -53,6 +55,7 @@ function bootDispatch() {
     const value = String(params.get('dispatch_test') || params.get('test') || '').trim().toLowerCase();
     return value === 'template' || value === 'template_test';
   })();
+  const analytics = createTinylyticsTracker({ enabled: Boolean(tinylyticsId()) });
 
   const railControls = attachRailState({
     shell,
@@ -145,7 +148,8 @@ function bootDispatch() {
   mountDispatchStatus(statusMount);
   mountDispatchActions(actionsMount, { onAction: handleAction });
   mountDispatchMessages(messagesMount, {
-    scrollContainer: () => document.querySelector('.dispatch-scroll')
+    scrollContainer: () => document.querySelector('.dispatch-scroll'),
+    track: (name, value) => analytics.track(name, value)
   });
 
   if (form) {

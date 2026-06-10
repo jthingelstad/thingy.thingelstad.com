@@ -135,9 +135,27 @@ test('createDraft activates a fresh draft and renders it into the signals', () =
   assert.equal(draftsSignal.value[0].title, 'New Dispatch');
   assert.equal(activeDraftId.value, draftsSignal.value[0].id);
   assert.equal(dispatchMessages.value.length, 1);
-  assert.match(dispatchMessages.value[0].text, /What should this Dispatch explore/);
+  assert.match(dispatchMessages.value[0].text, /make your first Dispatch/);
   assert.equal(dispatchInputDisabled.value, false);
   assert.match(dispatchInputPlaceholder.value, /Tell Thingy/);
+});
+
+test('createDraft gives later Dispatches contextual guided openings', () => {
+  dispatchBusy.value = false;
+  const actions = createDispatchActions({
+    session: fakeSession(),
+    onRender: () => {}
+  });
+  const first = actions.createDraft({ activate: true, render: false });
+  actions.addMessage('user', 'Write about RSS');
+  for (let index = 0; index < 5; index += 1) {
+    actions.createDraft({ activate: true, render: false });
+    actions.addMessage('user', `Dispatch seed ${index}`);
+  }
+  const seventh = actions.createDraft({ activate: true, render: false });
+
+  assert.match(first.messages[0].text, /first Dispatch/);
+  assert.match(seventh.messages[0].text, /seventh Dispatch/);
 });
 
 test('clarifyWithThingy moves an empty draft to ready and persists through the API', async () => {

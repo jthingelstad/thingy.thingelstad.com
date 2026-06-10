@@ -25,7 +25,7 @@ import {
 } from './thingy-dispatch-drafts.js';
 import { dispatchEditable } from './thingy-dispatch-state.js';
 
-const DEFAULT_WELCOME = "What should this Dispatch explore? Give me a topic, question, or thread from Jamie's archive and I'll help shape it before you send it.";
+const DEFAULT_WELCOME = "Alright, let's make your first Dispatch. Give me the topic, question, or archive thread you want to shape, and I'll help turn it into a clear direction before you generate it.";
 const MAX_DRAFTS = 24;
 
 // --- Pure helpers (exported for tests) --------------------------------------
@@ -36,6 +36,30 @@ function draftTitle(draft) {
 
 function titleFromPrompt(value) {
   return String(value || 'Dispatch').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Dispatch';
+}
+
+function ordinal(value) {
+  const number = Math.max(1, Number(value || 1));
+  const words = {
+    1: 'first',
+    2: 'second',
+    3: 'third',
+    4: 'fourth',
+    5: 'fifth',
+    6: 'sixth',
+    7: 'seventh',
+    8: 'eighth',
+    9: 'ninth',
+    10: 'tenth'
+  };
+  if (words[number]) return words[number];
+  const mod100 = number % 100;
+  if (mod100 >= 11 && mod100 <= 13) return `${number}th`;
+  return `${number}${{ 1: 'st', 2: 'nd', 3: 'rd' }[number % 10] || 'th'}`;
+}
+
+function defaultWelcomeText(dispatchNumber = 1) {
+  return `Alright, let's make your ${ordinal(dispatchNumber)} Dispatch. Give me the topic, question, or archive thread you want to shape, and I'll help turn it into a clear direction before you generate it.`;
 }
 
 function assistantClarificationText(data) {
@@ -112,7 +136,7 @@ function inputPlaceholderForDraft(draft, editable) {
 
 function createDispatchActions(options = {}) {
   const session = options.session || defaultSession;
-  const welcomeText = options.welcomeText || DEFAULT_WELCOME;
+  const welcomeTextOption = options.welcomeText || '';
   const dispatchTestMode = Boolean(options.dispatchTestMode);
   const activeKey = options.activeKey || 'thingyActiveDispatchDraft';
   const onRender = typeof options.onRender === 'function' ? options.onRender : () => {};
@@ -143,6 +167,12 @@ function createDispatchActions(options = {}) {
     return dispatchEditable(draft?.stage);
   }
 
+  function welcomeForDraft(dispatchNumber = drafts.length + 1) {
+    if (typeof welcomeTextOption === 'function') return String(welcomeTextOption(dispatchNumber) || DEFAULT_WELCOME);
+    if (welcomeTextOption) return String(welcomeTextOption);
+    return defaultWelcomeText(dispatchNumber);
+  }
+
   function saveDrafts() {
     drafts.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
     drafts = drafts.slice(0, MAX_DRAFTS);
@@ -169,14 +199,16 @@ function createDispatchActions(options = {}) {
   }
 
   function createDraft(opts = {}) {
+    const nextDispatchNumber = drafts.filter((entry) => hasDraftContent(entry)).length + 1;
     const draft = normalizeDraft({
       stage: 'empty',
       messages: [{
         role: 'assistant',
-        text: welcomeText
+        text: welcomeForDraft(nextDispatchNumber),
+        kind: 'welcome'
       }]
     });
-    drafts = drafts.filter((entry) => serverDispatchId(entry) || hasDraftContent(entry, welcomeText));
+    drafts = drafts.filter((entry) => serverDispatchId(entry) || hasDraftContent(entry));
     drafts.unshift(draft);
     if (opts.activate !== false) setActiveDraft(draft.id, { render: Boolean(opts.render) });
     saveDrafts();
@@ -252,7 +284,7 @@ function createDispatchActions(options = {}) {
   }
 
   async function saveDraftToServer(draft = activeDraft(), overrides = {}) {
-    if (!signedIn() || !hasDraftContent(draft, welcomeText)) return draft;
+    if (!signedIn() || !hasDraftContent(draft)) return draft;
     const serverId = serverDispatchId(draft);
     const data = await dispatchPost('save_draft', {
       dispatch_id: serverId,
@@ -328,7 +360,8 @@ function createDispatchActions(options = {}) {
     if (!draft.messages.length) {
       draft.messages.push({
         role: 'assistant',
-        text: welcomeText
+        text: welcomeForDraft(1),
+        kind: 'welcome'
       });
     }
     dispatchMessagesSignal.value = draft.messages.slice();
@@ -348,9 +381,9 @@ function createDispatchActions(options = {}) {
   async function loadHistory() {
     try {
       const data = await dispatchPost('list', { limit: 12 });
-      const serverDrafts = (data.dispatches || []).map((row) => draftFromServerRow(row, welcomeText));
+      const serverDrafts = (data.dispatches || []).map((row, index) => draftFromServerRow(row, welcomeForDraft(index + 1)));
       const activeLocal = draftById(activeId);
-      const keepActiveLocal = activeLocal && !serverDispatchId(activeLocal) && hasDraftContent(activeLocal, welcomeText);
+      const keepActiveLocal = activeLocal && !serverDispatchId(activeLocal) && hasDraftContent(activeLocal);
       drafts = [
         ...(keepActiveLocal ? [activeLocal] : []),
         ...serverDrafts

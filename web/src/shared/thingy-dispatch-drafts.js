@@ -65,7 +65,11 @@ function serverDispatchId(draft) {
 function hasDraftContent(draft, welcomeText = '') {
   if (!draft) return false;
   if (draft.prompt || draft.direction || draft.currentQuestion || draft.clarificationAnswer) return true;
-  return (draft.messages || []).some((message) => String(message.text || '') && message.text !== welcomeText);
+  return (draft.messages || []).some((message) => (
+    String(message.text || '')
+    && message.text !== welcomeText
+    && message.kind !== 'welcome'
+  ));
 }
 
 function draftStageFromRow(row) {
@@ -87,7 +91,7 @@ function fallbackMessagesForRow(row, welcomeText = '') {
   if (row.direction) {
     return [{ role: 'assistant', text: `Here is the Dispatch I am ready to generate:\n\n${row.direction}\n\nIf this is right, use Generate Dispatch. If you want to steer it, send me the adjustment.` }];
   }
-  return [{ role: 'assistant', text: welcomeText }];
+  return [{ role: 'assistant', text: welcomeText, kind: 'welcome' }];
 }
 
 function draftFromServerRow(row, welcomeText = '') {

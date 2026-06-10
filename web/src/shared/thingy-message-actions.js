@@ -126,6 +126,10 @@ async function copyRichHtmlToClipboard(html, text) {
 function createChatMessageActions(options = {}) {
   const submitFeedback = typeof options.submitFeedback === 'function' ? options.submitFeedback : async () => ({});
   const track = typeof options.track === 'function' ? options.track : () => {};
+  const promptShareUrl = typeof options.promptShareUrl === 'function'
+    ? options.promptShareUrl
+    : (prompt, scope) => buildSharePromptUrl(prompt, scope);
+  const promptShareTitle = String(options.promptShareTitle || 'Ask Thingy');
   let feedbackStatusTimer = 0;
   let speechUtterance = null;
   let speechButton = null;
@@ -235,20 +239,22 @@ function createChatMessageActions(options = {}) {
   }
 
   async function sharePrompt(prompt, scope) {
-    const shareUrl = buildSharePromptUrl(prompt, scope);
+    const shareUrl = promptShareUrl(prompt, scope);
     if (typeof navigator.share === 'function') {
       try {
-        await navigator.share({ title: 'Ask Thingy', text: prompt, url: shareUrl });
+        const payload = { title: promptShareTitle, text: prompt };
+        if (shareUrl) payload.url = shareUrl;
+        await navigator.share(payload);
         track('librarian.share_native');
         return 'Shared';
       } catch (error) {
         if (error && error.name === 'AbortError') return '';
       }
     }
-    const copied = await copyToClipboard(shareUrl);
+    const copied = await copyToClipboard(shareUrl || prompt);
     if (copied) {
       track('librarian.share_copy');
-      return 'Link copied';
+      return shareUrl ? 'Link copied' : 'Text copied';
     }
     return 'Could not copy';
   }
@@ -288,8 +294,9 @@ function createChatMessageActions(options = {}) {
     messageElement.appendChild(controls);
   }
 
-  function addResponseActions(messageElement, requestId) {
-    if (!requestId) return;
+  function addResponseActions(messageElement, requestId, actionOptions = {}) {
+    const includeFeedback = actionOptions.feedback !== false && Boolean(requestId);
+    if (!requestId && includeFeedback) return;
     const controls = document.createElement('div');
     controls.className = 'librarian-feedback';
     const playDisabled = speechOutputSupported() ? '' : ' disabled';
@@ -297,8 +304,8 @@ function createChatMessageActions(options = {}) {
     controls.innerHTML = `
       <button type="button" data-action="copy" aria-label="Copy answer" title="Copy answer">${actionIcon('copy')}</button>
       <button type="button" data-action="speak" aria-label="${playTitle}" title="${playTitle}"${playDisabled}>${actionIcon('play')}</button>
-      <button type="button" data-reaction="up" aria-label="Good response" aria-pressed="false" title="Good response">${actionIcon('up')}</button>
-      <button type="button" data-reaction="down" aria-label="Bad response" aria-pressed="false" title="Bad response">${actionIcon('down')}</button>
+      ${includeFeedback ? `<button type="button" data-reaction="up" aria-label="Good response" aria-pressed="false" title="Good response">${actionIcon('up')}</button>` : ''}
+      ${includeFeedback ? `<button type="button" data-reaction="down" aria-label="Bad response" aria-pressed="false" title="Bad response">${actionIcon('down')}</button>` : ''}
       <button type="button" data-action="share" aria-label="Share answer" title="Share answer">${actionIcon('share')}</button>
       <span class="librarian-feedback-status" aria-live="polite"></span>
     `;
