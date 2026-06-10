@@ -1,77 +1,114 @@
 import {
   appendActivityCommentary,
-  appendActivityStep,
-  renderAssistantResponse
+  appendActivityStep
 } from './thingy-chat-rendering.js';
+import { batch } from '@preact/signals';
 
+// Drives a streaming assistant message into a signal-backed model. Deltas
+// accumulate in local buffers and are flushed into the model once per
+// animation frame, so a fast stream doesn't re-render the message every
+// microtask.
 function createAssistantStreamRenderer(options = {}) {
-  const pending = options.pending;
+  const model = options.model;
+  if (!model) throw new Error('createAssistantStreamRenderer requires a model');
   const scroll = typeof options.scroll === 'function' ? options.scroll : () => {};
-  const label = options.label || '';
-  const statusFallback = options.statusFallback || 'Thingy is working...';
-  let answer = '';
-  let citations = Array.isArray(options.citations) ? options.citations : [];
-  let experience = null;
-  let activitySteps = [];
-  let activityCommentary = [];
-  let renderFrame = 0;
+  const fallback = options.statusFallback || 'Thingy is working...';
+  let bufferedContent = String(model.content.peek() || '');
+  let bufferedFrame = 0;
 
-  function render(active = false) {
-    renderFrame = 0;
-    if (!pending) return;
-    pending.classList.toggle('librarian-message-pending', Boolean(active));
-    pending.innerHTML = renderAssistantResponse(answer, citations, experience, activitySteps, activityCommentary, { active, label });
-    scroll(active ? { force: true } : undefined);
+  if (options.label) model.label.value = options.label;
+  if (options.statusFallback) model.statusFallback.value = options.statusFallback;
+  if (model.status.peek() === 'pending') {
+    // first content/status/citation event will flip it to streaming
+  }
+
+  function flush() {
+    bufferedFrame = 0;
+    if (model.content.peek() !== bufferedContent) {
+      model.content.value = bufferedContent;
+    }
+    scroll();
   }
 
   function schedule() {
-    if (renderFrame) return;
-    renderFrame = window.requestAnimationFrame(() => render(false));
+    if (bufferedFrame) return;
+    bufferedFrame = window.requestAnimationFrame(flush);
   }
 
-  function status(data, fallback = statusFallback) {
-    activitySteps = appendActivityStep(activitySteps, data, fallback);
-    render(true);
-  }
-
-  function commentary(value) {
-    activityCommentary = appendActivityCommentary(activityCommentary, value);
-    render(true);
+  function ensureStreaming() {
+    if (model.status.peek() === 'pending') model.status.value = 'streaming';
   }
 
   function appendDelta(delta) {
-    answer += delta || '';
-    answer = answer.replace(/^\s+/, '');
+    if (!delta) return;
+    bufferedContent = (bufferedContent + delta).replace(/^\s+/, '');
+    ensureStreaming();
     schedule();
   }
 
   function setAnswer(value) {
-    answer = value || '';
+    bufferedContent = String(value || '');
+    ensureStreaming();
     schedule();
   }
 
-  function setCitations(value) {
-    citations = value || [];
-    schedule();
+  function setCitations(citations) {
+    model.citations.value = Array.isArray(citations) ? citations : [];
+    scroll();
   }
 
-  function setExperience(value) {
-    experience = value || null;
-    schedule();
+  function setExperience(experience) {
+    model.experience.value = experience || null;
+    scroll();
   }
 
-  function finish() {
-    if (renderFrame) {
-      window.cancelAnimationFrame(renderFrame);
-      renderFrame = 0;
+  function status(data) {
+    const next = appendActivityStep(model.activity.peek().slice(), data, fallback);
+    model.activity.value = next;
+    ensureStreaming();
+    scroll({ force: true });
+  }
+
+  function commentary(value) {
+    const next = appendActivityCommentary(model.commentary.peek().slice(), value);
+    model.commentary.value = next;
+    ensureStreaming();
+    scroll({ force: true });
+  }
+
+  function finish(nextStatus = 'done') {
+    if (bufferedFrame) {
+      window.cancelAnimationFrame(bufferedFrame);
+      bufferedFrame = 0;
     }
-    render(false);
-    return { answer, citations, experience };
+    batch(() => {
+      if (model.content.peek() !== bufferedContent) model.content.value = bufferedContent;
+      model.status.value = nextStatus;
+    });
+    return {
+      answer: model.content.peek(),
+      citations: model.citations.peek(),
+      experience: model.experience.peek()
+    };
+  }
+
+  function fail(message, retryPrompt) {
+    if (bufferedFrame) {
+      window.cancelAnimationFrame(bufferedFrame);
+      bufferedFrame = 0;
+    }
+    batch(() => {
+      if (model.content.peek() !== bufferedContent) model.content.value = bufferedContent;
+      model.errorMessage.value = String(message || 'Thingy is unavailable.');
+      if (retryPrompt) model.retryPrompt.value = retryPrompt;
+      model.status.value = 'error';
+    });
   }
 
   return {
     appendDelta,
     commentary,
+    fail,
     finish,
     setAnswer,
     setCitations,

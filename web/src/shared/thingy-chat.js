@@ -20,10 +20,12 @@ import {
 } from './thingy-markdown.js';
 import {
   activityStepsFromToolNames,
-  renderAssistantResponse,
   renderCuriosityMap
 } from './thingy-chat-rendering.js';
 import { createAssistantStreamRenderer } from './thingy-chat-stream-renderer.js';
+import { createAssistantMessageModel } from './models/assistant-message.js';
+import { mountAssistantMessage } from './components/AssistantMessage.jsx';
+import { effect } from '@preact/signals';
 import { normalizeScopeParam } from './thingy-scope.js';
 import { createSourcePicker } from './thingy-source-picker.js';
 import { createThingyShell } from './thingy-shell.js';
@@ -219,6 +221,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
     if (email) emailInput.value = email;
 
     function resetMessages() {
+      unmountChildren(messages);
       messages.innerHTML = '';
     }
 
@@ -522,6 +525,41 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       return item;
     }
 
+    // Creates an assistant message backed by a reactive model. The DOM root
+    // is returned so other helpers (addResponseActions, scroll bookkeeping)
+    // keep working; the model is what stream code writes into. Pass
+    // `static: true` for a loaded (non-streaming) message — content/
+    // citations/etc. should be passed in modelOptions and won't change.
+    function addAssistantMessage(modelOptions = {}) {
+      const item = document.createElement('div');
+      item.className = 'librarian-message librarian-message-assistant';
+      messages.appendChild(item);
+      const model = createAssistantMessageModel(modelOptions);
+      const unmount = mountAssistantMessage(item, model);
+      const disposePending = effect(() => {
+        const s = model.status.value;
+        item.classList.toggle('librarian-message-pending', s === 'pending' || s === 'streaming');
+      });
+      item._thingyUnmount = () => {
+        disposePending();
+        unmount();
+      };
+      scheduleChatScroll({ force: true });
+      return { element: item, model };
+    }
+
+    function unmountChildren(parent) {
+      Array.from(parent.children).forEach((child) => {
+        if (typeof child._thingyUnmount === 'function') child._thingyUnmount();
+      });
+    }
+
+    function removeMessageElement(item) {
+      if (!item) return;
+      if (typeof item._thingyUnmount === 'function') item._thingyUnmount();
+      item.remove();
+    }
+
     if (chatScroll) {
       chatScroll.addEventListener('scroll', () => {
         autoFollowChat = nearChatBottom();
@@ -574,7 +612,9 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       welcomeInFlightSignal.value = false;
       if (welcomeAbortController) welcomeAbortController.abort();
       welcomeAbortController = null;
-      if (welcomePendingMessage && welcomePendingMessage.isConnected) welcomePendingMessage.remove();
+      if (welcomePendingMessage && welcomePendingMessage.isConnected) {
+        removeMessageElement(welcomePendingMessage);
+      }
       welcomePendingMessage = null;
       updateQuestionState();
     }
@@ -864,14 +904,16 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       stopSpeaking();
       if (!attachToCurrent) {
         setActiveConversation('');
+        unmountChildren(messages);
         messages.innerHTML = '';
       }
       setQuestionInputValue('');
       mapInFlightSignal.value = true;
       updateQuestionState();
       autoFollowChat = true;
-      const pending = addMessage('assistant', '<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>Thingy is drawing connections...</p>');
-      pending.classList.add('librarian-message-pending');
+      const { model } = addAssistantMessage({
+        statusFallback: 'Thingy is drawing connections...'
+      });
       try {
         const map = await postStreamJson('/curiosity-map', {
           scope,
@@ -880,17 +922,19 @@ import { mountRailRecents } from './components/RailRecents.jsx';
           conversation_id: existingConversationId || undefined,
           user_profile: readerProfileContext()
         }, authHeaders());
-        pending.classList.remove('librarian-message-pending');
         if (map.conversation_id) {
           setActiveConversation(map.conversation_id);
         }
         if (map.conversation) upsertConversationSummary(map.conversation);
-        pending.innerHTML = renderCuriosityMap(map) || '<p>Thingy could not find enough connected threads to draw a map yet.</p>';
+        const mapHtml = renderCuriosityMap(map) || '<p>Thingy could not find enough connected threads to draw a map yet.</p>';
+        model.artifactHtml.value = mapHtml;
+        model.status.value = 'done';
         scheduleChatScroll({ force: true });
         await refreshConversations();
         trackTinylyticsEvent('librarian.curiosity_map_success', `${(map.nodes || []).length}.${(map.sources || []).length}`);
       } catch (error) {
-        pending.innerHTML = `<p>${escapeHtml(error.message)}</p>`;
+        model.errorMessage.value = error.message;
+        model.status.value = 'error';
         trackTinylyticsEvent('librarian.curiosity_map_error', error.requestId ? 'server' : 'client');
         if (isAuthError(error)) clearToken();
       } finally {
@@ -1070,6 +1114,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
           activeMode = data.conversation.mode;
           renderModeControl();
         }
+        unmountChildren(messages);
         messages.innerHTML = '';
         hidePrompts();
         const scopeFallback = currentScope();
@@ -1080,8 +1125,16 @@ import { mountRailRecents } from './components/RailRecents.jsx';
           } else if (msg.role === 'assistant') {
             const artifactHtml = msg.artifact?.kind === 'curiosity_map' ? renderCuriosityMap(msg.artifact) : '';
             const activitySteps = activityStepsFromToolNames(msg.tool_names || msg.toolNames || []);
-            const el = addMessage('assistant', artifactHtml || renderAssistantResponse(msg.content || '', msg.citations || [], null, activitySteps, []));
-            if (!artifactHtml && (msg.request_id || msg.requestId)) addResponseActions(el, msg.request_id || msg.requestId);
+            const requestId = msg.request_id || msg.requestId || '';
+            const { element } = addAssistantMessage({
+              content: msg.content || '',
+              citations: msg.citations || [],
+              activity: activitySteps,
+              artifactHtml,
+              status: 'done',
+              requestId
+            });
+            if (!artifactHtml && requestId) addResponseActions(element, requestId);
           }
         }
         setQuestionInputValue('');
@@ -1166,7 +1219,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       }
     }
 
-    async function postStreamingChat(message, pending, scope) {
+    async function postStreamingChat(message, model, scope) {
       if (!streamBase) {
         throw new Error('Thingy has not been connected to the archive stream API yet.');
       }
@@ -1200,12 +1253,13 @@ import { mountRailRecents } from './components/RailRecents.jsx';
         });
       } catch (error) {
         if (chatStopRequested) {
+          model.status.value = 'stopped';
           return { answer: '', citations: [], experience: null, stopped: true, request_id: '', conversation_id: conversationId, conversation: null };
         }
         throw error;
       }
 
-      const renderer = createAssistantStreamRenderer({ pending, scroll: scheduleChatScroll });
+      const renderer = createAssistantStreamRenderer({ model, scroll: scheduleChatScroll });
 
       function applyEvent(eventName, data) {
         if (eventName === 'meta') {
@@ -1261,14 +1315,15 @@ import { mountRailRecents } from './components/RailRecents.jsx';
         if (!chatStopRequested) throw error;
         stopped = true;
       }
-      const result = renderer.finish();
+      const result = renderer.finish(stopped ? 'stopped' : 'done');
+      if (model.requestId.peek() !== requestId) model.requestId.value = requestId;
       if (!stopped && !String(result.answer || '').trim() && !result.experience) {
         throw new Error('Thingy did not return an answer. Please try again.');
       }
       return { ...result, stopped, request_id: requestId, conversation_id: conversationId, conversation };
     }
 
-    async function postStreamingWelcome(pending, scope, options = {}) {
+    async function postStreamingWelcome(model, scope, options = {}) {
       if (!streamBase) {
         throw new Error('Thingy has not been connected to the archive stream API yet.');
       }
@@ -1292,7 +1347,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       });
 
       const renderer = createAssistantStreamRenderer({
-        pending,
+        model,
         scroll: scheduleChatScroll,
         label: 'Session Setup',
         statusFallback: 'Thingy is getting oriented...'
@@ -1329,7 +1384,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       }
 
       await readStream(response, applyEvent);
-      const { answer, experience } = renderer.finish();
+      const { answer, experience } = renderer.finish('done');
       return { answer, experience, request_id: requestId };
     }
 
@@ -1345,15 +1400,20 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       welcomeInFlightSignal.value = true;
       welcomeAbortController = new AbortController();
       updateQuestionState();
-      const pending = addMessage('assistant', '<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>Thingy is getting oriented...</p>');
-      pending.classList.add('librarian-message-pending');
+      const { element: pending, model } = addAssistantMessage({
+        label: 'Session Setup',
+        statusFallback: 'Thingy is getting oriented...'
+      });
       welcomePendingMessage = pending;
       try {
-        await postStreamingWelcome(pending, currentScope(), { controller: welcomeAbortController });
+        await postStreamingWelcome(model, currentScope(), { controller: welcomeAbortController });
         trackTinylyticsEvent('librarian.welcome_success');
       } catch (error) {
         if (!welcomeInFlightSignal.value || !pending.isConnected) return;
-        pending.innerHTML = '<p>Hi. I&rsquo;m Thingy. Ask me what you&rsquo;re curious about and I&rsquo;ll help you explore the archive.</p>';
+        model.activity.value = [];
+        model.commentary.value = [];
+        model.content.value = "Hi. I'm Thingy. Ask me what you're curious about and I'll help you explore the archive.";
+        model.status.value = 'done';
         trackTinylyticsEvent('librarian.welcome_error', error.requestId ? 'server' : 'client');
       } finally {
         if (pending.isConnected) {
@@ -1402,37 +1462,6 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       });
     }
 
-    function appendStreamNote(target, text) {
-      const note = document.createElement('p');
-      note.className = 'librarian-stream-note';
-      note.textContent = text;
-      target.appendChild(note);
-    }
-
-    function renderStreamFailure(target, error, originalMessage) {
-      const hasPartial = Boolean(target.querySelector('.librarian-answer-content'));
-      const notice = document.createElement('div');
-      notice.className = 'librarian-stream-error';
-      const text = document.createElement('p');
-      text.textContent = hasPartial
-        ? `Thingy lost the thread mid-answer. ${error.message}`
-        : error.message;
-      notice.appendChild(text);
-      if (originalMessage && !isAuthError(error)) {
-        const retry = document.createElement('button');
-        retry.type = 'button';
-        retry.className = 'librarian-retry';
-        retry.dataset.retryPrompt = originalMessage;
-        retry.textContent = 'Try again';
-        notice.appendChild(retry);
-      }
-      if (hasPartial) {
-        target.appendChild(notice);
-      } else {
-        target.replaceChildren(notice);
-      }
-    }
-
     async function submitQuestion() {
       if (interactionBusy()) return;
       cancelWelcomeSetup();
@@ -1467,18 +1496,13 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       addPromptActions(userMessage, message, scope);
       setQuestionInputValue('');
       updateQuestionState();
-      const pending = addMessage('assistant', '<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>Thingy is thinking...</p>');
-      pending.classList.add('librarian-message-pending');
+      const { element: pending, model } = addAssistantMessage({
+        statusFallback: 'Thingy is thinking...'
+      });
       try {
-        const data = await postStreamingChat(message, pending, scope);
-        pending.classList.remove('librarian-message-pending');
+        const data = await postStreamingChat(message, model, scope);
         if (data.stopped) {
           const hasPartial = Boolean(String(data.answer || '').trim() || data.experience);
-          if (hasPartial) {
-            appendStreamNote(pending, 'Answer stopped.');
-          } else {
-            pending.innerHTML = '<p class="librarian-stream-note">Answer stopped.</p>';
-          }
           trackTinylyticsEvent('librarian.answer_stopped', hasPartial ? 'partial' : 'empty');
         } else {
           addResponseActions(pending, data.request_id);
@@ -1490,8 +1514,9 @@ import { mountRailRecents } from './components/RailRecents.jsx';
         await refreshConversations();
         if (!data.stopped) trackTinylyticsEvent('librarian.answer_success', `${questionSize}.${(data.citations || []).length}`);
       } catch (error) {
-        pending.classList.remove('librarian-message-pending');
-        renderStreamFailure(pending, error, message);
+        model.errorMessage.value = error.message;
+        if (!isAuthError(error)) model.retryPrompt.value = message;
+        model.status.value = 'error';
         trackTinylyticsEvent('librarian.answer_error', error.requestId ? 'server' : 'client');
         if (isAuthError(error)) {
           clearToken();
@@ -1552,7 +1577,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
         const failed = retryButton.closest('.librarian-message');
         const previous = failed ? failed.previousElementSibling : null;
         setQuestionInputValue(retryButton.dataset.retryPrompt || '');
-        if (failed) failed.remove();
+        if (failed) removeMessageElement(failed);
         if (previous && previous.classList.contains('librarian-message-user')) previous.remove();
         updateQuestionState();
         trackTinylyticsEvent('librarian.answer_retry');
