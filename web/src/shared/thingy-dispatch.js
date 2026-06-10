@@ -1,6 +1,7 @@
 // Boot wiring for /dispatch/: DOM lookups, island mounts, and event
-// listeners. All draft/server/polling logic lives in dispatch-actions.js;
-// this file only connects the actions to the page.
+// listeners. All draft/server/polling logic lives in
+// thingy-dispatch-actions.js; this file only connects the actions to
+// the page.
 
 import * as session from './thingy-session.js';
 import { effect } from '@preact/signals';
@@ -8,8 +9,8 @@ import {
   normalizePreferredName,
 } from './thingy-account.js';
 import { createComposer } from './thingy-composer.js';
-import { attachRailState } from './rail-state.js';
-import { createDispatchActions, draftTitle } from './dispatch-actions.js';
+import { attachRailState } from './thingy-rail-state.js';
+import { createDispatchActions, draftTitle } from './thingy-dispatch-actions.js';
 import { signedIn as signedInSignal } from './stores/chat-store.js';
 import {
   accountMenuOpen as accountMenuOpenSignal,

@@ -24,7 +24,7 @@ const {
   inputPlaceholderForDraft,
   readyDispatchText,
   titleFromPrompt
-} = await import('../src/shared/dispatch-actions.js');
+} = await import('../src/shared/thingy-dispatch-actions.js');
 
 const {
   dispatchBusy,

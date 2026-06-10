@@ -28,10 +28,10 @@ import { mountAssistantMessage } from './components/AssistantMessage.jsx';
 import { effect } from '@preact/signals';
 import { normalizeScopeParam } from './thingy-scope.js';
 import { createSourcePicker } from './thingy-source-picker.js';
-import { attachRailState } from './rail-state.js';
+import { attachRailState } from './thingy-rail-state.js';
 import { postJsonStream, read as readStream } from './thingy-stream.js';
 import { createDictationController } from './thingy-voice.js';
-import { createChatMessageActions } from './thingy-chat-actions.js';
+import { createChatMessageActions } from './thingy-message-actions.js';
 import {
   librarianStreamUrl,
   tinylyticsId
