@@ -162,6 +162,8 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
     const maxQuestionChars = Number(questionInput.getAttribute('maxlength') || '1200');
     const analytics = createTinylyticsTracker({ enabled: Boolean(tinylyticsId()) });
     let answerInFlight = false;
+    let chatAbortController = null;
+    let chatStopRequested = false;
     let autoFollowChat = true;
     let scrollFrame = 0;
     let composerReserveFrame = 0;
@@ -169,6 +171,7 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
     let welcomeInFlight = false;
     let welcomeShownThisVisit = false;
     let welcomeAbortController = null;
+    let welcomePendingMessage = null;
     let mapInFlight = false;
     let conversationCreateInFlight = false;
     let dictationControls = null;
@@ -374,17 +377,16 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
     async function refreshStoredAuth(options = {}) {
       if (!token() || tokenExpired()) return false;
       const shouldTrack = options.track !== false;
-      try {
-        const data = await postJson('/auth', { action: 'refresh_session' }, authHeaders());
-        if (!data.token) return false;
-        persistToken(data.token, data);
-        refreshAccountIdentity();
-        if (shouldTrack) trackTinylyticsEvent('librarian.auth_refresh_success');
-        return true;
-      } catch (error) {
+      const data = await session.refreshAuth();
+      if (!data) {
         if (shouldTrack) trackTinylyticsEvent('librarian.auth_refresh_error');
         return false;
       }
+      setUserProfile(data);
+      if (data.email && emailInput) emailInput.value = normalizeEmail(data.email);
+      refreshAccountIdentity();
+      if (shouldTrack) trackTinylyticsEvent('librarian.auth_refresh_success');
+      return true;
     }
 
     async function refreshAccountProfile(options = {}) {
@@ -551,10 +553,15 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       welcomeInFlight = false;
       if (welcomeAbortController) welcomeAbortController.abort();
       welcomeAbortController = null;
-      document.querySelectorAll('.librarian-message-pending').forEach((message) => {
-        if (/Thingy is getting oriented/i.test(message.textContent || '')) message.remove();
-      });
+      if (welcomePendingMessage && welcomePendingMessage.isConnected) welcomePendingMessage.remove();
+      welcomePendingMessage = null;
       updateQuestionState();
+    }
+
+    function stopActiveAnswer() {
+      if (!chatAbortController) return;
+      chatStopRequested = true;
+      chatAbortController.abort();
     }
 
     function updateQuestionState() {
@@ -564,6 +571,7 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
         maxChars: maxQuestionChars,
         hasSources: sourceCount() > 0,
         busy: interactionBusy(),
+        stoppable: answerInFlight && Boolean(chatAbortController),
         signedIn: Boolean(token()),
         sourceError,
         form: questionForm,
@@ -597,6 +605,25 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
 
     function trackTinylyticsEvent(name, value) {
       analytics.track(name, value);
+    }
+
+    let noticeTimer = 0;
+    function showNotice(message) {
+      let notice = document.getElementById('thingy-notice');
+      if (!notice) {
+        notice = document.createElement('div');
+        notice.id = 'thingy-notice';
+        notice.className = 'thingy-notice';
+        notice.setAttribute('role', 'status');
+        notice.setAttribute('aria-live', 'polite');
+        document.body.appendChild(notice);
+      }
+      notice.textContent = message;
+      notice.classList.add('is-visible');
+      if (noticeTimer) window.clearTimeout(noticeTimer);
+      noticeTimer = window.setTimeout(() => {
+        notice.classList.remove('is-visible');
+      }, 4000);
     }
 
     function escapeHtml(value) {
@@ -758,6 +785,7 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       if (!trimmed || trimmed === current) return;
       if (isLocalConversationId(active.id)) {
         active.title = trimmed;
+        active.draft = false;
         active.updated_at = new Date().toISOString();
         renderRecents();
         updateMobileConversationTitle();
@@ -765,9 +793,10 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       }
       try {
         const data = await conversationAction({ action: 'rename', conversation_id: active.id, title: trimmed });
-        if (data.conversation) upsertConversationSummary(data.conversation);
+        if (data.conversation) upsertConversationSummary({ ...data.conversation, draft: false });
         trackTinylyticsEvent('librarian.conversation_rename');
       } catch (error) {
+        showNotice('Could not rename the conversation. Please try again.');
         trackTinylyticsEvent('librarian.conversations_error', 'rename');
       }
     }
@@ -790,6 +819,7 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
         setMobileRailOpen(false);
         trackTinylyticsEvent('librarian.conversation_delete');
       } catch (error) {
+        showNotice('Could not delete the conversation. Please try again.');
         trackTinylyticsEvent('librarian.conversations_error', 'delete');
       }
     }
@@ -895,7 +925,8 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
           scope: existing.scope || scope || currentScope(),
           mode: normalizeModeId(existing.mode || mode || currentConversationMode()),
           updated_at: now,
-          last_message_at: now
+          last_message_at: now,
+          draft: false
         });
         return;
       }
@@ -909,7 +940,8 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
         created_at: now,
         updated_at: now,
         last_message_at: now,
-        turn_count: 0
+        turn_count: 0,
+        draft: false
       }, { replaceId });
     }
 
@@ -932,15 +964,19 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
           scope: currentScope()
         });
         if (data.conversation) {
-          upsertConversationSummary(data.conversation, {
+          upsertConversationSummary({ ...data.conversation, draft: true }, {
             replaceId: isLocalConversationId(replaceId) ? replaceId : ''
           });
           setActiveConversation(data.conversation.id || data.conversation.conversation_id);
           return data.conversation;
         }
       } catch (error) {
+        if (isAuthError(error)) {
+          clearToken();
+        } else {
+          showNotice(`Could not start a ${modeLabel(normalized)} chat. Please try again.`);
+        }
         trackTinylyticsEvent('librarian.conversations_error', 'create');
-        if (isAuthError(error)) clearToken();
       } finally {
         conversationCreateInFlight = false;
         updateQuestionState();
@@ -1076,6 +1112,7 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
         scrollChatToBottom({ force: true });
         questionInput.focus();
       } catch (error) {
+        showNotice('Could not load that conversation. Please try again.');
         trackTinylyticsEvent('librarian.conversations_error', 'get');
       }
     }
@@ -1157,23 +1194,35 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       let requestId = '';
       let conversationId = isLocalConversationId(activeConversationId) ? '' : (activeConversationId || '');
       let conversation = null;
-      const response = await postJsonStream({
-        baseUrl: streamBase,
-        path: '/chat',
-        timeoutMs: 190000,
-        abortMessage: 'Thingy spent too long in the archive. Please try again with a narrower angle.',
-        headers: {
-          authorization: `Bearer ${token()}`
-        },
-        payload: {
-          message,
-          scope,
-          mode: currentConversationMode(),
-          conversation_id: conversationId || undefined,
-          client_context: userLocalContext(),
-          user_profile: readerProfileContext()
+      chatStopRequested = false;
+      chatAbortController = new AbortController();
+      updateQuestionState();
+      let response;
+      try {
+        response = await postJsonStream({
+          baseUrl: streamBase,
+          path: '/chat',
+          controller: chatAbortController,
+          timeoutMs: 190000,
+          abortMessage: 'Thingy spent too long in the archive. Please try again with a narrower angle.',
+          headers: {
+            authorization: `Bearer ${token()}`
+          },
+          payload: {
+            message,
+            scope,
+            mode: currentConversationMode(),
+            conversation_id: conversationId || undefined,
+            client_context: userLocalContext(),
+            user_profile: readerProfileContext()
+          }
+        });
+      } catch (error) {
+        if (chatStopRequested) {
+          return { answer: '', citations: [], experience: null, stopped: true, request_id: '', conversation_id: conversationId, conversation: null };
         }
-      });
+        throw error;
+      }
 
       const renderer = createAssistantStreamRenderer({ pending, scroll: scheduleChatScroll });
 
@@ -1224,12 +1273,18 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
         }
       }
 
-      await readStream(response, applyEvent);
+      let stopped = false;
+      try {
+        await readStream(response, applyEvent);
+      } catch (error) {
+        if (!chatStopRequested) throw error;
+        stopped = true;
+      }
       const result = renderer.finish();
-      if (!String(result.answer || '').trim() && !result.experience) {
+      if (!stopped && !String(result.answer || '').trim() && !result.experience) {
         throw new Error('Thingy did not return an answer. Please try again.');
       }
-      return { ...result, request_id: requestId, conversation_id: conversationId, conversation };
+      return { ...result, stopped, request_id: requestId, conversation_id: conversationId, conversation };
     }
 
     async function postStreamingWelcome(pending, scope, options = {}) {
@@ -1311,6 +1366,7 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       updateQuestionState();
       const pending = addMessage('assistant', '<p class="librarian-status-line"><span class="librarian-thinking-dot"></span>Thingy is getting oriented...</p>');
       pending.classList.add('librarian-message-pending');
+      welcomePendingMessage = pending;
       try {
         await postStreamingWelcome(pending, currentScope(), { controller: welcomeAbortController });
         trackTinylyticsEvent('librarian.welcome_success');
@@ -1322,6 +1378,7 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
         if (pending.isConnected) {
           welcomeInFlight = false;
           welcomeAbortController = null;
+          welcomePendingMessage = null;
           updateQuestionState();
         }
       }
@@ -1364,6 +1421,37 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       });
     }
 
+    function appendStreamNote(target, text) {
+      const note = document.createElement('p');
+      note.className = 'librarian-stream-note';
+      note.textContent = text;
+      target.appendChild(note);
+    }
+
+    function renderStreamFailure(target, error, originalMessage) {
+      const hasPartial = Boolean(target.querySelector('.librarian-answer-content'));
+      const notice = document.createElement('div');
+      notice.className = 'librarian-stream-error';
+      const text = document.createElement('p');
+      text.textContent = hasPartial
+        ? `Thingy lost the thread mid-answer. ${error.message}`
+        : error.message;
+      notice.appendChild(text);
+      if (originalMessage && !isAuthError(error)) {
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.className = 'librarian-retry';
+        retry.dataset.retryPrompt = originalMessage;
+        retry.textContent = 'Try again';
+        notice.appendChild(retry);
+      }
+      if (hasPartial) {
+        target.appendChild(notice);
+      } else {
+        target.replaceChildren(notice);
+      }
+    }
+
     async function submitQuestion() {
       if (interactionBusy()) return;
       cancelWelcomeSetup();
@@ -1403,24 +1491,45 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
       try {
         const data = await postStreamingChat(message, pending, scope);
         pending.classList.remove('librarian-message-pending');
-        addResponseActions(pending, data.request_id);
+        if (data.stopped) {
+          const hasPartial = Boolean(String(data.answer || '').trim() || data.experience);
+          if (hasPartial) {
+            appendStreamNote(pending, 'Answer stopped.');
+          } else {
+            pending.innerHTML = '<p class="librarian-stream-note">Answer stopped.</p>';
+          }
+          trackTinylyticsEvent('librarian.answer_stopped', hasPartial ? 'partial' : 'empty');
+        } else {
+          addResponseActions(pending, data.request_id);
+        }
         if (data.conversation_id) {
           setActiveConversation(data.conversation_id);
         }
         if (data.conversation) upsertConversationSummary(data.conversation);
         await refreshConversations();
-        trackTinylyticsEvent('librarian.answer_success', `${questionSize}.${(data.citations || []).length}`);
+        if (!data.stopped) trackTinylyticsEvent('librarian.answer_success', `${questionSize}.${(data.citations || []).length}`);
       } catch (error) {
-        pending.innerHTML = `<p>${escapeHtml(error.message)}</p>`;
+        pending.classList.remove('librarian-message-pending');
+        renderStreamFailure(pending, error, message);
         trackTinylyticsEvent('librarian.answer_error', error.requestId ? 'server' : 'client');
         if (isAuthError(error)) {
           clearToken();
         }
       } finally {
         answerInFlight = false;
+        chatAbortController = null;
+        chatStopRequested = false;
         updateQuestionState();
       }
     }
+
+    questionButton.addEventListener('click', (event) => {
+      if (answerInFlight && chatAbortController) {
+        event.preventDefault();
+        stopActiveAnswer();
+        trackTinylyticsEvent('librarian.answer_stop_click');
+      }
+    });
 
     composerControls = createComposer({
       form: questionForm,
@@ -1447,6 +1556,18 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
 
     messages.addEventListener('click', (event) => {
       const target = event.target instanceof Element ? event.target : event.target.parentElement;
+      const retryButton = target ? target.closest('button[data-retry-prompt]') : null;
+      if (retryButton && !interactionBusy()) {
+        const failed = retryButton.closest('.librarian-message');
+        const previous = failed ? failed.previousElementSibling : null;
+        questionInput.value = retryButton.dataset.retryPrompt || '';
+        if (failed) failed.remove();
+        if (previous && previous.classList.contains('librarian-message-user')) previous.remove();
+        updateQuestionState();
+        trackTinylyticsEvent('librarian.answer_retry');
+        questionForm.requestSubmit();
+        return;
+      }
       const button = target ? target.closest('button[data-experience-prompt], button[data-map-prompt]') : null;
       if (!button || interactionBusy()) return;
       questionInput.value = button.dataset.experiencePrompt || button.dataset.mapPrompt || '';
@@ -1539,6 +1660,19 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) refreshAccountProfile();
     });
+    window.addEventListener('storage', (event) => {
+      // null key means storage was cleared wholesale.
+      if (event.key !== null && event.key !== session.storageKey) return;
+      const hasToken = Boolean(token());
+      const chatVisible = !chatPanel.hidden;
+      if (!hasToken && chatVisible) {
+        stopActiveAnswer();
+        clearToken({ message: 'You signed out of Thingy in another tab.' });
+        trackTinylyticsEvent('librarian.session_synced_signout');
+      } else if (hasToken && !chatVisible) {
+        window.location.reload();
+      }
+    });
 
     /* Recents list interactions. */
     const railRecentsEl = document.getElementById('rail-recents');
@@ -1575,6 +1709,7 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
             trackTinylyticsEvent('librarian.conversation_delete');
           } catch (error) {
             deleteBtn.disabled = false;
+            showNotice('Could not delete the conversation. Please try again.');
             trackTinylyticsEvent('librarian.conversations_error', 'delete');
           }
           return;

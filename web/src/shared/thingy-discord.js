@@ -33,13 +33,9 @@ function hideSignIn() {
 }
 
 async function refreshProfile() {
-  if (!session.token() || session.tokenExpired()) return session.storedProfile();
-  try {
-    const data = await session.postJson('/auth', { action: 'refresh_session' }, session.authHeaders());
-    session.persistAuth(data, session.storedEmail());
-  } catch (error) {
-    // Fall back to the cached profile; the code request below will surface auth failures.
-  }
+  // Falls back to the cached profile on failure; the code request below
+  // will surface auth failures.
+  await session.refreshAuth();
   return session.storedProfile();
 }
 

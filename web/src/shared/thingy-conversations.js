@@ -16,16 +16,22 @@ function conversationTitle(mode = 'thingy', labelForMode = () => 'Thingy') {
 function emptyConversationDraftKey(entry, labelForMode = () => 'Thingy') {
   if (!entry?.id) return '';
   const normalized = normalizeModeId(entry.mode || 'thingy');
+  if (entry.draft === true) return `${normalized}:${conversationTitle(normalized, labelForMode)}`;
+  if (entry.draft === false) return '';
   const title = String(entry.title || '');
   return title === conversationTitle(normalized, labelForMode) ? `${normalized}:${title}` : '';
 }
 
+// `draft` is an explicit client-side marker; the title comparison only exists
+// as a fallback for server rows that predate the marker.
 function isEmptyConversationDraft(entry, mode = '', labelForMode = () => 'Thingy') {
   if (!entry?.id) return false;
+  if (entry.draft === false) return false;
   const normalized = normalizeModeId(mode || entry.mode || 'thingy');
-  return normalizeModeId(entry.mode || 'thingy') === normalized
-    && Number(entry.turn_count || 0) === 0
-    && String(entry.title || '') === conversationTitle(normalized, labelForMode);
+  if (normalizeModeId(entry.mode || 'thingy') !== normalized) return false;
+  if (Number(entry.turn_count || 0) !== 0) return false;
+  if (entry.draft === true) return true;
+  return String(entry.title || '') === conversationTitle(normalized, labelForMode);
 }
 
 function dedupeEmptyConversationDrafts(list = [], options = {}) {
@@ -110,7 +116,8 @@ function createLocalConversation(options = {}) {
     updated_at: now,
     last_message_at: now,
     turn_count: 0,
-    local: true
+    local: true,
+    draft: true
   };
 }
 

@@ -193,6 +193,31 @@
   stroke-linejoin: round;
 }
 
+.composer-send .composer-send-ask,
+.composer-send .composer-send-stop {
+  display: grid;
+  place-items: center;
+  line-height: 0;
+}
+
+.composer-send .composer-send-stop {
+  display: none;
+}
+
+.composer-send.is-stop .composer-send-ask {
+  display: none;
+}
+
+.composer-send.is-stop .composer-send-stop {
+  display: grid;
+}
+
+.composer-send.is-stop svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+}
+
 .srcpick {
   position: relative;
   min-width: 0;

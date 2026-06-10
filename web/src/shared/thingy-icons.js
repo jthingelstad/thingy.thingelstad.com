@@ -30,6 +30,7 @@ import sendHorizontal from 'lucide-static/icons/send-horizontal.svg?raw';
 import share2 from 'lucide-static/icons/share-2.svg?raw';
 import shieldCheck from 'lucide-static/icons/shield-check.svg?raw';
 import sparkles from 'lucide-static/icons/sparkles.svg?raw';
+import square from 'lucide-static/icons/square.svg?raw';
 import thumbsDown from 'lucide-static/icons/thumbs-down.svg?raw';
 import thumbsUp from 'lucide-static/icons/thumbs-up.svg?raw';
 import triangleAlert from 'lucide-static/icons/triangle-alert.svg?raw';
@@ -72,6 +73,7 @@ const icons = {
   'share-2': share2,
   'shield-check': shieldCheck,
   sparkles,
+  square,
   'thumbs-down': thumbsDown,
   'thumbs-up': thumbsUp,
   'triangle-alert': triangleAlert,

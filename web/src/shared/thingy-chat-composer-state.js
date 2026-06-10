@@ -18,9 +18,12 @@ function updateChatComposerState(options = {}) {
     options.form.classList.toggle('is-busy', busy);
   }
   if (options.submitButton) {
-    options.submitButton.disabled = busy || !hasSources || !hasText || length > maxChars;
-    options.submitButton.setAttribute('aria-label', busy ? 'Thingy is answering' : 'Ask Thingy');
-    options.submitButton.title = busy ? 'Thingy is answering' : 'Ask Thingy';
+    const stoppable = busy && Boolean(options.stoppable);
+    options.submitButton.disabled = stoppable ? false : (busy || !hasSources || !hasText || length > maxChars);
+    options.submitButton.classList.toggle('is-stop', stoppable);
+    const submitLabel = stoppable ? 'Stop answer' : busy ? 'Thingy is answering' : 'Ask Thingy';
+    options.submitButton.setAttribute('aria-label', submitLabel);
+    options.submitButton.title = submitLabel;
   }
   if (options.mapDraftButton) {
     const canMapDraft = hasText && length <= maxChars && hasSources && signedIn;

@@ -58,14 +58,17 @@ async function postJson(path, payload, headers) {
   });
 }
 
+// Returns the parsed /auth payload on success (so callers can update UI
+// state from it), or null on any failure.
 async function refreshAuth() {
-  if (!token() || tokenExpired()) return false;
+  if (!token() || tokenExpired()) return null;
   try {
     const data = await postJson('/auth', { action: 'refresh_session' }, authHeaders());
+    if (!data || !data.token) return null;
     persistAuth(data, storedEmail());
-    return Boolean(data.token);
+    return data;
   } catch (error) {
-    return false;
+    return null;
   }
 }
 
@@ -73,7 +76,7 @@ async function ensureFreshToken() {
   if (!token()) return false;
   if (tokenExpired()) return false;
   if (!tokenNeedsRefresh()) return true;
-  return await refreshAuth();
+  return Boolean(await refreshAuth());
 }
 
 function normalizeModes(modes) {

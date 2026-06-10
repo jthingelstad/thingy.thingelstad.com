@@ -271,6 +271,47 @@
   margin-top: 0;
 }
 
+.librarian-stream-note {
+  margin: 10px 0 0;
+  color: var(--color-text-muted);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-style: italic;
+}
+
+.librarian-stream-error {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, #b23a2a 30%, var(--line));
+  border-left: 3px solid #b23a2a;
+  border-radius: 8px;
+  background: color-mix(in srgb, #b23a2a 6%, var(--surface));
+}
+
+.librarian-stream-error p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-family: var(--sans);
+  font-size: 14.5px;
+}
+
+.librarian-retry {
+  margin-top: 8px;
+  padding: 5px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-family: var(--sans);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.librarian-retry:hover {
+  border-color: var(--ink);
+}
+
 @media (max-width: 640px) {
   .thingy-h1 {
     font-size: 42px;

@@ -5,6 +5,32 @@
   background: var(--bg);
 }
 
+.thingy-notice {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 60;
+  max-width: min(28rem, calc(100vw - 32px));
+  padding: 10px 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--surface);
+  font-family: var(--sans);
+  font-size: 14.5px;
+  text-align: center;
+  box-shadow: 0 10px 28px rgba(23, 33, 31, 0.24);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 8px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.thingy-notice.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
 :root {
   --rail-bg: color-mix(in srgb, var(--surface-2) 75%, var(--bg));
   --rail-w: 264px;
