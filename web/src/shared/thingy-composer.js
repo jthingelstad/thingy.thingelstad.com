@@ -2,11 +2,13 @@ function defaultBusy() {
     return false;
   }
 
+// Wires the dumb pieces of a composer: form submit / Enter key / autosize.
+// The character count and the send button used to live here too; both moved
+// to the ComposerCount and ComposerSubmit signal-backed islands and the
+// `count` option was retired with them.
 function createComposer(options = {}) {
     const form = options.form || null;
     const input = options.input || null;
-    const count = options.count || null;
-    const maxChars = Number(options.maxChars || input?.getAttribute('maxlength') || 0);
     const isBusy = typeof options.isBusy === 'function' ? options.isBusy : defaultBusy;
     const onSubmit = typeof options.onSubmit === 'function' ? options.onSubmit : null;
     const onError = typeof options.onError === 'function' ? options.onError : null;
@@ -22,14 +24,7 @@ function createComposer(options = {}) {
       if (onAutoSize) onAutoSize();
     }
 
-    function updateCount() {
-      if (!count || !input || !maxChars) return;
-      count.textContent = `${input.value.length} / ${maxChars}`;
-      count.classList.toggle('warning', input.value.length > maxChars * 0.9);
-    }
-
     function sync() {
-      updateCount();
       autoSize();
     }
 
@@ -67,7 +62,7 @@ function createComposer(options = {}) {
     }
 
     sync();
-    return { autoSize, sync, updateCount };
+    return { autoSize, sync };
   }
 
 export { createComposer };
