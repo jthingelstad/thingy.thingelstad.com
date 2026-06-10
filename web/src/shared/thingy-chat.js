@@ -54,6 +54,7 @@ import { updateChatComposerState } from './thingy-chat-composer-state.js';
 import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-response.js';
 import {
   activeConversationId as activeConversationIdSignal,
+  activeMode as activeModeSignal,
   answerInFlight as answerInFlightSignal,
   authAction as authActionSignal,
   authBusy as authBusySignal,
@@ -150,12 +151,31 @@ function bootChat() {
       }
     });
     const maxRecents = 20;
-    let activeConversationId = null;
-    let conversations = [];
-    let preferredName = '';
+
+    // The mirror that used to live in renderRecents() is gone. `state` is a
+    // setter-backed proxy: writing `state.conversations = [...]` notifies
+    // the corresponding signal immediately, and reads return the signal's
+    // current value. That removes the bug class where a mutation could
+    // land without a matching renderRecents() call.
+    const state = new Proxy({}, {
+      get(_, prop) {
+        if (prop === 'conversations') return conversationsSignal.value;
+        if (prop === 'activeConversationId') return activeConversationIdSignal.value;
+        if (prop === 'availableModes') return availableModesSignal.value;
+        if (prop === 'activeMode') return activeModeSignal.value;
+        if (prop === 'preferredName') return displayPreferredNameSignal.value;
+        return undefined;
+      },
+      set(_, prop, value) {
+        if (prop === 'conversations') conversationsSignal.value = value;
+        else if (prop === 'activeConversationId') activeConversationIdSignal.value = value;
+        else if (prop === 'availableModes') availableModesSignal.value = value;
+        else if (prop === 'activeMode') activeModeSignal.value = value;
+        else if (prop === 'preferredName') displayPreferredNameSignal.value = value;
+        return true;
+      }
+    });
     let awaitingName = false;
-    let activeMode = 'thingy';
-    let availableModes = [{ id: 'thingy', label: 'Thingy' }];
     const maxQuestionChars = Number(questionInput.getAttribute('maxlength') || '1200');
     const analytics = createTinylyticsTracker({ enabled: Boolean(tinylyticsId()) });
     let chatAbortController = null;
@@ -246,10 +266,10 @@ function bootChat() {
     function setUserProfile(data) {
       const profile = session.mergeProfile(data || {}, storedEmail());
       const modes = normalizeModes(profile.modes || data?.modes || data?.profile?.modes || []);
-      availableModes = modes.length ? modes : [{ id: 'thingy', label: 'Thingy' }];
-      if (!availableModes.some((mode) => mode.id === activeMode)) activeMode = 'thingy';
-      preferredName = String(profile.preferred_name || '').trim();
-      session.updateStoredProfile({ ...profile, modes: availableModes });
+      state.availableModes = modes.length ? modes : [{ id: 'thingy', label: 'Thingy' }];
+      if (!state.availableModes.some((mode) => mode.id === state.activeMode)) state.activeMode = 'thingy';
+      state.preferredName = String(profile.preferred_name || '').trim();
+      session.updateStoredProfile({ ...profile, modes: state.availableModes });
       renderModeControl();
       return profile;
     }
@@ -258,19 +278,19 @@ function bootChat() {
       return session.storedProfile();
     }
 
-    function modeLabel(id = activeMode) {
-      return availableModes.find((mode) => mode.id === id)?.label || 'Thingy';
+    function modeLabel(id = state.activeMode) {
+      return state.availableModes.find((mode) => mode.id === id)?.label || 'Thingy';
     }
 
     function currentConversationMode() {
-      return activeConversation()?.mode || activeMode || 'thingy';
+      return activeConversation()?.mode || state.activeMode || 'thingy';
     }
 
     function isLocalConversationId(id) {
       return isLocalConversationIdValue(id, localConversationPrefix);
     }
 
-    function newConversationTitle(mode = activeMode) {
+    function newConversationTitle(mode = state.activeMode) {
       return conversationTitle(mode, modeLabel);
     }
 
@@ -293,10 +313,10 @@ function bootChat() {
 
     function renderModeControl() {
       if (!modeControl || !modeSelect) return;
-      const show = token() && availableModes.length > 1;
+      const show = token() && state.availableModes.length > 1;
       modeControl.hidden = !show;
-      modeSelect.innerHTML = availableModes.map((mode) => `<option value="${escapeHtml(mode.id)}">${escapeHtml(mode.label)}</option>`).join('');
-      modeSelect.value = availableModes.some((mode) => mode.id === activeMode) ? activeMode : 'thingy';
+      modeSelect.innerHTML = state.availableModes.map((mode) => `<option value="${escapeHtml(mode.id)}">${escapeHtml(mode.label)}</option>`).join('');
+      modeSelect.value = state.availableModes.some((mode) => mode.id === state.activeMode) ? state.activeMode : 'thingy';
       if (modeIconEl) modeIconEl.innerHTML = iconSvg(modeIcon(modeSelect.value));
       renderModeBanner();
     }
@@ -304,9 +324,10 @@ function bootChat() {
     function rememberPreferredName(name) {
       const cleanName = String(name || '').trim();
       if (!cleanName) return;
-      preferredName = cleanName;
+      // state.preferredName mirrors to displayPreferredNameSignal via the
+      // setter proxy, which is what the AccountMenu component subscribes to.
+      state.preferredName = cleanName;
       session.updateStoredProfile({ preferred_name: cleanName });
-      displayPreferredNameSignal.value = cleanName;
     }
 
     async function persistInferredPreferredName(name) {
@@ -319,7 +340,7 @@ function bootChat() {
     function readerProfileContext() {
       return {
         ...userProfile(),
-        preferred_name: preferredName,
+        preferred_name: state.preferredName,
         awaiting_name: awaitingName
       };
     }
@@ -407,7 +428,7 @@ function bootChat() {
           maybeSubmitInitialPrompt();
           return;
         }
-        if (!activeConversationId) startAgentWelcome();
+        if (!state.activeConversationId) startAgentWelcome();
       });
       scheduleComposerReserveUpdate();
       questionInput.focus();
@@ -423,9 +444,9 @@ function bootChat() {
       signedInSignal.value = false;
       if (config.preserveEmail && emailValue) authEmailSignal.value = emailValue;
       if (config.scrubAuthParams) scrubUrlParams(['login_token', 'magic_token', 'email']);
-      conversations = [];
-      availableModes = [{ id: 'thingy', label: 'Thingy' }];
-      activeMode = 'thingy';
+      state.conversations = [];
+      state.availableModes = [{ id: 'thingy', label: 'Thingy' }];
+      state.activeMode = 'thingy';
       setActiveConversation('');
       welcomeShownThisVisit = false;
       prompts.hidden = true;
@@ -439,13 +460,13 @@ function bootChat() {
     }
 
     function refreshAccountIdentity() {
-      // The AccountMenu component reads these signals; bootstrap and the
-      // refresh flows push the latest stored identity into them.
+      // displayEmail and displayProfile are owned by the controller (they
+      // mirror values derived from session.storedX()). state.preferredName
+      // is the source of truth for the name signal and already up-to-date.
       const stored = session.storedEmail();
       const value = String(authEmailSignal.value || '').trim() || stored;
       displayEmailSignal.value = value;
       displayProfileSignal.value = userProfile() || {};
-      displayPreferredNameSignal.value = preferredName;
       renderModeControl();
     }
 
@@ -670,10 +691,10 @@ function bootChat() {
     }
 
     function setActiveConversation(id) {
-      activeConversationId = String(id || '').trim() || null;
+      state.activeConversationId = String(id || '').trim() || null;
       try {
-        if (activeConversationId) {
-          window.localStorage.setItem(activeConvKey, activeConversationId);
+        if (state.activeConversationId) {
+          window.localStorage.setItem(activeConvKey, state.activeConversationId);
         } else {
           window.localStorage.removeItem(activeConvKey);
         }
@@ -681,7 +702,7 @@ function bootChat() {
       renderRecents();
       updateMobileConversationTitle();
       renderModeBanner();
-      return activeConversationId;
+      return state.activeConversationId;
     }
 
     function resetConversationView() {
@@ -709,12 +730,12 @@ function bootChat() {
 
     function dedupeEmptyConversationDrafts(list = [], options = {}) {
       return dedupeConversationDrafts(list, {
-        activeConversationId: options.activeConversationId || activeConversationId,
+        activeConversationId: options.activeConversationId || state.activeConversationId,
         labelForMode: modeLabel
       });
     }
 
-    function createLocalConversationShell(mode = activeMode) {
+    function createLocalConversationShell(mode = state.activeMode) {
       const normalized = normalizeModeId(mode);
       const existing = activeConversation();
       if (existing?.id && isLocalConversationId(existing.id)) {
@@ -730,27 +751,27 @@ function bootChat() {
         prefix: localConversationPrefix,
         labelForMode: modeLabel
       });
-      conversations = conversations.filter((entry) => !isEmptyConversationDraft(entry, normalized));
-      conversations.unshift(shell);
-      conversations = dedupeEmptyConversationDrafts(conversations, { activeConversationId: shell.id }).slice(0, maxRecents);
+      state.conversations = state.conversations.filter((entry) => !isEmptyConversationDraft(entry, normalized));
+      state.conversations.unshift(shell);
+      state.conversations = dedupeEmptyConversationDrafts(state.conversations, { activeConversationId: shell.id }).slice(0, maxRecents);
       setActiveConversation(shell.id);
       return shell;
     }
 
-    function startNewConversationView(mode = activeMode) {
-      activeMode = normalizeModeId(mode);
-      const shell = createLocalConversationShell(activeMode);
+    function startNewConversationView(mode = state.activeMode) {
+      state.activeMode = normalizeModeId(mode);
+      const shell = createLocalConversationShell(state.activeMode);
       resetConversationView();
       return shell;
     }
 
     function activeConversation() {
-      if (!activeConversationId) return null;
-      return conversations.find((entry) => entry.id === activeConversationId || entry.conversation_id === activeConversationId) || null;
+      if (!state.activeConversationId) return null;
+      return state.conversations.find((entry) => entry.id === state.activeConversationId || entry.conversation_id === state.activeConversationId) || null;
     }
 
     function currentConversationTitle() {
-      if (!activeConversationId) return 'New chat';
+      if (!state.activeConversationId) return 'New chat';
       const active = activeConversation();
       return active?.title || 'Current chat';
     }
@@ -764,7 +785,7 @@ function bootChat() {
 
     function updateMobileConversationTitle() {
       if (mobileConversationTitle) mobileConversationTitle.textContent = currentConversationTitle();
-      const hasActive = Boolean(activeConversationId && activeConversation());
+      const hasActive = Boolean(state.activeConversationId && activeConversation());
       if (mobileConversationMenuButton) {
         mobileConversationMenuButton.disabled = !hasActive || interactionBusy();
         mobileConversationMenuButton.title = hasActive ? 'Conversation actions' : 'No conversation actions';
@@ -809,14 +830,14 @@ function bootChat() {
       toggleMobileConversationMenu(false);
       if (!window.confirm('Delete this conversation?')) return;
       if (isLocalConversationId(active.id)) {
-        ({ conversations, activeConversationId } = deleteConversationSummaryList(conversations, active.id, { activeConversationId }));
+        ({ conversations: state.conversations, activeConversationId: state.activeConversationId } = deleteConversationSummaryList(state.conversations, active.id, { activeConversationId: state.activeConversationId }));
         startBlankConversationView();
         setMobileRailOpen(false);
         return;
       }
       try {
         await conversationAction({ action: 'delete', conversation_id: active.id });
-        ({ conversations, activeConversationId } = deleteConversationSummaryList(conversations, active.id, { activeConversationId }));
+        ({ conversations: state.conversations, activeConversationId: state.activeConversationId } = deleteConversationSummaryList(state.conversations, active.id, { activeConversationId: state.activeConversationId }));
         clearConversation();
         setMobileRailOpen(false);
         trackTinylyticsEvent('librarian.conversation_delete');
@@ -832,8 +853,8 @@ function bootChat() {
       stopSpeaking();
       if (dictationControls?.isListening?.()) stopDictation();
       welcomeShownThisVisit = true;
-      activeMode = normalizeModeId(modeSelect?.value || activeMode);
-      const shell = startNewConversationView(activeMode);
+      state.activeMode = normalizeModeId(modeSelect?.value || state.activeMode);
+      const shell = startNewConversationView(state.activeMode);
       questionInput.focus();
       trackTinylyticsEvent('librarian.clear');
       return shell;
@@ -850,8 +871,8 @@ function bootChat() {
         updateQuestionState();
         return;
       }
-      const attachToCurrent = Boolean(options.attachToCurrent && activeConversationId && !isLocalConversationId(activeConversationId));
-      const existingConversationId = attachToCurrent ? activeConversationId : '';
+      const attachToCurrent = Boolean(options.attachToCurrent && state.activeConversationId && !isLocalConversationId(state.activeConversationId));
+      const existingConversationId = attachToCurrent ? state.activeConversationId : '';
       if (!attachToCurrent) welcomeShownThisVisit = true;
       hidePrompts();
       if (window.matchMedia('(max-width: 640px)').matches) setMobileRailOpen(false);
@@ -900,16 +921,16 @@ function bootChat() {
     function upsertConversationSummary(conversation, options = {}) {
       if (!conversation || !(conversation.id || conversation.conversation_id)) return;
       const replaceId = String(options.replaceId || '').trim();
-      const result = upsertConversationSummaryList(conversations, conversation, {
-        activeConversationId,
+      const result = upsertConversationSummaryList(state.conversations, conversation, {
+        activeConversationId: state.activeConversationId,
         labelForMode: modeLabel,
         maxRecents,
         replaceId
       });
-      conversations = result.conversations;
-      if (result.activeConversationId && result.activeConversationId !== activeConversationId) {
-        activeConversationId = result.activeConversationId;
-        try { window.localStorage.setItem(activeConvKey, activeConversationId); } catch (error) { /* ignore */ }
+      state.conversations = result.conversations;
+      if (result.activeConversationId && result.activeConversationId !== state.activeConversationId) {
+        state.activeConversationId = result.activeConversationId;
+        try { window.localStorage.setItem(activeConvKey, state.activeConversationId); } catch (error) { /* ignore */ }
       }
       renderRecents();
       updateMobileConversationTitle();
@@ -919,9 +940,9 @@ function bootChat() {
     function upsertPendingConversation({ conversationId, title, scope, mode }) {
       const id = String(conversationId || '').trim();
       if (!id) return;
-      const replaceId = isLocalConversationId(activeConversationId) ? activeConversationId : '';
+      const replaceId = isLocalConversationId(state.activeConversationId) ? state.activeConversationId : '';
       const now = new Date().toISOString();
-      const existing = conversations.find((entry) => entry.id === id || entry.conversation_id === id);
+      const existing = state.conversations.find((entry) => entry.id === id || entry.conversation_id === id);
       if (!replaceId && existing) {
         upsertConversationSummary({
           ...existing,
@@ -954,12 +975,12 @@ function bootChat() {
     async function createConversationShellForMode(mode, options = {}) {
       const normalized = normalizeModeId(mode);
       if (!token() || normalized === 'thingy') return activeConversation();
-      if (!availableModes.some((entry) => entry.id === normalized)) return null;
+      if (!state.availableModes.some((entry) => entry.id === normalized)) return null;
       if (!(await ensureFreshToken())) {
         clearToken();
         return null;
       }
-      const replaceId = String(options.replaceId || activeConversationId || '').trim();
+      const replaceId = String(options.replaceId || state.activeConversationId || '').trim();
       conversationCreateInFlightSignal.value = true;
       updateQuestionState();
       try {
@@ -992,7 +1013,7 @@ function bootChat() {
 
     async function refreshConversations(options = {}) {
       if (!token()) {
-        conversations = [];
+        state.conversations = [];
         renderRecents();
         return [];
       }
@@ -1003,9 +1024,9 @@ function bootChat() {
       try {
         const data = await conversationAction({ action: 'list', limit: maxRecents });
         if (data.modes || data.entitlements) setUserProfile(data);
-        const clientActiveShells = conversations.filter((entry) => {
+        const clientActiveShells = state.conversations.filter((entry) => {
           if (!entry?.id) return false;
-          return isLocalConversationId(entry.id) || entry.id === activeConversationId;
+          return isLocalConversationId(entry.id) || entry.id === state.activeConversationId;
         });
         const serverConversations = (data.conversations || []).map((entry) => ({
           ...entry,
@@ -1013,16 +1034,16 @@ function bootChat() {
           local: false
         })).filter((entry) => entry.id);
         const serverIds = new Set(serverConversations.map((entry) => entry.id));
-        const keptClientShells = clientActiveShells.filter((entry) => entry.id === activeConversationId && !serverIds.has(entry.id));
-        conversations = dedupeEmptyConversationDrafts(
+        const keptClientShells = clientActiveShells.filter((entry) => entry.id === state.activeConversationId && !serverIds.has(entry.id));
+        state.conversations = dedupeEmptyConversationDrafts(
           [...keptClientShells, ...serverConversations]
             .sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))
         ).slice(0, maxRecents);
-        if (activeConversationId && !conversations.some((entry) => entry.id === activeConversationId)) {
+        if (state.activeConversationId && !state.conversations.some((entry) => entry.id === state.activeConversationId)) {
           setActiveConversation('');
         }
         renderRecents();
-        return conversations;
+        return state.conversations;
       } catch (error) {
         if (options.retryAuth !== false && isAuthError(error) && await refreshStoredAuth()) {
           return refreshConversations({ retryAuth: false });
@@ -1033,18 +1054,15 @@ function bootChat() {
           return [];
         }
         renderRecents();
-        return conversations;
+        return state.conversations;
       }
     }
 
-    // The rail recents list is rendered by the Preact island mounted onto
-    // #rail-recents-mount. This call site keeps the same name and signature
-    // it had under the imperative implementation; it just pushes state into
-    // the signal store, and the component subscribes from there.
+    // Updates the mobile chatbar's title text from the active conversation.
+    // Mutations to state.conversations / state.activeConversationId already
+    // notify the RailRecents island; this only handles the imperative
+    // mobile title that hasn't been migrated to a component yet.
     function renderRecents() {
-      conversationsSignal.value = conversations.slice();
-      activeConversationIdSignal.value = activeConversationId;
-      availableModesSignal.value = availableModes.slice();
       updateMobileConversationTitle();
     }
 
@@ -1065,7 +1083,7 @@ function bootChat() {
         setActiveConversation(conversationId);
         if (data.conversation) upsertConversationSummary(data.conversation);
         if (data.conversation?.mode) {
-          activeMode = data.conversation.mode;
+          state.activeMode = data.conversation.mode;
           renderModeControl();
         }
         unmountChildren(messages);
@@ -1179,7 +1197,7 @@ function bootChat() {
       }
 
       let requestId = '';
-      let conversationId = isLocalConversationId(activeConversationId) ? '' : (activeConversationId || '');
+      let conversationId = isLocalConversationId(state.activeConversationId) ? '' : (state.activeConversationId || '');
       let conversation = null;
       chatStopRequested = false;
       chatAbortController = new AbortController();
@@ -1219,7 +1237,7 @@ function bootChat() {
         if (eventName === 'meta') {
           requestId = data.request_id || requestId;
           if (data.mode) {
-            activeMode = data.mode;
+            state.activeMode = data.mode;
             renderModeControl();
           }
           if (data.conversation_id) {
@@ -1247,7 +1265,7 @@ function bootChat() {
         } else if (eventName === 'done') {
           requestId = data.request_id || requestId;
           if (data.mode) {
-            activeMode = data.mode;
+            state.activeMode = data.mode;
             renderModeControl();
           }
           if (data.conversation_id) {
@@ -1311,7 +1329,7 @@ function bootChat() {
         if (eventName === 'meta') {
           requestId = data.request_id || requestId;
           if (data.mode) {
-            activeMode = data.mode;
+            state.activeMode = data.mode;
             renderModeControl();
           }
         } else if (eventName === 'status') {
@@ -1327,7 +1345,7 @@ function bootChat() {
         } else if (eventName === 'done') {
           requestId = data.request_id || requestId;
           if (data.mode) {
-            activeMode = data.mode;
+            state.activeMode = data.mode;
             renderModeControl();
           }
         } else if (eventName === 'error') {
@@ -1349,7 +1367,7 @@ function bootChat() {
         return;
       }
       hidePrompts();
-      awaitingName = !preferredName;
+      awaitingName = !state.preferredName;
       welcomeShownThisVisit = true;
       welcomeInFlightSignal.value = true;
       welcomeAbortController = new AbortController();
@@ -1405,7 +1423,7 @@ function bootChat() {
     clearChatButton.addEventListener('click', async () => {
       if (interactionBusy()) return;
       const shell = clearConversation();
-      await createConversationShellForMode(activeMode, { replaceId: shell?.id });
+      await createConversationShellForMode(state.activeMode, { replaceId: shell?.id });
       if (window.matchMedia('(max-width: 640px)').matches) setMobileRailOpen(false);
     });
     if (curiosityMapButton) {
@@ -1444,7 +1462,7 @@ function bootChat() {
       hidePrompts();
       const questionWordCount = message.split(/\s+/).filter(Boolean).length;
       const questionSize = questionWordCount < 6 ? 'short' : questionWordCount < 18 ? 'medium' : 'long';
-      if (awaitingName && !preferredName) {
+      if (awaitingName && !state.preferredName) {
         const suppliedName = extractPreferredNameFromMessage(message);
         if (suppliedName) {
           await persistInferredPreferredName(suppliedName).catch(() => {});
@@ -1569,30 +1587,30 @@ function bootChat() {
         if (interactionBusy()) return;
         toggleMobileConversationMenu(false);
         const shell = clearConversation();
-        await createConversationShellForMode(activeMode, { replaceId: shell?.id });
+        await createConversationShellForMode(state.activeMode, { replaceId: shell?.id });
         setMobileRailOpen(false);
       });
     }
     if (modeSelect) {
       modeSelect.addEventListener('change', async () => {
         if (interactionBusy()) {
-          modeSelect.value = activeMode;
+          modeSelect.value = state.activeMode;
           return;
         }
         const nextMode = normalizeModeId(modeSelect.value);
-        if (!availableModes.some((mode) => mode.id === nextMode)) {
-          modeSelect.value = activeMode;
+        if (!state.availableModes.some((mode) => mode.id === nextMode)) {
+          modeSelect.value = state.activeMode;
           return;
         }
-        if (nextMode === activeMode && !activeConversationId) return;
-        activeMode = nextMode;
+        if (nextMode === state.activeMode && !state.activeConversationId) return;
+        state.activeMode = nextMode;
         welcomeShownThisVisit = false;
-        const shell = startNewConversationView(activeMode);
+        const shell = startNewConversationView(state.activeMode);
         renderModeControl();
-        const conversation = await createConversationShellForMode(activeMode, { replaceId: shell?.id });
+        const conversation = await createConversationShellForMode(state.activeMode, { replaceId: shell?.id });
         if (window.matchMedia('(max-width: 640px)').matches) setMobileRailOpen(false);
-        if (activeMode === 'thingy' || conversation) startAgentWelcome();
-        trackTinylyticsEvent('librarian.mode_change', activeMode);
+        if (state.activeMode === 'thingy' || conversation) startAgentWelcome();
+        trackTinylyticsEvent('librarian.mode_change', state.activeMode);
       });
     }
     if (mobileConversationMenuButton) {
@@ -1662,8 +1680,8 @@ function bootChat() {
       if (!id) return;
       if (!window.confirm('Delete this conversation?')) return;
       if (isLocalConversationId(id)) {
-        const wasActive = id === activeConversationId;
-        ({ conversations, activeConversationId } = deleteConversationSummaryList(conversations, id, { activeConversationId }));
+        const wasActive = id === state.activeConversationId;
+        ({ conversations: state.conversations, activeConversationId: state.activeConversationId } = deleteConversationSummaryList(state.conversations, id, { activeConversationId: state.activeConversationId }));
         if (wasActive) {
           startBlankConversationView();
         } else {
@@ -1674,8 +1692,8 @@ function bootChat() {
       }
       try {
         await conversationAction({ action: 'delete', conversation_id: id });
-        const wasActive = id === activeConversationId;
-        ({ conversations, activeConversationId } = deleteConversationSummaryList(conversations, id, { activeConversationId }));
+        const wasActive = id === state.activeConversationId;
+        ({ conversations: state.conversations, activeConversationId: state.activeConversationId } = deleteConversationSummaryList(state.conversations, id, { activeConversationId: state.activeConversationId }));
         if (wasActive) {
           clearConversation();
         } else {
@@ -1697,10 +1715,10 @@ function bootChat() {
     /* Conversation bootstrap. */
     resetMessages();
     const storedProfile = userProfile();
-    preferredName = String(storedProfile.preferred_name || '').trim();
-    availableModes = normalizeModes(storedProfile.modes || []);
-    if (!availableModes.length) availableModes = [{ id: 'thingy', label: 'Thingy' }];
-    if (!availableModes.some((mode) => mode.id === activeMode)) activeMode = 'thingy';
+    state.preferredName = String(storedProfile.preferred_name || '').trim();
+    state.availableModes = normalizeModes(storedProfile.modes || []);
+    if (!state.availableModes.length) state.availableModes = [{ id: 'thingy', label: 'Thingy' }];
+    if (!state.availableModes.some((mode) => mode.id === state.activeMode)) state.activeMode = 'thingy';
     refreshAccountIdentity();
     renderRecents();
 

@@ -18,6 +18,10 @@ const activeConversationId = signal(null);
 // { id: 'thingy', label: 'Thingy' }.
 const availableModes = signal([{ id: 'thingy', label: 'Thingy' }]);
 
+// The mode selected for the next new conversation (the mode picker value).
+// Existing conversations carry their own mode in the conversation summary.
+const activeMode = signal('thingy');
+
 // --- Auth gate --------------------------------------------------------------
 
 // True when a Thingy session token is held in this browser. The chat
@@ -73,6 +77,7 @@ const interactionBusy = computed(() => (
 
 export {
   activeConversationId,
+  activeMode,
   answerInFlight,
   authAction,
   authBusy,
