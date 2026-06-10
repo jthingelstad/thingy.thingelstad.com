@@ -3,29 +3,38 @@ import {
   normalizePreferredName,
 } from './thingy-account.js';
 import { createComposer } from './thingy-composer.js';
-import { renderMarkdown } from './thingy-markdown.js';
-import { createRailRecentItem } from './thingy-rail-recents.js';
 import { createThingyShell } from './thingy-shell.js';
+import { mountComposerCount } from './components/ComposerCount.jsx';
+import { mountDispatchRecents } from './components/DispatchRecents.jsx';
+import { mountDispatchStatus } from './components/DispatchStatus.jsx';
+import { mountDispatchActions } from './components/DispatchActions.jsx';
+import { mountDispatchMessages } from './components/DispatchMessages.jsx';
+import {
+  activeDraftId as activeDraftIdSignal,
+  dispatchActions as dispatchActionsSignal,
+  dispatchMessages as dispatchMessagesSignal,
+  dispatchStatusKind as dispatchStatusKindSignal,
+  dispatchStatusMessage as dispatchStatusMessageSignal,
+  dispatchText as dispatchTextSignal,
+  drafts as draftsSignal
+} from './stores/chat-store.js';
 import {
   draftFromServerRow,
   hasDraftContent,
   normalizeDraft,
-  serverDispatchId,
-  stageIcon,
-  stageLabel
+  serverDispatchId
 } from './thingy-dispatch-drafts.js';
 import { dispatchEditable } from './thingy-dispatch-state.js';
 
 (function () {
   const shell = document.getElementById('dispatch-shell');
   const app = document.getElementById('dispatch-app');
-  const messagesEl = document.getElementById('dispatch-messages');
-  const recentsEl = document.getElementById('dispatch-recents');
-  const emptyEl = document.getElementById('dispatch-empty');
+  const messagesMount = document.getElementById('dispatch-messages-mount');
+  const recentsMount = document.getElementById('dispatch-recents-mount');
+  const statusMount = document.getElementById('dispatch-status-mount');
+  const actionsMount = document.getElementById('dispatch-actions-mount');
   const form = document.getElementById('dispatch-form');
   const input = document.getElementById('dispatch-input');
-  const statusEl = document.getElementById('dispatch-status');
-  const actionsEl = document.getElementById('dispatch-actions');
   const countEl = document.getElementById('dispatch-count');
   const newButtons = [document.getElementById('dispatch-new'), document.getElementById('dispatch-mobile-new')].filter(Boolean);
   const accountEmail = document.getElementById('dispatch-account-email');
@@ -217,9 +226,8 @@ import { dispatchEditable } from './thingy-dispatch-state.js';
   }
 
   function setStatus(text, kind = '') {
-    if (!statusEl) return;
-    statusEl.textContent = text || '';
-    statusEl.dataset.kind = kind || '';
+    dispatchStatusMessageSignal.value = text || '';
+    dispatchStatusKindSignal.value = kind || '';
   }
 
   function updateComposerState() {
@@ -246,52 +254,45 @@ import { dispatchEditable } from './thingy-dispatch-state.js';
     railControls.setMobileOpen(open);
   }
 
-  function renderMessage(message) {
-    const role = message.role === 'user' ? 'user' : message.role === 'system' ? 'system' : 'assistant';
-    const body = renderMarkdown(message.text || '');
-    return `<article class="librarian-message librarian-message-${role} dispatch-message">${body}</article>`;
-  }
-
   function renderActions(draft) {
-    if (!actionsEl) return;
-    const actions = [];
+    const items = [];
     if (draft.stage === 'ready' || draft.stage === 'upgrade') {
-      actions.push(`<button type="button" class="dispatch-action-primary" data-action="generate">${dispatchTestMode ? 'Send Template Test' : 'Generate Dispatch'}</button>`);
+      items.push({
+        id: 'generate',
+        label: dispatchTestMode ? 'Send Template Test' : 'Generate Dispatch',
+        kind: 'primary'
+      });
     }
     if (draft.stage === 'upgrade') {
-      actions.push(`<a class="dispatch-action-secondary" href="https://www.thingelstad.com/2024/11/17/weekly-thing-supporting.html" target="_blank" rel="noopener">Supporting Membership</a>`);
-      actions.push(`<button type="button" class="dispatch-action-secondary" data-action="signin">I joined, sign in again</button>`);
+      items.push({
+        id: 'supporting',
+        label: 'Supporting Membership',
+        kind: 'link',
+        href: 'https://www.thingelstad.com/2024/11/17/weekly-thing-supporting.html'
+      });
+      items.push({
+        id: 'signin',
+        label: 'I joined, sign in again',
+        kind: 'secondary'
+      });
     }
     if (draft.stage === 'queued' || draft.stage === 'generating') {
-      actions.push(`<button type="button" class="dispatch-action-secondary" data-action="check">Check Status</button>`);
+      items.push({
+        id: 'check',
+        label: 'Check Status',
+        kind: 'secondary'
+      });
     }
-    actionsEl.innerHTML = actions.join('');
-    actionsEl.hidden = !actions.length;
+    dispatchActionsSignal.value = items;
   }
 
   function renderRecents() {
-    const rows = drafts.map((draft) => ({
+    draftsSignal.value = drafts.slice(0, 24).map((draft) => ({
       id: draft.id,
       title: draftTitle(draft),
-      status: draft.stage
-    })).slice(0, 24);
-    if (emptyEl) emptyEl.hidden = Boolean(rows.length);
-    if (!recentsEl) return;
-    recentsEl.hidden = !rows.length;
-    const elements = rows.map((row) => createRailRecentItem({
-      id: row.id,
-      label: row.title,
-      active: row.id === activeId,
-      className: 'dispatch-rail-item',
-      state: row.status,
-      hasMeta: true,
-      metaClass: 'dispatch-state-glyph',
-      metaLabel: stageLabel(row.status),
-      metaIcon: stageIcon(row.status),
-      deleteAction: 'delete-dispatch',
-      deleteLabel: 'Delete Dispatch'
+      stage: draft.stage
     }));
-    recentsEl.replaceChildren(...elements);
+    activeDraftIdSignal.value = activeId || null;
   }
 
   function render() {
@@ -302,11 +303,7 @@ import { dispatchEditable } from './thingy-dispatch-state.js';
         text: welcomeText
       });
     }
-    if (messagesEl) {
-      messagesEl.innerHTML = draft.messages.map(renderMessage).join('');
-      const scroll = document.querySelector('.dispatch-scroll');
-      if (scroll) scroll.scrollTop = scroll.scrollHeight;
-    }
+    dispatchMessagesSignal.value = draft.messages.slice();
     if (input) {
       const editable = draftEditable(draft);
       input.disabled = !editable;
@@ -326,12 +323,8 @@ import { dispatchEditable } from './thingy-dispatch-state.js';
   }
 
   function updateCount() {
-    if (composerControls) {
-      composerControls.sync();
-      return;
-    }
-    if (!countEl || !input) return;
-    countEl.textContent = `${input.value.length} / ${maxInputChars}`;
+    if (input) dispatchTextSignal.value = input.value;
+    if (composerControls) composerControls.sync();
   }
 
   function titleFromPrompt(value) {
@@ -649,11 +642,37 @@ import { dispatchEditable } from './thingy-dispatch-state.js';
   if (shell) shell.classList.remove('is-booting', 'is-auth');
   if (app) app.hidden = false;
 
+  function handleAction(actionId) {
+    if (busy) return;
+    if (actionId === 'generate') generateDispatch();
+    if (actionId === 'check') pollStatus();
+    if (actionId === 'signin') {
+      session.clearAuth();
+      window.location.href = session.signInUrl('/dispatch/');
+    }
+  }
+
+  mountDispatchRecents(recentsMount, {
+    onOpen: (id) => {
+      setActiveDraft(id);
+      setMobileRailOpen(false);
+    },
+    onDelete: (id) => deleteDispatch(id)
+  });
+  mountDispatchStatus(statusMount);
+  mountDispatchActions(actionsMount, { onAction: handleAction });
+  mountDispatchMessages(messagesMount, {
+    scrollContainer: () => document.querySelector('.dispatch-scroll')
+  });
+
   if (form) {
+    if (countEl) {
+      countEl.replaceChildren();
+      mountComposerCount(countEl, { maxChars: maxInputChars, text: dispatchTextSignal });
+    }
     composerControls = createComposer({
       form,
       input,
-      count: countEl,
       maxChars: maxInputChars,
       isBusy: () => busy,
       autoSize: true,
@@ -674,7 +693,10 @@ import { dispatchEditable } from './thingy-dispatch-state.js';
         await clarifyWithThingy(text);
         render();
       },
-      onInput: updateComposerState
+      onInput: () => {
+        updateCount();
+        updateComposerState();
+      }
     });
   }
 
@@ -683,22 +705,6 @@ import { dispatchEditable } from './thingy-dispatch-state.js';
     setMobileRailOpen(false);
   }));
 
-  if (recentsEl) {
-    recentsEl.addEventListener('click', (event) => {
-      const deleteBtn = event.target.closest('[data-action="delete-dispatch"]');
-      if (deleteBtn) {
-        event.preventDefault();
-        event.stopPropagation();
-        deleteDispatch(deleteBtn.dataset.id, deleteBtn);
-        return;
-      }
-      const button = event.target.closest('button[data-id]');
-      if (!button || button.disabled) return;
-      setActiveDraft(button.dataset.id);
-      setMobileRailOpen(false);
-    });
-  }
-
   document.addEventListener('click', () => accountControls.close());
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
@@ -706,20 +712,6 @@ import { dispatchEditable } from './thingy-dispatch-state.js';
       setMobileRailOpen(false);
     }
   });
-
-  if (actionsEl) {
-    actionsEl.addEventListener('click', (event) => {
-      const target = event.target.closest('[data-action]');
-      if (!target || busy) return;
-      const action = target.dataset.action;
-      if (action === 'generate') generateDispatch();
-      if (action === 'check') pollStatus();
-      if (action === 'signin') {
-        session.clearAuth();
-        window.location.href = session.signInUrl('/dispatch/');
-      }
-    });
-  }
 
   render();
   loadHistory().then(() => {

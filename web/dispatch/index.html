@@ -70,8 +70,7 @@
 
       <div class="rail-body">
         <p class="rail-recents-label">Dispatches</p>
-        <div class="rail-recents dispatch-recents" id="dispatch-recents" role="list" hidden></div>
-        <p class="rail-empty" id="dispatch-empty">Shape a Dispatch and it will stay here until it is sent.</p>
+        <div id="dispatch-recents-mount"></div>
       </div>
 
       <div class="rail-account">
@@ -123,18 +122,18 @@
 
       <div class="dispatch-chat" id="dispatch-app" hidden>
         <div class="thingy-chat-scroll dispatch-scroll">
-          <div class="librarian-messages dispatch-messages" id="dispatch-messages" aria-live="polite"></div>
+          <div class="librarian-messages dispatch-messages" id="dispatch-messages-mount" aria-live="polite"></div>
         </div>
 
         <div class="thingy-composer-zone dispatch-composer-zone">
-          <div class="dispatch-actions" id="dispatch-actions" hidden></div>
+          <div id="dispatch-actions-mount"></div>
           <form class="librarian-form librarian-question-form thingy-input composer-box dispatch-composer" id="dispatch-form">
             <label for="dispatch-input" class="sr-only">Message Thingy about this Dispatch</label>
             <textarea id="dispatch-input" rows="1" maxlength="1200" required placeholder="Tell Thingy what this Dispatch should explore..."></textarea>
             <div class="composer-toolbar">
-              <span class="dispatch-status" id="dispatch-status" aria-live="polite"></span>
+              <span id="dispatch-status-mount"></span>
               <span class="composer-spacer"></span>
-              <span class="composer-count" id="dispatch-count">0 / 1200</span>
+              <span id="dispatch-count"></span>
               <button type="submit" class="composer-send" aria-label="Send to Thingy" title="Send to Thingy" data-tinylytics-event="dispatch.message">
                 <span data-thingy-icon="arrow-up" aria-hidden="true"></span>
               </button>

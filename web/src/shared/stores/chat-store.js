@@ -43,12 +43,43 @@ const authAction = signal('none');
 // both the primary and secondary buttons.
 const authBusy = signal(false);
 
+// --- Dispatch ---------------------------------------------------------------
+
+// Dispatch draft summaries shown in the rail. The dispatch controller mirrors
+// its in-memory drafts array into this signal.
+const drafts = signal([]);
+
+// String id of the active dispatch draft.
+const activeDraftId = signal(null);
+
+// Rendered messages for the active draft (already-HTML-safe text).
+const dispatchMessages = signal([]);
+
+// Status surface under the dispatch composer.
+const dispatchStatusMessage = signal('');
+const dispatchStatusKind = signal('');
+
+// Action buttons shown above the status row (e.g. "Generate Dispatch",
+// "Check Status"). Each entry is { id, label, kind, href? }; the dispatch
+// controller derives them from the active draft's stage.
+const dispatchActions = signal([]);
+
+// Composer enablement.
+const dispatchInputDisabled = signal(false);
+const dispatchInputPlaceholder = signal('Tell Thingy what this Dispatch should explore...');
+const dispatchBusy = signal(false);
+
 // --- Composer ---------------------------------------------------------------
 
 // Current draft text in the composer textarea. The chat controller mirrors
 // the textarea's value into this signal so the count and submit button can
 // subscribe; writes to the signal are not the source of truth for the input.
 const questionText = signal('');
+
+// Dispatch composer text. Same mirroring contract as questionText; lives in
+// the chat store today so ComposerCount stays a single component shared
+// across surfaces. If dispatch grows its own store this moves there.
+const dispatchText = signal('');
 
 // True when at least one source is selected in the source picker. The
 // source picker is still imperative; the controller mirrors its state.
@@ -100,6 +131,16 @@ export {
   clearNotice,
   conversationCreateInFlight,
   conversations,
+  dispatchActions,
+  dispatchBusy,
+  dispatchInputDisabled,
+  dispatchInputPlaceholder,
+  dispatchMessages,
+  dispatchStatusKind,
+  dispatchStatusMessage,
+  dispatchText,
+  drafts,
+  activeDraftId,
   hasSources,
   interactionBusy,
   mapInFlight,
