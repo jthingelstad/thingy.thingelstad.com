@@ -35,6 +35,10 @@ jobs:
 
       - run: npm ci
 
+      - run: npm run lint
+
+      - run: npm test
+
       - run: npm run build
         env:
           LIBRARIAN_API_URL: ${{ vars.LIBRARIAN_API_URL }}
