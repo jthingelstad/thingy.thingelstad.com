@@ -13,6 +13,11 @@ const mobileRailOpen = signal(false);
 
 // --- Account identity (cross-surface) ---------------------------------------
 
+// True when a Thingy session token is held in this browser. Written by the
+// chat and dispatch bootstraps when they persist or clear the token, and by
+// the chat storage listener that catches cross-tab sign-outs.
+const signedIn = signal(false);
+
 // Email currently associated with this browser's session. Used as the rail
 // account display string and as the avatar's initial source.
 const displayEmail = signal('');
@@ -58,5 +63,6 @@ export {
   noticeNonce,
   noticeText,
   railCollapsed,
-  showNotice
+  showNotice,
+  signedIn
 };

@@ -8,15 +8,15 @@ import {
   accountNameStatus,
   displayEmail,
   displayPreferredName,
-  displayProfile
+  displayProfile,
+  signedIn as sharedSignedIn
 } from '../stores/ui-store.js';
-import { signedIn as chatSignedIn } from '../stores/chat-store.js';
 
 const LOG_OUT_ICON = iconSvg('log-out');
 
 function AccountMenu({
   session,
-  signedIn = chatSignedIn,
+  signedIn = sharedSignedIn,
   returnTo = '/chat/',
   signedOutEmailLabel = 'Sign in',
   signedOutSubLabel = 'Weekly Thing readers',

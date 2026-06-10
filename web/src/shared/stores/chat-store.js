@@ -23,11 +23,8 @@ const availableModes = signal([{ id: 'thingy', label: 'Thingy' }]);
 const activeMode = signal('thingy');
 
 // --- Auth gate --------------------------------------------------------------
-
-// True when a Thingy session token is held in this browser. The chat
-// controller writes to this whenever it persists or clears the token, and
-// also from the storage listener that catches cross-tab sign-outs.
-const signedIn = signal(false);
+// (signedIn lives in ui-store — it's cross-surface identity state shared
+// with dispatch and AccountMenu.)
 
 // Email currently shown in the sign-in input.
 const authEmail = signal('');
@@ -91,7 +88,6 @@ export {
   interactionBusy,
   mapInFlight,
   questionText,
-  signedIn,
   stoppable,
   welcomeInFlight
 };

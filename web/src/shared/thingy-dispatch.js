@@ -11,13 +11,13 @@ import {
 import { createComposer } from './thingy-composer.js';
 import { attachRailState } from './thingy-rail-state.js';
 import { createDispatchActions, draftTitle } from './thingy-dispatch-actions.js';
-import { signedIn as signedInSignal } from './stores/chat-store.js';
 import {
   accountMenuOpen as accountMenuOpenSignal,
   accountNameStatus as accountNameStatusSignal,
   displayEmail as displayEmailSignal,
   displayPreferredName as displayPreferredNameSignal,
-  displayProfile as displayProfileSignal
+  displayProfile as displayProfileSignal,
+  signedIn as signedInSignal
 } from './stores/ui-store.js';
 import { mountAccountMenu } from './components/AccountMenu.jsx';
 import { mountComposerCount } from './components/ComposerCount.jsx';

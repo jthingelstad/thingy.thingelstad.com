@@ -15,10 +15,10 @@ import {
   interactionBusy,
   mapInFlight,
   questionText,
-  signedIn,
   stoppable,
   welcomeInFlight
 } from '../src/shared/stores/chat-store.js';
+import { signedIn } from '../src/shared/stores/ui-store.js';
 
 function resetInFlight() {
   answerInFlight.value = false;

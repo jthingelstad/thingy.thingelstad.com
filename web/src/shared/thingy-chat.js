@@ -68,7 +68,6 @@ import {
   interactionBusy as interactionBusySignal,
   mapInFlight as mapInFlightSignal,
   questionText as questionTextSignal,
-  signedIn as signedInSignal,
   stoppable as stoppableSignal,
   welcomeInFlight as welcomeInFlightSignal
 } from './stores/chat-store.js';
@@ -78,7 +77,8 @@ import {
   displayEmail as displayEmailSignal,
   displayPreferredName as displayPreferredNameSignal,
   displayProfile as displayProfileSignal,
-  showNotice
+  showNotice,
+  signedIn as signedInSignal
 } from './stores/ui-store.js';
 import { focusAuthEmail, mountAuthPanel } from './components/AuthPanel.jsx';
 import { mountAccountMenu } from './components/AccountMenu.jsx';
