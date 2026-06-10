@@ -26,7 +26,7 @@ import {
 } from './thingy-dispatch-drafts.js';
 import { dispatchEditable } from './thingy-dispatch-state.js';
 
-(function () {
+function bootDispatch() {
   const shell = document.getElementById('dispatch-shell');
   const app = document.getElementById('dispatch-app');
   const messagesMount = document.getElementById('dispatch-messages-mount');
@@ -718,4 +718,6 @@ import { dispatchEditable } from './thingy-dispatch-state.js';
     const draft = activeDraft();
     if (draft.dispatchId && ['queued', 'generating', 'ready_to_send', 'sending'].includes(draft.stage)) startPolling();
   });
-}());
+}
+
+export { bootDispatch };
