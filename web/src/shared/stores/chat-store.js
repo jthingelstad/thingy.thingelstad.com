@@ -19,6 +19,30 @@ const activeConversationId = signal(null);
 // { id: 'thingy', label: 'Thingy' }.
 const availableModes = signal([{ id: 'thingy', label: 'Thingy' }]);
 
+// --- Auth gate --------------------------------------------------------------
+
+// True when a Thingy session token is held in this browser. The chat
+// controller writes to this whenever it persists or clears the token, and
+// also from the storage listener that catches cross-tab sign-outs.
+const signedIn = signal(false);
+
+// Email currently shown in the sign-in input.
+const authEmail = signal('');
+
+// Inline validation error under the email input ('' when valid).
+const authEmailError = signal('');
+
+// Status text under the sign-in form.
+const authMessage = signal('');
+
+// Which secondary action button is offered: 'none', 'subscribe', or
+// 'resend_confirmation'. Set by the auth response handler.
+const authAction = signal('none');
+
+// True while a sign-in / subscribe / resend POST is in flight; disables
+// both the primary and secondary buttons.
+const authBusy = signal(false);
+
 // --- Composer ---------------------------------------------------------------
 
 // Current draft text in the composer textarea. The chat controller mirrors
@@ -67,6 +91,11 @@ function clearNotice() {
 export {
   activeConversationId,
   answerInFlight,
+  authAction,
+  authBusy,
+  authEmail,
+  authEmailError,
+  authMessage,
   availableModes,
   clearNotice,
   conversationCreateInFlight,
@@ -78,6 +107,7 @@ export {
   noticeText,
   questionText,
   showNotice,
+  signedIn,
   stoppable,
   welcomeInFlight
 };

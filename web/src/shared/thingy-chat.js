@@ -55,6 +55,11 @@ import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-re
 import {
   activeConversationId as activeConversationIdSignal,
   answerInFlight as answerInFlightSignal,
+  authAction as authActionSignal,
+  authBusy as authBusySignal,
+  authEmail as authEmailSignal,
+  authEmailError as authEmailErrorSignal,
+  authMessage as authMessageSignal,
   availableModes as availableModesSignal,
   conversationCreateInFlight as conversationCreateInFlightSignal,
   conversations as conversationsSignal,
@@ -63,9 +68,11 @@ import {
   mapInFlight as mapInFlightSignal,
   questionText as questionTextSignal,
   showNotice,
+  signedIn as signedInSignal,
   stoppable as stoppableSignal,
   welcomeInFlight as welcomeInFlightSignal
 } from './stores/chat-store.js';
+import { focusAuthEmail, mountAuthPanel } from './components/AuthPanel.jsx';
 import { mountComposerCount } from './components/ComposerCount.jsx';
 import { mountComposerSubmit } from './components/ComposerSubmit.jsx';
 import { mountNotice } from './components/Notice.jsx';
@@ -77,15 +84,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
     const authPanel = document.getElementById('librarian-auth');
     const chatPanel = document.getElementById('librarian-chat');
     const appShell = document.getElementById('thingy-app-shell');
-    const authForm = document.getElementById('librarian-auth-form');
     const questionForm = document.getElementById('librarian-question-form');
-    const emailInput = document.getElementById('librarian-email');
-    const emailError = document.getElementById('librarian-email-error');
-    const authButton = document.getElementById('librarian-auth-submit');
-    const authMessage = document.getElementById('librarian-auth-message');
-    const authActions = document.getElementById('librarian-auth-actions');
-    const addSubscriberButton = document.getElementById('librarian-add-subscriber');
-    const resendConfirmationButton = document.getElementById('librarian-resend-confirmation');
     const logoutButton = document.getElementById('librarian-logout');
     const accountBtn = document.getElementById('account-btn');
     const accountMenu = document.getElementById('account-menu');
@@ -153,9 +152,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
         signedIn: () => Boolean(token()),
         returnTo: '/chat/',
         elements: accountElements,
-        onSignedOutClick: () => {
-          if (emailInput) emailInput.focus();
-        },
+        onSignedOutClick: () => focusAuthEmail(),
         onLogout: () => {
           clearToken({ scrubAuthParams: true });
           trackTinylyticsEvent('librarian.logout');
@@ -196,7 +193,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
     const emailRe = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
     const params = new URLSearchParams(window.location.search);
-    const email = normalizeEmail(params.get('email'));
+    const initialEmailFromUrl = normalizeEmail(params.get('email'));
     const loginToken = String(params.get('login_token') || params.get('magic_token') || '').trim();
     const initialPrompt = normalizeInitialPrompt(params.get('prompt'));
     const hasInitialPrompt = Boolean(initialPrompt);
@@ -218,7 +215,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       }
     });
     let initialPromptSubmitted = false;
-    if (email) emailInput.value = email;
+    if (initialEmailFromUrl) authEmailSignal.value = initialEmailFromUrl;
 
     function resetMessages() {
       unmountChildren(messages);
@@ -234,22 +231,12 @@ import { mountRailRecents } from './components/RailRecents.jsx';
     }
 
     function validateEmail() {
-      const value = emailInput.value.trim();
-      if (!value) {
-        emailError.textContent = '';
-        emailInput.classList.remove('invalid');
-        authButton.disabled = false;
+      const value = String(authEmailSignal.value || '').trim();
+      if (!value || emailRe.test(value)) {
+        authEmailErrorSignal.value = '';
         return true;
       }
-      if (emailRe.test(value)) {
-        emailError.textContent = '';
-        emailInput.classList.remove('invalid');
-        authButton.disabled = false;
-        return true;
-      }
-      emailError.textContent = 'Please enter a valid email address';
-      emailInput.classList.add('invalid');
-      authButton.disabled = true;
+      authEmailErrorSignal.value = 'Please enter a valid email address';
       return false;
     }
 
@@ -265,9 +252,13 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       return session.tokenNeedsRefresh(value);
     }
 
+    // Initialize the auth signal from localStorage before any effect runs
+    // so the first paint shows the right panel without a flash of auth.
+    signedInSignal.value = Boolean(token()) && !tokenExpired();
+
     function storedEmail() {
       const stored = session.storedEmail();
-      const entered = emailInput && emailInput.value ? emailInput.value.trim() : '';
+      const entered = String(authEmailSignal.value || '').trim();
       return normalizeEmail(entered || stored);
     }
 
@@ -376,17 +367,11 @@ import { mountRailRecents } from './components/RailRecents.jsx';
 
     setActiveScope(activeScope, { track: false });
 
-    function setAuthShellMode(isAuth) {
-      if (!appShell) return;
-      appShell.classList.remove('is-booting');
-      appShell.classList.toggle('is-auth', Boolean(isAuth));
-      if (isAuth) setMobileRailOpen(false);
-    }
-
     function persistToken(value, data = {}) {
       session.persistAuth({ ...data, token: value }, data.email || storedEmail());
       setUserProfile(data);
-      if (data.email && emailInput) emailInput.value = normalizeEmail(data.email);
+      if (data.email) authEmailSignal.value = normalizeEmail(data.email);
+      signedInSignal.value = Boolean(token());
       refreshAccountIdentity();
     }
 
@@ -399,7 +384,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
         return false;
       }
       setUserProfile(data);
-      if (data.email && emailInput) emailInput.value = normalizeEmail(data.email);
+      if (data.email) authEmailSignal.value = normalizeEmail(data.email);
       refreshAccountIdentity();
       if (shouldTrack) trackTinylyticsEvent('librarian.auth_refresh_success');
       return true;
@@ -433,10 +418,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
 
     function setToken(value, data = {}) {
       persistToken(value, data);
-      setAuthShellMode(false);
-      authPanel.hidden = true;
-      chatPanel.hidden = false;
-      hideAuthActions();
+      authActionSignal.value = 'none';
       resetMessages();
       refreshConversations().then(() => {
         if (hasInitialPrompt) {
@@ -454,34 +436,30 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       const config = typeof options === 'string' ? { message: options } : (options || {});
       authRequestGeneration += 1;
       const message = String(config.message || '').trim();
-      const existingMessage = authMessage ? authMessage.textContent : '';
+      const existingMessage = authMessageSignal.value;
       const emailValue = storedEmail();
       session.clearAuth();
-      if (config.preserveEmail && emailValue) {
-        if (emailInput) emailInput.value = emailValue;
-      }
+      signedInSignal.value = false;
+      if (config.preserveEmail && emailValue) authEmailSignal.value = emailValue;
       if (config.scrubAuthParams) scrubUrlParams(['login_token', 'magic_token', 'email']);
       conversations = [];
       availableModes = [{ id: 'thingy', label: 'Thingy' }];
       activeMode = 'thingy';
       setActiveConversation('');
       welcomeShownThisVisit = false;
-      chatPanel.hidden = true;
-      authPanel.hidden = false;
-      setAuthShellMode(true);
       prompts.hidden = true;
       prompts.innerHTML = '';
-      hideAuthActions();
-      setAuthMessage(message || existingMessage || '');
+      authActionSignal.value = 'none';
+      authMessageSignal.value = message || existingMessage || '';
       refreshAccountIdentity();
       renderModeControl();
       renderRecents();
-      emailInput.focus();
+      focusAuthEmail();
     }
 
     function refreshAccountIdentity() {
       const stored = session.storedEmail();
-      const value = (emailInput && emailInput.value ? emailInput.value.trim() : '') || stored;
+      const value = String(authEmailSignal.value || '').trim() || stored;
       accountControls?.refresh({
         signedIn: Boolean(token()),
         email: value,
@@ -651,19 +629,15 @@ import { mountRailRecents } from './components/RailRecents.jsx';
     }
 
     function setAuthMessage(message) {
-      authMessage.textContent = message || '';
+      authMessageSignal.value = message || '';
     }
 
     function hideAuthActions() {
-      authActions.hidden = true;
-      addSubscriberButton.hidden = true;
-      resendConfirmationButton.hidden = true;
+      authActionSignal.value = 'none';
     }
 
     function showAuthAction(action) {
-      authActions.hidden = false;
-      addSubscriberButton.hidden = action !== 'subscribe';
-      resendConfirmationButton.hidden = action !== 'resend_confirmation';
+      authActionSignal.value = action || 'none';
     }
 
     function trackTinylyticsEvent(name, value) {
@@ -1176,14 +1150,14 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       });
     }
 
-    async function submitAuthAction(action, button) {
+    async function submitAuthAction(action) {
       if (!validateEmail()) return;
       const generation = authRequestGeneration;
-      button.disabled = true;
+      authBusySignal.value = true;
       hideAuthActions();
       setAuthMessage(action === 'subscribe' ? 'Adding you to the Weekly Thing...' : 'Sending the confirmation email...');
       try {
-        const payload = { email: emailInput.value, action, source: 'thingy' };
+        const payload = { email: String(authEmailSignal.value || ''), action, source: 'thingy' };
         const data = await postJson('/auth', payload);
         if (generation !== authRequestGeneration) return;
         handleAuthResponse(data);
@@ -1192,18 +1166,18 @@ import { mountRailRecents } from './components/RailRecents.jsx';
         setAuthMessage(error.message);
         trackTinylyticsEvent('librarian.auth_error', error.requestId ? 'server' : 'client');
       } finally {
-        button.disabled = false;
+        authBusySignal.value = false;
       }
     }
 
     async function submitAuthCheck(options = {}) {
       if (!validateEmail()) return false;
       const generation = authRequestGeneration;
-      authButton.disabled = true;
+      authBusySignal.value = true;
       hideAuthActions();
       setAuthMessage('Sending a sign-in link...');
       try {
-        const data = await postJson('/auth', { email: emailInput.value.trim(), action: 'check', source: 'thingy' });
+        const data = await postJson('/auth', { email: String(authEmailSignal.value || '').trim(), action: 'check', source: 'thingy' });
         if (generation !== authRequestGeneration) return false;
         handleAuthResponse(data, options);
         if (options.scrubEmailParam) scrubUrlParams(['email']);
@@ -1214,7 +1188,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
         trackTinylyticsEvent('librarian.auth_error', error.requestId ? 'server' : 'client');
         return false;
       } finally {
-        authButton.disabled = false;
+        authBusySignal.value = false;
         validateEmail();
       }
     }
@@ -1425,22 +1399,28 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       }
     }
 
-    authForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      await submitAuthCheck();
+    mountAuthPanel(authPanel, {
+      onSubmit: () => { submitAuthCheck(); },
+      onAddSubscriber: () => submitAuthAction('subscribe'),
+      onResendConfirmation: () => submitAuthAction('resend_confirmation'),
+      onEmailInput: () => {
+        validateEmail();
+        hideAuthActions();
+      }
     });
 
-    emailInput.addEventListener('input', () => {
-      validateEmail();
-      hideAuthActions();
-    });
-
-    addSubscriberButton.addEventListener('click', () => {
-      submitAuthAction('subscribe', addSubscriberButton);
-    });
-
-    resendConfirmationButton.addEventListener('click', () => {
-      submitAuthAction('resend_confirmation', resendConfirmationButton);
+    // Drive panel visibility and the booting/auth shell modifier classes
+    // off the signedIn signal. The IIFE's startup paths set signedIn before
+    // calling this for the first time.
+    effect(() => {
+      const isSignedIn = signedInSignal.value;
+      authPanel.hidden = isSignedIn;
+      chatPanel.hidden = !isSignedIn;
+      if (appShell) {
+        appShell.classList.remove('is-booting');
+        appShell.classList.toggle('is-auth', !isSignedIn);
+        if (!isSignedIn) setMobileRailOpen(false);
+      }
     });
     clearChatButton.addEventListener('click', async () => {
       if (interactionBusy()) return;
@@ -1680,7 +1660,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
       // null key means storage was cleared wholesale.
       if (event.key !== null && event.key !== session.storageKey) return;
       const hasToken = Boolean(token());
-      const chatVisible = !chatPanel.hidden;
+      const chatVisible = signedInSignal.value;
       if (!hasToken && chatVisible) {
         stopActiveAnswer();
         clearToken({ message: 'You signed out of Thingy in another tab.' });
@@ -1748,7 +1728,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
     if (loginToken) {
       window.location.href = session.signInUrl();
       trackTinylyticsEvent('librarian.auth_magic_link_start');
-    } else if (email) {
+    } else if (initialEmailFromUrl) {
       window.location.href = session.signInUrl();
       trackTinylyticsEvent('librarian.auth_auto_start');
     } else if (token()) {
@@ -1759,9 +1739,7 @@ import { mountRailRecents } from './components/RailRecents.jsx';
         });
         trackTinylyticsEvent('librarian.session_expired_startup');
       } else {
-        setAuthShellMode(false);
-        authPanel.hidden = true;
-        chatPanel.hidden = false;
+        signedInSignal.value = true;
         scheduleComposerReserveUpdate();
         refreshAccountProfile({ force: true });
         const savedActiveId = savedActiveConversation();
