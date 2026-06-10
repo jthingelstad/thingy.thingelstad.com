@@ -5,6 +5,20 @@
 
 import { signal } from '@preact/signals';
 
+// --- Conversations ----------------------------------------------------------
+
+// The list of recent conversation summaries shown in the rail. Owned by the
+// chat controller for now; the controller pushes new arrays into this signal
+// through its renderRecents() sync step.
+const conversations = signal([]);
+
+// String id of the active conversation, or null when no chat is selected.
+const activeConversationId = signal(null);
+
+// Modes the signed-in user is entitled to. Always contains at least
+// { id: 'thingy', label: 'Thingy' }.
+const availableModes = signal([{ id: 'thingy', label: 'Thingy' }]);
+
 // --- Transient UI -----------------------------------------------------------
 
 // Notice (toast) surface. `text` is the visible message; `nonce` advances on
@@ -23,7 +37,10 @@ function clearNotice() {
 }
 
 export {
+  activeConversationId,
+  availableModes,
   clearNotice,
+  conversations,
   noticeNonce,
   noticeText,
   showNotice

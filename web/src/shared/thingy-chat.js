@@ -24,7 +24,6 @@ import {
   renderCuriosityMap
 } from './thingy-chat-rendering.js';
 import { createAssistantStreamRenderer } from './thingy-chat-stream-renderer.js';
-import { createRailRecentItem } from './thingy-rail-recents.js';
 import { normalizeScopeParam } from './thingy-scope.js';
 import { createSourcePicker } from './thingy-source-picker.js';
 import { createThingyShell } from './thingy-shell.js';
@@ -51,8 +50,14 @@ import {
 } from './thingy-url.js';
 import { updateChatComposerState } from './thingy-chat-composer-state.js';
 import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-response.js';
-import { showNotice } from './stores/chat-store.js';
+import {
+  activeConversationId as activeConversationIdSignal,
+  availableModes as availableModesSignal,
+  conversations as conversationsSignal,
+  showNotice
+} from './stores/chat-store.js';
 import { mountNotice } from './components/Notice.jsx';
+import { mountRailRecents } from './components/RailRecents.jsx';
 
 (() => {
     applyReturnChip();
@@ -1018,42 +1023,14 @@ import { mountNotice } from './components/Notice.jsx';
       }
     }
 
+    // The rail recents list is rendered by the Preact island mounted onto
+    // #rail-recents-mount. This call site keeps the same name and signature
+    // it had under the imperative implementation; it just pushes state into
+    // the signal store, and the component subscribes from there.
     function renderRecents() {
-      const railRecents = document.getElementById('rail-recents');
-      const railRecentsEmpty = document.getElementById('rail-recents-empty');
-      if (!railRecents || !railRecentsEmpty) return;
-      const list = conversations.filter((entry) => entry && entry.id).slice(0, maxRecents);
-      if (!list.length) {
-        railRecents.replaceChildren();
-        railRecents.hidden = true;
-        railRecentsEmpty.hidden = false;
-        updateMobileConversationTitle();
-        return;
-      }
-      railRecentsEmpty.hidden = true;
-      railRecents.hidden = false;
-      const rows = list.map((entry) => {
-        const title = entry.title || 'Untitled chat';
-        const id = String(entry.id || '');
-        const mode = entry.mode && entry.mode !== 'thingy' ? modeClass(entry.mode) : '';
-        const modeLabelText = mode ? modeLabel(entry.mode) : '';
-        const modeTitle = mode ? `${title} - ${modeLabelText}` : title;
-        return createRailRecentItem({
-          id,
-          label: title,
-          title: modeTitle,
-          active: entry.id === activeConversationId,
-          dataMode: mode,
-          hasMeta: Boolean(mode),
-          metaTag: 'small',
-          metaClass: 'rail-recent-mode',
-          metaLabel: modeLabelText,
-          metaIcon: mode ? modeIcon(entry.mode) : '',
-          deleteAction: 'delete-conv',
-          deleteLabel: 'Delete conversation'
-        });
-      });
-      railRecents.replaceChildren(...rows);
+      conversationsSignal.value = conversations.slice();
+      activeConversationIdSignal.value = activeConversationId;
+      availableModesSignal.value = availableModes.slice();
       updateMobileConversationTitle();
     }
 
@@ -1661,54 +1638,50 @@ import { mountNotice } from './components/Notice.jsx';
       }
     });
 
-    /* Recents list interactions. */
-    const railRecentsEl = document.getElementById('rail-recents');
-    if (railRecentsEl) {
-      railRecentsEl.addEventListener('click', async (event) => {
-        const deleteBtn = event.target instanceof Element ? event.target.closest('[data-action="delete-conv"]') : null;
-        if (deleteBtn) {
-          event.preventDefault();
-          event.stopPropagation();
-          const id = deleteBtn.dataset.id;
-          if (!id) return;
-          if (!window.confirm('Delete this conversation?')) return;
-          deleteBtn.disabled = true;
-          if (isLocalConversationId(id)) {
-            const wasActive = id === activeConversationId;
-            ({ conversations, activeConversationId } = deleteConversationSummaryList(conversations, id, { activeConversationId }));
-            if (wasActive) {
-              startBlankConversationView();
-            } else {
-              renderRecents();
-            }
-            trackTinylyticsEvent('librarian.conversation_delete');
-            return;
-          }
-          try {
-            await conversationAction({ action: 'delete', conversation_id: id });
-            const wasActive = id === activeConversationId;
-            ({ conversations, activeConversationId } = deleteConversationSummaryList(conversations, id, { activeConversationId }));
-            if (wasActive) {
-              clearConversation();
-            } else {
-              renderRecents();
-            }
-            trackTinylyticsEvent('librarian.conversation_delete');
-          } catch (error) {
-            deleteBtn.disabled = false;
-            showNotice('Could not delete the conversation. Please try again.');
-            trackTinylyticsEvent('librarian.conversations_error', 'delete');
-          }
-          return;
-        }
-        const openBtn = event.target instanceof Element ? event.target.closest('button[data-id]') : null;
-        if (openBtn) {
-          toggleMobileConversationMenu(false);
-          await loadConversationIntoChat(openBtn.dataset.id);
-          setMobileRailOpen(false);
-        }
-      });
+    /* Recents list interactions, wired into the Preact island. */
+    async function handleRecentOpen(id) {
+      if (interactionBusy()) return;
+      toggleMobileConversationMenu(false);
+      await loadConversationIntoChat(id);
+      setMobileRailOpen(false);
     }
+
+    async function handleRecentDelete(id) {
+      if (interactionBusy()) return;
+      if (!id) return;
+      if (!window.confirm('Delete this conversation?')) return;
+      if (isLocalConversationId(id)) {
+        const wasActive = id === activeConversationId;
+        ({ conversations, activeConversationId } = deleteConversationSummaryList(conversations, id, { activeConversationId }));
+        if (wasActive) {
+          startBlankConversationView();
+        } else {
+          renderRecents();
+        }
+        trackTinylyticsEvent('librarian.conversation_delete');
+        return;
+      }
+      try {
+        await conversationAction({ action: 'delete', conversation_id: id });
+        const wasActive = id === activeConversationId;
+        ({ conversations, activeConversationId } = deleteConversationSummaryList(conversations, id, { activeConversationId }));
+        if (wasActive) {
+          clearConversation();
+        } else {
+          renderRecents();
+        }
+        trackTinylyticsEvent('librarian.conversation_delete');
+      } catch (error) {
+        showNotice('Could not delete the conversation. Please try again.');
+        trackTinylyticsEvent('librarian.conversations_error', 'delete');
+      }
+    }
+
+    mountRailRecents(document.getElementById('rail-recents-mount'), {
+      maxRecents,
+      onOpen: handleRecentOpen,
+      onDelete: handleRecentDelete
+    });
 
     /* Conversation bootstrap. */
     resetMessages();
