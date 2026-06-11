@@ -27,3 +27,16 @@ test('dispatch reads URL params before Tinylytics strips them', async () => {
     'bootDispatch must run before loadTinylytics so dispatch_test params are read before analytics scrubbing'
   );
 });
+
+test('chat keeps signed-in invite links out of the sign-in redirect loop', async () => {
+  const sourceText = await source('../src/shared/thingy-chat.js');
+  const tokenBranch = sourceText.indexOf('} else if (actions.token()) {');
+  const emailBranch = sourceText.indexOf('} else if (initialEmailFromUrl) {');
+
+  assert.ok(tokenBranch > -1);
+  assert.ok(emailBranch > -1);
+  assert.ok(
+    tokenBranch < emailBranch,
+    'a valid stored session must take precedence over email= so signed-in prompt/from links do not bounce through /signin/'
+  );
+});

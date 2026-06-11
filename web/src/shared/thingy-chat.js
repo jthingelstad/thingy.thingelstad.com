@@ -1070,9 +1070,6 @@ function bootChat() {
     if (loginToken) {
       window.location.href = session.signInUrl();
       trackTinylyticsEvent('librarian.auth_magic_link_start');
-    } else if (initialEmailFromUrl) {
-      window.location.href = session.signInUrl();
-      trackTinylyticsEvent('librarian.auth_auto_start');
     } else if (actions.token()) {
       if (actions.tokenExpired()) {
         actions.redirectToSignIn();
@@ -1097,6 +1094,9 @@ function bootChat() {
         });
         trackTinylyticsEvent('librarian.session_resume');
       }
+    } else if (initialEmailFromUrl) {
+      window.location.href = session.signInUrl();
+      trackTinylyticsEvent('librarian.auth_auto_start');
     } else {
       window.location.href = session.signInUrl();
     }
