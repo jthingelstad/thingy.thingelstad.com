@@ -104,11 +104,14 @@ async function checkChatIslands(browser) {
   const emptyText = (await page.locator('#rail-recents-mount .rail-empty').textContent()).trim();
   assert.match(emptyText, /Your conversations sync with Thingy/);
 
-  // ComposerCount island should be reactive: count updates as the user types.
-  await page.waitForSelector('#librarian-question-count .composer-count');
+  // ComposerCount island should be present at rest, then visible/reactive
+  // after the compact composer expands.
+  await page.waitForSelector('#librarian-question-count .composer-count', { state: 'attached' });
   const countLocator = page.locator('#librarian-question-count .composer-count');
   assert.equal((await countLocator.textContent()).trim(), '0 / 1200', 'count starts at 0');
+  assert.equal(await countLocator.isVisible(), false, 'count is hidden while composer is compact');
   await page.locator('#librarian-question').fill('Hello Thingy');
+  await countLocator.waitFor({ state: 'visible' });
   await page.waitForFunction(() => {
     const el = document.querySelector('#librarian-question-count .composer-count');
     return el && /^12 \/ 1200/.test(el.textContent || '');

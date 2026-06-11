@@ -401,6 +401,7 @@ function bootChat() {
         : 0;
       keyboardInset = nextInset;
       document.documentElement.style.setProperty('--thingy-keyboard-inset', `${nextInset}px`);
+      document.documentElement.classList.toggle('is-thingy-keyboard-open', nextInset > 0);
       scheduleComposerReserveUpdate();
       if (nextInset > 0 && questionForm?.contains(document.activeElement)) {
         scheduleChatScroll({ force: true });

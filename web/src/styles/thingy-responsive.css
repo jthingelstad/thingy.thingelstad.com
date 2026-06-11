@@ -94,12 +94,16 @@
   }
 
   .thingy-composer-zone {
+    bottom: 0;
+    padding: 16px 16px calc(14px + env(safe-area-inset-bottom));
+    z-index: 48;
+  }
+
+  .is-thingy-keyboard-open .thingy-composer-zone {
     position: fixed;
     left: 0;
     right: 0;
     bottom: var(--thingy-keyboard-inset, 0px);
-    padding: 16px 16px calc(14px + env(safe-area-inset-bottom));
-    z-index: 48;
   }
 
   .thingy-composer-zone::before {
