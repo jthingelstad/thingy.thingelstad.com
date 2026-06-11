@@ -83,14 +83,27 @@ function normalizeModes(modes) {
   return Array.isArray(modes) ? modes.filter((mode) => mode && mode.id) : [];
 }
 
+function firstPresentObjectValue(source = {}, keys = []) {
+  if (!source || typeof source !== 'object') return undefined;
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(source, key)) return source[key];
+  }
+  return undefined;
+}
+
+function incomingDiscordConnection(data = {}, profile = {}) {
+  const keys = ['discord_connection', 'discordConnection', 'discord_user', 'discordUser'];
+  const topLevelValue = firstPresentObjectValue(data, keys);
+  if (topLevelValue !== undefined) return topLevelValue;
+  return firstPresentObjectValue(profile, keys);
+}
+
 function mergeProfile(data = {}, email = '') {
   const emailValue = normalizeEmail(data.email || email);
   if (emailValue) window.localStorage.setItem(userEmailKey, emailValue);
   const existingProfile = storedProfile();
   const incomingProfile = data.profile && typeof data.profile === 'object' ? data.profile : {};
-  const incomingDiscordConnection = (data.discord_connection && typeof data.discord_connection === 'object')
-    ? data.discord_connection
-    : incomingProfile.discord_connection;
+  const nextDiscordConnection = incomingDiscordConnection(data, incomingProfile);
   const hasIncomingEntitlements = Array.isArray(data.entitlements) || Array.isArray(incomingProfile.entitlements);
   const incomingEntitlements = Array.isArray(data.entitlements) ? data.entitlements : incomingProfile.entitlements;
   const entitlements = Array.isArray(incomingEntitlements) ? incomingEntitlements : existingProfile.entitlements;
@@ -103,7 +116,7 @@ function mergeProfile(data = {}, email = '') {
       ? Boolean(data.status === 'premium' || incomingProfile.supporting_member || (Array.isArray(entitlements) && entitlements.includes('supporting_member')))
       : Boolean(incomingProfile.supporting_member || existingProfile.supporting_member),
     entitlements,
-    discord_connection: incomingDiscordConnection === undefined ? existingProfile.discord_connection : incomingDiscordConnection,
+    discord_connection: nextDiscordConnection === undefined ? existingProfile.discord_connection : nextDiscordConnection,
     modes: normalizeModes(data.modes || incomingProfile.modes || existingProfile.modes)
   };
   window.localStorage.setItem(userProfileKey, JSON.stringify(profile));

@@ -39,7 +39,7 @@ function MemoryTrigger({ profile, onOpen }) {
     <button type="button" class="rail-memory-trigger" onClick={onOpen}>
       <span class="rail-memory-trigger-icon" aria-hidden="true" dangerouslySetInnerHTML={{ __html: BRAIN_ICON }} />
       <span class="rail-memory-trigger-copy">
-        <strong>View Thingy Memory</strong>
+        <strong>Show Account and Memory</strong>
         <small>{detail}</small>
       </span>
     </button>
@@ -50,12 +50,35 @@ function synthesisStatusText(status = {}) {
   const pending = Number(status.pending_event_count || 0);
   if (pending > 0) return `${pending} new interaction${pending === 1 ? '' : 's'} pending synthesis`;
   if (status.last_synthesized_at) return `Memory current · Last synthesized ${new Date(status.last_synthesized_at).toLocaleString()}`;
-  return 'Memory current';
+  return 'Memory has not been synthesized yet';
+}
+
+function formatMemoryDate(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  const date = new Date(text);
+  return Number.isNaN(date.getTime()) ? text : date.toLocaleString();
+}
+
+function formatMemoryCount(value, label) {
+  const count = Number(value || 0);
+  return `${count.toLocaleString()} ${label}${count === 1 ? '' : 's'}`;
+}
+
+function formatMemoryBreakdown(value = {}) {
+  const entries = Object.entries(value || {})
+    .filter(([, count]) => Number(count || 0) > 0)
+    .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0));
+  if (!entries.length) return '';
+  return entries
+    .map(([key, count]) => `${String(key).replace(/_/g, ' ')}: ${Number(count || 0).toLocaleString()}`)
+    .join(', ');
 }
 
 function MemoryModal({ open, onClose, session, profile, email, preferredName, connectedName, supporting }) {
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState('account');
   const [viewProfile, setViewProfile] = useState(profile || {});
+  const [accountOverview, setAccountOverview] = useState({});
   const [busyAction, setBusyAction] = useState('');
   const [memoryError, setMemoryError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState('');
@@ -66,13 +89,31 @@ function MemoryModal({ open, onClose, session, profile, email, preferredName, co
   const questions = memoryQuestionItems(viewProfile);
   const summaries = memorySummaryItems(viewProfile);
   const synthesis = viewProfile.memory_synthesis || {};
+  const viewConnectedName = discordConnectionName(viewProfile) || connectedName;
   const profileRows = [
     preferredName ? ['Name', preferredName] : null,
     email ? ['Email', email] : null,
-    connectedName ? ['Discord', connectedName] : null,
+    viewConnectedName ? ['Discord', viewConnectedName] : null,
     supporting ? ['Access', 'Supporting Member'] : null
   ].filter(Boolean);
+  const accountRows = [
+    preferredName ? ['Name', preferredName] : null,
+    email ? ['Email', email] : null,
+    supporting ? ['Access', 'Supporting Member'] : null,
+    viewConnectedName ? ['Discord', viewConnectedName] : ['Discord', 'Not connected in Thingy profile'],
+    ['First seen', formatMemoryDate(accountOverview.first_seen_at || viewProfile.first_seen_at) || 'Not recorded'],
+    ['Last activity', formatMemoryDate(accountOverview.last_seen_at || viewProfile.last_seen_at) || 'Not recorded'],
+    ['Thingy turns', formatMemoryCount(accountOverview.memory_turn_count ?? viewProfile.turn_count, 'turn')],
+    ['Retained conversations', formatMemoryCount(accountOverview.conversation_count, 'conversation')],
+    ['Retained conversation turns', formatMemoryCount(accountOverview.conversation_turn_count, 'turn')],
+    formatMemoryBreakdown(accountOverview.conversation_modes) ? ['Conversation modes', formatMemoryBreakdown(accountOverview.conversation_modes)] : null,
+    formatMemoryBreakdown(accountOverview.conversation_eval_statuses) ? ['Conversation evals', formatMemoryBreakdown(accountOverview.conversation_eval_statuses)] : null,
+    ['Memory events', formatMemoryCount(accountOverview.memory_event_count, 'event')],
+    formatMemoryBreakdown(accountOverview.memory_event_types) ? ['Memory event types', formatMemoryBreakdown(accountOverview.memory_event_types)] : null,
+    ['Memory status', synthesisStatusText(synthesis)]
+  ].filter(Boolean);
   const tabs = [
+    { id: 'account', label: 'Account', count: 0 },
     { id: 'profile', label: 'Profile', count: profileRows.length },
     { id: 'details', label: 'Remembered', count: facts.length },
     { id: 'learned', label: 'Learned', count: learned.length },
@@ -83,12 +124,15 @@ function MemoryModal({ open, onClose, session, profile, email, preferredName, co
 
   async function applyMemoryData(data) {
     if (!data?.profile) return;
-    const nextProfile = typeof session?.updateStoredProfile === 'function'
+    const nextProfile = typeof session?.mergeProfile === 'function'
+      ? session.mergeProfile(data, email)
+      : typeof session?.updateStoredProfile === 'function'
       ? session.updateStoredProfile(data.profile)
       : data.profile;
     displayProfile.value = nextProfile;
     displayPreferredName.value = String(nextProfile.preferred_name || displayPreferredName.value || '').trim();
     setViewProfile(nextProfile);
+    setAccountOverview(data.account || {});
   }
 
   async function runMemoryAction(payload, actionName) {
@@ -122,6 +166,7 @@ function MemoryModal({ open, onClose, session, profile, email, preferredName, co
   useEffect(() => {
     if (!open) return;
     setViewProfile(profile || {});
+    setAccountOverview({});
     setMemoryError('');
     setConfirmDelete('');
     runMemoryAction({ action: 'get' }, 'load');
@@ -157,6 +202,18 @@ function MemoryModal({ open, onClose, session, profile, email, preferredName, co
   }
 
   function renderPanel() {
+    if (activeTab === 'account') {
+      return (
+        <dl class="thingy-memory-dl">
+          {accountRows.map(([label, value]) => (
+            <Fragment key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </Fragment>
+          ))}
+        </dl>
+      );
+    }
     if (activeTab === 'profile') {
       return profileRows.length ? (
         <dl class="thingy-memory-dl">
@@ -259,10 +316,10 @@ function MemoryModal({ open, onClose, session, profile, email, preferredName, co
         <header class="thingy-memory-header">
           <span class="thingy-memory-header-icon" aria-hidden="true" dangerouslySetInnerHTML={{ __html: BRAIN_ICON }} />
           <div>
-            <h2 id="thingy-memory-title">Thingy Memory</h2>
-            <p>Profile metadata and bounded context Thingy can use.</p>
+            <h2 id="thingy-memory-title">Account and Memory</h2>
+            <p>Full account details, activity, and bounded context Thingy can use.</p>
           </div>
-          <button type="button" class="thingy-memory-close" aria-label="Close Thingy Memory" onClick={onClose} dangerouslySetInnerHTML={{ __html: CLOSE_ICON }} />
+          <button type="button" class="thingy-memory-close" aria-label="Close Account and Memory" onClick={onClose} dangerouslySetInnerHTML={{ __html: CLOSE_ICON }} />
         </header>
         <section class="thingy-memory-status" aria-live="polite">
           <span>{busyAction === 'load' ? 'Loading memory...' : synthesisStatusText(synthesis)}</span>
@@ -276,7 +333,7 @@ function MemoryModal({ open, onClose, session, profile, email, preferredName, co
           </div>
           {memoryError ? <small>{memoryError}</small> : null}
         </section>
-        <nav class="thingy-memory-tabs" role="tablist" aria-label="Thingy memory categories">
+        <nav class="thingy-memory-tabs" role="tablist" aria-label="Thingy account and memory categories">
           {tabs.map((tab) => (
             <button
               key={tab.id}
