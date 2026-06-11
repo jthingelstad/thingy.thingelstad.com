@@ -7,6 +7,7 @@
   min-height: 116px;
   padding: 0;
   overflow: visible;
+  transition: border-radius 0.16s ease, min-height 0.16s ease;
 }
 
 .composer-box.thingy-input textarea {
@@ -22,6 +23,7 @@
   font-size: 16px;
   line-height: 1.38;
   outline: none;
+  transition: min-height 0.16s ease, max-height 0.16s ease, padding 0.16s ease;
 }
 
 .composer-box.thingy-input textarea:focus {
@@ -36,6 +38,22 @@
   min-height: 48px;
   padding: 4px 12px 12px;
   min-width: 0;
+}
+
+.composer-box.thingy-input.is-compact {
+  min-height: 62px;
+  border-radius: 31px;
+}
+
+.composer-box.thingy-input.is-compact textarea {
+  min-height: 62px;
+  max-height: 62px;
+  padding: 19px 22px;
+  overflow: hidden;
+}
+
+.composer-box.thingy-input.is-compact .composer-toolbar {
+  display: none;
 }
 
 .composer-toolbar .composer-spacer {
@@ -216,6 +234,19 @@
   width: 17px;
   height: 17px;
   fill: currentColor;
+}
+
+@media (max-width: 640px) {
+  .composer-box.thingy-input.is-compact {
+    min-height: 54px;
+    border-radius: 27px;
+  }
+
+  .composer-box.thingy-input.is-compact textarea {
+    min-height: 54px;
+    max-height: 54px;
+    padding: 15px 18px;
+  }
 }
 
 .srcpick {

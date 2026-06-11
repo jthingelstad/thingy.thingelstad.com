@@ -16,9 +16,21 @@ function createComposer(options = {}) {
     const autoSizeEnabled = options.autoSize !== false;
     const maxHeight = Number(options.maxHeight || 240);
     const onAutoSize = typeof options.onAutoSize === 'function' ? options.onAutoSize : null;
+    let focusInside = false;
+
+    function updateCompactState() {
+      if (!form || !input) return;
+      form.classList.toggle('is-compact', !focusInside && !isBusy());
+    }
 
     function autoSize() {
       if (!input || !autoSizeEnabled) return;
+      updateCompactState();
+      if (form?.classList.contains('is-compact')) {
+        input.style.height = '';
+        if (onAutoSize) onAutoSize();
+        return;
+      }
       input.style.height = 'auto';
       input.style.height = `${Math.min(input.scrollHeight, maxHeight)}px`;
       if (onAutoSize) onAutoSize();
@@ -42,6 +54,16 @@ function createComposer(options = {}) {
             console.error(error);
           }
         }
+      });
+      form.addEventListener('focusin', () => {
+        focusInside = true;
+        sync();
+      });
+      form.addEventListener('focusout', () => {
+        window.setTimeout(() => {
+          focusInside = Boolean(form.contains(document.activeElement));
+          sync();
+        }, 0);
       });
     }
 
