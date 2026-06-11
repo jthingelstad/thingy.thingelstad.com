@@ -5,11 +5,20 @@ function actionIcon(name) {
     copy: 'copy',
     play: 'play',
     pause: 'pause',
+    retry: 'rotate-ccw',
     up: 'thumbs-up',
     down: 'thumbs-down',
     share: 'share'
   };
   return iconSvg(iconNames[name]);
+}
+
+function escapeAttribute(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
 }
 
 async function copyToClipboard(value) {
@@ -296,6 +305,7 @@ function createChatMessageActions(options = {}) {
 
   function addResponseActions(messageElement, requestId, actionOptions = {}) {
     const includeFeedback = actionOptions.feedback !== false && Boolean(requestId);
+    const retryPrompt = String(actionOptions.retryPrompt || '').trim();
     if (!requestId && includeFeedback) return;
     const controls = document.createElement('div');
     controls.className = 'librarian-feedback';
@@ -307,6 +317,7 @@ function createChatMessageActions(options = {}) {
       ${includeFeedback ? `<button type="button" data-reaction="up" aria-label="Good response" aria-pressed="false" title="Good response">${actionIcon('up')}</button>` : ''}
       ${includeFeedback ? `<button type="button" data-reaction="down" aria-label="Bad response" aria-pressed="false" title="Bad response">${actionIcon('down')}</button>` : ''}
       <button type="button" data-action="share" aria-label="Share answer" title="Share answer">${actionIcon('share')}</button>
+      ${retryPrompt ? `<button type="button" data-action="retry" data-retry-prompt="${escapeAttribute(retryPrompt)}" aria-label="Retry answer" title="Retry answer">${actionIcon('retry')}</button>` : ''}
       <span class="librarian-feedback-status" aria-live="polite"></span>
     `;
     controls.addEventListener('click', async (event) => {

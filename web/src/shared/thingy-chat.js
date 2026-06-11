@@ -658,8 +658,10 @@ function bootChat() {
         resetMessages();
         hidePrompts();
         const scopeFallback = sourceControls.currentScope();
+        let lastUserPrompt = '';
         for (const msg of data.messages || []) {
           if (msg.role === 'user') {
+            lastUserPrompt = msg.content || '';
             const el = addMessage('user', `<p>${escapeHtml(msg.content || '')}</p>`);
             addPromptActions(el, msg.content || '', msg.scope || scopeFallback);
           } else if (msg.role === 'assistant') {
@@ -674,7 +676,7 @@ function bootChat() {
               status: 'done',
               requestId
             });
-            if (!artifactHtml && requestId) addResponseActions(element, requestId);
+            if (!artifactHtml && requestId) addResponseActions(element, requestId, { retryPrompt: lastUserPrompt });
           }
         }
         setQuestionInputValue('');
@@ -826,7 +828,7 @@ function bootChat() {
           const hasPartial = Boolean(String(data.answer || '').trim() || data.experience);
           trackTinylyticsEvent('librarian.answer_stopped', hasPartial ? 'partial' : 'empty');
         } else {
-          addResponseActions(pending, data.request_id);
+          addResponseActions(pending, data.request_id, { retryPrompt: message });
         }
         if (data.conversation_id) {
           actions.setActiveConversation(data.conversation_id);
