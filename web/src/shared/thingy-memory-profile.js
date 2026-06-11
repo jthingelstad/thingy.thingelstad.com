@@ -11,7 +11,10 @@ const LOW_SIGNAL_MEMORY_PATTERNS = [
 ];
 
 function cleanMemoryText(value, max = 180) {
-  return String(value || '').trim().replace(/\s+/g, ' ').slice(0, max);
+  const text = String(value || '').trim().replace(/\s+/g, ' ');
+  if (text.length <= max) return text;
+  const clipped = text.slice(0, Math.max(0, max - 3)).replace(/\s+\S*$/, '');
+  return `${clipped || text.slice(0, Math.max(0, max - 3))}...`;
 }
 
 function usefulMemoryText(value, max = 180) {
@@ -52,9 +55,7 @@ function memorySummaryItems(profile = {}) {
 }
 
 function memoryLearnedItems(profile = {}) {
-  const learnedProfile = Array.isArray(profile.learned_profile)
-    ? profile.learned_profile
-    : profile.synthesized_memories;
+  const learnedProfile = Array.isArray(profile.learned_profile) ? profile.learned_profile : [];
   return profileList(learnedProfile, (item) => {
     const label = usefulMemoryText(item?.label || '', 160);
     const summary = usefulMemoryText(item?.summary || '', 420);
@@ -71,11 +72,7 @@ function memoryLearnedItems(profile = {}) {
 }
 
 function memorySignalCount(profile = {}) {
-  return (
-    memoryLearnedItems(profile).length +
-    memoryQuestions(profile).length +
-    memorySummaries(profile).length
-  );
+  return memoryLearnedItems(profile).length;
 }
 
 export {

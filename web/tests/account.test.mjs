@@ -147,7 +147,8 @@ test('memory profile helpers hide generic non-memory summaries', () => {
   assert.deepEqual(memorySummaries(profile), ['They explored Jamie writing about RSS, OPML, and reader workflows.']);
   assert.equal(memoryLearnedItems(profile).length, 1);
   assert.deepEqual(memoryQuestions(profile), ['What did Jamie write about OPML?']);
-  assert.equal(memorySignalCount(profile), 3);
+  assert.equal(memorySignalCount(profile), 1);
+  assert.equal(usefulMemoryText('One two three four five', 12), 'One two...');
 });
 
 test('memory profile item helpers preserve ids for user controls', () => {

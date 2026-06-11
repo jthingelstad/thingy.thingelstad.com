@@ -248,13 +248,14 @@ function MemoryModal({ open, onClose, onProfileDeleted, session, profile, email,
             <p>This deletes your Thingy profile, memory, conversations, Dispatch history, and Discord link. It does not unsubscribe you from Weekly Thing.</p>
             {confirmDelete === 'profile' ? (
               <div class="thingy-memory-danger-actions">
+                <p class="thingy-memory-confirm-copy">Are you sure? This cannot be undone from Thingy.</p>
                 <button
                   type="button"
                   class="thingy-memory-danger"
                   disabled={busyAction === 'delete_profile'}
                   onClick={handleDeleteProfile}
                 >
-                  {busyAction === 'delete_profile' ? 'Deleting...' : 'Delete Thingy Profile'}
+                  {busyAction === 'delete_profile' ? 'Deleting...' : 'Confirm Delete Thingy Profile'}
                 </button>
                 <button type="button" disabled={busyAction === 'delete_profile'} onClick={() => setConfirmDelete('')}>Cancel</button>
               </div>

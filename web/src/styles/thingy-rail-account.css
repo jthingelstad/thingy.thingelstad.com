@@ -604,6 +604,12 @@
   gap: 8px;
 }
 
+.thingy-memory-danger-actions .thingy-memory-confirm-copy {
+  flex-basis: 100%;
+  color: #a33325;
+  font-weight: 700;
+}
+
 .thingy-memory-empty {
   margin: 0;
   color: var(--muted);
