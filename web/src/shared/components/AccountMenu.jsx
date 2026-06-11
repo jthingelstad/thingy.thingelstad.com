@@ -59,6 +59,7 @@ function MemoryModal({ open, onClose, session, profile, email, preferredName, co
   const [busyAction, setBusyAction] = useState('');
   const [memoryError, setMemoryError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState('');
+  const onCloseRef = useRef(onClose);
   const facts = memoryFacts(viewProfile);
   const interests = memoryInterestItems(viewProfile);
   const learned = memoryLearnedItems(viewProfile);
@@ -106,17 +107,25 @@ function MemoryModal({ open, onClose, session, profile, email, preferredName, co
   }
 
   useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
     if (!open) return undefined;
+    function onKey(event) {
+      if (event.key === 'Escape') onCloseRef.current();
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     setViewProfile(profile || {});
     setMemoryError('');
     setConfirmDelete('');
     runMemoryAction({ action: 'get' }, 'load');
-    function onKey(event) {
-      if (event.key === 'Escape') onClose();
-    }
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, onClose, profile]);
+  }, [open]);
 
   if (!open) return null;
 
