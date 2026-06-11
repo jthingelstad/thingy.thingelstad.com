@@ -8,6 +8,7 @@ import * as defaultSession from './thingy-session.js';
 import { normalizePreferredName, savePreferredName } from './thingy-account.js';
 import { postJsonRequest } from './thingy-http.js';
 import { postJsonStream, read as readStream } from './thingy-stream.js';
+import { AGENT_RESPONSE_TIMEOUT_MS, AGENT_SETUP_TIMEOUT_MS } from './thingy-timeouts.js';
 import { createAssistantStreamRenderer } from './thingy-chat-stream-renderer.js';
 import { normalizeModeId, normalizeModes } from './thingy-modes.js';
 import {
@@ -646,7 +647,7 @@ function createChatActions(options = {}) {
         baseUrl: streamBase,
         path: '/chat',
         controller: chatAbortController,
-        timeoutMs: 190000,
+        timeoutMs: AGENT_RESPONSE_TIMEOUT_MS,
         abortMessage: 'Thingy spent too long in the archive. Please try again with a narrower angle.',
         headers: {
           authorization: `Bearer ${token()}`
@@ -742,7 +743,7 @@ function createChatActions(options = {}) {
       baseUrl: streamBase,
       path: '/welcome',
       controller: opts.controller,
-      timeoutMs: 45000,
+      timeoutMs: AGENT_SETUP_TIMEOUT_MS,
       abortMessage: 'Thingy took too long to get oriented. Please try asking a question.',
       headers: {
         authorization: `Bearer ${token()}`

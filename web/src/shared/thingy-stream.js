@@ -1,3 +1,5 @@
+import { DEFAULT_API_TIMEOUT_MS } from './thingy-timeouts.js';
+
 function parseBlock(block) {
     let eventName = 'message';
     const dataLines = [];
@@ -49,7 +51,7 @@ async function postJsonStream(options = {}) {
     const baseUrl = String(options.baseUrl || '').replace(/\/$/, '');
     if (!baseUrl) throw new Error(options.missingMessage || 'Thingy has not been connected to the archive stream API yet.');
     const controller = options.controller || new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), Number(options.timeoutMs || 60000));
+    const timeout = window.setTimeout(() => controller.abort(), Number(options.timeoutMs || DEFAULT_API_TIMEOUT_MS));
     const response = await fetch(`${baseUrl}${options.path || ''}`, {
       method: 'POST',
       headers: {

@@ -313,7 +313,7 @@ function MemoryModal({ open, onClose, onProfileDeleted, session, profile, email,
         ))}
       </ul>
     ) : (
-      <p class="thingy-memory-empty">No recent questions are available in this session yet.</p>
+      <p class="thingy-memory-empty">No recent prompts are available in this profile yet.</p>
     );
   }
 

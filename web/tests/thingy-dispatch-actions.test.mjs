@@ -25,6 +25,7 @@ const {
   readyDispatchText,
   titleFromPrompt
 } = await import('../src/shared/thingy-dispatch-actions.js');
+const { AGENT_RESPONSE_TIMEOUT_MS } = await import('../src/shared/thingy-timeouts.js');
 
 const {
   dispatchBusy,
@@ -123,6 +124,14 @@ function fakeSession(overrides = {}) {
   };
 }
 
+function progressMessages() {
+  return dispatchMessages.value.filter((message) => message.kind === 'progress');
+}
+
+function progressBaseIds(messages = progressMessages()) {
+  return messages.map((message) => message.baseId || message.id);
+}
+
 test('createDraft activates a fresh draft and renders it into the signals', () => {
   dispatchBusy.value = false;
   const actions = createDispatchActions({
@@ -162,8 +171,8 @@ test('clarifyWithThingy moves an empty draft to ready and persists through the A
   dispatchBusy.value = false;
   const calls = [];
   const session = fakeSession({
-    postJson: async (path, payload) => {
-      calls.push(payload.action);
+    postJson: async (path, payload, headers, options) => {
+      calls.push({ action: payload.action, options });
       if (payload.action === 'clarify') {
         return { needs_clarification: false, direction: 'A focused direction', message: 'Shaped it.' };
       }
@@ -178,8 +187,9 @@ test('clarifyWithThingy moves an empty draft to ready and persists through the A
   const draft = actions.activeDraft();
   assert.equal(draft.stage, 'ready');
   assert.equal(draft.direction, 'A focused direction');
-  assert.deepEqual(calls.filter((c) => c === 'clarify'), ['clarify']);
-  assert.ok(calls.includes('save_draft'), 'draft persisted to server');
+  assert.deepEqual(calls.filter((call) => call.action === 'clarify').map((call) => call.action), ['clarify']);
+  assert.equal(calls.find((call) => call.action === 'clarify').options.timeoutMs, AGENT_RESPONSE_TIMEOUT_MS);
+  assert.ok(calls.some((call) => call.action === 'save_draft'), 'draft persisted to server');
   const lastMessage = dispatchMessages.value[dispatchMessages.value.length - 1];
   assert.equal(lastMessage.text, 'Shaped it.');
   assert.equal(dispatchBusy.value, false, 'busy resets after clarify');
@@ -236,12 +246,85 @@ test('clarifyWithThingy renders archive planning activity and a Dispatch brief',
   const draft = actions.activeDraft();
   assert.equal(draft.stage, 'ready');
   assert.equal(draft.brief.coverage_status, 'focused');
-  const progress = dispatchMessages.value.filter((message) => message.kind === 'progress');
-  assert.deepEqual(progress.map((message) => message.id), ['archive-fit', 'source-balance', 'dispatch-brief']);
+  const progress = progressMessages();
+  assert.deepEqual(progressBaseIds(progress), ['archive-fit', 'source-balance', 'dispatch-brief']);
+  assert.ok(progress.every((message) => String(message.id).startsWith('plan-1:')), 'planning progress rows are scoped to the run');
   assert.equal(progress[0].status, 'complete');
+  assert.ok(progress.every((message) => Number(message.startedAt) > 0), 'progress rows carry timer start metadata');
+  assert.ok(progress.every((message) => Number(message.completedAt) >= Number(message.startedAt)), 'completed progress rows carry completion metadata');
   assert.ok(dispatchMessages.value.some((message) => message.kind === 'brief' && /Dispatch brief/.test(message.text)));
   const finalSave = payloads.filter((payload) => payload.action === 'save_draft').at(-1);
   assert.equal(finalSave.brief.working_angle, 'Connect RSS to ownership and publishing');
+});
+
+test('clarifyWithThingy keeps progress rows intermingled with each Dispatch turn', async () => {
+  dispatchBusy.value = false;
+  let clarifyCalls = 0;
+  const session = fakeSession({
+    postJson: async (path, payload) => {
+      if (payload.action === 'clarify') {
+        clarifyCalls += 1;
+        return clarifyCalls === 1 ? {
+          needs_clarification: true,
+          direction: 'RSS is broad in the archive.',
+          message: 'I found a lot of RSS material.',
+          question: 'Which RSS angle should I narrow toward?',
+          tool_activity: [{
+            id: 'archive-fit',
+            label: 'Checked archive coverage',
+            status: 'complete',
+            summary: 'RSS has a broad source set.'
+          }, {
+            id: 'source-balance',
+            label: 'Balanced source packet',
+            status: 'complete',
+            summary: 'The source packet needs a narrower angle.'
+          }]
+        } : {
+          needs_clarification: false,
+          direction: 'A focused Dispatch about RSS and ownership.',
+          message: 'That is narrow enough to generate.',
+          tool_activity: [{
+            id: 'archive-fit',
+            label: 'Checked archive coverage',
+            status: 'complete',
+            summary: 'Ownership gives the Dispatch a focused source set.'
+          }, {
+            id: 'source-balance',
+            label: 'Balanced source packet',
+            status: 'complete',
+            summary: 'The selected packet is now bounded.'
+          }]
+        };
+      }
+      return { dispatch: { id: 'srv-turns' } };
+    }
+  });
+  const actions = createDispatchActions({ session, onRender: () => {}, activeKey: 'turn-scope-test' });
+  actions.createDraft({ activate: true, render: false });
+
+  actions.addMessage('user', 'Write about RSS');
+  await actions.clarifyWithThingy('Write about RSS');
+  actions.addMessage('user', 'Focus on RSS and ownership');
+  await actions.clarifyWithThingy('Focus on RSS and ownership');
+
+  const messages = dispatchMessages.value;
+  const userIndexes = messages
+    .map((message, index) => ({ message, index }))
+    .filter((entry) => entry.message.role === 'user')
+    .map((entry) => entry.index);
+  const progress = progressMessages();
+  const progressIndexes = messages
+    .map((message, index) => ({ message, index }))
+    .filter((entry) => entry.message.kind === 'progress')
+    .map((entry) => entry.index);
+
+  assert.deepEqual(progressBaseIds(progress), ['archive-fit', 'source-balance', 'archive-fit', 'source-balance']);
+  assert.equal(new Set(progress.map((message) => message.id)).size, 4, 'repeated backend activity IDs get per-turn client IDs');
+  assert.ok(progress[0].id.startsWith('plan-1:'));
+  assert.ok(progress[2].id.startsWith('plan-2:'));
+  assert.deepEqual(progressIndexes.slice(0, 2), [userIndexes[0] + 1, userIndexes[0] + 2]);
+  assert.deepEqual(progressIndexes.slice(2), [userIndexes[1] + 1, userIndexes[1] + 2]);
 });
 
 test('clarifyWithThingy restores the previous stage when the API fails', async () => {
@@ -256,6 +339,11 @@ test('clarifyWithThingy restores the previous stage when the API fails', async (
   actions.createDraft({ activate: true, render: false });
   await actions.clarifyWithThingy('topic');
   assert.equal(actions.activeDraft().stage, 'empty', 'stage rolled back');
+  const progress = progressMessages();
+  assert.deepEqual(progress.map((message) => [message.baseId, message.status]), [
+    ['archive-fit', 'failed'],
+    ['source-balance', 'failed']
+  ]);
   const lastMessage = dispatchMessages.value[dispatchMessages.value.length - 1];
   assert.equal(lastMessage.text, 'boom');
 });
@@ -284,8 +372,12 @@ test('generateDispatch writes progress into the Dispatch transcript', async () =
 
   await actions.generateDispatch();
 
-  const progress = dispatchMessages.value.filter((message) => message.kind === 'progress');
-  assert.deepEqual(progress.map((message) => message.id), ['generate-start', 'generate-save', 'generate-queue']);
+  const progress = progressMessages();
+  assert.deepEqual(progressBaseIds(progress), ['generate-start', 'generate-save', 'generate-queue']);
+  assert.ok(progress.every((message) => String(message.id).startsWith('generate-1:')), 'generation progress rows are scoped to the run');
+  assert.equal(progress[0].status, 'complete');
+  assert.equal(progress[1].status, 'complete');
+  assert.equal(progress[2].status, 'complete');
   assert.match(progress[0].text, /brief we shaped/i);
   assert.match(progress[0].text, /Archive fit: Focused/i);
   assert.match(progress[1].text, /direction and brief/i);

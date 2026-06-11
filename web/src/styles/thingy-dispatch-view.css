@@ -64,6 +64,30 @@
   min-width: 0;
 }
 
+.dispatch-message-progress-line {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.dispatch-message-progress-lead {
+  min-width: 0;
+}
+
+.dispatch-message-progress-lead p,
+.dispatch-message-progress-detail p {
+  margin-bottom: 0;
+}
+
+.dispatch-message-progress-elapsed {
+  flex: 0 0 auto;
+}
+
+.dispatch-message-progress-detail {
+  margin-top: 3px;
+}
+
 .dispatch-actions {
   width: min(100%, 50rem);
   display: flex;

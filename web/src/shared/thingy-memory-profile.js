@@ -29,16 +29,22 @@ function profileList(value, mapper) {
 }
 
 function memoryQuestions(profile = {}) {
-  return profileList(profile.current_session_questions, (item) => (
+  const source = Array.isArray(profile.recent_prompts) && profile.recent_prompts.length
+    ? profile.recent_prompts
+    : profile.current_session_questions;
+  return profileList(source, (item) => (
     usefulMemoryText(item?.question || item, 180)
-  )).slice(-4);
+  )).slice(-10);
 }
 
 function memoryQuestionItems(profile = {}) {
-  return profileList(profile.current_session_questions, (item) => {
+  const source = Array.isArray(profile.recent_prompts) && profile.recent_prompts.length
+    ? profile.recent_prompts
+    : profile.current_session_questions;
+  return profileList(source, (item) => {
     const value = usefulMemoryText(item?.question || item, 180);
     return value ? { id: item?.id || '', value, ts: item?.ts || '' } : null;
-  }).slice(-4);
+  }).slice(-10);
 }
 
 function memorySummaries(profile = {}) {

@@ -24,6 +24,7 @@ import {
   serverDispatchId
 } from './thingy-dispatch-drafts.js';
 import { dispatchEditable } from './thingy-dispatch-state.js';
+import { AGENT_RESPONSE_TIMEOUT_MS } from './thingy-timeouts.js';
 
 const DEFAULT_WELCOME = "Alright, let's make your first Dispatch. Give me the topic, question, or archive thread you want to shape, and I'll help turn it into a clear direction before you generate it.";
 const MAX_DRAFTS = 24;
@@ -217,6 +218,7 @@ function createDispatchActions(options = {}) {
   } catch (error) { /* private mode */ }
   let pollTimer = 0;
   let pollingDraftId = '';
+  let progressRunCounter = 0;
 
   function nowIso() {
     return new Date().toISOString();
@@ -298,18 +300,40 @@ function createDispatchActions(options = {}) {
     return draft;
   }
 
+  function nextProgressScope(kind = 'progress') {
+    progressRunCounter += 1;
+    return `${kind}-${progressRunCounter}`;
+  }
+
+  function scopedProgressId(scope, id) {
+    const base = String(id || 'progress').trim().replace(/[^a-z0-9_-]+/gi, '-') || 'progress';
+    return scope ? `${scope}:${base}` : base;
+  }
+
   function upsertProgressMessage(id, text, targetDraft = activeDraft(), extra = {}) {
     const draft = targetDraft;
     const key = String(id || '').trim();
     const existing = key ? draft.messages.find((message) => message.kind === 'progress' && message.id === key) : null;
+    const nowMs = Date.now();
+    const status = extra.status || 'pending';
+    const baseId = String(extra.baseId || existing?.baseId || key).trim();
+    const scope = String(extra.scope || existing?.scope || '').trim();
+    const startedAt = Number(extra.startedAt || (
+      existing && (existing.status === 'pending' || status !== 'pending') ? existing.startedAt : 0
+    ) || nowMs);
     const next = {
       id: key || `progress-${Date.now()}`,
+      baseId,
+      scope,
       role: 'assistant',
       text: String(text || ''),
       time: nowIso(),
       kind: 'progress',
-      status: extra.status || 'pending'
+      status,
+      startedAt
     };
+    if (status !== 'pending') next.completedAt = Number(extra.completedAt || existing?.completedAt || nowMs);
+    else next.completedAt = '';
     if (existing) {
       Object.assign(existing, next);
     } else {
@@ -318,6 +342,14 @@ function createDispatchActions(options = {}) {
     draft.updatedAt = nowIso();
     saveDrafts();
     return draft;
+  }
+
+  function upsertScopedProgressMessage(scope, id, text, targetDraft = activeDraft(), extra = {}) {
+    return upsertProgressMessage(scopedProgressId(scope, id), text, targetDraft, {
+      ...extra,
+      baseId: id,
+      scope
+    });
   }
 
   function removeProgressMessage(id, targetDraft = activeDraft()) {
@@ -348,13 +380,13 @@ function createDispatchActions(options = {}) {
     return false;
   }
 
-  async function dispatchPost(action, extra) {
+  async function dispatchPost(action, extra, options = {}) {
     if (!(await session.ensureFreshToken())) {
       session.clearAuth();
       requireAuth();
       throw new Error('Sign in again to continue.');
     }
-    return await session.postJson('/dispatch', { action, ...(extra || {}) }, session.authHeaders());
+    return await session.postJson('/dispatch', { action, ...(extra || {}) }, session.authHeaders(), options);
   }
 
   async function saveDraftToServer(draft = activeDraft(), overrides = {}) {
@@ -490,6 +522,11 @@ function createDispatchActions(options = {}) {
 
   async function clarifyWithThingy(text) {
     const draft = activeDraft();
+    const progressScope = nextProgressScope('plan');
+    const progressId = (id) => scopedProgressId(progressScope, id);
+    const progress = (id, value, targetDraft = activeDraft(), extra = {}) => (
+      upsertScopedProgressMessage(progressScope, id, value, targetDraft, extra)
+    );
     const previous = {
       stage: draft.stage,
       prompt: draft.prompt,
@@ -501,8 +538,8 @@ function createDispatchActions(options = {}) {
     };
     const request = clarifyRequest(draft, text);
     setBusy(true, 'Thingy is shaping this Dispatch...');
-    upsertProgressMessage('archive-fit', 'Checking Jamie’s archive coverage for this Dispatch request.', draft, { status: 'pending' });
-    upsertProgressMessage('source-balance', 'Looking for a source packet that is enough to be meaningful without flooding generation.', draft, { status: 'pending' });
+    progress('archive-fit', 'Checking Jamie’s archive coverage for this Dispatch request.', draft, { status: 'pending' });
+    progress('source-balance', 'Looking for a source packet that is enough to be meaningful without flooding generation.', draft, { status: 'pending' });
     updateDraft({
       stage: 'shaping',
       prompt: request.nextPrompt,
@@ -519,12 +556,15 @@ function createDispatchActions(options = {}) {
         clarification_question: draft.currentQuestion,
         clarification_answer: request.answer,
         messages: activeDraft().messages || []
+      }, {
+        timeoutMs: AGENT_RESPONSE_TIMEOUT_MS,
+        abortMessage: 'Thingy spent too long shaping this Dispatch. Please try again with a narrower angle.'
       });
       const direction = data.direction || request.prompt;
       const planningActivity = Array.isArray(data.tool_activity) ? data.tool_activity : [];
       if (planningActivity.length) {
         planningActivity.forEach((activity, index) => {
-          upsertProgressMessage(
+          progress(
             activity.id || `plan-${index}`,
             planningActivityText(activity),
             activeDraft(),
@@ -532,8 +572,8 @@ function createDispatchActions(options = {}) {
           );
         });
       } else {
-        removeProgressMessage('archive-fit');
-        removeProgressMessage('source-balance');
+        removeProgressMessage(progressId('archive-fit'));
+        removeProgressMessage(progressId('source-balance'));
       }
       if (data.needs_clarification) {
         updateDraft({
@@ -559,7 +599,8 @@ function createDispatchActions(options = {}) {
       setStatus('');
     } catch (error) {
       updateDraft(previous);
-      upsertProgressMessage('archive-fit', 'Archive planning failed before I could shape this Dispatch.', activeDraft(), { status: 'failed' });
+      progress('archive-fit', 'Archive planning failed before I could shape this Dispatch.', activeDraft(), { status: 'failed' });
+      progress('source-balance', 'Source balancing stopped before I could shape this Dispatch.', activeDraft(), { status: 'failed' });
       addMessage('assistant', error.message || 'I could not shape that Dispatch right now.');
       saveDraftToServer(activeDraft(), { status: activeDraft().stage === 'empty' ? 'draft' : activeDraft().stage }).catch(() => {});
       setStatus('Thingy could not shape that right now.', 'error');
@@ -571,17 +612,23 @@ function createDispatchActions(options = {}) {
 
   async function generateDispatch() {
     const draft = activeDraft();
+    const progressScope = nextProgressScope('generate');
+    const progress = (id, value, targetDraft = activeDraft(), extra = {}) => (
+      upsertScopedProgressMessage(progressScope, id, value, targetDraft, extra)
+    );
     const email = session.storedEmail();
     if (!email) {
       redirectToSignIn();
       return;
     }
     setBusy(true, dispatchTestMode ? 'Queueing template test...' : 'Queueing Dispatch...');
-    upsertProgressMessage('generate-start', generationContextText(draft, dispatchTestMode), draft, { status: 'pending' });
+    draft.generationProgressScope = progressScope;
+    progress('generate-start', generationContextText(draft, dispatchTestMode), draft, { status: 'pending' });
     render();
     try {
       await saveDraftToServer(draft, { status: draft.stage === 'upgrade' ? 'ready' : draft.stage });
-      upsertProgressMessage('generate-save', 'Saved the Dispatch direction and brief.\n\nSending the generation request now.', draft, { status: 'complete' });
+      progress('generate-start', generationContextText(draft, dispatchTestMode), draft, { status: 'complete' });
+      progress('generate-save', 'Saved the Dispatch direction and brief.\n\nSending the generation request now.', draft, { status: 'pending' });
       render();
       const data = await dispatchPost('create', {
         dispatch_id: serverDispatchId(draft),
@@ -594,13 +641,15 @@ function createDispatchActions(options = {}) {
         template_test: dispatchTestMode,
         email
       });
+      progress('generate-save', 'Saved the Dispatch direction and brief.\n\nSending the generation request now.', activeDraft(), { status: 'complete' });
       const row = data.dispatch || {};
       updateDraft({
         stage: row.status || 'queued',
         dispatchId: row.id || row.dispatch_id || '',
         statusText: dispatchTestMode ? 'Template test queued.' : 'Dispatch queued.'
       });
-      upsertProgressMessage('generate-queue', dispatchTestMode
+      activeDraft().generationProgressScope = progressScope;
+      progress('generate-queue', dispatchTestMode
         ? 'Template test queued. I am checking the generation status now.'
         : 'Dispatch queued. I am checking the generation status now.', activeDraft(), { status: 'complete' });
       startPolling();
@@ -621,6 +670,10 @@ function createDispatchActions(options = {}) {
         addMessage('assistant', error.message || 'I could not queue this Dispatch.');
         setStatus('Could not queue this Dispatch.', 'error');
       }
+      if (activeDraft().messages.some((message) => message.kind === 'progress' && message.id === scopedProgressId(progressScope, 'generate-start') && message.status === 'pending')) {
+        progress('generate-start', 'Dispatch preparation stopped before the request could be queued.', activeDraft(), { status: 'failed' });
+      }
+      progress('generate-save', 'The Dispatch generation request stopped before it could be queued.', activeDraft(), { status: 'failed' });
     } finally {
       setBusy(false);
       render();
@@ -638,6 +691,10 @@ function createDispatchActions(options = {}) {
   async function pollStatus(draftId = activeId) {
     const draft = draftById(draftId) || activeDraft();
     if (!draft.dispatchId) return;
+    if (!draft.generationProgressScope) draft.generationProgressScope = nextProgressScope('generate');
+    const progress = (id, value, targetDraft = draft, extra = {}) => (
+      upsertScopedProgressMessage(draft.generationProgressScope, id, value, targetDraft, extra)
+    );
     try {
       const data = await dispatchPost('status', { dispatch_id: draft.dispatchId });
       const row = data.dispatch || {};
@@ -649,7 +706,7 @@ function createDispatchActions(options = {}) {
           updatedAt: nowIso()
         });
         if (!draft.messages.some((message) => message.kind === 'sent')) {
-          upsertProgressMessage('generate-status', 'Generation finished and the email handoff completed.', draft, { status: 'complete' });
+          progress('generate-status', 'Generation finished and the email handoff completed.', draft, { status: 'complete' });
           draft.messages.push({
             role: 'assistant',
             text: 'Dispatch sent. Check your email.',
@@ -666,7 +723,7 @@ function createDispatchActions(options = {}) {
           statusText: row.error || 'Failed',
           updatedAt: nowIso()
         });
-        upsertProgressMessage('generate-status', 'Generation failed before the email could be sent.', draft, { status: 'failed' });
+        progress('generate-status', 'Generation failed before the email could be sent.', draft, { status: 'failed' });
         draft.messages.push({
           role: 'assistant',
           text: row.error || 'Dispatch failed while generating.',
@@ -680,7 +737,7 @@ function createDispatchActions(options = {}) {
           stage: row.status,
           updatedAt: nowIso()
         });
-        upsertProgressMessage('generate-status', statusProgressText(row.status), draft, { status: 'pending' });
+        progress('generate-status', statusProgressText(row.status), draft, { status: 'pending' });
         saveDrafts();
         render();
       }

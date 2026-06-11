@@ -48,12 +48,13 @@ function authHeaders() {
   return token() ? { authorization: `Bearer ${token()}` } : {};
 }
 
-async function postJson(path, payload, headers) {
+async function postJson(path, payload, headers, options = {}) {
   return postJsonRequest({
     baseUrl: apiUrl(),
     path,
     payload,
     headers,
+    ...options,
     missingMessage: 'Thingy has not been connected to the archive API yet.'
   });
 }
