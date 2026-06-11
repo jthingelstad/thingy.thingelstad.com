@@ -4,5 +4,5 @@ import { bootDispatch } from '../shared/thingy-dispatch.js';
 import { loadTinylytics } from '../shared/thingy-tinylytics-loader.js';
 
 hydrateThingyIcons();
-loadTinylytics();
 bootDispatch();
+loadTinylytics();

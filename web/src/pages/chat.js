@@ -4,5 +4,5 @@ import { bootChat } from '../shared/thingy-chat.js';
 import { loadTinylytics } from '../shared/thingy-tinylytics-loader.js';
 
 hydrateThingyIcons();
-loadTinylytics();
 bootChat();
+loadTinylytics();
