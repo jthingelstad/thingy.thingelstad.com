@@ -207,12 +207,22 @@
 .thingy-ai-note {
   width: min(calc(100% - 36px), 50rem);
   max-width: 100%;
-  margin: 8px auto 0;
-  color: color-mix(in srgb, var(--muted) 86%, var(--ink-soft));
+  max-height: 2rem;
+  margin: 6px auto 0;
+  color: color-mix(in srgb, var(--muted) 72%, transparent);
   font-family: var(--sans);
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.35;
   text-align: center;
+  opacity: 1;
+  overflow: hidden;
+  transition: opacity 140ms ease, max-height 140ms ease, margin-top 140ms ease;
+}
+
+.thingy-composer-zone:has(.thingy-input.is-compact) .thingy-ai-note {
+  max-height: 0;
+  margin-top: 0;
+  opacity: 0;
 }
 
 .librarian-question-form {
