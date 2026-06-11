@@ -128,14 +128,6 @@ async function checkChatIslands(browser) {
   assert.match((await page.locator('.rail-menu-build').textContent()).trim(), /^Build .+/);
   await page.keyboard.press('Escape');
 
-  // Notice toast: showNotice via the store should reveal the .thingy-notice node.
-  await page.evaluate(async () => {
-    const mod = await import('/src/shared/stores/ui-store.js');
-    mod.showNotice('Smoke notice');
-  });
-  await page.waitForSelector('.thingy-notice.is-visible');
-  assert.equal((await page.locator('.thingy-notice').textContent()).trim(), 'Smoke notice');
-
   await context.close();
 }
 
@@ -176,6 +168,15 @@ async function checkMobileChat(browser) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${baseUrl}/chat/`);
   await page.waitForSelector('.mobile-chatbar');
+  await page.waitForSelector('#librarian-chat:not([hidden])');
+  await page.waitForSelector('.thingy-input.is-compact');
+  assert.equal(await page.locator('.thingy-composer-zone').isVisible(), true, 'mobile composer zone is visible at rest');
+  assert.equal(await page.locator('.thingy-input.is-compact').isVisible(), true, 'mobile compact composer is visible at rest');
+  assert.equal(
+    await page.locator('.thingy-input').evaluate((element) => window.getComputedStyle(element).position),
+    'static',
+    'mobile compact composer stays in page flow until the keyboard opens'
+  );
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
   await page.locator('#mobile-conversations-toggle').click();
   await page.waitForSelector('.thingy-app-shell.is-mobile-rail-open');

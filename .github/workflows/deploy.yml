@@ -35,6 +35,8 @@ jobs:
 
       - run: npm ci
 
+      - run: npx playwright install --with-deps chromium
+
       - run: npm run lint
 
       - run: npm test
@@ -44,6 +46,24 @@ jobs:
           LIBRARIAN_API_URL: ${{ vars.LIBRARIAN_API_URL }}
           LIBRARIAN_STREAM_URL: ${{ vars.LIBRARIAN_STREAM_URL }}
           TINYLYTICS_SITE_UID: ${{ vars.TINYLYTICS_SITE_UID }}
+
+      - name: Browser smoke
+        env:
+          LIBRARIAN_API_URL: ${{ vars.LIBRARIAN_API_URL }}
+          LIBRARIAN_STREAM_URL: ${{ vars.LIBRARIAN_STREAM_URL }}
+          TINYLYTICS_SITE_UID: ${{ vars.TINYLYTICS_SITE_UID }}
+        run: |
+          npx vite preview --host 0.0.0.0 --port=8080 > /tmp/thingy-vite-preview.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..30}; do
+            if curl -fsS http://localhost:8080/chat/ > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://localhost:8080/chat/ > /dev/null
+          THINGY_SMOKE_URL=http://localhost:8080 npm run smoke
 
       - uses: actions/upload-pages-artifact@v5
         with:
