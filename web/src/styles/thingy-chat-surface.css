@@ -115,11 +115,29 @@
   width: 100%;
   min-width: 0;
   position: sticky;
-  bottom: 0;
-  padding: 8px clamp(18px, 5vw, 72px) 24px;
-  background:
-    linear-gradient(180deg, rgba(246, 248, 245, 0), var(--bg) 24%, var(--bg));
+  bottom: var(--thingy-keyboard-inset, 0px);
+  padding: 18px clamp(18px, 5vw, 72px) calc(24px + env(safe-area-inset-bottom));
+  background: transparent;
   z-index: 20;
+}
+
+.thingy-composer-zone::before {
+  content: "";
+  position: absolute;
+  inset: -96px 0 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--bg) 0%, transparent),
+      color-mix(in srgb, var(--bg) 74%, transparent) 42%,
+      var(--bg) 72%,
+      var(--bg));
+  z-index: 0;
+}
+
+.thingy-composer-zone > * {
+  position: relative;
+  z-index: 1;
 }
 
 .librarian-prompts {

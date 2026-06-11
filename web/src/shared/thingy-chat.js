@@ -116,6 +116,8 @@ function bootChat() {
     let autoFollowChat = true;
     let scrollFrame = 0;
     let composerReserveFrame = 0;
+    let keyboardFrame = 0;
+    let keyboardInset = 0;
     let composerControls = null;
     let welcomeShownThisVisit = false;
     let welcomeAbortController = null;
@@ -379,7 +381,7 @@ function bootChat() {
       composerReserveFrame = 0;
       if (!composerZone || !chatPanel) return;
       const height = Math.ceil(composerZone.getBoundingClientRect().height);
-      chatPanel.style.setProperty('--composer-reserve', `${height}px`);
+      chatPanel.style.setProperty('--composer-reserve', `${height + keyboardInset}px`);
     }
 
     function scheduleComposerReserveUpdate() {
@@ -391,9 +393,34 @@ function bootChat() {
       const composerObserver = new ResizeObserver(updateComposerReserve);
       composerObserver.observe(composerZone);
     }
+    function updateKeyboardInset() {
+      keyboardFrame = 0;
+      const viewport = window.visualViewport;
+      const nextInset = viewport
+        ? Math.max(0, Math.ceil(window.innerHeight - viewport.height - viewport.offsetTop))
+        : 0;
+      keyboardInset = nextInset;
+      document.documentElement.style.setProperty('--thingy-keyboard-inset', `${nextInset}px`);
+      scheduleComposerReserveUpdate();
+      if (nextInset > 0 && questionForm?.contains(document.activeElement)) {
+        scheduleChatScroll({ force: true });
+      }
+    }
+
+    function scheduleKeyboardInsetUpdate() {
+      if (keyboardFrame) return;
+      keyboardFrame = window.requestAnimationFrame(updateKeyboardInset);
+    }
+
     window.addEventListener('resize', () => {
+      scheduleKeyboardInsetUpdate();
       updateComposerReserve();
     });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', scheduleKeyboardInsetUpdate);
+      window.visualViewport.addEventListener('scroll', scheduleKeyboardInsetUpdate);
+    }
+    updateKeyboardInset();
 
     // Thin wrapper around the store signal so the legacy createComposer /
     // createDictationController APIs (which expect an `isBusy()` function)
