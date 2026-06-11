@@ -185,6 +185,65 @@ test('clarifyWithThingy moves an empty draft to ready and persists through the A
   assert.equal(dispatchBusy.value, false, 'busy resets after clarify');
 });
 
+test('clarifyWithThingy renders archive planning activity and a Dispatch brief', async () => {
+  dispatchBusy.value = false;
+  const payloads = [];
+  const session = fakeSession({
+    postJson: async (path, payload) => {
+      payloads.push(payload);
+      if (payload.action === 'clarify') {
+        return {
+          needs_clarification: false,
+          direction: 'A focused Dispatch about RSS and ownership',
+          message: 'I checked the archive and this is ready to generate.',
+          brief: {
+            user_goal: 'Understand RSS',
+            working_angle: 'Connect RSS to ownership and publishing',
+            coverage_status: 'focused',
+            selected_sources: [{
+              id: 'S1',
+              label: 'WT10',
+              title: 'Open web',
+              why: 'Core source'
+            }]
+          },
+          tool_activity: [{
+            id: 'archive-fit',
+            label: 'Checked archive coverage',
+            status: 'complete',
+            summary: '6 source packets selected from 11 candidate matches.'
+          }, {
+            id: 'source-balance',
+            label: 'Balanced source packet',
+            status: 'complete',
+            summary: 'Coverage includes Weekly Thing and blog.'
+          }, {
+            id: 'dispatch-brief',
+            label: 'Prepared Dispatch brief',
+            status: 'complete',
+            summary: 'Brief is ready with 1 planned source.'
+          }]
+        };
+      }
+      return { dispatch: { id: 'srv-brief' } };
+    }
+  });
+  const actions = createDispatchActions({ session, onRender: () => {}, activeKey: 'brief-test' });
+  actions.createDraft({ activate: true, render: false });
+  actions.addMessage('user', 'Write about RSS');
+  await actions.clarifyWithThingy('Write about RSS');
+
+  const draft = actions.activeDraft();
+  assert.equal(draft.stage, 'ready');
+  assert.equal(draft.brief.coverage_status, 'focused');
+  const progress = dispatchMessages.value.filter((message) => message.kind === 'progress');
+  assert.deepEqual(progress.map((message) => message.id), ['archive-fit', 'source-balance', 'dispatch-brief']);
+  assert.equal(progress[0].status, 'complete');
+  assert.ok(dispatchMessages.value.some((message) => message.kind === 'brief' && /Dispatch brief/.test(message.text)));
+  const finalSave = payloads.filter((payload) => payload.action === 'save_draft').at(-1);
+  assert.equal(finalSave.brief.working_angle, 'Connect RSS to ownership and publishing');
+});
+
 test('clarifyWithThingy restores the previous stage when the API fails', async () => {
   dispatchBusy.value = false;
   const session = fakeSession({
@@ -203,8 +262,10 @@ test('clarifyWithThingy restores the previous stage when the API fails', async (
 
 test('generateDispatch writes progress into the Dispatch transcript', async () => {
   dispatchBusy.value = false;
+  const payloads = [];
   const session = fakeSession({
     postJson: async (path, payload) => {
+      payloads.push(payload);
       if (payload.action === 'create') return { dispatch: { id: 'srv-1', status: 'queued' } };
       return { dispatch: { id: 'srv-1' } };
     }
@@ -214,16 +275,23 @@ test('generateDispatch writes progress into the Dispatch transcript', async () =
   Object.assign(draft, {
     stage: 'ready',
     prompt: 'Write about RSS',
-    direction: 'A Dispatch about RSS'
+    direction: 'A Dispatch about RSS',
+    brief: {
+      coverage_status: 'focused',
+      selected_sources: [{ label: 'WT10', title: 'Open web' }]
+    }
   });
 
   await actions.generateDispatch();
 
   const progress = dispatchMessages.value.filter((message) => message.kind === 'progress');
   assert.deepEqual(progress.map((message) => message.id), ['generate-start', 'generate-save', 'generate-queue']);
-  assert.match(progress[0].text, /saving the current direction/i);
-  assert.match(progress[1].text, /generation request/i);
+  assert.match(progress[0].text, /brief we shaped/i);
+  assert.match(progress[0].text, /Archive fit: Focused/i);
+  assert.match(progress[1].text, /direction and brief/i);
   assert.match(progress[2].text, /checking the generation status/i);
+  const createPayload = payloads.find((payload) => payload.action === 'create');
+  assert.equal(createPayload.brief.coverage_status, 'focused');
 });
 
 test('deleteDispatch respects the confirmDelete hook', async () => {

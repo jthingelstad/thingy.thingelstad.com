@@ -27,13 +27,41 @@
 
 .dispatch-message.is-progress {
   max-width: min(42rem, 100%);
-  padding-left: 13px;
-  border-left: 3px solid color-mix(in srgb, var(--accent) 38%, var(--line));
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 2px 0;
   color: var(--ink-soft);
 }
 
-.dispatch-message.is-progress p {
+.dispatch-message.is-progress p,
+.dispatch-message-progress-body p {
   color: var(--ink-soft);
+}
+
+.dispatch-message-progress-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: var(--ink-soft);
+}
+
+.dispatch-message[data-dispatch-message-status="complete"] .dispatch-message-progress-icon {
+  color: var(--accent-deep);
+}
+
+.dispatch-message[data-dispatch-message-status="failed"] .dispatch-message-progress-icon {
+  color: #b54730;
+}
+
+.dispatch-message-progress-body {
+  min-width: 0;
 }
 
 .dispatch-actions {

@@ -76,6 +76,69 @@ function readyDispatchText(data, direction) {
   return `I have shaped this Dispatch direction:\n\n${direction}\n\nIf this is right, use Generate Dispatch. If you want to steer it, send me the adjustment.`;
 }
 
+function coverageLabel(value) {
+  return {
+    thin: 'Thin',
+    focused: 'Focused',
+    broad: 'Broad',
+    ambiguous: 'Needs steering'
+  }[String(value || '').toLowerCase()] || 'Checked';
+}
+
+function briefSourceLine(source = {}) {
+  const title = String(source.title || '').trim();
+  const label = String(source.label || '').trim();
+  const why = String(source.why || '').trim();
+  const url = String(source.url || '').trim();
+  const name = [label, title].filter(Boolean).join(' - ') || url || 'Archive source';
+  return `${name}${why ? `: ${why}` : ''}`;
+}
+
+function dispatchBriefMarkdown(brief = {}) {
+  if (!brief || typeof brief !== 'object' || Array.isArray(brief)) return '';
+  const angle = String(brief.working_angle || brief.generation_instructions || '').trim();
+  const goal = String(brief.user_goal || '').trim();
+  const sources = Array.isArray(brief.selected_sources) ? brief.selected_sources.map(briefSourceLine).filter(Boolean).slice(0, 6) : [];
+  const excluded = Array.isArray(brief.excluded_scope) ? brief.excluded_scope.map((item) => String(item || '').trim()).filter(Boolean).slice(0, 5) : [];
+  if (!angle && !goal && !sources.length) return '';
+  return [
+    '**Dispatch brief**',
+    goal ? `- **Goal:** ${goal}` : '',
+    angle ? `- **Angle:** ${angle}` : '',
+    `- **Archive fit:** ${coverageLabel(brief.coverage_status)}`,
+    sources.length ? `- **Planned sources:**\n${sources.map((source) => `  - ${source}`).join('\n')}` : '',
+    excluded.length ? `- **Keep out:** ${excluded.join('; ')}` : ''
+  ].filter(Boolean).join('\n');
+}
+
+function planningActivityText(activity = {}) {
+  const label = String(activity.label || 'Checked Dispatch context').trim();
+  const summary = String(activity.summary || '').trim();
+  return summary ? `**${label}**\n\n${summary}` : `**${label}**`;
+}
+
+function generationContextText(draft = {}, dispatchTestMode = false) {
+  const brief = draft.brief && typeof draft.brief === 'object' ? draft.brief : {};
+  const sources = Array.isArray(brief.selected_sources) ? brief.selected_sources : [];
+  const lines = [
+    dispatchTestMode
+      ? 'I am preparing the template test with the current Dispatch brief.'
+      : 'I am preparing this Dispatch with the brief we shaped together.',
+    brief.coverage_status ? `Archive fit: ${coverageLabel(brief.coverage_status)}.` : '',
+    sources.length ? `Planned sources: ${sources.slice(0, 4).map((source) => source.label || source.title).filter(Boolean).join(', ')}.` : ''
+  ].filter(Boolean);
+  return lines.join('\n\n');
+}
+
+function statusProgressText(status) {
+  const normalized = String(status || '').replace(/_/g, ' ');
+  if (status === 'queued') return 'The Dispatch is queued. I am watching for the worker to pick it up.';
+  if (status === 'generating') return 'The worker has the request. I am writing from the planned archive packet now.';
+  if (status === 'ready_to_send') return 'The Dispatch draft is written. I am handing it to the email sender.';
+  if (status === 'sending') return 'The email sender has the Dispatch. I am waiting for delivery confirmation.';
+  return `Thingy is ${normalized} this Dispatch. I will keep checking until it is sent.`;
+}
+
 // Builds the clarify request payload from the draft's stage and the new
 // reader text. Each stage frames the prompt differently so Thingy sees the
 // full context (seed, confirmed direction, adjustment) in one string.
@@ -235,7 +298,7 @@ function createDispatchActions(options = {}) {
     return draft;
   }
 
-  function upsertProgressMessage(id, text, targetDraft = activeDraft()) {
+  function upsertProgressMessage(id, text, targetDraft = activeDraft(), extra = {}) {
     const draft = targetDraft;
     const key = String(id || '').trim();
     const existing = key ? draft.messages.find((message) => message.kind === 'progress' && message.id === key) : null;
@@ -244,13 +307,24 @@ function createDispatchActions(options = {}) {
       role: 'assistant',
       text: String(text || ''),
       time: nowIso(),
-      kind: 'progress'
+      kind: 'progress',
+      status: extra.status || 'pending'
     };
     if (existing) {
       Object.assign(existing, next);
     } else {
       draft.messages.push(next);
     }
+    draft.updatedAt = nowIso();
+    saveDrafts();
+    return draft;
+  }
+
+  function removeProgressMessage(id, targetDraft = activeDraft()) {
+    const draft = targetDraft;
+    const key = String(id || '').trim();
+    if (!key) return draft;
+    draft.messages = draft.messages.filter((message) => !(message.kind === 'progress' && message.id === key));
     draft.updatedAt = nowIso();
     saveDrafts();
     return draft;
@@ -294,6 +368,7 @@ function createDispatchActions(options = {}) {
       direction: draft.direction,
       clarification_question: draft.currentQuestion,
       clarification_answer: draft.clarificationAnswer,
+      brief: draft.brief || {},
       title: draftTitle(draft),
       messages: draft.messages || []
     });
@@ -421,10 +496,13 @@ function createDispatchActions(options = {}) {
       direction: draft.direction,
       currentQuestion: draft.currentQuestion,
       clarificationAnswer: draft.clarificationAnswer,
-      title: draft.title
+      title: draft.title,
+      brief: draft.brief
     };
     const request = clarifyRequest(draft, text);
     setBusy(true, 'Thingy is shaping this Dispatch...');
+    upsertProgressMessage('archive-fit', 'Checking Jamie’s archive coverage for this Dispatch request.', draft, { status: 'pending' });
+    upsertProgressMessage('source-balance', 'Looking for a source packet that is enough to be meaningful without flooding generation.', draft, { status: 'pending' });
     updateDraft({
       stage: 'shaping',
       prompt: request.nextPrompt,
@@ -433,6 +511,7 @@ function createDispatchActions(options = {}) {
       title: titleFromPrompt(request.nextPrompt),
       clarificationAnswer: request.answer || draft.clarificationAnswer
     });
+    render();
     try {
       await saveDraftToServer(activeDraft(), { status: 'shaping' });
       const data = await dispatchPost('clarify', {
@@ -442,11 +521,26 @@ function createDispatchActions(options = {}) {
         messages: activeDraft().messages || []
       });
       const direction = data.direction || request.prompt;
+      const planningActivity = Array.isArray(data.tool_activity) ? data.tool_activity : [];
+      if (planningActivity.length) {
+        planningActivity.forEach((activity, index) => {
+          upsertProgressMessage(
+            activity.id || `plan-${index}`,
+            planningActivityText(activity),
+            activeDraft(),
+            { status: activity.status || 'complete' }
+          );
+        });
+      } else {
+        removeProgressMessage('archive-fit');
+        removeProgressMessage('source-balance');
+      }
       if (data.needs_clarification) {
         updateDraft({
           stage: 'needs_clarification',
           direction,
-          currentQuestion: data.question || ''
+          currentQuestion: data.question || '',
+          brief: data.brief || activeDraft().brief || {}
         });
         addMessage('assistant', assistantClarificationText(data));
         await saveDraftToServer(activeDraft(), { status: 'needs_clarification' });
@@ -454,14 +548,18 @@ function createDispatchActions(options = {}) {
         updateDraft({
           stage: 'ready',
           direction,
-          currentQuestion: ''
+          currentQuestion: '',
+          brief: data.brief || activeDraft().brief || {}
         });
         addMessage('assistant', readyDispatchText(data, direction));
+        const briefText = dispatchBriefMarkdown(activeDraft().brief);
+        if (briefText) addMessage('assistant', briefText, { kind: 'brief' });
         await saveDraftToServer(activeDraft(), { status: 'ready' });
       }
       setStatus('');
     } catch (error) {
       updateDraft(previous);
+      upsertProgressMessage('archive-fit', 'Archive planning failed before I could shape this Dispatch.', activeDraft(), { status: 'failed' });
       addMessage('assistant', error.message || 'I could not shape that Dispatch right now.');
       saveDraftToServer(activeDraft(), { status: activeDraft().stage === 'empty' ? 'draft' : activeDraft().stage }).catch(() => {});
       setStatus('Thingy could not shape that right now.', 'error');
@@ -479,13 +577,11 @@ function createDispatchActions(options = {}) {
       return;
     }
     setBusy(true, dispatchTestMode ? 'Queueing template test...' : 'Queueing Dispatch...');
-    upsertProgressMessage('generate-start', dispatchTestMode
-      ? 'Preparing the template test and saving the current Dispatch direction.'
-      : 'Preparing this Dispatch and saving the current direction.');
+    upsertProgressMessage('generate-start', generationContextText(draft, dispatchTestMode), draft, { status: 'pending' });
     render();
     try {
       await saveDraftToServer(draft, { status: draft.stage === 'upgrade' ? 'ready' : draft.stage });
-      upsertProgressMessage('generate-save', 'Saved the Dispatch direction. Sending the generation request now.');
+      upsertProgressMessage('generate-save', 'Saved the Dispatch direction and brief.\n\nSending the generation request now.', draft, { status: 'complete' });
       render();
       const data = await dispatchPost('create', {
         dispatch_id: serverDispatchId(draft),
@@ -494,6 +590,7 @@ function createDispatchActions(options = {}) {
         direction: draft.direction || draft.prompt,
         clarification_question: draft.currentQuestion,
         clarification_answer: draft.clarificationAnswer,
+        brief: draft.brief || {},
         template_test: dispatchTestMode,
         email
       });
@@ -505,7 +602,7 @@ function createDispatchActions(options = {}) {
       });
       upsertProgressMessage('generate-queue', dispatchTestMode
         ? 'Template test queued. I am checking the generation status now.'
-        : 'Dispatch queued. I am checking the generation status now.');
+        : 'Dispatch queued. I am checking the generation status now.', activeDraft(), { status: 'complete' });
       startPolling();
     } catch (error) {
       if (error.status === 403 && error.data && error.data.status === 'supporting_member_required') {
@@ -552,7 +649,7 @@ function createDispatchActions(options = {}) {
           updatedAt: nowIso()
         });
         if (!draft.messages.some((message) => message.kind === 'sent')) {
-          upsertProgressMessage('generate-status', 'Generation finished and the email handoff completed.', draft);
+          upsertProgressMessage('generate-status', 'Generation finished and the email handoff completed.', draft, { status: 'complete' });
           draft.messages.push({
             role: 'assistant',
             text: 'Dispatch sent. Check your email.',
@@ -569,7 +666,7 @@ function createDispatchActions(options = {}) {
           statusText: row.error || 'Failed',
           updatedAt: nowIso()
         });
-        upsertProgressMessage('generate-status', 'Generation failed before the email could be sent.', draft);
+        upsertProgressMessage('generate-status', 'Generation failed before the email could be sent.', draft, { status: 'failed' });
         draft.messages.push({
           role: 'assistant',
           text: row.error || 'Dispatch failed while generating.',
@@ -583,7 +680,7 @@ function createDispatchActions(options = {}) {
           stage: row.status,
           updatedAt: nowIso()
         });
-        upsertProgressMessage('generate-status', `Thingy is ${String(row.status).replace(/_/g, ' ')} this Dispatch. I will keep checking until it is sent.`, draft);
+        upsertProgressMessage('generate-status', statusProgressText(row.status), draft, { status: 'pending' });
         saveDrafts();
         render();
       }

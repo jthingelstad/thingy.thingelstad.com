@@ -1,6 +1,7 @@
 import { render } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import { createChatMessageActions } from '../thingy-message-actions.js';
+import { iconSvg } from '../thingy-icons.js';
 import { renderMarkdown } from '../thingy-markdown.js';
 import { dispatchMessages } from '../stores/dispatch-store.js';
 
@@ -8,6 +9,26 @@ function DispatchMessage({ message, index }) {
   const role = message.role === 'user' ? 'user' : message.role === 'system' ? 'system' : 'assistant';
   const html = renderMarkdown(message.text || '');
   const kind = message.kind ? ` is-${String(message.kind).replace(/[^a-z0-9_-]/gi, '')}` : '';
+  const status = String(message.status || '').trim();
+  const statusIcon = status === 'complete' ? 'check' : status === 'failed' ? 'triangle-alert' : status === 'waiting' ? 'circle-help' : 'loader-circle';
+  if (message.kind === 'progress') {
+    return (
+      <article
+        class={`librarian-message librarian-message-${role} dispatch-message${kind}`}
+        data-dispatch-message-index={index}
+        data-dispatch-message-role={role}
+        data-dispatch-message-kind={message.kind || ''}
+        data-dispatch-message-status={status}
+      >
+        <span
+          class="dispatch-message-progress-icon"
+          aria-hidden="true"
+          dangerouslySetInnerHTML={{ __html: iconSvg(statusIcon) }}
+        />
+        <div class="dispatch-message-progress-body" dangerouslySetInnerHTML={{ __html: html }} />
+      </article>
+    );
+  }
   return (
     <article
       class={`librarian-message librarian-message-${role} dispatch-message${kind}`}
