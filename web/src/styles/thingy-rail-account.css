@@ -287,12 +287,14 @@
   display: grid;
   place-items: center;
   padding: 18px;
+  overflow: auto;
   background: rgba(11, 22, 20, 0.34);
 }
 
 .thingy-memory-modal {
   width: min(720px, 100%);
   max-height: min(760px, calc(100vh - 36px));
+  max-height: min(760px, calc(100dvh - 36px));
   display: grid;
   grid-template-rows: auto auto auto minmax(0, 1fr);
   overflow: hidden;
@@ -620,12 +622,16 @@
 
 @media (max-width: 560px) {
   .thingy-memory-modal-backdrop {
-    align-items: end;
-    padding: 10px;
+    align-items: start;
+    justify-items: stretch;
+    padding: calc(env(safe-area-inset-top) + 8px) 10px calc(env(safe-area-inset-bottom) + 10px);
   }
 
   .thingy-memory-modal {
-    max-height: min(720px, calc(100vh - 20px));
+    width: 100%;
+    max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 18px);
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 18px);
+    border-radius: 10px;
   }
 
   .thingy-memory-header {
