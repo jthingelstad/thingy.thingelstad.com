@@ -10,8 +10,8 @@ try {
 }
 
 const baseUrl = (process.env.THINGY_SMOKE_URL || 'http://localhost:8080').replace(/\/$/, '');
-const apiHost = 'https://k0yklt9vg3.execute-api.us-east-1.amazonaws.com';
-const streamHost = 'https://jcvud66qqpq53frvno5stoqntm0zqntw.lambda-url.us-east-1.on.aws';
+const apiHost = (process.env.LIBRARIAN_API_URL || 'https://k0yklt9vg3.execute-api.us-east-1.amazonaws.com').replace(/\/$/, '');
+const streamHost = (process.env.LIBRARIAN_STREAM_URL || 'https://stream.thingy.thingelstad.com').replace(/\/$/, '');
 
 function fakeToken() {
   const payload = Buffer.from(JSON.stringify({
