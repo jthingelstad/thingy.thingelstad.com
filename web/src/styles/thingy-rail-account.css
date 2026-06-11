@@ -391,7 +391,8 @@
 
 .thingy-memory-status button,
 .thingy-memory-delete,
-.thingy-memory-delete-confirm button {
+.thingy-memory-delete-confirm button,
+.thingy-memory-danger-zone button {
   flex: 0 0 auto;
   padding: 6px 9px;
   border: 1px solid var(--line);
@@ -404,14 +405,16 @@
   cursor: pointer;
 }
 
-.thingy-memory-status button:disabled {
+.thingy-memory-status button:disabled,
+.thingy-memory-danger-zone button:disabled {
   cursor: wait;
   opacity: 0.62;
 }
 
 .thingy-memory-status button:hover:not(:disabled),
 .thingy-memory-delete:hover,
-.thingy-memory-delete-confirm button:hover {
+.thingy-memory-delete-confirm button:hover,
+.thingy-memory-danger-zone button:hover:not(:disabled) {
   background: color-mix(in srgb, var(--ink) 7%, transparent);
 }
 
@@ -562,6 +565,43 @@
   font-size: 13px;
   font-weight: 650;
   overflow-wrap: anywhere;
+}
+
+.thingy-memory-danger-zone {
+  display: grid;
+  gap: 8px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.thingy-memory-danger-zone h3 {
+  margin: 0;
+  color: #8f2d20;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.thingy-memory-danger-zone p {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.thingy-memory-danger-zone .thingy-memory-danger {
+  width: fit-content;
+  border-color: color-mix(in srgb, #b23a2a 46%, var(--line));
+  color: #a33325;
+}
+
+.thingy-memory-danger-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .thingy-memory-empty {

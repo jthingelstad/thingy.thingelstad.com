@@ -18,8 +18,6 @@ import {
   signedIn as sharedSignedIn
 } from '../stores/ui-store.js';
 import {
-  memoryFacts,
-  memoryInterestItems,
   memoryLearnedItems,
   memoryQuestionItems,
   memorySignalCount,
@@ -33,13 +31,13 @@ const CLOSE_ICON = iconSvg('x');
 function MemoryTrigger({ profile, onOpen }) {
   const count = memorySignalCount(profile);
   const detail = count > 0
-    ? `${count} remembered signal${count === 1 ? '' : 's'}`
-    : 'Profile, interests, and prior context';
+    ? `${count} profile signal${count === 1 ? '' : 's'}`
+    : 'Account details and archive context';
   return (
     <button type="button" class="rail-memory-trigger" onClick={onOpen}>
       <span class="rail-memory-trigger-icon" aria-hidden="true" dangerouslySetInnerHTML={{ __html: BRAIN_ICON }} />
       <span class="rail-memory-trigger-copy">
-        <strong>Show Account and Memory</strong>
+        <strong>Show Profile</strong>
         <small>{detail}</small>
       </span>
     </button>
@@ -48,9 +46,9 @@ function MemoryTrigger({ profile, onOpen }) {
 
 function synthesisStatusText(status = {}) {
   const pending = Number(status.pending_event_count || 0);
-  if (pending > 0) return `${pending} new interaction${pending === 1 ? '' : 's'} pending synthesis`;
-  if (status.last_synthesized_at) return `Memory current · Last synthesized ${new Date(status.last_synthesized_at).toLocaleString()}`;
-  return 'Memory has not been synthesized yet';
+  if (pending > 0) return `${pending} new interaction${pending === 1 ? '' : 's'} ready for profile refresh`;
+  if (status.last_synthesized_at) return `Profile current · Last refreshed ${new Date(status.last_synthesized_at).toLocaleString()}`;
+  return 'Profile has not been refreshed yet';
 }
 
 function formatMemoryDate(value) {
@@ -65,59 +63,73 @@ function formatMemoryCount(value, label) {
   return `${count.toLocaleString()} ${label}${count === 1 ? '' : 's'}`;
 }
 
-function formatMemoryBreakdown(value = {}) {
-  const entries = Object.entries(value || {})
-    .filter(([, count]) => Number(count || 0) > 0)
-    .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0));
-  if (!entries.length) return '';
-  return entries
-    .map(([key, count]) => `${String(key).replace(/_/g, ' ')}: ${Number(count || 0).toLocaleString()}`)
-    .join(', ');
+function memoryNumber(value) {
+  const count = Number(value || 0);
+  return Number.isFinite(count) ? count : 0;
 }
 
-function MemoryModal({ open, onClose, session, profile, email, preferredName, connectedName, supporting }) {
-  const [activeTab, setActiveTab] = useState('account');
+function formatDurationParts(milliseconds) {
+  const minutes = Math.max(0, Math.floor(milliseconds / 60000));
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor((minutes % 1440) / 60);
+  const remainingMinutes = minutes % 60;
+  const parts = [];
+  if (days) parts.push(`${days.toLocaleString()} day${days === 1 ? '' : 's'}`);
+  if (hours && parts.length < 2) parts.push(`${hours} hour${hours === 1 ? '' : 's'}`);
+  if (!parts.length && remainingMinutes) parts.push(`${remainingMinutes} minute${remainingMinutes === 1 ? '' : 's'}`);
+  return parts.length ? parts.join(', ') : 'Less than a minute';
+}
+
+function formatActiveSpan(startValue, endValue) {
+  const start = new Date(String(startValue || '').trim());
+  const end = new Date(String(endValue || '').trim());
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'Not enough activity yet';
+  const diff = Math.max(0, end.getTime() - start.getTime());
+  return formatDurationParts(diff);
+}
+
+function formatProfileActivity(accountOverview = {}, profile = {}) {
+  const totalTurns = memoryNumber(accountOverview.memory_turn_count ?? profile.turn_count);
+  const conversationCount = memoryNumber(accountOverview.conversation_count);
+  const conversationTurns = memoryNumber(accountOverview.conversation_turn_count);
+  const first = totalTurns
+    ? `${formatMemoryCount(totalTurns, 'total Thingy turn')} recorded.`
+    : 'No Thingy turns have been recorded yet.';
+  const second = conversationCount
+    ? `${formatMemoryCount(conversationCount, 'retained conversation')} with ${formatMemoryCount(conversationTurns, 'retained turn')} are available for profile context.`
+    : 'No retained conversations are available for profile context yet.';
+  return `${first} ${second}`;
+}
+
+function MemoryModal({ open, onClose, onProfileDeleted, session, profile, email, preferredName, connectedName, supporting }) {
+  const [activeTab, setActiveTab] = useState('profile');
   const [viewProfile, setViewProfile] = useState(profile || {});
   const [accountOverview, setAccountOverview] = useState({});
   const [busyAction, setBusyAction] = useState('');
   const [memoryError, setMemoryError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState('');
   const onCloseRef = useRef(onClose);
-  const facts = memoryFacts(viewProfile);
-  const interests = memoryInterestItems(viewProfile);
   const learned = memoryLearnedItems(viewProfile);
   const questions = memoryQuestionItems(viewProfile);
   const summaries = memorySummaryItems(viewProfile);
   const synthesis = viewProfile.memory_synthesis || {};
   const viewConnectedName = discordConnectionName(viewProfile) || connectedName;
+  const viewPreferredName = String(preferredName || viewProfile.preferred_name || '').trim();
+  const firstSeen = accountOverview.first_seen_at || viewProfile.first_seen_at;
+  const lastActivity = accountOverview.last_seen_at || viewProfile.last_seen_at;
   const profileRows = [
-    preferredName ? ['Name', preferredName] : null,
+    viewPreferredName ? ['Name', viewPreferredName] : ['Name', 'Not set'],
     email ? ['Email', email] : null,
-    viewConnectedName ? ['Discord', viewConnectedName] : null,
-    supporting ? ['Access', 'Supporting Member'] : null
-  ].filter(Boolean);
-  const accountRows = [
-    preferredName ? ['Name', preferredName] : null,
-    email ? ['Email', email] : null,
-    supporting ? ['Access', 'Supporting Member'] : null,
+    ['Access', supporting ? 'Supporting Member' : 'Weekly Thing reader'],
     viewConnectedName ? ['Discord', viewConnectedName] : ['Discord', 'Not connected in Thingy profile'],
-    ['First seen', formatMemoryDate(accountOverview.first_seen_at || viewProfile.first_seen_at) || 'Not recorded'],
-    ['Last activity', formatMemoryDate(accountOverview.last_seen_at || viewProfile.last_seen_at) || 'Not recorded'],
-    ['Thingy turns', formatMemoryCount(accountOverview.memory_turn_count ?? viewProfile.turn_count, 'turn')],
-    ['Retained conversations', formatMemoryCount(accountOverview.conversation_count, 'conversation')],
-    ['Retained conversation turns', formatMemoryCount(accountOverview.conversation_turn_count, 'turn')],
-    formatMemoryBreakdown(accountOverview.conversation_modes) ? ['Conversation modes', formatMemoryBreakdown(accountOverview.conversation_modes)] : null,
-    formatMemoryBreakdown(accountOverview.conversation_eval_statuses) ? ['Conversation evals', formatMemoryBreakdown(accountOverview.conversation_eval_statuses)] : null,
-    ['Memory events', formatMemoryCount(accountOverview.memory_event_count, 'event')],
-    formatMemoryBreakdown(accountOverview.memory_event_types) ? ['Memory event types', formatMemoryBreakdown(accountOverview.memory_event_types)] : null,
-    ['Memory status', synthesisStatusText(synthesis)]
+    ['First seen', formatMemoryDate(firstSeen) || 'Not recorded'],
+    ['Last activity', formatMemoryDate(lastActivity) || 'Not recorded'],
+    ['Active span', formatActiveSpan(firstSeen, lastActivity)],
+    ['Thingy activity', formatProfileActivity(accountOverview, viewProfile)]
   ].filter(Boolean);
   const tabs = [
-    { id: 'account', label: 'Account', count: 0 },
-    { id: 'profile', label: 'Profile', count: profileRows.length },
-    { id: 'details', label: 'Remembered', count: facts.length },
+    { id: 'profile', label: 'Profile', count: 0 },
     { id: 'learned', label: 'Learned', count: learned.length },
-    { id: 'interests', label: 'Interests', count: interests.length },
     { id: 'threads', label: 'Threads', count: summaries.length },
     { id: 'recent', label: 'Recent', count: questions.length }
   ];
@@ -143,8 +155,25 @@ function MemoryModal({ open, onClose, session, profile, email, preferredName, co
       const data = await session.postJson('/memory', payload, session.authHeaders());
       await applyMemoryData(data);
       setConfirmDelete('');
+      return data;
     } catch (error) {
       setMemoryError(error.message || 'Thingy could not update memory right now.');
+      return null;
+    } finally {
+      setBusyAction('');
+    }
+  }
+
+  async function handleDeleteProfile() {
+    if (!session?.postJson || !session?.authHeaders) return;
+    setBusyAction('delete_profile');
+    setMemoryError('');
+    try {
+      await session.postJson('/memory', { action: 'delete_profile' }, session.authHeaders());
+      setConfirmDelete('');
+      if (typeof onProfileDeleted === 'function') onProfileDeleted();
+    } catch (error) {
+      setMemoryError(error.message || 'Thingy could not delete this profile right now.');
     } finally {
       setBusyAction('');
     }
@@ -165,6 +194,7 @@ function MemoryModal({ open, onClose, session, profile, email, preferredName, co
 
   useEffect(() => {
     if (!open) return;
+    setActiveTab('profile');
     setViewProfile(profile || {});
     setAccountOverview({});
     setMemoryError('');
@@ -202,63 +232,39 @@ function MemoryModal({ open, onClose, session, profile, email, preferredName, co
   }
 
   function renderPanel() {
-    if (activeTab === 'account') {
-      return (
-        <dl class="thingy-memory-dl">
-          {accountRows.map(([label, value]) => (
-            <Fragment key={label}>
-              <dt>{label}</dt>
-              <dd>{value}</dd>
-            </Fragment>
-          ))}
-        </dl>
-      );
-    }
     if (activeTab === 'profile') {
-      return profileRows.length ? (
-        <dl class="thingy-memory-dl">
-          {profileRows.map(([label, value]) => (
-            <Fragment key={label}>
-              <dt>{label}</dt>
-              <dd>{value}</dd>
-            </Fragment>
-          ))}
-        </dl>
-      ) : (
-        <p class="thingy-memory-empty">Thingy does not have profile metadata for this account yet.</p>
-      );
-    }
-    if (activeTab === 'details') {
-      return facts.length ? (
-        <ul class="thingy-memory-list">
-          {facts.map((item) => (
-            <li key={`${item.category}:${item.value}`}>
-              <div class="thingy-memory-row-head">
-                <b>{item.category}</b>
-                {deleteControl('remembered_fact', item)}
+      return (
+        <>
+          <dl class="thingy-memory-dl">
+            {profileRows.map(([label, value]) => (
+              <Fragment key={label}>
+                <dt>{label}</dt>
+                <dd>{value}</dd>
+              </Fragment>
+            ))}
+          </dl>
+          <section class="thingy-memory-danger-zone" aria-label="Delete Thingy Profile">
+            <h3>Delete Thingy Profile</h3>
+            <p>This deletes your Thingy profile, memory, conversations, Dispatch history, and Discord link. It does not unsubscribe you from Weekly Thing.</p>
+            {confirmDelete === 'profile' ? (
+              <div class="thingy-memory-danger-actions">
+                <button
+                  type="button"
+                  class="thingy-memory-danger"
+                  disabled={busyAction === 'delete_profile'}
+                  onClick={handleDeleteProfile}
+                >
+                  {busyAction === 'delete_profile' ? 'Deleting...' : 'Delete Thingy Profile'}
+                </button>
+                <button type="button" disabled={busyAction === 'delete_profile'} onClick={() => setConfirmDelete('')}>Cancel</button>
               </div>
-              <span>{item.value}</span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p class="thingy-memory-empty">Thingy has not saved any explicit remembered details yet.</p>
-      );
-    }
-    if (activeTab === 'interests') {
-      return interests.length ? (
-        <ul class="thingy-memory-list">
-          {interests.map((item) => (
-            <li key={item.value}>
-              <div class="thingy-memory-row-head">
-                <span>{item.value}</span>
-                {deleteControl('interest', item)}
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p class="thingy-memory-empty">Thingy has not saved any explicit interests yet.</p>
+            ) : (
+              <button type="button" class="thingy-memory-danger" disabled={Boolean(busyAction)} onClick={() => setConfirmDelete('profile')}>
+                Delete Thingy Profile
+              </button>
+            )}
+          </section>
+        </>
       );
     }
     if (activeTab === 'learned') {
@@ -275,7 +281,7 @@ function MemoryModal({ open, onClose, session, profile, email, preferredName, co
           ))}
         </ul>
       ) : (
-        <p class="thingy-memory-empty">Thingy has not synthesized learned memory from engagement yet.</p>
+        <p class="thingy-memory-empty">Thingy has not learned a profile from archive use yet.</p>
       );
     }
     if (activeTab === 'threads') {
@@ -316,24 +322,21 @@ function MemoryModal({ open, onClose, session, profile, email, preferredName, co
         <header class="thingy-memory-header">
           <span class="thingy-memory-header-icon" aria-hidden="true" dangerouslySetInnerHTML={{ __html: BRAIN_ICON }} />
           <div>
-            <h2 id="thingy-memory-title">Account and Memory</h2>
-            <p>Full account details, activity, and bounded context Thingy can use.</p>
+            <h2 id="thingy-memory-title">Profile</h2>
+            <p>Account details, activity, and learned archive context Thingy can use.</p>
           </div>
-          <button type="button" class="thingy-memory-close" aria-label="Close Account and Memory" onClick={onClose} dangerouslySetInnerHTML={{ __html: CLOSE_ICON }} />
+          <button type="button" class="thingy-memory-close" aria-label="Close Profile" onClick={onClose} dangerouslySetInnerHTML={{ __html: CLOSE_ICON }} />
         </header>
         <section class="thingy-memory-status" aria-live="polite">
           <span>{busyAction === 'load' ? 'Loading memory...' : synthesisStatusText(synthesis)}</span>
           <div>
-            <button type="button" disabled={Boolean(busyAction)} onClick={() => runMemoryAction({ action: 'synthesize' }, 'synthesize')}>
-              {busyAction === 'synthesize' ? 'Updating...' : 'Update Thingy Memory'}
-            </button>
-            <button type="button" disabled={Boolean(busyAction)} onClick={() => runMemoryAction({ action: 'resynthesize' }, 'resynthesize')}>
-              {busyAction === 'resynthesize' ? 'Resynthesizing...' : 'Resynthesize'}
+            <button type="button" disabled={Boolean(busyAction)} onClick={() => runMemoryAction({ action: 'refresh_profile' }, 'refresh_profile')}>
+              {busyAction === 'refresh_profile' ? 'Refreshing...' : 'Refresh Profile'}
             </button>
           </div>
           {memoryError ? <small>{memoryError}</small> : null}
         </section>
-        <nav class="thingy-memory-tabs" role="tablist" aria-label="Thingy account and memory categories">
+        <nav class="thingy-memory-tabs" role="tablist" aria-label="Thingy profile categories">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -526,6 +529,7 @@ function AccountMenu({
       <MemoryModal
         open={memoryOpen}
         onClose={handleMemoryClose}
+        onProfileDeleted={handleLogout}
         session={session}
         profile={profile}
         email={email}

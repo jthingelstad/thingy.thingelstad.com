@@ -25,25 +25,6 @@ function profileList(value, mapper) {
   return Array.isArray(value) ? value.map(mapper).filter(Boolean) : [];
 }
 
-function memoryFacts(profile = {}) {
-  return profileList(profile.remembered_facts, (item) => {
-    const category = cleanMemoryText(item?.category || 'detail', 40);
-    const value = usefulMemoryText(item?.value || item, 220);
-    return value ? { id: item?.id || '', category, value, source: cleanMemoryText(item?.source || '', 120), remembered_at: item?.remembered_at || '' } : null;
-  }).slice(-6);
-}
-
-function memoryInterests(profile = {}) {
-  return profileList(profile.interests, (item) => usefulMemoryText(item, 80)).slice(-8);
-}
-
-function memoryInterestItems(profile = {}) {
-  return memoryInterests(profile).map((value) => ({
-    id: `interest:${value.toLowerCase()}`,
-    value
-  }));
-}
-
 function memoryQuestions(profile = {}) {
   return profileList(profile.current_session_questions, (item) => (
     usefulMemoryText(item?.question || item, 180)
@@ -71,25 +52,26 @@ function memorySummaryItems(profile = {}) {
 }
 
 function memoryLearnedItems(profile = {}) {
-  return profileList(profile.synthesized_memories, (item) => {
+  const learnedProfile = Array.isArray(profile.learned_profile)
+    ? profile.learned_profile
+    : profile.synthesized_memories;
+  return profileList(learnedProfile, (item) => {
     const label = usefulMemoryText(item?.label || '', 160);
     const summary = usefulMemoryText(item?.summary || '', 420);
     return label || summary ? {
       id: item?.id || '',
-      type: item?.type || 'learned',
+      type: item?.type || 'observed_archive_theme',
       label: label || summary.slice(0, 80),
       summary,
       confidence: Number(item?.confidence || 0),
       evidence: Array.isArray(item?.evidence) ? item.evidence : [],
       synthesized_at: item?.synthesized_at || ''
     } : null;
-  }).slice(-8);
+  }).slice(0, 12);
 }
 
 function memorySignalCount(profile = {}) {
   return (
-    memoryFacts(profile).length +
-    memoryInterests(profile).length +
     memoryLearnedItems(profile).length +
     memoryQuestions(profile).length +
     memorySummaries(profile).length
@@ -98,9 +80,6 @@ function memorySignalCount(profile = {}) {
 
 export {
   cleanMemoryText,
-  memoryFacts,
-  memoryInterestItems,
-  memoryInterests,
   memoryLearnedItems,
   memoryQuestionItems,
   memoryQuestions,

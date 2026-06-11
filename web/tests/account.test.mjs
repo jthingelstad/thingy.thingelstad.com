@@ -10,9 +10,6 @@ import {
   hasSupportingAccess
 } from '../src/shared/thingy-account.js';
 import {
-  memoryFacts,
-  memoryInterestItems,
-  memoryInterests,
   memoryLearnedItems,
   memoryQuestionItems,
   memoryQuestions,
@@ -135,10 +132,9 @@ test('memory profile helpers hide generic non-memory summaries', () => {
   assert.equal(usefulMemoryText('Trace Privacy Philosophy And Toolkit through the archive.'), 'Trace Privacy Philosophy And Toolkit through the archive.');
 
   const profile = {
-    remembered_facts: [
-      { category: 'preference', value: 'Prefers concise answers' }
+    learned_profile: [
+      { id: 'learned-1', label: 'RSS workflows', summary: 'Often explores RSS and OPML.' }
     ],
-    interests: ['RSS'],
     current_session_questions: [
       { question: 'What did Jamie write about OPML?' }
     ],
@@ -149,21 +145,18 @@ test('memory profile helpers hide generic non-memory summaries', () => {
   };
 
   assert.deepEqual(memorySummaries(profile), ['They explored Jamie writing about RSS, OPML, and reader workflows.']);
-  assert.equal(memoryFacts(profile).length, 1);
-  assert.deepEqual(memoryInterests(profile), ['RSS']);
+  assert.equal(memoryLearnedItems(profile).length, 1);
   assert.deepEqual(memoryQuestions(profile), ['What did Jamie write about OPML?']);
-  assert.equal(memorySignalCount(profile), 4);
+  assert.equal(memorySignalCount(profile), 3);
 });
 
 test('memory profile item helpers preserve ids for user controls', () => {
   const profile = {
-    interests: ['RSS'],
     current_session_questions: [{ id: 'recent-1', question: 'What did Jamie say about RSS?' }],
     prior_session_summaries: [{ id: 'thread-1', summary: 'They explored RSS workflows.' }],
-    synthesized_memories: [{ id: 'learned-1', label: 'RSS workflows', summary: 'Often explores RSS and OPML.', confidence: 0.8 }]
+    learned_profile: [{ id: 'learned-1', label: 'RSS workflows', summary: 'Often explores RSS and OPML.', confidence: 0.8 }]
   };
 
-  assert.equal(memoryInterestItems(profile)[0].value, 'RSS');
   assert.equal(memoryQuestionItems(profile)[0].id, 'recent-1');
   assert.equal(memorySummaryItems(profile)[0].id, 'thread-1');
   assert.equal(memoryLearnedItems(profile)[0].id, 'learned-1');
