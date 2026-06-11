@@ -26,9 +26,7 @@ function updateChatComposerState(options = {}) {
   if (options.newChatButton) options.newChatButton.disabled = busy;
   if (options.curiosityMapButton) options.curiosityMapButton.disabled = busy || !signedIn || !hasSources;
   if (options.modeSelect) options.modeSelect.disabled = busy;
-  // Source selection should remain available while Thingy is working; changes
-  // apply to the next prompt and keep the composer controls discoverable.
-  options.sourceControls?.setDisabled?.(!signedIn);
+  options.sourceControls?.setDisabled?.(busy);
   options.onVoiceUpdate?.();
   options.onConversationTitleUpdate?.();
   options.onAutoSize?.();

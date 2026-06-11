@@ -115,29 +115,11 @@
   width: 100%;
   min-width: 0;
   position: sticky;
-  bottom: var(--thingy-keyboard-inset, 0px);
-  padding: 18px clamp(18px, 5vw, 72px) calc(24px + env(safe-area-inset-bottom));
-  background: transparent;
-  z-index: 20;
-}
-
-.thingy-composer-zone::before {
-  content: "";
-  position: absolute;
-  inset: -96px 0 0;
-  pointer-events: none;
+  bottom: 0;
+  padding: 8px clamp(18px, 5vw, 72px) 24px;
   background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--bg) 0%, transparent),
-      color-mix(in srgb, var(--bg) 74%, transparent) 42%,
-      var(--bg) 72%,
-      var(--bg));
-  z-index: 0;
-}
-
-.thingy-composer-zone > * {
-  position: relative;
-  z-index: 1;
+    linear-gradient(180deg, rgba(246, 248, 245, 0), var(--bg) 24%, var(--bg));
+  z-index: 20;
 }
 
 .librarian-prompts {
@@ -207,22 +189,12 @@
 .thingy-ai-note {
   width: min(calc(100% - 36px), 50rem);
   max-width: 100%;
-  max-height: 2rem;
-  margin: 6px auto 0;
-  color: color-mix(in srgb, var(--muted) 72%, transparent);
+  margin: 8px auto 0;
+  color: color-mix(in srgb, var(--muted) 86%, var(--ink-soft));
   font-family: var(--sans);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.35;
   text-align: center;
-  opacity: 1;
-  overflow: hidden;
-  transition: opacity 140ms ease, max-height 140ms ease, margin-top 140ms ease;
-}
-
-.thingy-composer-zone:has(.thingy-input.is-compact) .thingy-ai-note {
-  max-height: 0;
-  margin-top: 0;
-  opacity: 0;
 }
 
 .librarian-question-form {

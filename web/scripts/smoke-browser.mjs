@@ -104,14 +104,11 @@ async function checkChatIslands(browser) {
   const emptyText = (await page.locator('#rail-recents-mount .rail-empty').textContent()).trim();
   assert.match(emptyText, /Your conversations sync with Thingy/);
 
-  // ComposerCount island should be present at rest, then visible/reactive
-  // after the compact composer expands.
-  await page.waitForSelector('#librarian-question-count .composer-count', { state: 'attached' });
+  // ComposerCount island should be reactive: count updates as the user types.
+  await page.waitForSelector('#librarian-question-count .composer-count');
   const countLocator = page.locator('#librarian-question-count .composer-count');
   assert.equal((await countLocator.textContent()).trim(), '0 / 1200', 'count starts at 0');
-  assert.equal(await countLocator.isVisible(), false, 'count is hidden while composer is compact');
   await page.locator('#librarian-question').fill('Hello Thingy');
-  await countLocator.waitFor({ state: 'visible' });
   await page.waitForFunction(() => {
     const el = document.querySelector('#librarian-question-count .composer-count');
     return el && /^12 \/ 1200/.test(el.textContent || '');
@@ -169,13 +166,13 @@ async function checkMobileChat(browser) {
   await page.goto(`${baseUrl}/chat/`);
   await page.waitForSelector('.mobile-chatbar');
   await page.waitForSelector('#librarian-chat:not([hidden])');
-  await page.waitForSelector('.thingy-input.is-compact');
+  await page.waitForSelector('.thingy-input');
   assert.equal(await page.locator('.thingy-composer-zone').isVisible(), true, 'mobile composer zone is visible at rest');
-  assert.equal(await page.locator('.thingy-input.is-compact').isVisible(), true, 'mobile compact composer is visible at rest');
+  assert.equal(await page.locator('.thingy-input').isVisible(), true, 'mobile composer is visible at rest');
   assert.equal(
     await page.locator('.thingy-input').evaluate((element) => window.getComputedStyle(element).position),
     'static',
-    'mobile compact composer stays in page flow until the keyboard opens'
+    'mobile composer stays in page flow'
   );
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
   await page.locator('#mobile-conversations-toggle').click();

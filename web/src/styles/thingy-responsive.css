@@ -93,23 +93,6 @@
     grid-template-rows: minmax(0, 1fr);
   }
 
-  .thingy-composer-zone {
-    bottom: 0;
-    padding: 16px 16px calc(14px + env(safe-area-inset-bottom));
-    z-index: 48;
-  }
-
-  .is-thingy-keyboard-open .thingy-composer-zone {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: var(--thingy-keyboard-inset, 0px);
-  }
-
-  .thingy-composer-zone::before {
-    inset: -82px 0 0;
-  }
-
   .mobile-chatbar {
     position: sticky;
     top: 0;

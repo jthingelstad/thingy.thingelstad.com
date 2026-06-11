@@ -7,7 +7,6 @@
   min-height: 116px;
   padding: 0;
   overflow: visible;
-  transition: border-radius 0.16s ease, min-height 0.16s ease;
 }
 
 .composer-box.thingy-input textarea {
@@ -23,23 +22,11 @@
   font-size: 16px;
   line-height: 1.38;
   outline: none;
-  transition: min-height 0.16s ease, max-height 0.16s ease, padding 0.16s ease;
 }
 
 .composer-box.thingy-input textarea:focus {
   border-color: transparent;
   box-shadow: none;
-}
-
-.composer-box.thingy-input textarea:disabled {
-  color: color-mix(in srgb, var(--ink-soft) 74%, var(--surface));
-  opacity: 1;
-  -webkit-text-fill-color: color-mix(in srgb, var(--ink-soft) 74%, var(--surface));
-}
-
-.composer-box.thingy-input textarea:disabled::placeholder {
-  color: color-mix(in srgb, var(--muted) 62%, var(--surface));
-  opacity: 1;
 }
 
 .composer-toolbar {
@@ -49,29 +36,6 @@
   min-height: 48px;
   padding: 4px 12px 12px;
   min-width: 0;
-}
-
-.composer-box.thingy-input.is-compact {
-  min-height: 104px;
-  border-radius: 28px;
-}
-
-.composer-box.thingy-input.is-compact textarea {
-  min-height: 50px;
-  max-height: 50px;
-  padding: 16px 20px 0;
-  overflow: hidden;
-}
-
-.composer-box.thingy-input.is-compact .composer-toolbar {
-  display: flex;
-  min-height: 44px;
-  padding: 0 10px 10px;
-}
-
-.composer-box.thingy-input.is-compact .composer-count,
-.composer-box.thingy-input.is-compact .composer-voice-status {
-  display: none;
 }
 
 .composer-toolbar .composer-spacer {
@@ -127,10 +91,10 @@
 }
 
 :is(.composer-voice, .composer-map, .librarian-form button.composer-voice, .librarian-form button.composer-map):disabled {
-  color: color-mix(in srgb, var(--ink-soft) 48%, var(--surface));
+  color: color-mix(in srgb, var(--muted) 64%, var(--surface));
   background: transparent;
   cursor: not-allowed;
-  opacity: 1;
+  opacity: 0.62;
 }
 
 .composer-voice svg,
@@ -212,17 +176,11 @@
 }
 
 :is(.composer-send, .librarian-form button.composer-send):disabled {
-  background: #d6ddda;
-  border-color: #aeb9b5;
-  color: var(--ink);
+  background: color-mix(in srgb, var(--muted) 22%, var(--surface-2));
+  border-color: color-mix(in srgb, var(--muted) 22%, var(--surface-2));
+  color: color-mix(in srgb, var(--muted) 70%, var(--surface));
   cursor: not-allowed;
-  opacity: 1;
-  box-shadow: 0 4px 14px rgba(23, 33, 31, 0.14);
-}
-
-:is(.srcpick-btn, .librarian-form button.srcpick-btn):disabled {
-  color: color-mix(in srgb, var(--ink-soft) 48%, var(--surface));
-  opacity: 1;
+  box-shadow: none;
 }
 
 .composer-send svg {
@@ -258,30 +216,6 @@
   width: 17px;
   height: 17px;
   fill: currentColor;
-}
-
-@media (max-width: 640px) {
-  .composer-box.thingy-input.is-compact {
-    min-height: 98px;
-    border-radius: 28px;
-  }
-
-  .composer-box.thingy-input.is-compact textarea {
-    min-height: 44px;
-    max-height: 44px;
-    padding: 13px 16px 0;
-  }
-
-  .composer-box.thingy-input.is-compact .composer-toolbar {
-    min-height: 44px;
-    padding: 0 8px 9px;
-    gap: 8px;
-  }
-
-  .composer-box.thingy-input.is-compact .composer-voice,
-  .composer-box.thingy-input.is-compact .composer-map {
-    display: none;
-  }
 }
 
 .srcpick {
@@ -386,7 +320,7 @@
     linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 28%, transparent), transparent 58%),
     var(--surface);
   box-shadow: 0 20px 46px -24px rgba(14, 43, 38, 0.48), 0 2px 10px rgba(14, 43, 38, 0.08);
-  z-index: 120;
+  z-index: 80;
 }
 
 .srcpick-pop[hidden] {
@@ -429,9 +363,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 44px;
+  min-height: 40px;
   margin: 0;
-  padding: 6px 8px;
+  padding: 5px 6px;
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -535,8 +469,8 @@
 
 @media (max-width: 640px) {
   :is(.srcpick-btn, .librarian-form button.srcpick-btn) {
-    width: 62px;
-    max-width: 62px;
+    width: 70px;
+    max-width: 70px;
     justify-content: center;
     gap: 5px;
   }
