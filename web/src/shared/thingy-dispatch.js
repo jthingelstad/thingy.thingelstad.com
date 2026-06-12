@@ -177,7 +177,7 @@ function bootDispatch() {
         updateCount();
         updateComposerState();
         actions.addMessage('user', text);
-        await actions.clarifyWithThingy(text);
+        await actions.planWithThingy(text);
         actions.render();
       },
       onInput: () => {

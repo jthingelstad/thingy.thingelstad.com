@@ -4,8 +4,15 @@
 // caller supplies DOM-facing callbacks (onRender) and environment hooks
 // (confirmDelete, redirectToSignIn) so this module never touches
 // document/window beyond localStorage and timers.
+//
+// Planning runs as a streaming conversation on the Librarian /chat endpoint
+// in the dispatch mode: the planner streams answer deltas, real tool status,
+// and dispatch_brief events that this layer mirrors into the draft. Queueing
+// and send status stay on the request/response /dispatch route.
 
 import * as defaultSession from './thingy-session.js';
+import { librarianStreamUrl } from './thingy-config.js';
+import { postJsonStream, read as readStream } from './thingy-stream.js';
 import {
   activeDraftId as activeDraftIdSignal,
   dispatchActions as dispatchActionsSignal,
@@ -63,20 +70,6 @@ function defaultWelcomeText(dispatchNumber = 1) {
   return `Alright, let's make your ${ordinal(dispatchNumber)} Dispatch. Give me the topic, question, or archive thread you want to shape, and I'll help turn it into a clear direction before you generate it.`;
 }
 
-function assistantClarificationText(data) {
-  const message = String(data.message || '').trim();
-  const question = String(data.question || '').trim();
-  if (message && question && !message.includes(question)) return `${message}\n\n${question}`;
-  return message || question || 'What angle should I use for this Dispatch?';
-}
-
-function readyDispatchText(data, direction) {
-  const message = String(data.message || '').trim();
-  const claimsStarted = /\b(?:generating now|generate now|drafting now|sending now|emailing now)\b/i.test(message);
-  if (message && !message.includes('?') && !claimsStarted) return message;
-  return `I have shaped this Dispatch direction:\n\n${direction}\n\nIf this is right, use Generate Dispatch. If you want to steer it, send me the adjustment.`;
-}
-
 function coverageLabel(value) {
   return {
     thin: 'Thin',
@@ -112,12 +105,6 @@ function dispatchBriefMarkdown(brief = {}) {
   ].filter(Boolean).join('\n');
 }
 
-function planningActivityText(activity = {}) {
-  const label = String(activity.label || 'Checked Dispatch context').trim();
-  const summary = String(activity.summary || '').trim();
-  return summary ? `**${label}**\n\n${summary}` : `**${label}**`;
-}
-
 function generationContextText(draft = {}, dispatchTestMode = false) {
   const brief = draft.brief && typeof draft.brief === 'object' ? draft.brief : {};
   const sources = Array.isArray(brief.selected_sources) ? brief.selected_sources : [];
@@ -140,58 +127,9 @@ function statusProgressText(status) {
   return `Thingy is ${normalized} this Dispatch. I will keep checking until it is sent.`;
 }
 
-// Builds the clarify request payload from the draft's stage and the new
-// reader text. Each stage frames the prompt differently so Thingy sees the
-// full context (seed, confirmed direction, adjustment) in one string.
-function clarifyRequest(draft, text) {
-  const seed = draft.prompt || text;
-  if (draft.stage === 'needs_clarification') {
-    return {
-      prompt: seed,
-      answer: text,
-      nextPrompt: seed,
-      nextDirection: draft.direction,
-      nextQuestion: draft.currentQuestion
-    };
-  }
-  if (draft.stage === 'ready' || draft.stage === 'upgrade') {
-    return {
-      prompt: [
-        seed ? `Original Dispatch seed: ${seed}` : '',
-        draft.direction ? `Current confirmed direction: ${draft.direction}` : '',
-        `Reader adjustment: ${text}`
-      ].filter(Boolean).join('\n'),
-      answer: '',
-      nextPrompt: seed,
-      nextDirection: draft.direction,
-      nextQuestion: ''
-    };
-  }
-  if (draft.prompt && draft.prompt !== text) {
-    return {
-      prompt: [
-        `Original Dispatch seed: ${draft.prompt}`,
-        draft.direction ? `Current working direction: ${draft.direction}` : '',
-        `Reader follow-up: ${text}`
-      ].filter(Boolean).join('\n'),
-      answer: '',
-      nextPrompt: draft.prompt,
-      nextDirection: draft.direction,
-      nextQuestion: draft.currentQuestion
-    };
-  }
-  return {
-    prompt: text,
-    answer: '',
-    nextPrompt: text,
-    nextDirection: draft.direction,
-    nextQuestion: ''
-  };
-}
-
 function inputPlaceholderForDraft(draft, editable) {
   if (!editable) return 'Start a new Dispatch to shape another request...';
-  if (draft.stage === 'needs_clarification') return 'Answer Thingy’s clarification question...';
+  if (draft.stage === 'needs_clarification') return 'Answer Thingy, or steer the plan another way...';
   if (draft.stage === 'ready' || draft.stage === 'upgrade') return 'Adjust the direction, or generate when ready...';
   return 'Tell Thingy what this Dispatch should explore...';
 }
@@ -200,6 +138,11 @@ function inputPlaceholderForDraft(draft, editable) {
 
 function createDispatchActions(options = {}) {
   const session = options.session || defaultSession;
+  const streamBase = () => String(options.streamBase ?? librarianStreamUrl() ?? '').replace(/\/$/, '');
+  // Stream seams are injectable so tests can drive planner events without
+  // a fetch/SSE stack.
+  const postStream = options.postStream || postJsonStream;
+  const readEvents = options.readEvents || readStream;
   const welcomeTextOption = options.welcomeText || '';
   const dispatchTestMode = Boolean(options.dispatchTestMode);
   const activeKey = options.activeKey || 'thingyActiveDispatchDraft';
@@ -352,16 +295,6 @@ function createDispatchActions(options = {}) {
     });
   }
 
-  function removeProgressMessage(id, targetDraft = activeDraft()) {
-    const draft = targetDraft;
-    const key = String(id || '').trim();
-    if (!key) return draft;
-    draft.messages = draft.messages.filter((message) => !(message.kind === 'progress' && message.id === key));
-    draft.updatedAt = nowIso();
-    saveDrafts();
-    return draft;
-  }
-
   function setActiveDraft(id, opts = {}) {
     activeId = String(id || '');
     if (activeId) {
@@ -398,6 +331,7 @@ function createDispatchActions(options = {}) {
       topic: draft.prompt || draft.title,
       prompt: draft.prompt,
       direction: draft.direction,
+      conversation_id: draft.conversationId || '',
       clarification_question: draft.currentQuestion,
       clarification_answer: draft.clarificationAnswer,
       brief: draft.brief || {},
@@ -520,10 +454,31 @@ function createDispatchActions(options = {}) {
     }
   }
 
-  async function clarifyWithThingy(text) {
+  function upsertBriefMessage(text, targetDraft = activeDraft()) {
+    const existing = targetDraft.messages.find((message) => message.kind === 'brief');
+    if (existing) {
+      existing.text = String(text || '');
+      existing.time = nowIso();
+    } else {
+      targetDraft.messages.push({
+        role: 'assistant',
+        text: String(text || ''),
+        time: nowIso(),
+        kind: 'brief'
+      });
+    }
+    targetDraft.updatedAt = nowIso();
+    saveDrafts();
+    return targetDraft;
+  }
+
+  // One planning turn: stream the dispatch-mode /chat conversation and
+  // mirror its events into the draft. The planner streams answer deltas,
+  // tool status, and dispatch_brief events; the brief card and stage are
+  // derived from the last brief the planner published.
+  async function planWithThingy(text) {
     const draft = activeDraft();
     const progressScope = nextProgressScope('plan');
-    const progressId = (id) => scopedProgressId(progressScope, id);
     const progress = (id, value, targetDraft = activeDraft(), extra = {}) => (
       upsertScopedProgressMessage(progressScope, id, value, targetDraft, extra)
     );
@@ -531,79 +486,94 @@ function createDispatchActions(options = {}) {
       stage: draft.stage,
       prompt: draft.prompt,
       direction: draft.direction,
-      currentQuestion: draft.currentQuestion,
-      clarificationAnswer: draft.clarificationAnswer,
       title: draft.title,
       brief: draft.brief
     };
-    const request = clarifyRequest(draft, text);
-    setBusy(true, 'Thingy is shaping this Dispatch...');
-    progress('archive-fit', 'Checking Jamie’s archive coverage for this Dispatch request.', draft, { status: 'pending' });
-    progress('source-balance', 'Looking for a source packet that is enough to be meaningful without flooding generation.', draft, { status: 'pending' });
+    setBusy(true, 'Thingy is planning this Dispatch...');
     updateDraft({
       stage: 'shaping',
-      prompt: request.nextPrompt,
-      direction: request.nextDirection,
-      currentQuestion: request.nextQuestion,
-      title: titleFromPrompt(request.nextPrompt),
-      clarificationAnswer: request.answer || draft.clarificationAnswer
+      prompt: draft.prompt || text,
+      title: draft.prompt ? draft.title : titleFromPrompt(text)
     });
     render();
+    let briefStatus = '';
+    let answerMessage = null;
+    const ensureAnswerMessage = () => {
+      if (!answerMessage) {
+        const target = activeDraft();
+        answerMessage = { role: 'assistant', text: '', time: nowIso() };
+        target.messages.push(answerMessage);
+        target.updatedAt = nowIso();
+      }
+      return answerMessage;
+    };
     try {
-      await saveDraftToServer(activeDraft(), { status: 'shaping' });
-      const data = await dispatchPost('clarify', {
-        prompt: request.prompt,
-        clarification_question: draft.currentQuestion,
-        clarification_answer: request.answer,
-        messages: activeDraft().messages || []
-      }, {
+      if (!(await session.ensureFreshToken())) {
+        session.clearAuth();
+        requireAuth();
+        throw new Error('Sign in again to continue.');
+      }
+      const response = await postStream({
+        baseUrl: streamBase(),
+        path: '/chat',
         timeoutMs: AGENT_RESPONSE_TIMEOUT_MS,
-        abortMessage: 'Thingy spent too long shaping this Dispatch. Please try again with a narrower angle.'
+        abortMessage: 'Thingy spent too long planning this Dispatch. Please try again with a narrower angle.',
+        headers: { authorization: `Bearer ${session.token()}` },
+        payload: {
+          message: text,
+          scope: 'all',
+          mode: 'dispatch',
+          conversation_id: activeDraft().conversationId || undefined
+        }
       });
-      const direction = data.direction || request.prompt;
-      const planningActivity = Array.isArray(data.tool_activity) ? data.tool_activity : [];
-      if (planningActivity.length) {
-        planningActivity.forEach((activity, index) => {
-          progress(
-            activity.id || `plan-${index}`,
-            planningActivityText(activity),
-            activeDraft(),
-            { status: activity.status || 'complete' }
-          );
-        });
-      } else {
-        removeProgressMessage(progressId('archive-fit'));
-        removeProgressMessage(progressId('source-balance'));
-      }
-      if (data.needs_clarification) {
-        updateDraft({
-          stage: 'needs_clarification',
-          direction,
-          currentQuestion: data.question || '',
-          brief: data.brief || activeDraft().brief || {}
-        });
-        addMessage('assistant', assistantClarificationText(data));
-        await saveDraftToServer(activeDraft(), { status: 'needs_clarification' });
-      } else {
-        updateDraft({
-          stage: 'ready',
-          direction,
-          currentQuestion: '',
-          brief: data.brief || activeDraft().brief || {}
-        });
-        addMessage('assistant', readyDispatchText(data, direction));
-        const briefText = dispatchBriefMarkdown(activeDraft().brief);
-        if (briefText) addMessage('assistant', briefText, { kind: 'brief' });
-        await saveDraftToServer(activeDraft(), { status: 'ready' });
-      }
+      progress('planning', 'Thingy is planning against the archive...', activeDraft(), { status: 'pending' });
+      render();
+      await readEvents(response, (eventName, data) => {
+        if (eventName === 'meta') {
+          if (data.conversation_id) updateDraft({ conversationId: data.conversation_id });
+        } else if (eventName === 'status') {
+          const message = String(data.commentary || data.message || '').trim();
+          if (message) {
+            progress('planning', message, activeDraft(), { status: 'pending' });
+            render();
+          }
+        } else if (eventName === 'answer_delta') {
+          ensureAnswerMessage().text += String(data.delta || '');
+          render();
+        } else if (eventName === 'answer') {
+          if (String(data.answer || '').trim()) {
+            ensureAnswerMessage().text = String(data.answer || '');
+            render();
+          }
+        } else if (eventName === 'dispatch_brief') {
+          const brief = data.brief && typeof data.brief === 'object' ? data.brief : {};
+          briefStatus = String(data.status || brief.status || 'draft');
+          updateDraft({ brief });
+          const briefText = dispatchBriefMarkdown(brief);
+          if (briefText) upsertBriefMessage(briefText);
+          render();
+        } else if (eventName === 'error') {
+          throw new Error(data.error || 'Thingy is unavailable.');
+        }
+      });
+      progress('planning', 'Finished this planning pass.', activeDraft(), { status: 'complete' });
+      const current = activeDraft();
+      const brief = current.brief && typeof current.brief === 'object' ? current.brief : {};
+      const ready = briefStatus === 'ready' || String(brief.status || '') === 'ready';
+      updateDraft({
+        stage: ready ? 'ready' : 'needs_clarification',
+        direction: String(brief.working_angle || brief.generation_instructions || current.direction || current.prompt || '').trim()
+      });
+      await saveDraftToServer(activeDraft(), { status: ready ? 'ready' : 'needs_clarification' });
       setStatus('');
     } catch (error) {
       updateDraft(previous);
-      progress('archive-fit', 'Archive planning failed before I could shape this Dispatch.', activeDraft(), { status: 'failed' });
-      progress('source-balance', 'Source balancing stopped before I could shape this Dispatch.', activeDraft(), { status: 'failed' });
-      addMessage('assistant', error.message || 'I could not shape that Dispatch right now.');
+      progress('planning', 'Planning stopped before Thingy could finish this pass.', activeDraft(), { status: 'failed' });
+      if (!String(answerMessage?.text || '').trim()) {
+        addMessage('assistant', error.message || 'I could not plan that Dispatch right now.');
+      }
       saveDraftToServer(activeDraft(), { status: activeDraft().stage === 'empty' ? 'draft' : activeDraft().stage }).catch(() => {});
-      setStatus('Thingy could not shape that right now.', 'error');
+      setStatus('Thingy could not plan that right now.', 'error');
     } finally {
       setBusy(false);
       render();
@@ -785,7 +755,7 @@ function createDispatchActions(options = {}) {
   return {
     activeDraft,
     addMessage,
-    clarifyWithThingy,
+    planWithThingy,
     createDraft,
     deleteDispatch,
     draftById,
@@ -807,11 +777,9 @@ function createDispatchActions(options = {}) {
 }
 
 export {
-  assistantClarificationText,
-  clarifyRequest,
   createDispatchActions,
+  dispatchBriefMarkdown,
   draftTitle,
   inputPlaceholderForDraft,
-  readyDispatchText,
   titleFromPrompt
 };

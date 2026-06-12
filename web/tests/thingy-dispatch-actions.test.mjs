@@ -17,12 +17,10 @@ global.window.setInterval = () => 0;
 global.window.clearInterval = () => {};
 
 const {
-  assistantClarificationText,
-  clarifyRequest,
   createDispatchActions,
+  dispatchBriefMarkdown,
   draftTitle,
   inputPlaceholderForDraft,
-  readyDispatchText,
   titleFromPrompt
 } = await import('../src/shared/thingy-dispatch-actions.js');
 const { AGENT_RESPONSE_TIMEOUT_MS } = await import('../src/shared/thingy-timeouts.js');
@@ -49,61 +47,26 @@ test('draftTitle prefers title, then prompt, then direction', () => {
   assert.equal(draftTitle({}), 'New Dispatch');
 });
 
-test('assistantClarificationText combines message and question when distinct', () => {
-  assert.equal(
-    assistantClarificationText({ message: 'Tell me more.', question: 'Which year?' }),
-    'Tell me more.\n\nWhich year?'
-  );
-  assert.equal(
-    assistantClarificationText({ message: 'Which year? Tell me.', question: 'Which year?' }),
-    'Which year? Tell me.'
-  );
-  assert.equal(
-    assistantClarificationText({}),
-    'What angle should I use for this Dispatch?'
-  );
-});
-
-test('readyDispatchText falls back to the shaped-direction copy for questions or generation claims', () => {
-  assert.equal(readyDispatchText({ message: 'All shaped and ready.' }, 'dir'), 'All shaped and ready.');
-  assert.match(readyDispatchText({ message: 'Ready? Generating now!' }, 'the direction'), /I have shaped this Dispatch direction/);
-  assert.match(readyDispatchText({}, 'the direction'), /the direction/);
-});
-
-test('clarifyRequest treats needs_clarification as an answer to the open question', () => {
-  const request = clarifyRequest({
-    stage: 'needs_clarification',
-    prompt: 'seed',
-    direction: 'dir',
-    currentQuestion: 'Which year?'
-  }, '2024');
-  assert.equal(request.prompt, 'seed');
-  assert.equal(request.answer, '2024');
-  assert.equal(request.nextQuestion, 'Which year?');
-});
-
-test('clarifyRequest treats ready-stage text as an adjustment', () => {
-  const request = clarifyRequest({
-    stage: 'ready',
-    prompt: 'seed',
-    direction: 'dir'
-  }, 'tighter focus');
-  assert.match(request.prompt, /Original Dispatch seed: seed/);
-  assert.match(request.prompt, /Current confirmed direction: dir/);
-  assert.match(request.prompt, /Reader adjustment: tighter focus/);
-  assert.equal(request.answer, '');
-  assert.equal(request.nextQuestion, '');
-});
-
-test('clarifyRequest starts fresh for an empty draft', () => {
-  const request = clarifyRequest({ stage: 'empty' }, 'new topic');
-  assert.equal(request.prompt, 'new topic');
-  assert.equal(request.nextPrompt, 'new topic');
+test('dispatchBriefMarkdown renders goal, angle, fit, and sources', () => {
+  const text = dispatchBriefMarkdown({
+    user_goal: 'Understand RSS',
+    working_angle: 'Connect RSS to ownership',
+    coverage_status: 'focused',
+    selected_sources: [{ label: 'WT10', title: 'Open web', why: 'Core source' }],
+    excluded_scope: ['podcast detours']
+  });
+  assert.match(text, /\*\*Dispatch brief\*\*/);
+  assert.match(text, /Understand RSS/);
+  assert.match(text, /Connect RSS to ownership/);
+  assert.match(text, /Archive fit:\*\* Focused/);
+  assert.match(text, /WT10 - Open web: Core source/);
+  assert.match(text, /podcast detours/);
+  assert.equal(dispatchBriefMarkdown({}), '');
 });
 
 test('inputPlaceholderForDraft maps stages to placeholder copy', () => {
   assert.match(inputPlaceholderForDraft({ stage: 'sent' }, false), /Start a new Dispatch/);
-  assert.match(inputPlaceholderForDraft({ stage: 'needs_clarification' }, true), /clarification question/);
+  assert.match(inputPlaceholderForDraft({ stage: 'needs_clarification' }, true), /Answer Thingy/);
   assert.match(inputPlaceholderForDraft({ stage: 'ready' }, true), /Adjust the direction/);
   assert.match(inputPlaceholderForDraft({ stage: 'empty' }, true), /Tell Thingy/);
 });
@@ -124,18 +87,37 @@ function fakeSession(overrides = {}) {
   };
 }
 
-function progressMessages() {
-  return dispatchMessages.value.filter((message) => message.kind === 'progress');
+// Fake planner stream: postStream captures the request, readEvents replays
+// a scripted event list into the handler.
+function fakeStream(turns) {
+  const requests = [];
+  let turnIndex = 0;
+  return {
+    requests,
+    postStream: async (request) => {
+      requests.push(request);
+      return { turn: turnIndex };
+    },
+    readEvents: async (response, onEvent) => {
+      const events = turns[Math.min(turnIndex, turns.length - 1)];
+      turnIndex += 1;
+      for (const [eventName, data] of events) {
+        if (eventName === '__throw__') throw new Error(String(data));
+        await onEvent(eventName, data);
+      }
+    }
+  };
 }
 
-function progressBaseIds(messages = progressMessages()) {
-  return messages.map((message) => message.baseId || message.id);
+function progressMessages() {
+  return dispatchMessages.value.filter((message) => message.kind === 'progress');
 }
 
 test('createDraft activates a fresh draft and renders it into the signals', () => {
   dispatchBusy.value = false;
   const actions = createDispatchActions({
     session: fakeSession(),
+    streamBase: 'https://stream.test',
     onRender: () => {}
   });
   actions.createDraft({ activate: true, render: false });
@@ -153,6 +135,7 @@ test('createDraft gives later Dispatches contextual guided openings', () => {
   dispatchBusy.value = false;
   const actions = createDispatchActions({
     session: fakeSession(),
+    streamBase: 'https://stream.test',
     onRender: () => {}
   });
   const first = actions.createDraft({ activate: true, render: false });
@@ -167,183 +150,150 @@ test('createDraft gives later Dispatches contextual guided openings', () => {
   assert.match(seventh.messages[0].text, /seventh Dispatch/);
 });
 
-test('clarifyWithThingy moves an empty draft to ready and persists through the API', async () => {
+test('planWithThingy streams a planning turn into a ready draft', async () => {
   dispatchBusy.value = false;
-  const calls = [];
+  const saves = [];
   const session = fakeSession({
-    postJson: async (path, payload, headers, options) => {
-      calls.push({ action: payload.action, options });
-      if (payload.action === 'clarify') {
-        return { needs_clarification: false, direction: 'A focused direction', message: 'Shaped it.' };
-      }
+    postJson: async (path, payload) => {
+      if (payload.action === 'save_draft') saves.push(payload);
       return { dispatch: { id: 'srv-1' } };
     }
   });
-  const actions = createDispatchActions({ session, onRender: () => {} });
-  actions.createDraft({ activate: true, render: false });
-  actions.addMessage('user', 'Write about RSS');
-  await actions.clarifyWithThingy('Write about RSS');
-
-  const draft = actions.activeDraft();
-  assert.equal(draft.stage, 'ready');
-  assert.equal(draft.direction, 'A focused direction');
-  assert.deepEqual(calls.filter((call) => call.action === 'clarify').map((call) => call.action), ['clarify']);
-  assert.equal(calls.find((call) => call.action === 'clarify').options.timeoutMs, AGENT_RESPONSE_TIMEOUT_MS);
-  assert.ok(calls.some((call) => call.action === 'save_draft'), 'draft persisted to server');
-  const lastMessage = dispatchMessages.value[dispatchMessages.value.length - 1];
-  assert.equal(lastMessage.text, 'Shaped it.');
-  assert.equal(dispatchBusy.value, false, 'busy resets after clarify');
-});
-
-test('clarifyWithThingy renders archive planning activity and a Dispatch brief', async () => {
-  dispatchBusy.value = false;
-  const payloads = [];
-  const session = fakeSession({
-    postJson: async (path, payload) => {
-      payloads.push(payload);
-      if (payload.action === 'clarify') {
-        return {
-          needs_clarification: false,
-          direction: 'A focused Dispatch about RSS and ownership',
-          message: 'I checked the archive and this is ready to generate.',
-          brief: {
-            user_goal: 'Understand RSS',
-            working_angle: 'Connect RSS to ownership and publishing',
-            coverage_status: 'focused',
-            selected_sources: [{
-              id: 'S1',
-              label: 'WT10',
-              title: 'Open web',
-              why: 'Core source'
-            }]
-          },
-          tool_activity: [{
-            id: 'archive-fit',
-            label: 'Checked archive coverage',
-            status: 'complete',
-            summary: '6 source packets selected from 11 candidate matches.'
-          }, {
-            id: 'source-balance',
-            label: 'Balanced source packet',
-            status: 'complete',
-            summary: 'Coverage includes Weekly Thing and blog.'
-          }, {
-            id: 'dispatch-brief',
-            label: 'Prepared Dispatch brief',
-            status: 'complete',
-            summary: 'Brief is ready with 1 planned source.'
-          }]
-        };
+  const stream = fakeStream([[
+    ['meta', { conversation_id: 'conv-1', mode: 'dispatch' }],
+    ['status', { kind: 'tool', tool_name: 'check_dispatch_fit', message: 'Checking dispatch fit...' }],
+    ['answer_delta', { delta: 'The archive is focused here. ' }],
+    ['answer_delta', { delta: 'Brief is ready to lock.' }],
+    ['dispatch_brief', {
+      status: 'ready',
+      brief: {
+        user_goal: 'Understand RSS',
+        working_angle: 'Connect RSS to ownership and publishing',
+        coverage_status: 'focused',
+        generation_instructions: 'Trace the RSS thread with dates and links.',
+        selected_sources: [{ id: 'S1', label: 'WT10', title: 'Open web', why: 'Core source' }],
+        status: 'ready'
       }
-      return { dispatch: { id: 'srv-brief' } };
-    }
+    }],
+    ['done', { request_id: 'req-1' }]
+  ]]);
+  const actions = createDispatchActions({
+    session,
+    streamBase: 'https://stream.test',
+    postStream: stream.postStream,
+    readEvents: stream.readEvents,
+    onRender: () => {},
+    activeKey: 'plan-ready-test'
   });
-  const actions = createDispatchActions({ session, onRender: () => {}, activeKey: 'brief-test' });
   actions.createDraft({ activate: true, render: false });
   actions.addMessage('user', 'Write about RSS');
-  await actions.clarifyWithThingy('Write about RSS');
+  await actions.planWithThingy('Write about RSS');
 
   const draft = actions.activeDraft();
   assert.equal(draft.stage, 'ready');
+  assert.equal(draft.conversationId, 'conv-1');
+  assert.equal(draft.direction, 'Connect RSS to ownership and publishing');
   assert.equal(draft.brief.coverage_status, 'focused');
-  const progress = progressMessages();
-  assert.deepEqual(progressBaseIds(progress), ['archive-fit', 'source-balance', 'dispatch-brief']);
-  assert.ok(progress.every((message) => String(message.id).startsWith('plan-1:')), 'planning progress rows are scoped to the run');
-  assert.equal(progress[0].status, 'complete');
-  assert.ok(progress.every((message) => Number(message.startedAt) > 0), 'progress rows carry timer start metadata');
-  assert.ok(progress.every((message) => Number(message.completedAt) >= Number(message.startedAt)), 'completed progress rows carry completion metadata');
+
+  const request = stream.requests[0];
+  assert.equal(request.path, '/chat');
+  assert.equal(request.baseUrl, 'https://stream.test');
+  assert.equal(request.payload.mode, 'dispatch');
+  assert.equal(request.payload.message, 'Write about RSS');
+  assert.equal(request.payload.conversation_id, undefined);
+  assert.equal(request.timeoutMs, AGENT_RESPONSE_TIMEOUT_MS);
+  assert.equal(request.headers.authorization, 'Bearer tok');
+
+  const assistant = dispatchMessages.value.filter((message) => message.role === 'assistant' && !message.kind);
+  assert.equal(assistant.at(-1).text, 'The archive is focused here. Brief is ready to lock.');
   assert.ok(dispatchMessages.value.some((message) => message.kind === 'brief' && /Dispatch brief/.test(message.text)));
-  const finalSave = payloads.filter((payload) => payload.action === 'save_draft').at(-1);
+  const progress = progressMessages();
+  assert.equal(progress.length, 1);
+  assert.equal(progress[0].status, 'complete');
+
+  const finalSave = saves.at(-1);
+  assert.equal(finalSave.status, 'ready');
+  assert.equal(finalSave.conversation_id, 'conv-1');
   assert.equal(finalSave.brief.working_angle, 'Connect RSS to ownership and publishing');
+  assert.equal(dispatchBusy.value, false, 'busy resets after planning');
 });
 
-test('clarifyWithThingy keeps progress rows intermingled with each Dispatch turn', async () => {
+test('planWithThingy keeps the conversation across turns and updates the brief card in place', async () => {
   dispatchBusy.value = false;
-  let clarifyCalls = 0;
   const session = fakeSession({
-    postJson: async (path, payload) => {
-      if (payload.action === 'clarify') {
-        clarifyCalls += 1;
-        return clarifyCalls === 1 ? {
-          needs_clarification: true,
-          direction: 'RSS is broad in the archive.',
-          message: 'I found a lot of RSS material.',
-          question: 'Which RSS angle should I narrow toward?',
-          tool_activity: [{
-            id: 'archive-fit',
-            label: 'Checked archive coverage',
-            status: 'complete',
-            summary: 'RSS has a broad source set.'
-          }, {
-            id: 'source-balance',
-            label: 'Balanced source packet',
-            status: 'complete',
-            summary: 'The source packet needs a narrower angle.'
-          }]
-        } : {
-          needs_clarification: false,
-          direction: 'A focused Dispatch about RSS and ownership.',
-          message: 'That is narrow enough to generate.',
-          tool_activity: [{
-            id: 'archive-fit',
-            label: 'Checked archive coverage',
-            status: 'complete',
-            summary: 'Ownership gives the Dispatch a focused source set.'
-          }, {
-            id: 'source-balance',
-            label: 'Balanced source packet',
-            status: 'complete',
-            summary: 'The selected packet is now bounded.'
-          }]
-        };
-      }
-      return { dispatch: { id: 'srv-turns' } };
-    }
+    postJson: async () => ({ dispatch: { id: 'srv-2' } })
   });
-  const actions = createDispatchActions({ session, onRender: () => {}, activeKey: 'turn-scope-test' });
+  const stream = fakeStream([
+    [
+      ['meta', { conversation_id: 'conv-2' }],
+      ['answer_delta', { delta: 'RSS is broad. Which angle?' }],
+      ['dispatch_brief', {
+        status: 'draft',
+        brief: { user_goal: 'RSS Dispatch', working_angle: 'RSS broadly', coverage_status: 'broad', generation_instructions: 'TBD', status: 'draft' }
+      }],
+      ['done', {}]
+    ],
+    [
+      ['meta', { conversation_id: 'conv-2' }],
+      ['answer_delta', { delta: 'Narrowed to ownership. Ready.' }],
+      ['dispatch_brief', {
+        status: 'ready',
+        brief: {
+          user_goal: 'RSS Dispatch',
+          working_angle: 'RSS and ownership',
+          coverage_status: 'focused',
+          generation_instructions: 'Trace it.',
+          selected_sources: [{ id: 'S1', title: 'Open web', url: 'https://example.com' }],
+          status: 'ready'
+        }
+      }],
+      ['done', {}]
+    ]
+  ]);
+  const actions = createDispatchActions({
+    session,
+    streamBase: 'https://stream.test',
+    postStream: stream.postStream,
+    readEvents: stream.readEvents,
+    onRender: () => {},
+    activeKey: 'plan-turns-test'
+  });
   actions.createDraft({ activate: true, render: false });
 
   actions.addMessage('user', 'Write about RSS');
-  await actions.clarifyWithThingy('Write about RSS');
-  actions.addMessage('user', 'Focus on RSS and ownership');
-  await actions.clarifyWithThingy('Focus on RSS and ownership');
+  await actions.planWithThingy('Write about RSS');
+  assert.equal(actions.activeDraft().stage, 'needs_clarification');
 
-  const messages = dispatchMessages.value;
-  const userIndexes = messages
-    .map((message, index) => ({ message, index }))
-    .filter((entry) => entry.message.role === 'user')
-    .map((entry) => entry.index);
-  const progress = progressMessages();
-  const progressIndexes = messages
-    .map((message, index) => ({ message, index }))
-    .filter((entry) => entry.message.kind === 'progress')
-    .map((entry) => entry.index);
+  actions.addMessage('user', 'Focus on ownership');
+  await actions.planWithThingy('Focus on ownership');
 
-  assert.deepEqual(progressBaseIds(progress), ['archive-fit', 'source-balance', 'archive-fit', 'source-balance']);
-  assert.equal(new Set(progress.map((message) => message.id)).size, 4, 'repeated backend activity IDs get per-turn client IDs');
-  assert.ok(progress[0].id.startsWith('plan-1:'));
-  assert.ok(progress[2].id.startsWith('plan-2:'));
-  assert.deepEqual(progressIndexes.slice(0, 2), [userIndexes[0] + 1, userIndexes[0] + 2]);
-  assert.deepEqual(progressIndexes.slice(2), [userIndexes[1] + 1, userIndexes[1] + 2]);
+  assert.equal(stream.requests[1].payload.conversation_id, 'conv-2');
+  assert.equal(actions.activeDraft().stage, 'ready');
+  const briefCards = dispatchMessages.value.filter((message) => message.kind === 'brief');
+  assert.equal(briefCards.length, 1, 'one brief card updated in place');
+  assert.match(briefCards[0].text, /RSS and ownership/);
 });
 
-test('clarifyWithThingy restores the previous stage when the API fails', async () => {
+test('planWithThingy restores the previous stage when the stream fails', async () => {
   dispatchBusy.value = false;
-  const session = fakeSession({
-    postJson: async (path, payload) => {
-      if (payload.action === 'clarify') throw new Error('boom');
-      return { dispatch: {} };
-    }
+  const session = fakeSession();
+  const stream = fakeStream([[
+    ['meta', { conversation_id: 'conv-3' }],
+    ['__throw__', 'boom']
+  ]]);
+  const actions = createDispatchActions({
+    session,
+    streamBase: 'https://stream.test',
+    postStream: stream.postStream,
+    readEvents: stream.readEvents,
+    onRender: () => {},
+    activeKey: 'plan-fail-test'
   });
-  const actions = createDispatchActions({ session, onRender: () => {} });
   actions.createDraft({ activate: true, render: false });
-  await actions.clarifyWithThingy('topic');
+  await actions.planWithThingy('topic');
   assert.equal(actions.activeDraft().stage, 'empty', 'stage rolled back');
   const progress = progressMessages();
-  assert.deepEqual(progress.map((message) => [message.baseId, message.status]), [
-    ['archive-fit', 'failed'],
-    ['source-balance', 'failed']
-  ]);
+  assert.deepEqual(progress.map((message) => message.status), ['failed']);
   const lastMessage = dispatchMessages.value[dispatchMessages.value.length - 1];
   assert.equal(lastMessage.text, 'boom');
 });
@@ -358,7 +308,7 @@ test('generateDispatch writes progress into the Dispatch transcript', async () =
       return { dispatch: { id: 'srv-1' } };
     }
   });
-  const actions = createDispatchActions({ session, onRender: () => {} });
+  const actions = createDispatchActions({ session, streamBase: 'https://stream.test', onRender: () => {} });
   const draft = actions.createDraft({ activate: true, render: false });
   Object.assign(draft, {
     stage: 'ready',
@@ -373,7 +323,7 @@ test('generateDispatch writes progress into the Dispatch transcript', async () =
   await actions.generateDispatch();
 
   const progress = progressMessages();
-  assert.deepEqual(progressBaseIds(progress), ['generate-start', 'generate-save', 'generate-queue']);
+  assert.deepEqual(progress.map((message) => message.baseId || message.id), ['generate-start', 'generate-save', 'generate-queue']);
   assert.ok(progress.every((message) => String(message.id).startsWith('generate-1:')), 'generation progress rows are scoped to the run');
   assert.equal(progress[0].status, 'complete');
   assert.equal(progress[1].status, 'complete');
@@ -391,6 +341,7 @@ test('deleteDispatch respects the confirmDelete hook', async () => {
   let confirmed = false;
   const actions = createDispatchActions({
     session: fakeSession(),
+    streamBase: 'https://stream.test',
     onRender: () => {},
     confirmDelete: () => confirmed
   });

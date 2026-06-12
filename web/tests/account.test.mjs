@@ -9,16 +9,6 @@ import {
   savePreferredName,
   hasSupportingAccess
 } from '../src/shared/thingy-account.js';
-import {
-  memoryLearnedItems,
-  memoryQuestionItems,
-  memoryQuestions,
-  memorySignalCount,
-  memorySummaryItems,
-  memorySummaries,
-  usefulMemoryText
-} from '../src/shared/thingy-memory-profile.js';
-
 test('savePreferredName persists through the auth API before updating cached profile', async () => {
   const calls = [];
   let cachedProfile = {};
@@ -124,54 +114,4 @@ test('extractPreferredNameFromMessage pulls names from natural phrasing', () => 
   assert.equal(extractPreferredNameFromMessage("I'm Jamie Thingelstad"), 'Jamie Thingelstad');
   assert.equal(extractPreferredNameFromMessage('What about RSS?'), '');
   assert.equal(extractPreferredNameFromMessage('Jamie'), 'Jamie');
-});
-
-test('memory profile helpers hide generic non-memory summaries', () => {
-  assert.equal(usefulMemoryText("I don't have any previous context about that topic."), '');
-  assert.equal(usefulMemoryText("Could you provide more details about the chat session you'd like me to summarize?"), '');
-  assert.equal(usefulMemoryText('Trace Privacy Philosophy And Toolkit through the archive.'), 'Trace Privacy Philosophy And Toolkit through the archive.');
-
-  const profile = {
-    learned_profile: [
-      { id: 'learned-1', label: 'RSS workflows', summary: 'Often explores RSS and OPML.' }
-    ],
-    recent_prompts: [
-      { question: 'What did Jamie write about RSS?' },
-      { question: 'What did Jamie write about OPML?' }
-    ],
-    current_session_questions: [
-      { question: 'Fallback session question?' }
-    ],
-    prior_session_summaries: [
-      { summary: "I don't have any previous context about Jamie's archive." },
-      { summary: 'They explored Jamie writing about RSS, OPML, and reader workflows.' }
-    ]
-  };
-
-  assert.deepEqual(memorySummaries(profile), ['They explored Jamie writing about RSS, OPML, and reader workflows.']);
-  assert.equal(memoryLearnedItems(profile).length, 1);
-  assert.deepEqual(memoryQuestions(profile), ['What did Jamie write about RSS?', 'What did Jamie write about OPML?']);
-  assert.equal(memorySignalCount(profile), 1);
-  assert.equal(usefulMemoryText('One two three four five', 12), 'One two...');
-});
-
-test('memory profile item helpers preserve ids for user controls', () => {
-  const profile = {
-    recent_prompts: [{ id: 'recent-1', question: 'What did Jamie say about RSS?' }],
-    prior_session_summaries: [{ id: 'thread-1', summary: 'They explored RSS workflows.' }],
-    learned_profile: [{ id: 'learned-1', label: 'RSS workflows', summary: 'Often explores RSS and OPML.', confidence: 0.8 }]
-  };
-
-  assert.equal(memoryQuestionItems(profile)[0].id, 'recent-1');
-  assert.equal(memorySummaryItems(profile)[0].id, 'thread-1');
-  assert.equal(memoryLearnedItems(profile)[0].id, 'learned-1');
-});
-
-test('memory profile recent helpers fall back to current-session questions', () => {
-  const profile = {
-    current_session_questions: [{ id: 'session-1', question: 'What did Jamie say about Atom?' }]
-  };
-
-  assert.deepEqual(memoryQuestions(profile), ['What did Jamie say about Atom?']);
-  assert.equal(memoryQuestionItems(profile)[0].id, 'session-1');
 });

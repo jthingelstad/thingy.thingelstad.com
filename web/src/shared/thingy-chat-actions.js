@@ -520,7 +520,9 @@ function createChatActions(options = {}) {
         ...entry,
         id: entry.id || entry.conversation_id,
         local: false
-      })).filter((entry) => entry.id);
+      })).filter((entry) => entry.id)
+        // Dispatch planning conversations belong to the /dispatch/ surface.
+        .filter((entry) => String(entry.mode || '') !== 'dispatch');
       const serverIds = new Set(serverConversations.map((entry) => entry.id));
       const keptClientShells = clientActiveShells.filter((entry) => entry.id === state.activeConversationId && !serverIds.has(entry.id));
       state.conversations = dedupeEmptyConversationDrafts(

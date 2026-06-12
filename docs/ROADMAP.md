@@ -53,7 +53,7 @@ product direction.
 - Corpus metadata is richer and more even across sources: dates, domains, source identity, internal links,
   external links, and podcast metadata.
 - The API includes tools for archive search, corpus summaries, linked domains, source exploration,
-  timeline-like summaries, curiosity map generation, and user memory/profile support.
+  timeline-like summaries, and curiosity map generation.
 - Markdown rendering supports richer answers, including tables and horizontal rules.
 
 ### Operator Loop
@@ -66,8 +66,10 @@ product direction.
 
 ### Delight Features
 
-- Agentic welcome behavior uses local time, user profile, conversation history, and membership context.
-- Thingy can remember the user's name and profile details.
+- Agentic welcome behavior uses local time, conversation history, and membership context.
+- Thingy can remember the user's name. The earlier AI-synthesized reader memory was deliberately
+  removed: server-side conversations cover continuity, and the profile is now basic account metadata
+  (name, Discord link, activity counts).
 - Curiosity map creates visual trails through the archive and can seed new conversations.
 - Archive work/tool activity is visible in the chat, then collapses after completion.
 - Archive Sparks can surface adjacent ideas, though emission needs continued tuning.

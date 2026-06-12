@@ -17,53 +17,36 @@ import {
   displayProfile,
   signedIn as sharedSignedIn
 } from '../stores/ui-store.js';
-import {
-  memoryLearnedItems,
-  memoryQuestionItems,
-  memorySignalCount,
-  memorySummaryItems
-} from '../thingy-memory-profile.js';
 
 const LOG_OUT_ICON = iconSvg('log-out');
-const BRAIN_ICON = iconSvg('brain-circuit');
+const PROFILE_ICON = iconSvg('users-round');
 const CLOSE_ICON = iconSvg('x');
 
-function MemoryTrigger({ profile, onOpen }) {
-  const count = memorySignalCount(profile);
-  const detail = count > 0
-    ? `${count} profile signal${count === 1 ? '' : 's'}`
-    : 'Account details and archive context';
+function ProfileTrigger({ onOpen }) {
   return (
     <button type="button" class="rail-memory-trigger" onClick={onOpen}>
-      <span class="rail-memory-trigger-icon" aria-hidden="true" dangerouslySetInnerHTML={{ __html: BRAIN_ICON }} />
+      <span class="rail-memory-trigger-icon" aria-hidden="true" dangerouslySetInnerHTML={{ __html: PROFILE_ICON }} />
       <span class="rail-memory-trigger-copy">
         <strong>Show Profile</strong>
-        <small>{detail}</small>
+        <small>Account details and activity</small>
       </span>
     </button>
   );
 }
 
-function synthesisStatusText(status = {}) {
-  const pending = Number(status.pending_event_count || 0);
-  if (pending > 0) return `${pending} new interaction${pending === 1 ? '' : 's'} ready for profile refresh`;
-  if (status.last_synthesized_at) return `Profile current · Last refreshed ${new Date(status.last_synthesized_at).toLocaleString()}`;
-  return 'Profile has not been refreshed yet';
-}
-
-function formatMemoryDate(value) {
+function formatProfileDate(value) {
   const text = String(value || '').trim();
   if (!text) return '';
   const date = new Date(text);
   return Number.isNaN(date.getTime()) ? text : date.toLocaleString();
 }
 
-function formatMemoryCount(value, label) {
+function formatProfileCount(value, label) {
   const count = Number(value || 0);
   return `${count.toLocaleString()} ${label}${count === 1 ? '' : 's'}`;
 }
 
-function memoryNumber(value) {
+function profileNumber(value) {
   const count = Number(value || 0);
   return Number.isFinite(count) ? count : 0;
 }
@@ -89,30 +72,25 @@ function formatActiveSpan(startValue, endValue) {
 }
 
 function formatProfileActivity(accountOverview = {}, profile = {}) {
-  const totalTurns = memoryNumber(accountOverview.memory_turn_count ?? profile.turn_count);
-  const conversationCount = memoryNumber(accountOverview.conversation_count);
-  const conversationTurns = memoryNumber(accountOverview.conversation_turn_count);
+  const totalTurns = profileNumber(accountOverview.memory_turn_count ?? profile.turn_count);
+  const conversationCount = profileNumber(accountOverview.conversation_count);
+  const conversationTurns = profileNumber(accountOverview.conversation_turn_count);
   const first = totalTurns
-    ? `${formatMemoryCount(totalTurns, 'total Thingy turn')} recorded.`
+    ? `${formatProfileCount(totalTurns, 'total Thingy turn')} recorded.`
     : 'No Thingy turns have been recorded yet.';
   const second = conversationCount
-    ? `${formatMemoryCount(conversationCount, 'retained conversation')} with ${formatMemoryCount(conversationTurns, 'retained turn')} are available for profile context.`
-    : 'No retained conversations are available for profile context yet.';
+    ? `${formatProfileCount(conversationCount, 'retained conversation')} with ${formatProfileCount(conversationTurns, 'retained turn')}.`
+    : 'No retained conversations yet.';
   return `${first} ${second}`;
 }
 
-function MemoryModal({ open, onClose, onProfileDeleted, session, profile, email, preferredName, connectedName, supporting }) {
-  const [activeTab, setActiveTab] = useState('profile');
+function ProfileModal({ open, onClose, onProfileDeleted, session, profile, email, preferredName, connectedName, supporting }) {
   const [viewProfile, setViewProfile] = useState(profile || {});
   const [accountOverview, setAccountOverview] = useState({});
   const [busyAction, setBusyAction] = useState('');
-  const [memoryError, setMemoryError] = useState('');
-  const [confirmDelete, setConfirmDelete] = useState('');
+  const [profileError, setProfileError] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const onCloseRef = useRef(onClose);
-  const learned = memoryLearnedItems(viewProfile);
-  const questions = memoryQuestionItems(viewProfile);
-  const summaries = memorySummaryItems(viewProfile);
-  const synthesis = viewProfile.memory_synthesis || {};
   const viewConnectedName = discordConnectionName(viewProfile) || connectedName;
   const viewPreferredName = String(preferredName || viewProfile.preferred_name || '').trim();
   const firstSeen = accountOverview.first_seen_at || viewProfile.first_seen_at;
@@ -122,19 +100,13 @@ function MemoryModal({ open, onClose, onProfileDeleted, session, profile, email,
     email ? ['Email', email] : null,
     ['Access', supporting ? 'Supporting Member' : 'Weekly Thing reader'],
     viewConnectedName ? ['Discord', viewConnectedName] : ['Discord', 'Not connected in Thingy profile'],
-    ['First seen', formatMemoryDate(firstSeen) || 'Not recorded'],
-    ['Last activity', formatMemoryDate(lastActivity) || 'Not recorded'],
+    ['First seen', formatProfileDate(firstSeen) || 'Not recorded'],
+    ['Last activity', formatProfileDate(lastActivity) || 'Not recorded'],
     ['Active span', formatActiveSpan(firstSeen, lastActivity)],
     ['Thingy activity', formatProfileActivity(accountOverview, viewProfile)]
   ].filter(Boolean);
-  const tabs = [
-    { id: 'profile', label: 'Profile', count: 0 },
-    { id: 'learned', label: 'Learned', count: learned.length },
-    { id: 'threads', label: 'Threads', count: summaries.length },
-    { id: 'recent', label: 'Recent', count: questions.length }
-  ];
 
-  async function applyMemoryData(data) {
+  function applyProfileData(data) {
     if (!data?.profile) return;
     const nextProfile = typeof session?.mergeProfile === 'function'
       ? session.mergeProfile(data, email)
@@ -147,18 +119,15 @@ function MemoryModal({ open, onClose, onProfileDeleted, session, profile, email,
     setAccountOverview(data.account || {});
   }
 
-  async function runMemoryAction(payload, actionName) {
+  async function loadProfile() {
     if (!session?.postJson || !session?.authHeaders) return;
-    setBusyAction(actionName);
-    setMemoryError('');
+    setBusyAction('load');
+    setProfileError('');
     try {
-      const data = await session.postJson('/memory', payload, session.authHeaders());
-      await applyMemoryData(data);
-      setConfirmDelete('');
-      return data;
+      const data = await session.postJson('/memory', { action: 'get' }, session.authHeaders());
+      applyProfileData(data);
     } catch (error) {
-      setMemoryError(error.message || 'Thingy could not update memory right now.');
-      return null;
+      setProfileError(error.message || 'Thingy could not load this profile right now.');
     } finally {
       setBusyAction('');
     }
@@ -167,13 +136,13 @@ function MemoryModal({ open, onClose, onProfileDeleted, session, profile, email,
   async function handleDeleteProfile() {
     if (!session?.postJson || !session?.authHeaders) return;
     setBusyAction('delete_profile');
-    setMemoryError('');
+    setProfileError('');
     try {
       await session.postJson('/memory', { action: 'delete_profile' }, session.authHeaders());
-      setConfirmDelete('');
+      setConfirmDelete(false);
       if (typeof onProfileDeleted === 'function') onProfileDeleted();
     } catch (error) {
-      setMemoryError(error.message || 'Thingy could not delete this profile right now.');
+      setProfileError(error.message || 'Thingy could not delete this profile right now.');
     } finally {
       setBusyAction('');
     }
@@ -194,12 +163,11 @@ function MemoryModal({ open, onClose, onProfileDeleted, session, profile, email,
 
   useEffect(() => {
     if (!open) return;
-    setActiveTab('profile');
     setViewProfile(profile || {});
     setAccountOverview({});
-    setMemoryError('');
-    setConfirmDelete('');
-    runMemoryAction({ action: 'get' }, 'load');
+    setProfileError('');
+    setConfirmDelete(false);
+    loadProfile();
   }, [open]);
 
   if (!open) return null;
@@ -208,33 +176,22 @@ function MemoryModal({ open, onClose, onProfileDeleted, session, profile, email,
     if (event.target === event.currentTarget) onClose();
   }
 
-  function deleteControl(type, item, label = 'Forget') {
-    const key = `${type}:${item.id || item.value || item.label}`;
-    const payload = {
-      action: 'delete',
-      type,
-      id: item.id || '',
-      value: item.value || item.summary || item.label || ''
-    };
-    if (confirmDelete === key) {
-      return (
-        <span class="thingy-memory-delete-confirm">
-          <button type="button" onClick={() => runMemoryAction(payload, 'delete')}>Confirm</button>
-          <button type="button" onClick={() => setConfirmDelete('')}>Cancel</button>
-        </span>
-      );
-    }
-    return (
-      <button type="button" class="thingy-memory-delete" onClick={() => setConfirmDelete(key)}>
-        {label}
-      </button>
-    );
-  }
-
-  function renderPanel() {
-    if (activeTab === 'profile') {
-      return (
-        <>
+  return (
+    <div class="thingy-memory-modal-backdrop" onClick={handleBackdropClick}>
+      <section class="thingy-memory-modal" role="dialog" aria-modal="true" aria-labelledby="thingy-memory-title">
+        <header class="thingy-memory-header">
+          <span class="thingy-memory-header-icon" aria-hidden="true" dangerouslySetInnerHTML={{ __html: PROFILE_ICON }} />
+          <div>
+            <h2 id="thingy-memory-title">Profile</h2>
+            <p>Account details and Thingy activity.</p>
+          </div>
+          <button type="button" class="thingy-memory-close" aria-label="Close Profile" onClick={onClose} dangerouslySetInnerHTML={{ __html: CLOSE_ICON }} />
+        </header>
+        <section class="thingy-memory-status" aria-live="polite">
+          <span>{busyAction === 'load' ? 'Loading profile...' : ''}</span>
+          {profileError ? <small>{profileError}</small> : null}
+        </section>
+        <div class="thingy-memory-panel">
           <dl class="thingy-memory-dl">
             {profileRows.map(([label, value]) => (
               <Fragment key={label}>
@@ -245,8 +202,8 @@ function MemoryModal({ open, onClose, onProfileDeleted, session, profile, email,
           </dl>
           <section class="thingy-memory-danger-zone" aria-label="Delete Thingy Profile">
             <h3>Delete Thingy Profile</h3>
-            <p>This deletes your Thingy profile, memory, conversations, Dispatch history, and Discord link. It does not unsubscribe you from Weekly Thing.</p>
-            {confirmDelete === 'profile' ? (
+            <p>This deletes your Thingy profile, conversations, Dispatch history, and Discord link. It does not unsubscribe you from Weekly Thing.</p>
+            {confirmDelete ? (
               <div class="thingy-memory-danger-actions">
                 <p class="thingy-memory-confirm-copy">Are you sure? This cannot be undone from Thingy.</p>
                 <button
@@ -257,109 +214,14 @@ function MemoryModal({ open, onClose, onProfileDeleted, session, profile, email,
                 >
                   {busyAction === 'delete_profile' ? 'Deleting...' : 'Confirm Delete Thingy Profile'}
                 </button>
-                <button type="button" disabled={busyAction === 'delete_profile'} onClick={() => setConfirmDelete('')}>Cancel</button>
+                <button type="button" disabled={busyAction === 'delete_profile'} onClick={() => setConfirmDelete(false)}>Cancel</button>
               </div>
             ) : (
-              <button type="button" class="thingy-memory-danger" disabled={Boolean(busyAction)} onClick={() => setConfirmDelete('profile')}>
+              <button type="button" class="thingy-memory-danger" disabled={Boolean(busyAction)} onClick={() => setConfirmDelete(true)}>
                 Delete Thingy Profile
               </button>
             )}
           </section>
-        </>
-      );
-    }
-    if (activeTab === 'learned') {
-      return learned.length ? (
-        <ul class="thingy-memory-list">
-          {learned.map((item) => (
-            <li key={`${item.id}:${item.label}`}>
-              <div class="thingy-memory-row-head">
-                <b>{item.label}</b>
-                {deleteControl('learned', item, 'Remove')}
-              </div>
-              {item.summary ? <span>{item.summary}</span> : null}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p class="thingy-memory-empty">Thingy has not learned a profile from archive use yet.</p>
-      );
-    }
-    if (activeTab === 'threads') {
-      return summaries.length ? (
-        <ul class="thingy-memory-list">
-          {summaries.map((item) => (
-            <li key={`${item.id}:${item.value}`}>
-              <div class="thingy-memory-row-head">
-                <span>{item.value}</span>
-                {deleteControl('thread', item, 'Remove')}
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p class="thingy-memory-empty">No useful prior thread summaries are available yet.</p>
-      );
-    }
-    return questions.length ? (
-      <ul class="thingy-memory-list">
-        {questions.map((item) => (
-          <li key={`${item.id}:${item.value}`}>
-            <div class="thingy-memory-row-head">
-              <span>{item.value}</span>
-              {deleteControl('recent', item, 'Remove')}
-            </div>
-          </li>
-        ))}
-      </ul>
-    ) : (
-      <p class="thingy-memory-empty">No recent prompts are available in this profile yet.</p>
-    );
-  }
-
-  return (
-    <div class="thingy-memory-modal-backdrop" onClick={handleBackdropClick}>
-      <section class="thingy-memory-modal" role="dialog" aria-modal="true" aria-labelledby="thingy-memory-title">
-        <header class="thingy-memory-header">
-          <span class="thingy-memory-header-icon" aria-hidden="true" dangerouslySetInnerHTML={{ __html: BRAIN_ICON }} />
-          <div>
-            <h2 id="thingy-memory-title">Profile</h2>
-            <p>Account details, activity, and learned archive context Thingy can use.</p>
-          </div>
-          <button type="button" class="thingy-memory-close" aria-label="Close Profile" onClick={onClose} dangerouslySetInnerHTML={{ __html: CLOSE_ICON }} />
-        </header>
-        <section class="thingy-memory-status" aria-live="polite">
-          <span>{busyAction === 'load' ? 'Loading memory...' : synthesisStatusText(synthesis)}</span>
-          <div>
-            <button type="button" disabled={Boolean(busyAction)} onClick={() => runMemoryAction({ action: 'refresh_profile' }, 'refresh_profile')}>
-              {busyAction === 'refresh_profile' ? 'Refreshing...' : 'Refresh Profile'}
-            </button>
-          </div>
-          {memoryError ? <small>{memoryError}</small> : null}
-        </section>
-        <nav class="thingy-memory-tabs" role="tablist" aria-label="Thingy profile categories">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === tab.id ? 'true' : 'false'}
-              aria-controls={`thingy-memory-${tab.id}`}
-              id={`thingy-memory-tab-${tab.id}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <span>{tab.label}</span>
-              {tab.count ? <i>{tab.count}</i> : null}
-            </button>
-          ))}
-        </nav>
-        <div
-          class="thingy-memory-panel"
-          id={`thingy-memory-${activeTab}`}
-          role="tabpanel"
-          aria-labelledby={`thingy-memory-tab-${activeTab}`}
-        >
-          {renderPanel()}
         </div>
       </section>
     </div>
@@ -395,7 +257,7 @@ function AccountMenu({
   const buttonRef = useRef(null);
   const formRef = useRef(null);
   const inputRef = useRef(null);
-  const [memoryOpen, setMemoryOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   // Close on document click outside the menu, and on Escape.
   useEffect(() => {
@@ -451,7 +313,7 @@ function AccountMenu({
 
   function handleLogout() {
     accountMenuOpen.value = false;
-    setMemoryOpen(false);
+    setProfileOpen(false);
     if (typeof onLogout === 'function') {
       onLogout();
       return;
@@ -463,14 +325,14 @@ function AccountMenu({
   const connection = discordConnection(profile);
   const connectedName = discordConnectionName(profile);
 
-  function handleMemoryOpen(event) {
+  function handleProfileOpen(event) {
     event.stopPropagation();
-    setMemoryOpen(true);
+    setProfileOpen(true);
     accountMenuOpen.value = false;
   }
 
-  function handleMemoryClose() {
-    setMemoryOpen(false);
+  function handleProfileClose() {
+    setProfileOpen(false);
   }
 
   return (
@@ -515,7 +377,7 @@ function AccountMenu({
             <a class="rail-menu-link" href="/discord/">{connection ? 'Refresh Discord Connection' : 'Link to Discord'}</a>
           </div>
         ) : null}
-        <MemoryTrigger profile={profile} onOpen={handleMemoryOpen} />
+        <ProfileTrigger onOpen={handleProfileOpen} />
         <div class="rail-menu-sep" role="separator" />
         <button
           type="button"
@@ -527,9 +389,9 @@ function AccountMenu({
         </button>
         <p class="rail-menu-build" title="Thingy build">Build {buildId()}</p>
       </div>
-      <MemoryModal
-        open={memoryOpen}
-        onClose={handleMemoryClose}
+      <ProfileModal
+        open={profileOpen}
+        onClose={handleProfileClose}
         onProfileDeleted={handleLogout}
         session={session}
         profile={profile}
