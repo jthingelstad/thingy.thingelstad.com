@@ -6,7 +6,7 @@ import test from 'node:test';
 function storage() {
   const values = new Map();
   return {
-    getItem: (key) => values.has(key) ? values.get(key) : null,
+    getItem: (key) => (values.has(key) ? values.get(key) : null),
     removeItem: (key) => values.delete(key),
     setItem: (key, value) => values.set(key, String(value))
   };
@@ -16,13 +16,8 @@ global.window.localStorage = storage();
 global.window.setInterval = () => 0;
 global.window.clearInterval = () => {};
 
-const {
-  createDispatchActions,
-  dispatchBriefMarkdown,
-  draftTitle,
-  inputPlaceholderForDraft,
-  titleFromPrompt
-} = await import('../src/shared/thingy-dispatch-actions.js');
+const { createDispatchActions, dispatchBriefMarkdown, draftTitle, inputPlaceholderForDraft, titleFromPrompt } =
+  await import('../src/shared/thingy-dispatch-actions.js');
 const { AGENT_RESPONSE_TIMEOUT_MS } = await import('../src/shared/thingy-timeouts.js');
 
 const {
@@ -159,24 +154,29 @@ test('planWithThingy streams a planning turn into a ready draft', async () => {
       return { dispatch: { id: 'srv-1' } };
     }
   });
-  const stream = fakeStream([[
-    ['meta', { conversation_id: 'conv-1', mode: 'dispatch' }],
-    ['status', { kind: 'tool', tool_name: 'check_dispatch_fit', message: 'Checking dispatch fit...' }],
-    ['answer_delta', { delta: 'The archive is focused here. ' }],
-    ['answer_delta', { delta: 'Brief is ready to lock.' }],
-    ['dispatch_brief', {
-      status: 'ready',
-      brief: {
-        user_goal: 'Understand RSS',
-        working_angle: 'Connect RSS to ownership and publishing',
-        coverage_status: 'focused',
-        generation_instructions: 'Trace the RSS thread with dates and links.',
-        selected_sources: [{ id: 'S1', label: 'WT10', title: 'Open web', why: 'Core source' }],
-        status: 'ready'
-      }
-    }],
-    ['done', { request_id: 'req-1' }]
-  ]]);
+  const stream = fakeStream([
+    [
+      ['meta', { conversation_id: 'conv-1', mode: 'dispatch' }],
+      ['status', { kind: 'tool', tool_name: 'check_dispatch_fit', message: 'Checking dispatch fit...' }],
+      ['answer_delta', { delta: 'The archive is focused here. ' }],
+      ['answer_delta', { delta: 'Brief is ready to lock.' }],
+      [
+        'dispatch_brief',
+        {
+          status: 'ready',
+          brief: {
+            user_goal: 'Understand RSS',
+            working_angle: 'Connect RSS to ownership and publishing',
+            coverage_status: 'focused',
+            generation_instructions: 'Trace the RSS thread with dates and links.',
+            selected_sources: [{ id: 'S1', label: 'WT10', title: 'Open web', why: 'Core source' }],
+            status: 'ready'
+          }
+        }
+      ],
+      ['done', { request_id: 'req-1' }]
+    ]
+  ]);
   const actions = createDispatchActions({
     session,
     streamBase: 'https://stream.test',
@@ -227,26 +227,38 @@ test('planWithThingy keeps the conversation across turns and updates the brief c
     [
       ['meta', { conversation_id: 'conv-2' }],
       ['answer_delta', { delta: 'RSS is broad. Which angle?' }],
-      ['dispatch_brief', {
-        status: 'draft',
-        brief: { user_goal: 'RSS Dispatch', working_angle: 'RSS broadly', coverage_status: 'broad', generation_instructions: 'TBD', status: 'draft' }
-      }],
+      [
+        'dispatch_brief',
+        {
+          status: 'draft',
+          brief: {
+            user_goal: 'RSS Dispatch',
+            working_angle: 'RSS broadly',
+            coverage_status: 'broad',
+            generation_instructions: 'TBD',
+            status: 'draft'
+          }
+        }
+      ],
       ['done', {}]
     ],
     [
       ['meta', { conversation_id: 'conv-2' }],
       ['answer_delta', { delta: 'Narrowed to ownership. Ready.' }],
-      ['dispatch_brief', {
-        status: 'ready',
-        brief: {
-          user_goal: 'RSS Dispatch',
-          working_angle: 'RSS and ownership',
-          coverage_status: 'focused',
-          generation_instructions: 'Trace it.',
-          selected_sources: [{ id: 'S1', title: 'Open web', url: 'https://example.com' }],
-          status: 'ready'
+      [
+        'dispatch_brief',
+        {
+          status: 'ready',
+          brief: {
+            user_goal: 'RSS Dispatch',
+            working_angle: 'RSS and ownership',
+            coverage_status: 'focused',
+            generation_instructions: 'Trace it.',
+            selected_sources: [{ id: 'S1', title: 'Open web', url: 'https://example.com' }],
+            status: 'ready'
+          }
         }
-      }],
+      ],
       ['done', {}]
     ]
   ]);
@@ -277,10 +289,12 @@ test('planWithThingy keeps the conversation across turns and updates the brief c
 test('planWithThingy restores the previous stage when the stream fails', async () => {
   dispatchBusy.value = false;
   const session = fakeSession();
-  const stream = fakeStream([[
-    ['meta', { conversation_id: 'conv-3' }],
-    ['__throw__', 'boom']
-  ]]);
+  const stream = fakeStream([
+    [
+      ['meta', { conversation_id: 'conv-3' }],
+      ['__throw__', 'boom']
+    ]
+  ]);
   const actions = createDispatchActions({
     session,
     streamBase: 'https://stream.test',
@@ -293,7 +307,10 @@ test('planWithThingy restores the previous stage when the stream fails', async (
   await actions.planWithThingy('topic');
   assert.equal(actions.activeDraft().stage, 'empty', 'stage rolled back');
   const progress = progressMessages();
-  assert.deepEqual(progress.map((message) => message.status), ['failed']);
+  assert.deepEqual(
+    progress.map((message) => message.status),
+    ['failed']
+  );
   const lastMessage = dispatchMessages.value[dispatchMessages.value.length - 1];
   assert.equal(lastMessage.text, 'boom');
 });
@@ -323,8 +340,14 @@ test('generateDispatch writes progress into the Dispatch transcript', async () =
   await actions.generateDispatch();
 
   const progress = progressMessages();
-  assert.deepEqual(progress.map((message) => message.baseId || message.id), ['generate-start', 'generate-save', 'generate-queue']);
-  assert.ok(progress.every((message) => String(message.id).startsWith('generate-1:')), 'generation progress rows are scoped to the run');
+  assert.deepEqual(
+    progress.map((message) => message.baseId || message.id),
+    ['generate-start', 'generate-save', 'generate-queue']
+  );
+  assert.ok(
+    progress.every((message) => String(message.id).startsWith('generate-1:')),
+    'generation progress rows are scoped to the run'
+  );
   assert.equal(progress[0].status, 'complete');
   assert.equal(progress[1].status, 'complete');
   assert.equal(progress[2].status, 'complete');

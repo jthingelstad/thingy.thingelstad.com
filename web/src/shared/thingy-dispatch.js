@@ -5,9 +5,7 @@
 
 import * as session from './thingy-session.js';
 import { effect } from '@preact/signals';
-import {
-  normalizePreferredName,
-} from './thingy-account.js';
+import { normalizePreferredName } from './thingy-account.js';
 import { createComposer } from './thingy-composer.js';
 import { createTinylyticsTracker } from './thingy-analytics.js';
 import { tinylyticsId } from './thingy-config.js';
@@ -43,16 +41,20 @@ function bootDispatch() {
   const form = document.getElementById('dispatch-form');
   const input = document.getElementById('dispatch-input');
   const countEl = document.getElementById('dispatch-count');
-  const newButtons = [document.getElementById('dispatch-new'), document.getElementById('dispatch-mobile-new')].filter(Boolean);
+  const newButtons = [document.getElementById('dispatch-new'), document.getElementById('dispatch-mobile-new')].filter(
+    Boolean
+  );
   const accountMount = document.getElementById('dispatch-rail-account-mount');
   const mobileTitle = document.getElementById('dispatch-mobile-title');
   const mobileToggle = document.getElementById('dispatch-mobile-toggle');
   const railScrim = document.getElementById('dispatch-rail-scrim');
   const railCollapseBtn = document.getElementById('dispatch-rail-collapse');
-  const maxInputChars = Number(input && input.getAttribute('maxlength') || 1200);
+  const maxInputChars = Number((input && input.getAttribute('maxlength')) || 1200);
   const dispatchTestMode = (() => {
     const params = new URLSearchParams(window.location.search);
-    const value = String(params.get('dispatch_test') || params.get('test') || '').trim().toLowerCase();
+    const value = String(params.get('dispatch_test') || params.get('test') || '')
+      .trim()
+      .toLowerCase();
     return value === 'template' || value === 'template_test';
   })();
   const analytics = createTinylyticsTracker({ enabled: Boolean(tinylyticsId()) });
@@ -187,10 +189,12 @@ function bootDispatch() {
     });
   }
 
-  newButtons.forEach((button) => button.addEventListener('click', () => {
-    actions.createDraft({ activate: true, render: true });
-    railControls.setMobileOpen(false);
-  }));
+  newButtons.forEach((button) =>
+    button.addEventListener('click', () => {
+      actions.createDraft({ activate: true, render: true });
+      railControls.setMobileOpen(false);
+    })
+  );
 
   // AccountMenu owns its own outside-click + Escape close listeners. We
   // still close the mobile rail on Escape here.
@@ -205,7 +209,8 @@ function bootDispatch() {
   actions.render();
   actions.loadHistory().then(() => {
     const draft = actions.activeDraft();
-    if (draft.dispatchId && ['queued', 'generating', 'ready_to_send', 'sending'].includes(draft.stage)) actions.startPolling();
+    if (draft.dispatchId && ['queued', 'generating', 'ready_to_send', 'sending'].includes(draft.stage))
+      actions.startPolling();
   });
 }
 

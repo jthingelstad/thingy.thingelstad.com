@@ -73,7 +73,7 @@
 .rail-account-caret svg {
   width: 16px;
   height: 16px;
-  fill: currentColor;
+  fill: currentcolor;
 }
 
 .rail-account-caret[hidden],
@@ -93,7 +93,7 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
-  box-shadow: 0 14px 40px -18px rgba(14, 43, 38, 0.45), 0 2px 8px rgba(14, 43, 38, 0.08);
+  box-shadow: 0 14px 40px -18px rgb(14 43 38 / 45%), 0 2px 8px rgb(14 43 38 / 8%);
   max-height: min(680px, calc(100vh - 38px));
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -204,7 +204,7 @@
   width: 16px;
   height: 16px;
   fill: none;
-  stroke: currentColor;
+  stroke: currentcolor;
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -288,7 +288,7 @@
   place-items: center;
   padding: 18px;
   overflow: auto;
-  background: rgba(11, 22, 20, 0.34);
+  background: rgb(11 22 20 / 34%);
 }
 
 .thingy-memory-modal {
@@ -301,7 +301,7 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
-  box-shadow: 0 30px 90px -45px rgba(14, 43, 38, 0.55), 0 6px 24px rgba(14, 43, 38, 0.14);
+  box-shadow: 0 30px 90px -45px rgb(14 43 38 / 55%), 0 6px 24px rgb(14 43 38 / 14%);
 }
 
 .thingy-memory-header {
@@ -360,7 +360,7 @@
 .thingy-memory-header-icon svg,
 .thingy-memory-tabs svg {
   fill: none;
-  stroke: currentColor;
+  stroke: currentcolor;
   stroke-width: 1.9;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -620,10 +620,9 @@
   line-height: 1.45;
 }
 
-@media (max-width: 560px) {
+@media (width <= 560px) {
   .thingy-memory-modal-backdrop {
-    align-items: start;
-    justify-items: stretch;
+    place-items: start stretch;
     padding: calc(env(safe-area-inset-top) + 8px) 10px calc(env(safe-area-inset-bottom) + 10px);
   }
 

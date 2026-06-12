@@ -47,8 +47,13 @@ function buildId() {
   // also present but `git` works there too. Falls back to 'dev'.
   let hash = env('GITHUB_SHA').slice(0, 7);
   try {
-    hash = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() || hash;
-  } catch (error) { /* not a git checkout */ }
+    hash =
+      execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+        .toString()
+        .trim() || hash;
+  } catch (error) {
+    /* not a git checkout */
+  }
   const date = new Date().toISOString().slice(0, 10);
   return hash ? `${hash} · ${date}` : 'dev';
 }

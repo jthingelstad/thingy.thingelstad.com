@@ -33,7 +33,7 @@
   width: 15px;
   height: 15px;
   fill: none;
-  stroke: currentColor;
+  stroke: currentcolor;
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -52,7 +52,7 @@
   white-space: nowrap;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .return-chip {
     top: calc(64px + env(safe-area-inset-top));
   }

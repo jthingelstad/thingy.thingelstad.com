@@ -1,7 +1,5 @@
-import {
-  appendActivityCommentary,
-  appendActivityStep
-} from './thingy-chat-rendering.js';
+// @ts-check
+import { appendActivityCommentary, appendActivityStep } from './thingy-chat-rendering.js';
 import { batch } from '@preact/signals';
 
 // Drives a streaming assistant message into a signal-backed model.

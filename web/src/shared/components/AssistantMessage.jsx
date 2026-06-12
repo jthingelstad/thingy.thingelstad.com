@@ -14,11 +14,7 @@ function StreamError({ message, retryPrompt }) {
     <div class="librarian-stream-error">
       <p>{message}</p>
       {retryPrompt ? (
-        <button
-          type="button"
-          class="librarian-retry"
-          data-retry-prompt={retryPrompt}
-        >
+        <button type="button" class="librarian-retry" data-retry-prompt={retryPrompt}>
           Try again
         </button>
       ) : null}
@@ -60,19 +56,15 @@ function AssistantMessage({ model }) {
     const timer = window.setInterval(tick, 1000);
     return () => window.clearInterval(timer);
   }, [model, status]);
-  const hasPartial = useComputed(() => Boolean(
-    String(model.content.value || '').trim()
-    || model.experience.value
-    || model.artifactHtml.value
-  ));
+  const hasPartial = useComputed(() =>
+    Boolean(String(model.content.value || '').trim() || model.experience.value || model.artifactHtml.value)
+  );
   const errorMessage = model.errorMessage.value;
   const retryPrompt = model.retryPrompt.value;
   return (
     <>
       <AssistantBody model={model} />
-      {status === 'stopped' ? (
-        <StreamNote text={hasPartial.value ? 'Answer stopped.' : 'Answer stopped.'} />
-      ) : null}
+      {status === 'stopped' ? <StreamNote text={hasPartial.value ? 'Answer stopped.' : 'Answer stopped.'} /> : null}
       {status === 'error' && errorMessage ? (
         <StreamError
           message={hasPartial.value ? `Thingy lost the thread mid-answer. ${errorMessage}` : errorMessage}

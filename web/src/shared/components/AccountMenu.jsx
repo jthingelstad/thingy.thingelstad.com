@@ -3,12 +3,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { useComputed } from '@preact/signals';
 import { iconSvg } from '../thingy-icons.js';
 import { buildId } from '../thingy-config.js';
-import {
-  discordConnection,
-  discordConnectionName,
-  hasSupportingAccess,
-  savePreferredName
-} from '../thingy-account.js';
+import { discordConnection, discordConnectionName, hasSupportingAccess, savePreferredName } from '../thingy-account.js';
 import {
   accountMenuOpen,
   accountNameStatus,
@@ -84,7 +79,17 @@ function formatProfileActivity(accountOverview = {}, profile = {}) {
   return `${first} ${second}`;
 }
 
-function ProfileModal({ open, onClose, onProfileDeleted, session, profile, email, preferredName, connectedName, supporting }) {
+function ProfileModal({
+  open,
+  onClose,
+  onProfileDeleted,
+  session,
+  profile,
+  email,
+  preferredName,
+  connectedName,
+  supporting
+}) {
   const [viewProfile, setViewProfile] = useState(profile || {});
   const [accountOverview, setAccountOverview] = useState({});
   const [busyAction, setBusyAction] = useState('');
@@ -108,11 +113,12 @@ function ProfileModal({ open, onClose, onProfileDeleted, session, profile, email
 
   function applyProfileData(data) {
     if (!data?.profile) return;
-    const nextProfile = typeof session?.mergeProfile === 'function'
-      ? session.mergeProfile(data, email)
-      : typeof session?.updateStoredProfile === 'function'
-      ? session.updateStoredProfile(data.profile)
-      : data.profile;
+    const nextProfile =
+      typeof session?.mergeProfile === 'function'
+        ? session.mergeProfile(data, email)
+        : typeof session?.updateStoredProfile === 'function'
+          ? session.updateStoredProfile(data.profile)
+          : data.profile;
     displayProfile.value = nextProfile;
     displayPreferredName.value = String(nextProfile.preferred_name || displayPreferredName.value || '').trim();
     setViewProfile(nextProfile);
@@ -168,6 +174,9 @@ function ProfileModal({ open, onClose, onProfileDeleted, session, profile, email
     setProfileError('');
     setConfirmDelete(false);
     loadProfile();
+    // Reset-and-reload must run only on open/close transitions, not on
+    // every profile identity change while the modal is already open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   if (!open) return null;
@@ -180,12 +189,22 @@ function ProfileModal({ open, onClose, onProfileDeleted, session, profile, email
     <div class="thingy-memory-modal-backdrop" onClick={handleBackdropClick}>
       <section class="thingy-memory-modal" role="dialog" aria-modal="true" aria-labelledby="thingy-memory-title">
         <header class="thingy-memory-header">
-          <span class="thingy-memory-header-icon" aria-hidden="true" dangerouslySetInnerHTML={{ __html: PROFILE_ICON }} />
+          <span
+            class="thingy-memory-header-icon"
+            aria-hidden="true"
+            dangerouslySetInnerHTML={{ __html: PROFILE_ICON }}
+          />
           <div>
             <h2 id="thingy-memory-title">Profile</h2>
             <p>Account details and Thingy activity.</p>
           </div>
-          <button type="button" class="thingy-memory-close" aria-label="Close Profile" onClick={onClose} dangerouslySetInnerHTML={{ __html: CLOSE_ICON }} />
+          <button
+            type="button"
+            class="thingy-memory-close"
+            aria-label="Close Profile"
+            onClick={onClose}
+            dangerouslySetInnerHTML={{ __html: CLOSE_ICON }}
+          />
         </header>
         <section class="thingy-memory-status" aria-live="polite">
           <span>{busyAction === 'load' ? 'Loading profile...' : ''}</span>
@@ -202,7 +221,10 @@ function ProfileModal({ open, onClose, onProfileDeleted, session, profile, email
           </dl>
           <section class="thingy-memory-danger-zone" aria-label="Delete Thingy Profile">
             <h3>Delete Thingy Profile</h3>
-            <p>This deletes your Thingy profile, conversations, Dispatch history, and Discord link. It does not unsubscribe you from Weekly Thing.</p>
+            <p>
+              This deletes your Thingy profile, conversations, Dispatch history, and Discord link. It does not
+              unsubscribe you from Weekly Thing.
+            </p>
             {confirmDelete ? (
               <div class="thingy-memory-danger-actions">
                 <p class="thingy-memory-confirm-copy">Are you sure? This cannot be undone from Thingy.</p>
@@ -214,10 +236,21 @@ function ProfileModal({ open, onClose, onProfileDeleted, session, profile, email
                 >
                   {busyAction === 'delete_profile' ? 'Deleting...' : 'Confirm Delete Thingy Profile'}
                 </button>
-                <button type="button" disabled={busyAction === 'delete_profile'} onClick={() => setConfirmDelete(false)}>Cancel</button>
+                <button
+                  type="button"
+                  disabled={busyAction === 'delete_profile'}
+                  onClick={() => setConfirmDelete(false)}
+                >
+                  Cancel
+                </button>
               </div>
             ) : (
-              <button type="button" class="thingy-memory-danger" disabled={Boolean(busyAction)} onClick={() => setConfirmDelete(true)}>
+              <button
+                type="button"
+                class="thingy-memory-danger"
+                disabled={Boolean(busyAction)}
+                onClick={() => setConfirmDelete(true)}
+              >
                 Delete Thingy Profile
               </button>
             )}
@@ -346,12 +379,21 @@ function AccountMenu({
         title={isSignedIn ? 'Account' : 'Sign in'}
         onClick={handleButtonClick}
       >
-        <span class="rail-avatar" aria-hidden="true">{initial.value}</span>
-        <span class="rail-account-meta">
-          <span class="rail-account-email">{isSignedIn ? (display || 'Signed in') : signedOutEmailLabel}</span>
-          <span class="rail-account-sub">{isSignedIn ? (supporting ? 'Supporting Member' : 'Weekly Thing reader') : signedOutSubLabel}</span>
+        <span class="rail-avatar" aria-hidden="true">
+          {initial.value}
         </span>
-        <span class="rail-account-caret" hidden={!isSignedIn} aria-hidden="true" dangerouslySetInnerHTML={{ __html: iconSvg('chevron-down') }} />
+        <span class="rail-account-meta">
+          <span class="rail-account-email">{isSignedIn ? display || 'Signed in' : signedOutEmailLabel}</span>
+          <span class="rail-account-sub">
+            {isSignedIn ? (supporting ? 'Supporting Member' : 'Weekly Thing reader') : signedOutSubLabel}
+          </span>
+        </span>
+        <span
+          class="rail-account-caret"
+          hidden={!isSignedIn}
+          aria-hidden="true"
+          dangerouslySetInnerHTML={{ __html: iconSvg('chevron-down') }}
+        />
       </button>
       <div class="rail-menu" hidden={!open} role="menu">
         <form ref={formRef} class="rail-account-setting" onSubmit={handleNameSubmit}>
@@ -373,21 +415,27 @@ function AccountMenu({
         {supporting ? (
           <div class="rail-account-setting rail-account-discord">
             <span>Discord</span>
-            <p>{connection ? (connectedName ? `Connected as ${connectedName}` : 'Connected to Discord.') : 'Supporting Members can connect Discord.'}</p>
-            <a class="rail-menu-link" href="/discord/">{connection ? 'Refresh Discord Connection' : 'Link to Discord'}</a>
+            <p>
+              {connection
+                ? connectedName
+                  ? `Connected as ${connectedName}`
+                  : 'Connected to Discord.'
+                : 'Supporting Members can connect Discord.'}
+            </p>
+            <a class="rail-menu-link" href="/discord/">
+              {connection ? 'Refresh Discord Connection' : 'Link to Discord'}
+            </a>
           </div>
         ) : null}
         <ProfileTrigger onOpen={handleProfileOpen} />
         <div class="rail-menu-sep" role="separator" />
-        <button
-          type="button"
-          role="menuitem"
-          class="danger"
-          onClick={handleLogout}
-        >
-          <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: LOG_OUT_ICON }} />Logout
+        <button type="button" role="menuitem" class="danger" onClick={handleLogout}>
+          <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: LOG_OUT_ICON }} />
+          Logout
         </button>
-        <p class="rail-menu-build" title="Thingy build">Build {buildId()}</p>
+        <p class="rail-menu-build" title="Thingy build">
+          Build {buildId()}
+        </p>
       </div>
       <ProfileModal
         open={profileOpen}

@@ -5,6 +5,7 @@
   border-top: none;
   padding: 20px;
 }
+
 .librarian-auth.thingy-auth {
   padding-top: 22px;
   background:
@@ -255,7 +256,12 @@
   max-width: min(34rem, 86%);
 }
 .librarian-message-user p { color: #fff; }
-.librarian-message-user a { color: #fff; text-decoration: underline; }
+
+.librarian-message-user a {
+  color: #fff;
+  text-decoration: underline;
+}
+
 .librarian-message-assistant {
   background: color-mix(in srgb, var(--surface-2) 72%, var(--surface));
   border-color: var(--line);
@@ -312,7 +318,7 @@
   border-color: var(--ink);
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .thingy-h1 {
     font-size: 42px;
   }

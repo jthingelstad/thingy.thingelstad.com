@@ -1,3 +1,4 @@
+// @ts-check
 // Signal store for the Thingy Dispatch surface (/dispatch/). bootDispatch()
 // writes to these signals; the dispatch components subscribe to them. The
 // chat surface uses chat-store.js, and the cross-surface notice lives in

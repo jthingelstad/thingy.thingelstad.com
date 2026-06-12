@@ -17,7 +17,7 @@
   width: min(100%, 320px);
   height: auto;
   display: block;
-  filter: drop-shadow(0 28px 46px rgba(23, 33, 31, 0.18));
+  filter: drop-shadow(0 28px 46px rgb(23 33 31 / 18%));
 }
 
 .thingy-home-copy {
@@ -131,7 +131,7 @@
   color: var(--accent-deep);
 }
 
-@media (max-width: 560px) {
+@media (width <= 560px) {
   .thingy-home-hero,
   .thingy-home-grid {
     grid-template-columns: 1fr;

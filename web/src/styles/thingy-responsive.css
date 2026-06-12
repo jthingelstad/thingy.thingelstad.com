@@ -1,4 +1,4 @@
-@media (max-width: 820px) {
+@media (width <= 820px) {
   .thingy-app-shell,
   .thingy-app-shell.is-collapsed {
     grid-template-columns: 64px minmax(0, 1fr);
@@ -10,6 +10,7 @@
 
   .rail {
     --rail-mark-size: 42px;
+
     align-items: center;
     padding: 14px 10px;
   }
@@ -73,7 +74,7 @@
 }
 
 /* Phone shell: mobile header and rail drawer. */
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .thingy-app-shell,
   .thingy-app-shell.is-collapsed {
     grid-template-columns: minmax(0, 1fr);
@@ -134,7 +135,7 @@
     border-radius: 999px;
     background: color-mix(in srgb, var(--surface) 86%, transparent);
     color: var(--ink);
-    box-shadow: 0 10px 26px rgba(23, 33, 31, 0.10);
+    box-shadow: 0 10px 26px rgb(23 33 31 / 10%);
     appearance: none;
     -webkit-appearance: none;
   }
@@ -145,14 +146,14 @@
     width: 23px;
     height: 23px;
     fill: none;
-    stroke: currentColor;
+    stroke: currentcolor;
     stroke-width: 2.3;
     stroke-linecap: round;
     stroke-linejoin: round;
   }
 
   .mobile-chatbar-menu-button svg {
-    fill: currentColor;
+    fill: currentcolor;
     stroke: none;
   }
 
@@ -176,7 +177,7 @@
     border: 1px solid var(--line);
     border-radius: 14px;
     background: var(--surface);
-    box-shadow: 0 18px 50px -20px rgba(14, 43, 38, 0.5), 0 2px 10px rgba(14, 43, 38, 0.08);
+    box-shadow: 0 18px 50px -20px rgb(14 43 38 / 50%), 0 2px 10px rgb(14 43 38 / 8%);
     display: grid;
     gap: 2px;
   }
@@ -231,7 +232,7 @@
     inset: 0;
     z-index: 70;
     display: block;
-    background: rgba(14, 22, 20, 0.34);
+    background: rgb(14 22 20 / 34%);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.18s ease;
@@ -245,6 +246,7 @@
   .rail,
   .thingy-app-shell.is-collapsed .rail {
     --rail-mark-size: 114px;
+
     position: fixed;
     top: 0;
     left: 0;
@@ -260,7 +262,7 @@
     border-right: 1px solid var(--line);
     border-bottom: 0;
     background: var(--rail-bg);
-    box-shadow: 18px 0 60px rgba(14, 43, 38, 0.24);
+    box-shadow: 18px 0 60px rgb(14 43 38 / 24%);
     transform: none;
     transition: none;
     overflow: hidden;
@@ -382,8 +384,7 @@
     flex-direction: column;
     gap: 4px;
     padding: 14px 4px;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden auto;
   }
 
   .rail-recents-label {
@@ -428,10 +429,7 @@
   }
 
   .rail-menu {
-    left: 0;
-    right: 0;
-    top: auto;
-    bottom: calc(100% + 6px);
+    inset: auto 0 calc(100% + 6px);
     width: auto;
   }
 

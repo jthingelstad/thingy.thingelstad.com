@@ -18,18 +18,25 @@ test('upsertConversationSummaryList replaces a local draft with the server conve
     turn_count: 0
   };
 
-  const result = upsertConversationSummaryList([local], {
-    id: 'server-1',
-    title: 'What Jamie means by RSS',
-    updated_at: '2026-06-09T02:00:00.000Z'
-  }, {
-    activeConversationId: local.id,
-    replaceId: local.id,
-    maxRecents: 20
-  });
+  const result = upsertConversationSummaryList(
+    [local],
+    {
+      id: 'server-1',
+      title: 'What Jamie means by RSS',
+      updated_at: '2026-06-09T02:00:00.000Z'
+    },
+    {
+      activeConversationId: local.id,
+      replaceId: local.id,
+      maxRecents: 20
+    }
+  );
 
   assert.equal(result.activeConversationId, 'server-1');
-  assert.deepEqual(result.conversations.map((entry) => entry.id), ['server-1']);
+  assert.deepEqual(
+    result.conversations.map((entry) => entry.id),
+    ['server-1']
+  );
   assert.equal(result.conversations[0].local, false);
 });
 
@@ -52,7 +59,10 @@ test('a user-titled conversation is never treated as an empty draft', () => {
     renamed,
     { id: 'local-chat-2', title: 'New chat', mode: 'thingy', turn_count: 0, draft: true }
   ]);
-  assert.deepEqual(deduped.map((entry) => entry.id), ['server-1', 'local-chat-2']);
+  assert.deepEqual(
+    deduped.map((entry) => entry.id),
+    ['server-1', 'local-chat-2']
+  );
 });
 
 test('explicit drafts dedupe to one per mode, preferring the active conversation', () => {
@@ -61,7 +71,10 @@ test('explicit drafts dedupe to one per mode, preferring the active conversation
     { id: 'local-chat-2', title: 'New chat', mode: 'thingy', turn_count: 0, draft: true }
   ];
   const deduped = dedupeEmptyConversationDrafts(list, { activeConversationId: 'local-chat-2' });
-  assert.deepEqual(deduped.map((entry) => entry.id), ['local-chat-2']);
+  assert.deepEqual(
+    deduped.map((entry) => entry.id),
+    ['local-chat-2']
+  );
 });
 
 test('deleteConversationSummaryList clears the active id only for the deleted conversation', () => {
@@ -72,9 +85,15 @@ test('deleteConversationSummaryList clears the active id only for the deleted co
 
   const inactiveDelete = deleteConversationSummaryList(rows, 'b', { activeConversationId: 'a' });
   assert.equal(inactiveDelete.activeConversationId, 'a');
-  assert.deepEqual(inactiveDelete.conversations.map((entry) => entry.id), ['a']);
+  assert.deepEqual(
+    inactiveDelete.conversations.map((entry) => entry.id),
+    ['a']
+  );
 
   const activeDelete = deleteConversationSummaryList(rows, 'a', { activeConversationId: 'a' });
   assert.equal(activeDelete.activeConversationId, '');
-  assert.deepEqual(activeDelete.conversations.map((entry) => entry.id), ['b']);
+  assert.deepEqual(
+    activeDelete.conversations.map((entry) => entry.id),
+    ['b']
+  );
 });

@@ -1,3 +1,4 @@
+// @ts-check
 // Cross-surface UI signals: the notice (toast) surface, the rail state
 // (collapsed / mobile open), and the account-menu identity that both /chat/
 // and /dispatch/ render in the same way.

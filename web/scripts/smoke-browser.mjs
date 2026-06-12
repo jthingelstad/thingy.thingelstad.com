@@ -10,14 +10,19 @@ try {
 }
 
 const baseUrl = (process.env.THINGY_SMOKE_URL || 'http://localhost:8080').replace(/\/$/, '');
-const apiHost = (process.env.LIBRARIAN_API_URL || 'https://k0yklt9vg3.execute-api.us-east-1.amazonaws.com').replace(/\/$/, '');
+const apiHost = (process.env.LIBRARIAN_API_URL || 'https://k0yklt9vg3.execute-api.us-east-1.amazonaws.com').replace(
+  /\/$/,
+  ''
+);
 const streamHost = (process.env.LIBRARIAN_STREAM_URL || 'https://stream.thingy.thingelstad.com').replace(/\/$/, '');
 
 function fakeToken() {
-  const payload = Buffer.from(JSON.stringify({
-    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 20,
-    email: 'thingy@thingelstad.com'
-  })).toString('base64url');
+  const payload = Buffer.from(
+    JSON.stringify({
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 20,
+      email: 'thingy@thingelstad.com'
+    })
+  ).toString('base64url');
   return `${payload}.smoke`;
 }
 
@@ -25,13 +30,16 @@ async function seedSession(context) {
   await context.addInitScript((token) => {
     window.localStorage.setItem('weeklyThingLibrarianToken', token);
     window.localStorage.setItem('thingyUserEmail', 'thingy@thingelstad.com');
-    window.localStorage.setItem('thingyUserProfile', JSON.stringify({
-      preferred_name: 'Smoke',
-      status: 'premium',
-      supporting_member: true,
-      entitlements: ['supporting_member'],
-      modes: [{ id: 'thingy', label: 'Thingy' }]
-    }));
+    window.localStorage.setItem(
+      'thingyUserProfile',
+      JSON.stringify({
+        preferred_name: 'Smoke',
+        status: 'premium',
+        supporting_member: true,
+        entitlements: ['supporting_member'],
+        modes: [{ id: 'thingy', label: 'Thingy' }]
+      })
+    );
   }, fakeToken());
 }
 
@@ -44,13 +52,15 @@ async function routeMockApi(page) {
         body: JSON.stringify({
           supporting_member: true,
           entitlements: ['supporting_member'],
-          dispatches: [{
-            id: 'smoke-sent',
-            status: 'sent',
-            title: 'Smoke Sent Dispatch',
-            prompt: 'Smoke prompt',
-            updated_at: new Date().toISOString()
-          }]
+          dispatches: [
+            {
+              id: 'smoke-sent',
+              status: 'sent',
+              title: 'Smoke Sent Dispatch',
+              prompt: 'Smoke prompt',
+              updated_at: new Date().toISOString()
+            }
+          ]
         })
       });
       return;
@@ -80,7 +90,9 @@ async function routeMockApi(page) {
 async function checkSignInRedirect(browser) {
   const context = await browser.newContext();
   const page = await context.newPage();
-  await page.goto(`${baseUrl}/chat/?email=thingy%40thingelstad.com&prompt=What%20about%20RSS%3F&from=https%3A%2F%2Fweekly.thingelstad.com%2Farchive%2F123%2F&corpus=blog`);
+  await page.goto(
+    `${baseUrl}/chat/?email=thingy%40thingelstad.com&prompt=What%20about%20RSS%3F&from=https%3A%2F%2Fweekly.thingelstad.com%2Farchive%2F123%2F&corpus=blog`
+  );
   await page.waitForURL(/\/signin\/\?return=%2Fchat%2F$/);
   assert.equal(new URL(page.url()).searchParams.get('return'), '/chat/');
   assert.doesNotMatch(page.url(), /thingy%40thingelstad|What%20about|weekly\.thingelstad|corpus=blog/);
@@ -117,7 +129,11 @@ async function checkChatIslands(browser) {
   // ComposerSubmit island: send button is present and not in stop mode at rest.
   const sendButton = page.locator('button.composer-send').first();
   assert.equal((await sendButton.getAttribute('aria-label')) || '', 'Ask Thingy', 'send button at rest');
-  assert.equal(await sendButton.evaluate((el) => el.classList.contains('is-stop')), false, 'send button not in stop mode at rest');
+  assert.equal(
+    await sendButton.evaluate((el) => el.classList.contains('is-stop')),
+    false,
+    'send button not in stop mode at rest'
+  );
 
   // AccountMenu: opening it shows the build stamp injected at build time.
   await page.locator('.rail-account-btn').click();
@@ -167,7 +183,11 @@ async function checkMobileChat(browser) {
   await page.waitForSelector('.mobile-chatbar');
   await page.waitForSelector('#librarian-chat:not([hidden])');
   await page.waitForSelector('.thingy-input');
-  assert.equal(await page.locator('.thingy-composer-zone').isVisible(), true, 'mobile composer zone is visible at rest');
+  assert.equal(
+    await page.locator('.thingy-composer-zone').isVisible(),
+    true,
+    'mobile composer zone is visible at rest'
+  );
   assert.equal(await page.locator('.thingy-input').isVisible(), true, 'mobile composer is visible at rest');
   assert.equal(
     await page.locator('.thingy-input').evaluate((element) => window.getComputedStyle(element).position),

@@ -27,11 +27,4 @@ function buildId() {
   return String(publicConfig().buildId || 'dev');
 }
 
-export {
-  buildId,
-  librarianApiUrl,
-  librarianStreamUrl,
-  networkLinks,
-  publicConfig,
-  tinylyticsId
-};
+export { buildId, librarianApiUrl, librarianStreamUrl, networkLinks, publicConfig, tinylyticsId };

@@ -27,11 +27,13 @@ test('savePreferredName persists through the auth API before updating cached pro
   const result = await savePreferredName(fakeSession, ' jamie ', normalizePreferredName);
 
   assert.equal(result.savedName, 'Jamie');
-  assert.deepEqual(calls, [{
-    path: '/auth',
-    payload: { action: 'update_profile', preferred_name: 'Jamie' },
-    headers: { authorization: 'Bearer test' }
-  }]);
+  assert.deepEqual(calls, [
+    {
+      path: '/auth',
+      payload: { action: 'update_profile', preferred_name: 'Jamie' },
+      headers: { authorization: 'Bearer test' }
+    }
+  ]);
   assert.equal(cachedProfile.preferred_name, 'Jamie');
 });
 
@@ -44,46 +46,52 @@ test('savePreferredName rejects names the API does not confirm', async () => {
     }
   };
 
-  await assert.rejects(
-    savePreferredName(fakeSession, 'Jamie', normalizePreferredName),
-    /could not confirm/i
-  );
+  await assert.rejects(savePreferredName(fakeSession, 'Jamie', normalizePreferredName), /could not confirm/i);
 });
 
 test('discordConnectionName accepts canonical Discord connection profile shape', () => {
-  assert.equal(discordConnectionName({
-    discord_connection: {
-      connected: true,
-      username: 'thingyuser',
-      global_name: 'Thingy User',
-      display_name: 'Thingy Display'
-    }
-  }), 'Thingy Display');
+  assert.equal(
+    discordConnectionName({
+      discord_connection: {
+        connected: true,
+        username: 'thingyuser',
+        global_name: 'Thingy User',
+        display_name: 'Thingy Display'
+      }
+    }),
+    'Thingy Display'
+  );
 });
 
 test('discordConnectionName accepts camelCase fallback profile shape', () => {
-  assert.equal(discordConnectionName({
-    discordConnection: {
-      connected: true,
-      username: 'thingyuser',
-      globalName: 'Thingy User'
-    }
-  }), 'Thingy User');
+  assert.equal(
+    discordConnectionName({
+      discordConnection: {
+        connected: true,
+        username: 'thingyuser',
+        globalName: 'Thingy User'
+      }
+    }),
+    'Thingy User'
+  );
 });
 
 test('discordConnection accepts linked records without a Discord display name', () => {
-  assert.deepEqual(discordConnection({
-    discord_connection: {
+  assert.deepEqual(
+    discordConnection({
+      discord_connection: {
+        connected: true,
+        connected_at: '2026-06-10T19:30:00Z'
+      }
+    }),
+    {
       connected: true,
-      connected_at: '2026-06-10T19:30:00Z'
+      connected_at: '2026-06-10T19:30:00Z',
+      username: '',
+      global_name: '',
+      display_name: ''
     }
-  }), {
-    connected: true,
-    connected_at: '2026-06-10T19:30:00Z',
-    username: '',
-    global_name: '',
-    display_name: ''
-  });
+  );
 });
 
 test('discordConnection ignores disconnected or empty Discord connection values', () => {

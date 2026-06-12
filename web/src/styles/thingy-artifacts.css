@@ -9,8 +9,7 @@
 .thingy-exp-head {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  column-gap: 9px;
-  row-gap: 2px;
+  gap: 2px 9px;
   align-items: center;
   margin-bottom: 10px;
 }
@@ -189,7 +188,7 @@ a.thingy-exp-source:hover {
   border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--line));
   border-radius: 999px;
   background: var(--surface);
-  box-shadow: 0 12px 30px -22px rgba(14, 43, 38, 0.55);
+  box-shadow: 0 12px 30px -22px rgb(14 43 38 / 55%);
   color: var(--ink);
   font: 800 0.82rem / 1.12 var(--sans);
   text-align: center;
@@ -266,7 +265,7 @@ a.thingy-exp-source:hover {
   line-height: 1.2;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .thingy-map-canvas {
     min-height: 20rem;
     aspect-ratio: 0.92 / 1;

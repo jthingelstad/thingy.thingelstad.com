@@ -1,3 +1,4 @@
+// @ts-check
 // Updates the parts of the composer that are still imperative (map, mode,
 // voice, source picker, new-chat, source error). The textarea count and the
 // send/stop button are driven by ComposerCount / ComposerSubmit signal
@@ -21,7 +22,10 @@ function updateChatComposerState(options = {}) {
     const canMapDraft = hasText && length <= maxChars && hasSources && signedIn;
     options.mapDraftButton.disabled = busy || !canMapDraft;
     options.mapDraftButton.title = canMapDraft ? 'Seed curiosity map with this text' : 'Type a topic to seed a map';
-    options.mapDraftButton.setAttribute('aria-label', canMapDraft ? 'Seed curiosity map with this text' : 'Type a topic to seed a map');
+    options.mapDraftButton.setAttribute(
+      'aria-label',
+      canMapDraft ? 'Seed curiosity map with this text' : 'Type a topic to seed a map'
+    );
   }
   if (options.newChatButton) options.newChatButton.disabled = busy;
   if (options.curiosityMapButton) options.curiosityMapButton.disabled = busy || !signedIn || !hasSources;

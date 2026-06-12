@@ -1,3 +1,4 @@
+// @ts-check
 import { librarianApiUrl } from './thingy-config.js';
 import { postJsonRequest } from './thingy-http.js';
 
@@ -6,14 +7,28 @@ const userEmailKey = 'thingyUserEmail';
 const userProfileKey = 'thingyUserProfile';
 const pendingReturnParamsKey = 'thingyPendingReturnParams';
 const refreshWindowSeconds = 60 * 60 * 24 * 3;
-const privateReturnParams = ['email', 'prompt', 'from', 'scope', 'corpus', 'dispatch_test', 'test', 'login_token', 'magic_token', 'state', 'code'];
+const privateReturnParams = [
+  'email',
+  'prompt',
+  'from',
+  'scope',
+  'corpus',
+  'dispatch_test',
+  'test',
+  'login_token',
+  'magic_token',
+  'state',
+  'code'
+];
 
 function apiUrl() {
   return librarianApiUrl();
 }
 
 function normalizeEmail(value) {
-  return String(value || '').trim().toLowerCase();
+  return String(value || '')
+    .trim()
+    .toLowerCase();
 }
 
 function token() {
@@ -34,13 +49,13 @@ function tokenPayload(value) {
 
 function tokenExpired(value, skewSeconds = 60) {
   const payload = tokenPayload(value || token());
-  const expiresAt = Number(payload && payload.exp || 0);
+  const expiresAt = Number((payload && payload.exp) || 0);
   return !expiresAt || expiresAt <= Math.floor(Date.now() / 1000) + skewSeconds;
 }
 
 function tokenNeedsRefresh(value) {
   const payload = tokenPayload(value || token());
-  const expiresAt = Number(payload && payload.exp || 0);
+  const expiresAt = Number((payload && payload.exp) || 0);
   return Boolean(expiresAt) && expiresAt <= Math.floor(Date.now() / 1000) + refreshWindowSeconds;
 }
 
@@ -114,10 +129,15 @@ function mergeProfile(data = {}, email = '') {
     preferred_name: String(incomingProfile.preferred_name || existingProfile.preferred_name || '').trim(),
     status: data.status || incomingProfile.status || existingProfile.status || '',
     supporting_member: hasIncomingEntitlements
-      ? Boolean(data.status === 'premium' || incomingProfile.supporting_member || (Array.isArray(entitlements) && entitlements.includes('supporting_member')))
+      ? Boolean(
+          data.status === 'premium' ||
+          incomingProfile.supporting_member ||
+          (Array.isArray(entitlements) && entitlements.includes('supporting_member'))
+        )
       : Boolean(incomingProfile.supporting_member || existingProfile.supporting_member),
     entitlements,
-    discord_connection: nextDiscordConnection === undefined ? existingProfile.discord_connection : nextDiscordConnection,
+    discord_connection:
+      nextDiscordConnection === undefined ? existingProfile.discord_connection : nextDiscordConnection,
     modes: normalizeModes(data.modes || incomingProfile.modes || existingProfile.modes)
   };
   window.localStorage.setItem(userProfileKey, JSON.stringify(profile));
@@ -179,10 +199,13 @@ function stashPrivateReturnParams(url) {
   });
   if (!moved.length) return;
   try {
-    window.sessionStorage.setItem(pendingReturnParamsKey, JSON.stringify({
-      path: url.pathname,
-      params: moved
-    }));
+    window.sessionStorage.setItem(
+      pendingReturnParamsKey,
+      JSON.stringify({
+        path: url.pathname,
+        params: moved
+      })
+    );
   } catch (error) {
     // If sessionStorage is unavailable, prefer a clean sign-in URL over leaking private params.
   }
@@ -211,7 +234,10 @@ function restorePendingReturnParams(returnTo) {
 
 function signInUrl(returnTo) {
   const url = new URL('/signin/', window.location.origin);
-  const destination = relativeUrl(returnTo || `${window.location.pathname}${window.location.search}${window.location.hash}`, '/chat/');
+  const destination = relativeUrl(
+    returnTo || `${window.location.pathname}${window.location.search}${window.location.hash}`,
+    '/chat/'
+  );
   stashPrivateReturnParams(destination);
   url.searchParams.set('return', pathFromUrl(destination));
   return url.toString();

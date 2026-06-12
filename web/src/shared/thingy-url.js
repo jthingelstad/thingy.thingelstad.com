@@ -1,3 +1,4 @@
+// @ts-check
 function scrubUrlParams(names = []) {
   if (!names.length) return;
   const url = new URL(window.location.href);
@@ -23,7 +24,7 @@ const AUTH_ERROR_CODES = new Set([
   'magic_link_required',
   'session_expired',
   'subscriber_required',
-  'unauthorized',
+  'unauthorized'
 ]);
 
 function isAuthError(error) {
@@ -33,8 +34,4 @@ function isAuthError(error) {
   return code ? AUTH_ERROR_CODES.has(code) : false;
 }
 
-export {
-  AUTH_ERROR_CODES,
-  isAuthError,
-  scrubUrlParams
-};
+export { AUTH_ERROR_CODES, isAuthError, scrubUrlParams };

@@ -24,16 +24,12 @@ import {
   dispatchStatusMessage as dispatchStatusMessageSignal,
   drafts as draftsSignal
 } from './stores/dispatch-store.js';
-import {
-  draftFromServerRow,
-  hasDraftContent,
-  normalizeDraft,
-  serverDispatchId
-} from './thingy-dispatch-drafts.js';
+import { draftFromServerRow, hasDraftContent, normalizeDraft, serverDispatchId } from './thingy-dispatch-drafts.js';
 import { dispatchEditable } from './thingy-dispatch-state.js';
 import { AGENT_RESPONSE_TIMEOUT_MS } from './thingy-timeouts.js';
 
-const DEFAULT_WELCOME = "Alright, let's make your first Dispatch. Give me the topic, question, or archive thread you want to shape, and I'll help turn it into a clear direction before you generate it.";
+const DEFAULT_WELCOME =
+  "Alright, let's make your first Dispatch. Give me the topic, question, or archive thread you want to shape, and I'll help turn it into a clear direction before you generate it.";
 const MAX_DRAFTS = 24;
 
 // --- Pure helpers (exported for tests) --------------------------------------
@@ -43,7 +39,12 @@ function draftTitle(draft) {
 }
 
 function titleFromPrompt(value) {
-  return String(value || 'Dispatch').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Dispatch';
+  return (
+    String(value || 'Dispatch')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 80) || 'Dispatch'
+  );
 }
 
 function ordinal(value) {
@@ -71,12 +72,14 @@ function defaultWelcomeText(dispatchNumber = 1) {
 }
 
 function coverageLabel(value) {
-  return {
-    thin: 'Thin',
-    focused: 'Focused',
-    broad: 'Broad',
-    ambiguous: 'Needs steering'
-  }[String(value || '').toLowerCase()] || 'Checked';
+  return (
+    {
+      thin: 'Thin',
+      focused: 'Focused',
+      broad: 'Broad',
+      ambiguous: 'Needs steering'
+    }[String(value || '').toLowerCase()] || 'Checked'
+  );
 }
 
 function briefSourceLine(source = {}) {
@@ -92,8 +95,15 @@ function dispatchBriefMarkdown(brief = {}) {
   if (!brief || typeof brief !== 'object' || Array.isArray(brief)) return '';
   const angle = String(brief.working_angle || brief.generation_instructions || '').trim();
   const goal = String(brief.user_goal || '').trim();
-  const sources = Array.isArray(brief.selected_sources) ? brief.selected_sources.map(briefSourceLine).filter(Boolean).slice(0, 6) : [];
-  const excluded = Array.isArray(brief.excluded_scope) ? brief.excluded_scope.map((item) => String(item || '').trim()).filter(Boolean).slice(0, 5) : [];
+  const sources = Array.isArray(brief.selected_sources)
+    ? brief.selected_sources.map(briefSourceLine).filter(Boolean).slice(0, 6)
+    : [];
+  const excluded = Array.isArray(brief.excluded_scope)
+    ? brief.excluded_scope
+        .map((item) => String(item || '').trim())
+        .filter(Boolean)
+        .slice(0, 5)
+    : [];
   if (!angle && !goal && !sources.length) return '';
   return [
     '**Dispatch brief**',
@@ -102,7 +112,9 @@ function dispatchBriefMarkdown(brief = {}) {
     `- **Archive fit:** ${coverageLabel(brief.coverage_status)}`,
     sources.length ? `- **Planned sources:**\n${sources.map((source) => `  - ${source}`).join('\n')}` : '',
     excluded.length ? `- **Keep out:** ${excluded.join('; ')}` : ''
-  ].filter(Boolean).join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
 }
 
 function generationContextText(draft = {}, dispatchTestMode = false) {
@@ -113,7 +125,13 @@ function generationContextText(draft = {}, dispatchTestMode = false) {
       ? 'I am preparing the template test with the current Dispatch brief.'
       : 'I am preparing this Dispatch with the brief we shaped together.',
     brief.coverage_status ? `Archive fit: ${coverageLabel(brief.coverage_status)}.` : '',
-    sources.length ? `Planned sources: ${sources.slice(0, 4).map((source) => source.label || source.title).filter(Boolean).join(', ')}.` : ''
+    sources.length
+      ? `Planned sources: ${sources
+          .slice(0, 4)
+          .map((source) => source.label || source.title)
+          .filter(Boolean)
+          .join(', ')}.`
+      : ''
   ].filter(Boolean);
   return lines.join('\n\n');
 }
@@ -147,18 +165,22 @@ function createDispatchActions(options = {}) {
   const dispatchTestMode = Boolean(options.dispatchTestMode);
   const activeKey = options.activeKey || 'thingyActiveDispatchDraft';
   const onRender = typeof options.onRender === 'function' ? options.onRender : () => {};
-  const confirmDelete = typeof options.confirmDelete === 'function'
-    ? options.confirmDelete
-    : () => window.confirm('Delete this Dispatch?');
-  const redirectToSignIn = typeof options.redirectToSignIn === 'function'
-    ? options.redirectToSignIn
-    : () => { window.location.href = session.signInUrl('/dispatch/'); };
+  const confirmDelete =
+    typeof options.confirmDelete === 'function' ? options.confirmDelete : () => window.confirm('Delete this Dispatch?');
+  const redirectToSignIn =
+    typeof options.redirectToSignIn === 'function'
+      ? options.redirectToSignIn
+      : () => {
+          window.location.href = session.signInUrl('/dispatch/');
+        };
 
   let drafts = [];
   let activeId = '';
   try {
     activeId = window.localStorage.getItem(activeKey) || '';
-  } catch (error) { /* private mode */ }
+  } catch (error) {
+    /* private mode */
+  }
   let pollTimer = 0;
   let pollingDraftId = '';
   let progressRunCounter = 0;
@@ -210,11 +232,13 @@ function createDispatchActions(options = {}) {
     const nextDispatchNumber = drafts.filter((entry) => hasDraftContent(entry)).length + 1;
     const draft = normalizeDraft({
       stage: 'empty',
-      messages: [{
-        role: 'assistant',
-        text: welcomeForDraft(nextDispatchNumber),
-        kind: 'welcome'
-      }]
+      messages: [
+        {
+          role: 'assistant',
+          text: welcomeForDraft(nextDispatchNumber),
+          kind: 'welcome'
+        }
+      ]
     });
     drafts = drafts.filter((entry) => serverDispatchId(entry) || hasDraftContent(entry));
     drafts.unshift(draft);
@@ -249,7 +273,10 @@ function createDispatchActions(options = {}) {
   }
 
   function scopedProgressId(scope, id) {
-    const base = String(id || 'progress').trim().replace(/[^a-z0-9_-]+/gi, '-') || 'progress';
+    const base =
+      String(id || 'progress')
+        .trim()
+        .replace(/[^a-z0-9_-]+/gi, '-') || 'progress';
     return scope ? `${scope}:${base}` : base;
   }
 
@@ -261,9 +288,11 @@ function createDispatchActions(options = {}) {
     const status = extra.status || 'pending';
     const baseId = String(extra.baseId || existing?.baseId || key).trim();
     const scope = String(extra.scope || existing?.scope || '').trim();
-    const startedAt = Number(extra.startedAt || (
-      existing && (existing.status === 'pending' || status !== 'pending') ? existing.startedAt : 0
-    ) || nowMs);
+    const startedAt = Number(
+      extra.startedAt ||
+        (existing && (existing.status === 'pending' || status !== 'pending') ? existing.startedAt : 0) ||
+        nowMs
+    );
     const next = {
       id: key || `progress-${Date.now()}`,
       baseId,
@@ -298,7 +327,11 @@ function createDispatchActions(options = {}) {
   function setActiveDraft(id, opts = {}) {
     activeId = String(id || '');
     if (activeId) {
-      try { window.localStorage.setItem(activeKey, activeId); } catch (error) { /* ignore */ }
+      try {
+        window.localStorage.setItem(activeKey, activeId);
+      } catch (error) {
+        /* ignore */
+      }
     }
     if (opts.render !== false) render();
   }
@@ -422,31 +455,39 @@ function createDispatchActions(options = {}) {
   async function loadHistory() {
     try {
       const data = await dispatchPost('list', { limit: 12 });
-      const serverDrafts = (data.dispatches || []).map((row, index) => draftFromServerRow(row, welcomeForDraft(index + 1)));
+      const serverDrafts = (data.dispatches || []).map((row, index) =>
+        draftFromServerRow(row, welcomeForDraft(index + 1))
+      );
       const activeLocal = draftById(activeId);
       const keepActiveLocal = activeLocal && !serverDispatchId(activeLocal) && hasDraftContent(activeLocal);
-      drafts = [
-        ...(keepActiveLocal ? [activeLocal] : []),
-        ...serverDrafts
-      ].sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))).slice(0, MAX_DRAFTS);
+      drafts = [...(keepActiveLocal ? [activeLocal] : []), ...serverDrafts]
+        .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))
+        .slice(0, MAX_DRAFTS);
       if (!drafts.some((draft) => draft.id === activeId)) {
         activeId = drafts[0]?.id || '';
         if (activeId) {
-          try { window.localStorage.setItem(activeKey, activeId); } catch (error) { /* ignore */ }
+          try {
+            window.localStorage.setItem(activeKey, activeId);
+          } catch (error) {
+            /* ignore */
+          }
         }
       }
       saveDrafts();
       if (data.entitlements || data.supporting_member) {
         const profile = session.storedProfile();
-        session.persistAuth({
-          token: session.token(),
-          email: session.storedEmail(),
-          profile: {
-            ...profile,
-            supporting_member: Boolean(data.supporting_member || profile.supporting_member),
-            entitlements: data.entitlements || profile.entitlements
-          }
-        }, session.storedEmail());
+        session.persistAuth(
+          {
+            token: session.token(),
+            email: session.storedEmail(),
+            profile: {
+              ...profile,
+              supporting_member: Boolean(data.supporting_member || profile.supporting_member),
+              entitlements: data.entitlements || profile.entitlements
+            }
+          },
+          session.storedEmail()
+        );
       }
       render();
     } catch (error) {
@@ -479,9 +520,8 @@ function createDispatchActions(options = {}) {
   async function planWithThingy(text) {
     const draft = activeDraft();
     const progressScope = nextProgressScope('plan');
-    const progress = (id, value, targetDraft = activeDraft(), extra = {}) => (
-      upsertScopedProgressMessage(progressScope, id, value, targetDraft, extra)
-    );
+    const progress = (id, value, targetDraft = activeDraft(), extra = {}) =>
+      upsertScopedProgressMessage(progressScope, id, value, targetDraft, extra);
     const previous = {
       stage: draft.stage,
       prompt: draft.prompt,
@@ -562,17 +602,23 @@ function createDispatchActions(options = {}) {
       const ready = briefStatus === 'ready' || String(brief.status || '') === 'ready';
       updateDraft({
         stage: ready ? 'ready' : 'needs_clarification',
-        direction: String(brief.working_angle || brief.generation_instructions || current.direction || current.prompt || '').trim()
+        direction: String(
+          brief.working_angle || brief.generation_instructions || current.direction || current.prompt || ''
+        ).trim()
       });
       await saveDraftToServer(activeDraft(), { status: ready ? 'ready' : 'needs_clarification' });
       setStatus('');
     } catch (error) {
       updateDraft(previous);
-      progress('planning', 'Planning stopped before Thingy could finish this pass.', activeDraft(), { status: 'failed' });
+      progress('planning', 'Planning stopped before Thingy could finish this pass.', activeDraft(), {
+        status: 'failed'
+      });
       if (!String(answerMessage?.text || '').trim()) {
         addMessage('assistant', error.message || 'I could not plan that Dispatch right now.');
       }
-      saveDraftToServer(activeDraft(), { status: activeDraft().stage === 'empty' ? 'draft' : activeDraft().stage }).catch(() => {});
+      saveDraftToServer(activeDraft(), {
+        status: activeDraft().stage === 'empty' ? 'draft' : activeDraft().stage
+      }).catch(() => {});
       setStatus('Thingy could not plan that right now.', 'error');
     } finally {
       setBusy(false);
@@ -583,9 +629,8 @@ function createDispatchActions(options = {}) {
   async function generateDispatch() {
     const draft = activeDraft();
     const progressScope = nextProgressScope('generate');
-    const progress = (id, value, targetDraft = activeDraft(), extra = {}) => (
-      upsertScopedProgressMessage(progressScope, id, value, targetDraft, extra)
-    );
+    const progress = (id, value, targetDraft = activeDraft(), extra = {}) =>
+      upsertScopedProgressMessage(progressScope, id, value, targetDraft, extra);
     const email = session.storedEmail();
     if (!email) {
       redirectToSignIn();
@@ -598,7 +643,12 @@ function createDispatchActions(options = {}) {
     try {
       await saveDraftToServer(draft, { status: draft.stage === 'upgrade' ? 'ready' : draft.stage });
       progress('generate-start', generationContextText(draft, dispatchTestMode), draft, { status: 'complete' });
-      progress('generate-save', 'Saved the Dispatch direction and brief.\n\nSending the generation request now.', draft, { status: 'pending' });
+      progress(
+        'generate-save',
+        'Saved the Dispatch direction and brief.\n\nSending the generation request now.',
+        draft,
+        { status: 'pending' }
+      );
       render();
       const data = await dispatchPost('create', {
         dispatch_id: serverDispatchId(draft),
@@ -611,7 +661,12 @@ function createDispatchActions(options = {}) {
         template_test: dispatchTestMode,
         email
       });
-      progress('generate-save', 'Saved the Dispatch direction and brief.\n\nSending the generation request now.', activeDraft(), { status: 'complete' });
+      progress(
+        'generate-save',
+        'Saved the Dispatch direction and brief.\n\nSending the generation request now.',
+        activeDraft(),
+        { status: 'complete' }
+      );
       const row = data.dispatch || {};
       updateDraft({
         stage: row.status || 'queued',
@@ -619,18 +674,26 @@ function createDispatchActions(options = {}) {
         statusText: dispatchTestMode ? 'Template test queued.' : 'Dispatch queued.'
       });
       activeDraft().generationProgressScope = progressScope;
-      progress('generate-queue', dispatchTestMode
-        ? 'Template test queued. I am checking the generation status now.'
-        : 'Dispatch queued. I am checking the generation status now.', activeDraft(), { status: 'complete' });
+      progress(
+        'generate-queue',
+        dispatchTestMode
+          ? 'Template test queued. I am checking the generation status now.'
+          : 'Dispatch queued. I am checking the generation status now.',
+        activeDraft(),
+        { status: 'complete' }
+      );
       startPolling();
     } catch (error) {
       if (error.status === 403 && error.data && error.data.status === 'supporting_member_required') {
         updateDraft({ stage: 'upgrade' });
-        addMessage('assistant', [
-          'This Dispatch is shaped and ready.',
-          'Sending Dispatches is a Supporting Member feature. Supporting Membership helps sustain The Weekly Thing and Jamie directs the membership proceeds as a charitable giving pool rather than treating this as a paywall for Thingy.',
-          'You can become a Supporting Member, come back here, sign in again so I can see the updated membership, and generate this same Dispatch.'
-        ].join('\n\n'));
+        addMessage(
+          'assistant',
+          [
+            'This Dispatch is shaped and ready.',
+            'Sending Dispatches is a Supporting Member feature. Supporting Membership helps sustain The Weekly Thing and Jamie directs the membership proceeds as a charitable giving pool rather than treating this as a paywall for Thingy.',
+            'You can become a Supporting Member, come back here, sign in again so I can see the updated membership, and generate this same Dispatch.'
+          ].join('\n\n')
+        );
         saveDraftToServer(activeDraft(), { status: 'ready' }).catch(() => {});
         setStatus('Ready to send after Supporting Membership.', 'notice');
       } else if (error.status === 429) {
@@ -640,10 +703,21 @@ function createDispatchActions(options = {}) {
         addMessage('assistant', error.message || 'I could not queue this Dispatch.');
         setStatus('Could not queue this Dispatch.', 'error');
       }
-      if (activeDraft().messages.some((message) => message.kind === 'progress' && message.id === scopedProgressId(progressScope, 'generate-start') && message.status === 'pending')) {
-        progress('generate-start', 'Dispatch preparation stopped before the request could be queued.', activeDraft(), { status: 'failed' });
+      if (
+        activeDraft().messages.some(
+          (message) =>
+            message.kind === 'progress' &&
+            message.id === scopedProgressId(progressScope, 'generate-start') &&
+            message.status === 'pending'
+        )
+      ) {
+        progress('generate-start', 'Dispatch preparation stopped before the request could be queued.', activeDraft(), {
+          status: 'failed'
+        });
       }
-      progress('generate-save', 'The Dispatch generation request stopped before it could be queued.', activeDraft(), { status: 'failed' });
+      progress('generate-save', 'The Dispatch generation request stopped before it could be queued.', activeDraft(), {
+        status: 'failed'
+      });
     } finally {
       setBusy(false);
       render();
@@ -662,9 +736,8 @@ function createDispatchActions(options = {}) {
     const draft = draftById(draftId) || activeDraft();
     if (!draft.dispatchId) return;
     if (!draft.generationProgressScope) draft.generationProgressScope = nextProgressScope('generate');
-    const progress = (id, value, targetDraft = draft, extra = {}) => (
-      upsertScopedProgressMessage(draft.generationProgressScope, id, value, targetDraft, extra)
-    );
+    const progress = (id, value, targetDraft = draft, extra = {}) =>
+      upsertScopedProgressMessage(draft.generationProgressScope, id, value, targetDraft, extra);
     try {
       const data = await dispatchPost('status', { dispatch_id: draft.dispatchId });
       const row = data.dispatch || {};
@@ -676,7 +749,9 @@ function createDispatchActions(options = {}) {
           updatedAt: nowIso()
         });
         if (!draft.messages.some((message) => message.kind === 'sent')) {
-          progress('generate-status', 'Generation finished and the email handoff completed.', draft, { status: 'complete' });
+          progress('generate-status', 'Generation finished and the email handoff completed.', draft, {
+            status: 'complete'
+          });
           draft.messages.push({
             role: 'assistant',
             text: 'Dispatch sent. Check your email.',
@@ -776,10 +851,4 @@ function createDispatchActions(options = {}) {
   };
 }
 
-export {
-  createDispatchActions,
-  dispatchBriefMarkdown,
-  draftTitle,
-  inputPlaceholderForDraft,
-  titleFromPrompt
-};
+export { createDispatchActions, dispatchBriefMarkdown, draftTitle, inputPlaceholderForDraft, titleFromPrompt };

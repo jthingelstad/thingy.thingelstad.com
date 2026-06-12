@@ -1,3 +1,4 @@
+// @ts-check
 // Signal store for the Thingy chat surface (/chat/). Components read these
 // signals; bootChat() writes to them. Dispatch's state lives in
 // dispatch-store.js, and the cross-surface notice lives in ui-store.js.
@@ -65,12 +66,9 @@ const conversationCreateInFlight = signal(false);
 // True while an answer is streaming AND the user can abort it.
 const stoppable = signal(false);
 
-const interactionBusy = computed(() => (
-  answerInFlight.value
-  || welcomeInFlight.value
-  || mapInFlight.value
-  || conversationCreateInFlight.value
-));
+const interactionBusy = computed(
+  () => answerInFlight.value || welcomeInFlight.value || mapInFlight.value || conversationCreateInFlight.value
+);
 
 export {
   activeConversationId,

@@ -15,7 +15,7 @@
   background: color-mix(in srgb, var(--surface) 88%, transparent);
   color: var(--ink-soft);
   font: 800 12px/1 var(--sans);
-  box-shadow: 0 10px 28px rgba(23, 33, 31, 0.08);
+  box-shadow: 0 10px 28px rgb(23 33 31 / 8%);
   backdrop-filter: blur(12px);
 }
 

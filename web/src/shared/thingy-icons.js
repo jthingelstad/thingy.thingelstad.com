@@ -95,9 +95,7 @@ function iconSvg(name, options = {}) {
   if (!raw) return '';
   const className = String(options.className || '').trim();
   const label = String(options.label || '').trim();
-  const aria = label
-    ? `role="img" aria-label="${escapeAttribute(label)}"`
-    : 'aria-hidden="true" focusable="false"';
+  const aria = label ? `role="img" aria-label="${escapeAttribute(label)}"` : 'aria-hidden="true" focusable="false"';
   const svg = raw.replace(/<!--[\s\S]*?-->/g, '').trim();
   const classes = `thingy-icon${className ? ` ${escapeAttribute(className)}` : ''}`;
   const withAria = svg.replace('<svg', `<svg ${aria}`);
@@ -121,8 +119,4 @@ function hydrateThingyIcons(root = document) {
   });
 }
 
-export {
-  hydrateThingyIcons,
-  iconElement,
-  iconSvg
-};
+export { hydrateThingyIcons, iconElement, iconSvg };

@@ -1,7 +1,6 @@
 /* Auth panel shown inside the chat shell. */
 .librarian-auth.thingy-auth {
-  align-self: center;
-  justify-self: center;
+  place-self: center center;
   width: min(100% - 36px, 48rem);
   padding: 0;
   background: transparent;
@@ -21,7 +20,7 @@
   border-radius: 8px;
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, var(--accent-soft)), var(--surface));
-  box-shadow: 0 28px 70px -52px rgba(14, 43, 38, 0.58);
+  box-shadow: 0 28px 70px -52px rgb(14 43 38 / 58%);
 }
 
 .thingy-auth-mark {
@@ -36,7 +35,7 @@
   height: 100%;
   object-fit: contain;
   border-radius: 0;
-  filter: drop-shadow(0 18px 28px rgba(31, 47, 42, 0.14));
+  filter: drop-shadow(0 18px 28px rgb(31 47 42 / 14%));
 }
 
 .thingy-auth-content {
@@ -94,7 +93,7 @@
   white-space: nowrap;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .librarian-auth.thingy-auth {
     grid-row: 2;
     align-self: start;

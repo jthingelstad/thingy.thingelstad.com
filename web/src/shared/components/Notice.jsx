@@ -25,16 +25,15 @@ function Notice() {
     }, VISIBLE_MS);
   });
 
-  useEffect(() => () => {
-    if (timer.current) window.clearTimeout(timer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (timer.current) window.clearTimeout(timer.current);
+    },
+    []
+  );
 
   return (
-    <div
-      class={`thingy-notice${visible.value ? ' is-visible' : ''}`}
-      role="status"
-      aria-live="polite"
-    >
+    <div class={`thingy-notice${visible.value ? ' is-visible' : ''}`} role="status" aria-live="polite">
       {noticeText.value}
     </div>
   );

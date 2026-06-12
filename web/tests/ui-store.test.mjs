@@ -1,11 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {
-  clearNotice,
-  noticeNonce,
-  noticeText,
-  showNotice
-} from '../src/shared/stores/ui-store.js';
+import { clearNotice, noticeNonce, noticeText, showNotice } from '../src/shared/stores/ui-store.js';
 
 test('showNotice updates the visible text and advances the nonce', () => {
   clearNotice();

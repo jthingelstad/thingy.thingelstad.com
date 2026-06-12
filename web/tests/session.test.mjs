@@ -4,7 +4,7 @@ import test from 'node:test';
 function storage() {
   const values = new Map();
   return {
-    getItem: (key) => values.has(key) ? values.get(key) : null,
+    getItem: (key) => (values.has(key) ? values.get(key) : null),
     removeItem: (key) => values.delete(key),
     setItem: (key, value) => values.set(key, String(value))
   };
@@ -24,7 +24,9 @@ function installWindow(url = 'http://localhost:8080/chat/') {
 }
 
 test('signInUrl keeps private app params out of the visible sign-in return URL', async () => {
-  const win = installWindow('http://localhost:8080/chat/?email=reader@example.com&prompt=What%20about%20RSS%3F&from=https%3A%2F%2Fweekly.thingelstad.com%2Farchive%2F123%2F&corpus=blog&mode=thingy');
+  const win = installWindow(
+    'http://localhost:8080/chat/?email=reader@example.com&prompt=What%20about%20RSS%3F&from=https%3A%2F%2Fweekly.thingelstad.com%2Farchive%2F123%2F&corpus=blog&mode=thingy'
+  );
   const session = await import('../src/shared/thingy-session.js');
 
   const url = new URL(session.signInUrl(), win.location.origin);
@@ -35,7 +37,10 @@ test('signInUrl keeps private app params out of the visible sign-in return URL',
   assert.doesNotMatch(url.href, /reader@example\.com|What%20about%20RSS|weekly\.thingelstad\.com|corpus=blog/);
 
   const restored = session.restorePendingReturnParams(returnTo);
-  assert.equal(restored, '/chat/?mode=thingy&email=reader%40example.com&prompt=What+about+RSS%3F&from=https%3A%2F%2Fweekly.thingelstad.com%2Farchive%2F123%2F&corpus=blog');
+  assert.equal(
+    restored,
+    '/chat/?mode=thingy&email=reader%40example.com&prompt=What+about+RSS%3F&from=https%3A%2F%2Fweekly.thingelstad.com%2Farchive%2F123%2F&corpus=blog'
+  );
   assert.equal(win.sessionStorage.getItem(session.pendingReturnParamsKey), null);
 });
 

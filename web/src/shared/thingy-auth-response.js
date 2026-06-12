@@ -1,3 +1,4 @@
+// @ts-check
 function handleAuthResponse(data = {}, options = {}) {
   const setMessage = typeof options.setMessage === 'function' ? options.setMessage : () => {};
   const showAction = typeof options.showAction === 'function' ? options.showAction : () => {};
@@ -41,7 +42,9 @@ function handleAuthResponse(data = {}, options = {}) {
     return data.status;
   }
   if (data.status === 'magic_link_invalid') {
-    setMessage(data.error || data.message || 'That sign-in link is invalid or expired. Enter your email to get a fresh link.');
+    setMessage(
+      data.error || data.message || 'That sign-in link is invalid or expired. Enter your email to get a fresh link.'
+    );
     hideActions();
     track('librarian.auth_magic_link_invalid');
     return data.status;

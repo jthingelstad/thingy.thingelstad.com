@@ -8,7 +8,8 @@ const signInLink = document.getElementById('thingy-discord-signin-link');
 const codeWrap = document.getElementById('thingy-discord-code');
 const codeValue = document.getElementById('thingy-discord-code-value');
 const copyCodeButton = document.getElementById('thingy-discord-copy-code');
-const connectCopy = 'To connect to the Weekly Thing Supporting Member special Discord, join the server, run <code>/thingy verify</code> in the validation channel, and open the link Thingy gives you.';
+const connectCopy =
+  'To connect to the Weekly Thing Supporting Member special Discord, join the server, run <code>/thingy verify</code> in the validation channel, and open the link Thingy gives you.';
 
 function normalizeDiscordCode(code) {
   return String(code || '').trim();
@@ -86,15 +87,23 @@ async function initDiscordLink() {
     renderDiscordCode('');
     renderSignIn(state);
     setCopy('Sign in to Thingy in this browser to finish connecting Discord.');
-    setMessage(`${authReason} The sign-in link will return here with your Discord verification state preserved.`, 'error');
+    setMessage(
+      `${authReason} The sign-in link will return here with your Discord verification state preserved.`,
+      'error'
+    );
     return;
   }
 
   hideSignIn();
   const profile = await refreshProfile();
   if (!hasSupportingAccess(profile)) {
-    setCopyHtml('The Weekly Thing Supporting Member special Discord is an exclusive benefit for <a href="https://weekly.thingelstad.com/members/">Supporting Members</a>. Join or manage your membership, then sign in again so Thingy can refresh your account.');
-    setMessage('If you recently became a Supporting Member, sign out and sign back in so Thingy can refresh your account.', 'error');
+    setCopyHtml(
+      'The Weekly Thing Supporting Member special Discord is an exclusive benefit for <a href="https://weekly.thingelstad.com/members/">Supporting Members</a>. Join or manage your membership, then sign in again so Thingy can refresh your account.'
+    );
+    setMessage(
+      'If you recently became a Supporting Member, sign out and sign back in so Thingy can refresh your account.',
+      'error'
+    );
     return;
   }
 
@@ -112,11 +121,15 @@ async function initDiscordLink() {
 
   setCopy('Generating a one-time verification code.');
   try {
-    const data = await session.postJson('/auth', {
-      action: 'discord_link_code',
-      state,
-      email: session.storedEmail()
-    }, session.authHeaders());
+    const data = await session.postJson(
+      '/auth',
+      {
+        action: 'discord_link_code',
+        state,
+        email: session.storedEmail()
+      },
+      session.authHeaders()
+    );
     const code = renderDiscordCode(data.code);
     if (!code) throw new Error('Thingy did not return a Discord verification code. Run /thingy verify again.');
     setCopy('Copy this code, then use /thingy confirm in Discord and paste it into the code field.');
@@ -135,7 +148,12 @@ if (copyCodeButton) {
     if (!code) return;
     try {
       const copied = await copyText(code);
-      setMessage(copied ? 'Copied the verification code.' : 'Copy is not available in this browser. Select the code and copy it manually.', copied ? 'success' : 'error');
+      setMessage(
+        copied
+          ? 'Copied the verification code.'
+          : 'Copy is not available in this browser. Select the code and copy it manually.',
+        copied ? 'success' : 'error'
+      );
     } catch (error) {
       setMessage('Copy failed. Select the code and copy it manually.', 'error');
     }
@@ -144,7 +162,4 @@ if (copyCodeButton) {
 
 initDiscordLink();
 
-export {
-  normalizeDiscordCode,
-  discordSignInUrl
-};
+export { normalizeDiscordCode, discordSignInUrl };

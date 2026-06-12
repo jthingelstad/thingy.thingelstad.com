@@ -40,12 +40,16 @@ function buildSharePromptUrl(prompt, scope) {
 
 function answerClipboardPayload(messageElement) {
   const clone = messageElement.cloneNode(true);
-  clone.querySelectorAll('.librarian-feedback, .librarian-prompt-actions, .librarian-activity').forEach((node) => node.remove());
+  clone
+    .querySelectorAll('.librarian-feedback, .librarian-prompt-actions, .librarian-activity')
+    .forEach((node) => node.remove());
   clone.querySelectorAll('[aria-hidden="true"]').forEach((node) => node.remove());
   clone.querySelectorAll('a[href]').forEach((link) => {
     try {
       link.setAttribute('href', new URL(link.getAttribute('href'), window.location.origin).toString());
-    } catch (error) { /* leave original href */ }
+    } catch (error) {
+      /* leave original href */
+    }
   });
   const scratch = document.createElement('div');
   scratch.setAttribute('aria-hidden', 'true');
@@ -98,7 +102,7 @@ function legacyCopyRichHtml(html, text) {
   };
 
   document.addEventListener('copy', onCopy);
-  let copied = false;
+  let copied;
   try {
     copied = document.execCommand('copy');
   } catch (error) {
@@ -125,7 +129,9 @@ async function copyRichHtmlToClipboard(html, text) {
         })
       ]);
       return 'rich';
-    } catch (error) { /* fall through */ }
+    } catch (error) {
+      /* fall through */
+    }
   }
   if (legacyCopyRichHtml(normalizedHtml, normalizedText)) return 'rich';
   if (await copyToClipboard(normalizedText)) return 'plain';
@@ -135,9 +141,10 @@ async function copyRichHtmlToClipboard(html, text) {
 function createChatMessageActions(options = {}) {
   const submitFeedback = typeof options.submitFeedback === 'function' ? options.submitFeedback : async () => ({});
   const track = typeof options.track === 'function' ? options.track : () => {};
-  const promptShareUrl = typeof options.promptShareUrl === 'function'
-    ? options.promptShareUrl
-    : (prompt, scope) => buildSharePromptUrl(prompt, scope);
+  const promptShareUrl =
+    typeof options.promptShareUrl === 'function'
+      ? options.promptShareUrl
+      : (prompt, scope) => buildSharePromptUrl(prompt, scope);
   const promptShareTitle = String(options.promptShareTitle || 'Ask Thingy');
   let feedbackStatusTimer = 0;
   let speechUtterance = null;
@@ -338,7 +345,10 @@ function createChatMessageActions(options = {}) {
       if (button.dataset.action === 'copy') {
         const message = await copyAnswerRichText(messageElement);
         flashActionStatus(controls, message);
-        track('librarian.answer_copy', message === 'Rich text copied' ? 'rich' : message === 'Text copied' ? 'plain' : 'error');
+        track(
+          'librarian.answer_copy',
+          message === 'Rich text copied' ? 'rich' : message === 'Text copied' ? 'plain' : 'error'
+        );
         return;
       }
       if (button.dataset.action === 'speak') {
@@ -350,7 +360,18 @@ function createChatMessageActions(options = {}) {
       if (button.dataset.action === 'share') {
         const message = await shareAnswer(messageElement);
         if (message) flashActionStatus(controls, message);
-        track('librarian.answer_share', message === 'Shared' ? 'native' : message === 'Rich text copied' ? 'rich' : message === 'Text copied' ? 'plain' : message ? 'error' : 'cancel');
+        track(
+          'librarian.answer_share',
+          message === 'Shared'
+            ? 'native'
+            : message === 'Rich text copied'
+              ? 'rich'
+              : message === 'Text copied'
+                ? 'plain'
+                : message
+                  ? 'error'
+                  : 'cancel'
+        );
       }
     });
     messageElement.appendChild(controls);

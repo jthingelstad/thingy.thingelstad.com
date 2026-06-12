@@ -1,7 +1,8 @@
+// @ts-check
 function userLocalContext() {
   const now = new Date();
   const locale = navigator.language || 'en-US';
-  let timeZone = '';
+  let timeZone;
   try {
     timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
   } catch (error) {
@@ -13,7 +14,8 @@ function userLocalContext() {
   const offset = `${offsetSign}${String(Math.floor(offsetAbs / 60)).padStart(2, '0')}:${String(offsetAbs % 60).padStart(2, '0')}`;
   const localIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}${offset}`;
   const hour = now.getHours();
-  const dayPeriod = hour < 5 ? 'night' : hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : hour < 21 ? 'evening' : 'night';
+  const dayPeriod =
+    hour < 5 ? 'night' : hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : hour < 21 ? 'evening' : 'night';
   const localDate = new Intl.DateTimeFormat(locale, {
     weekday: 'long',
     month: 'long',

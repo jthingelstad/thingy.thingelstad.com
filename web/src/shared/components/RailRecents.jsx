@@ -1,14 +1,10 @@
 import { render } from 'preact';
 import { iconSvg } from '../thingy-icons.js';
 import { modeClass, modeIcon } from '../thingy-modes.js';
-import {
-  activeConversationId,
-  availableModes,
-  conversations
-} from '../stores/chat-store.js';
+import { activeConversationId, availableModes, conversations } from '../stores/chat-store.js';
 
 const DEFAULT_MAX_RECENTS = 20;
-const EMPTY_LABEL = "Your conversations sync with Thingy. Start one and it’ll show up here.";
+const EMPTY_LABEL = 'Your conversations sync with Thingy. Start one and it’ll show up here.';
 
 function labelForMode(modes, id) {
   return modes.find((mode) => mode.id === id)?.label || 'Thingy';
@@ -19,11 +15,7 @@ function RecentRow({ entry, modes, isActive, onOpen, onDelete }) {
   const title = entry.title || 'Untitled chat';
   const showMode = Boolean(entry.mode && entry.mode !== 'thingy');
   const modeText = showMode ? labelForMode(modes, entry.mode) : '';
-  const rowClass = [
-    'rail-recent',
-    isActive ? 'is-active' : '',
-    showMode ? 'has-mode' : ''
-  ].filter(Boolean).join(' ');
+  const rowClass = ['rail-recent', isActive ? 'is-active' : '', showMode ? 'has-mode' : ''].filter(Boolean).join(' ');
   const buttonTitle = showMode ? `${title} - ${modeText}` : title;
   return (
     <div class={rowClass} data-mode={showMode ? modeClass(entry.mode) : undefined} role="listitem">
@@ -57,9 +49,7 @@ function RecentRow({ entry, modes, isActive, onOpen, onDelete }) {
 }
 
 function RailRecents({ maxRecents = DEFAULT_MAX_RECENTS, onOpen, onDelete }) {
-  const list = conversations.value
-    .filter((entry) => entry && entry.id)
-    .slice(0, maxRecents);
+  const list = conversations.value.filter((entry) => entry && entry.id).slice(0, maxRecents);
   const modes = availableModes.value;
   const activeId = activeConversationId.value;
 

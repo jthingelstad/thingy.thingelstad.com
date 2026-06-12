@@ -1,37 +1,42 @@
+// @ts-check
 function nowIso() {
   return new Date().toISOString();
 }
 
 function stageLabel(value) {
-  return {
-    empty: 'Draft',
-    shaping: 'Shaping',
-    needs_clarification: 'Clarify',
-    ready: 'Ready',
-    upgrade: 'Ready',
-    queued: 'Queued',
-    generating: 'Generating',
-    ready_to_send: 'Sending',
-    sending: 'Sending',
-    sent: 'Sent',
-    failed: 'Failed'
-  }[value] || 'Draft';
+  return (
+    {
+      empty: 'Draft',
+      shaping: 'Shaping',
+      needs_clarification: 'Clarify',
+      ready: 'Ready',
+      upgrade: 'Ready',
+      queued: 'Queued',
+      generating: 'Generating',
+      ready_to_send: 'Sending',
+      sending: 'Sending',
+      sent: 'Sent',
+      failed: 'Failed'
+    }[value] || 'Draft'
+  );
 }
 
 function stageIcon(value) {
-  return {
-    empty: 'file-pen',
-    shaping: 'wand-sparkles',
-    needs_clarification: 'circle-help',
-    ready: 'circle-check',
-    upgrade: 'circle-check',
-    queued: 'clock',
-    generating: 'loader-circle',
-    ready_to_send: 'clock',
-    sending: 'send-horizontal',
-    sent: 'check-check',
-    failed: 'triangle-alert'
-  }[value] || 'file-pen';
+  return (
+    {
+      empty: 'file-pen',
+      shaping: 'wand-sparkles',
+      needs_clarification: 'circle-help',
+      ready: 'circle-check',
+      upgrade: 'circle-check',
+      queued: 'clock',
+      generating: 'loader-circle',
+      ready_to_send: 'clock',
+      sending: 'send-horizontal',
+      sent: 'check-check',
+      failed: 'triangle-alert'
+    }[value] || 'file-pen'
+  );
 }
 
 function normalizeDraft(raw) {
@@ -67,11 +72,9 @@ function serverDispatchId(draft) {
 function hasDraftContent(draft, welcomeText = '') {
   if (!draft) return false;
   if (draft.prompt || draft.direction || draft.currentQuestion || draft.clarificationAnswer) return true;
-  return (draft.messages || []).some((message) => (
-    String(message.text || '')
-    && message.text !== welcomeText
-    && message.kind !== 'welcome'
-  ));
+  return (draft.messages || []).some(
+    (message) => String(message.text || '') && message.text !== welcomeText && message.kind !== 'welcome'
+  );
 }
 
 function draftStageFromRow(row) {
@@ -91,7 +94,12 @@ function fallbackMessagesForRow(row, welcomeText = '') {
     return [{ role: 'assistant', text: row.error || 'Dispatch failed while generating.' }];
   }
   if (row.direction) {
-    return [{ role: 'assistant', text: `Here is the Dispatch I am ready to generate:\n\n${row.direction}\n\nIf this is right, use Generate Dispatch. If you want to steer it, send me the adjustment.` }];
+    return [
+      {
+        role: 'assistant',
+        text: `Here is the Dispatch I am ready to generate:\n\n${row.direction}\n\nIf this is right, use Generate Dispatch. If you want to steer it, send me the adjustment.`
+      }
+    ];
   }
   return [{ role: 'assistant', text: welcomeText, kind: 'welcome' }];
 }
@@ -115,11 +123,4 @@ function draftFromServerRow(row, welcomeText = '') {
   });
 }
 
-export {
-  draftFromServerRow,
-  hasDraftContent,
-  normalizeDraft,
-  serverDispatchId,
-  stageIcon,
-  stageLabel
-};
+export { draftFromServerRow, hasDraftContent, normalizeDraft, serverDispatchId, stageIcon, stageLabel };

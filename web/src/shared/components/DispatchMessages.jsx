@@ -18,7 +18,14 @@ function DispatchMessage({ message, index, elapsedLabel = '' }) {
   const html = renderMarkdown(message.text || '');
   const kind = message.kind ? ` is-${String(message.kind).replace(/[^a-z0-9_-]/gi, '')}` : '';
   const status = String(message.status || '').trim();
-  const statusIcon = status === 'complete' ? 'check' : status === 'failed' ? 'triangle-alert' : status === 'waiting' ? 'circle-help' : 'loader-circle';
+  const statusIcon =
+    status === 'complete'
+      ? 'check'
+      : status === 'failed'
+        ? 'triangle-alert'
+        : status === 'waiting'
+          ? 'circle-help'
+          : 'loader-circle';
   if (message.kind === 'progress') {
     const parts = splitProgressHtml(html);
     return (
@@ -37,9 +44,13 @@ function DispatchMessage({ message, index, elapsedLabel = '' }) {
         <div class="dispatch-message-progress-body">
           <div class="dispatch-message-progress-line">
             <div class="dispatch-message-progress-lead" dangerouslySetInnerHTML={{ __html: parts.lead }} />
-            {elapsedLabel ? <span class="librarian-elapsed dispatch-message-progress-elapsed">{elapsedLabel}</span> : null}
+            {elapsedLabel ? (
+              <span class="librarian-elapsed dispatch-message-progress-elapsed">{elapsedLabel}</span>
+            ) : null}
           </div>
-          {parts.rest ? <div class="dispatch-message-progress-detail" dangerouslySetInnerHTML={{ __html: parts.rest }} /> : null}
+          {parts.rest ? (
+            <div class="dispatch-message-progress-detail" dangerouslySetInnerHTML={{ __html: parts.rest }} />
+          ) : null}
         </div>
       </article>
     );
@@ -91,9 +102,11 @@ function DispatchMessages({ scrollContainer, track = () => {} }) {
     if (scroll) scroll.scrollTop = scroll.scrollHeight;
   }, [messages, scrollContainer]);
 
-  const activeProgressIndex = messages.reduce((latest, message, index) => (
-    message.kind === 'progress' && String(message.status || 'pending') === 'pending' ? index : latest
-  ), -1);
+  const activeProgressIndex = messages.reduce(
+    (latest, message, index) =>
+      message.kind === 'progress' && String(message.status || 'pending') === 'pending' ? index : latest,
+    -1
+  );
 
   useEffect(() => {
     if (activeProgressIndex < 0) return undefined;
@@ -107,9 +120,8 @@ function DispatchMessages({ scrollContainer, track = () => {} }) {
     <div ref={ref} class="dispatch-messages-list">
       {messages.map((message, index) => {
         const startedAt = Number(message.startedAt || 0);
-        const elapsedLabel = index === activeProgressIndex && startedAt
-          ? formatElapsedTime((nowMs - startedAt) / 1000)
-          : '';
+        const elapsedLabel =
+          index === activeProgressIndex && startedAt ? formatElapsedTime((nowMs - startedAt) / 1000) : '';
         return (
           <DispatchMessage
             key={String(message.id || index)}

@@ -4,7 +4,7 @@ import test from 'node:test';
 function storage() {
   const values = new Map();
   return {
-    getItem: (key) => values.has(key) ? values.get(key) : null,
+    getItem: (key) => (values.has(key) ? values.get(key) : null),
     removeItem: (key) => values.delete(key),
     setItem: (key, value) => values.set(key, String(value))
   };
@@ -13,14 +13,14 @@ global.window = global.window || {};
 global.window.localStorage = storage();
 
 const { chatState, createChatActions } = await import('../src/shared/thingy-chat-actions.js');
-const {
-  activeConversationId,
-  conversations
-} = await import('../src/shared/stores/chat-store.js');
+const { activeConversationId, conversations } = await import('../src/shared/stores/chat-store.js');
 
 function fakeSession(overrides = {}) {
   return {
-    normalizeEmail: (value) => String(value || '').trim().toLowerCase(),
+    normalizeEmail: (value) =>
+      String(value || '')
+        .trim()
+        .toLowerCase(),
     token: () => 'tok',
     tokenExpired: () => false,
     tokenNeedsRefresh: () => false,
@@ -51,7 +51,9 @@ function freshActions(overrides = {}) {
 test('createLocalConversationShell notifies the conversations signal', () => {
   const actions = freshActions();
   let notifications = 0;
-  const unsubscribe = conversations.subscribe(() => { notifications += 1; });
+  const unsubscribe = conversations.subscribe(() => {
+    notifications += 1;
+  });
   const before = notifications;
   const shell = actions.createLocalConversationShell('thingy');
   unsubscribe();
@@ -66,7 +68,9 @@ test('renameConversation (local) replaces the entry immutably and notifies', asy
   const shell = actions.createLocalConversationShell('thingy');
   const originalEntry = chatState.conversations[0];
   let notifications = 0;
-  const unsubscribe = conversations.subscribe(() => { notifications += 1; });
+  const unsubscribe = conversations.subscribe(() => {
+    notifications += 1;
+  });
   const before = notifications;
   const ok = await actions.renameConversation(shell.id, 'My renamed chat');
   unsubscribe();
@@ -124,7 +128,11 @@ test('upsertPendingConversation replaces the active local shell with the server 
     mode: 'thingy'
   });
   assert.equal(chatState.activeConversationId, 'srv-9');
-  assert.equal(chatState.conversations.some((entry) => entry.id === shell.id), false, 'local shell replaced');
+  assert.equal(
+    chatState.conversations.some((entry) => entry.id === shell.id),
+    false,
+    'local shell replaced'
+  );
   const entry = chatState.conversations.find((e) => e.id === 'srv-9');
   assert.equal(entry.title, 'What about RSS?');
   assert.equal(entry.draft, false);

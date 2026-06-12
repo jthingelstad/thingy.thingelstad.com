@@ -45,7 +45,8 @@ import {
   signedIn as signedInSignal
 } from './stores/ui-store.js';
 
-const EMAIL_RE = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+const EMAIL_RE =
+  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
 // Signals are the source of truth for chat state. `chatState` is a
 // setter-backed proxy: writing `chatState.conversations = [...]` notifies
@@ -53,24 +54,27 @@ const EMAIL_RE = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{
 // current value. Entries held by the conversations signal are treated as
 // immutable — updating one means reassigning with a new array and a new
 // entry object, otherwise subscribers never re-render.
-const chatState = new Proxy({}, {
-  get(_, prop) {
-    if (prop === 'conversations') return conversationsSignal.value;
-    if (prop === 'activeConversationId') return activeConversationIdSignal.value;
-    if (prop === 'availableModes') return availableModesSignal.value;
-    if (prop === 'activeMode') return activeModeSignal.value;
-    if (prop === 'preferredName') return displayPreferredNameSignal.value;
-    return undefined;
-  },
-  set(_, prop, value) {
-    if (prop === 'conversations') conversationsSignal.value = value;
-    else if (prop === 'activeConversationId') activeConversationIdSignal.value = value;
-    else if (prop === 'availableModes') availableModesSignal.value = value;
-    else if (prop === 'activeMode') activeModeSignal.value = value;
-    else if (prop === 'preferredName') displayPreferredNameSignal.value = value;
-    return true;
+const chatState = new Proxy(
+  {},
+  {
+    get(_, prop) {
+      if (prop === 'conversations') return conversationsSignal.value;
+      if (prop === 'activeConversationId') return activeConversationIdSignal.value;
+      if (prop === 'availableModes') return availableModesSignal.value;
+      if (prop === 'activeMode') return activeModeSignal.value;
+      if (prop === 'preferredName') return displayPreferredNameSignal.value;
+      return undefined;
+    },
+    set(_, prop, value) {
+      if (prop === 'conversations') conversationsSignal.value = value;
+      else if (prop === 'activeConversationId') activeConversationIdSignal.value = value;
+      else if (prop === 'availableModes') availableModesSignal.value = value;
+      else if (prop === 'activeMode') activeModeSignal.value = value;
+      else if (prop === 'preferredName') displayPreferredNameSignal.value = value;
+      return true;
+    }
   }
-});
+);
 
 function createChatActions(options = {}) {
   const session = options.session || defaultSession;
@@ -83,7 +87,8 @@ function createChatActions(options = {}) {
   const scheduleChatScroll = typeof ui.scheduleChatScroll === 'function' ? ui.scheduleChatScroll : () => {};
   const track = typeof ui.track === 'function' ? ui.track : () => {};
   const onModesChanged = typeof ui.onModesChanged === 'function' ? ui.onModesChanged : () => {};
-  const onActiveConversationChanged = typeof ui.onActiveConversationChanged === 'function' ? ui.onActiveConversationChanged : () => {};
+  const onActiveConversationChanged =
+    typeof ui.onActiveConversationChanged === 'function' ? ui.onActiveConversationChanged : () => {};
   const onQuestionStateChanged = typeof ui.onQuestionStateChanged === 'function' ? ui.onQuestionStateChanged : () => {};
   const onAuthenticated = typeof ui.onAuthenticated === 'function' ? ui.onAuthenticated : () => {};
   const onAuthCleared = typeof ui.onAuthCleared === 'function' ? ui.onAuthCleared : () => {};
@@ -220,10 +225,9 @@ function createChatActions(options = {}) {
     if (!opts.force && now - accountProfileRefreshAt < 30000) return false;
     if (accountProfileRefreshPromise) return accountProfileRefreshPromise;
     accountProfileRefreshAt = now;
-    accountProfileRefreshPromise = refreshStoredAuth({ track: false })
-      .finally(() => {
-        accountProfileRefreshPromise = null;
-      });
+    accountProfileRefreshPromise = refreshStoredAuth({ track: false }).finally(() => {
+      accountProfileRefreshPromise = null;
+    });
     return accountProfileRefreshPromise;
   }
 
@@ -231,7 +235,7 @@ function createChatActions(options = {}) {
     if (!token()) return false;
     if (!tokenExpired() && !tokenNeedsRefresh()) return true;
     const refreshable = tokenNeedsRefresh();
-    if (refreshable && await refreshStoredAuth()) return true;
+    if (refreshable && (await refreshStoredAuth())) return true;
     redirectToSignIn();
     track(refreshable ? 'librarian.auth_refresh_error' : 'librarian.session_expired');
     return false;
@@ -260,14 +264,20 @@ function createChatActions(options = {}) {
 
   function handleAuthResponse(data, opts = {}) {
     return handleAuthResponseStatus(data, {
-      hideActions: () => { authActionSignal.value = 'none'; },
+      hideActions: () => {
+        authActionSignal.value = 'none';
+      },
       onToken: (authData) => {
         persistToken(authData.token, authData);
         authActionSignal.value = 'none';
         onAuthenticated(authData, opts);
       },
-      setMessage: (message) => { authMessageSignal.value = message || ''; },
-      showAction: (action) => { authActionSignal.value = action || 'none'; },
+      setMessage: (message) => {
+        authMessageSignal.value = message || '';
+      },
+      showAction: (action) => {
+        authActionSignal.value = action || 'none';
+      },
       track
     });
   }
@@ -277,7 +287,8 @@ function createChatActions(options = {}) {
     const generation = authRequestGeneration;
     authBusySignal.value = true;
     authActionSignal.value = 'none';
-    authMessageSignal.value = action === 'subscribe' ? 'Adding you to the Weekly Thing...' : 'Sending the confirmation email...';
+    authMessageSignal.value =
+      action === 'subscribe' ? 'Adding you to the Weekly Thing...' : 'Sending the confirmation email...';
     try {
       const payload = { email: String(authEmailSignal.value || ''), action, source: 'thingy' };
       const data = await session.postJson('/auth', payload);
@@ -299,7 +310,11 @@ function createChatActions(options = {}) {
     authActionSignal.value = 'none';
     authMessageSignal.value = 'Sending a sign-in link...';
     try {
-      const data = await session.postJson('/auth', { email: String(authEmailSignal.value || '').trim(), action: 'check', source: 'thingy' });
+      const data = await session.postJson('/auth', {
+        email: String(authEmailSignal.value || '').trim(),
+        action: 'check',
+        source: 'thingy'
+      });
       if (generation !== authRequestGeneration) return false;
       handleAuthResponse(data, opts);
       if (opts.scrubEmailParam) scrubUrlParams(['email']);
@@ -339,7 +354,11 @@ function createChatActions(options = {}) {
 
   function activeConversation() {
     if (!state.activeConversationId) return null;
-    return state.conversations.find((entry) => entry.id === state.activeConversationId || entry.conversation_id === state.activeConversationId) || null;
+    return (
+      state.conversations.find(
+        (entry) => entry.id === state.activeConversationId || entry.conversation_id === state.activeConversationId
+      ) || null
+    );
   }
 
   function currentConversationMode() {
@@ -360,7 +379,9 @@ function createChatActions(options = {}) {
       } else {
         window.localStorage.removeItem(activeConvKey);
       }
-    } catch (error) { /* ignore */ }
+    } catch (error) {
+      /* ignore */
+    }
     onActiveConversationChanged();
     return state.activeConversationId;
   }
@@ -405,7 +426,9 @@ function createChatActions(options = {}) {
       labelForMode: modeLabel
     });
     const withoutDrafts = state.conversations.filter((entry) => !isEmptyConversationDraft(entry, normalized));
-    state.conversations = dedupeEmptyConversationDrafts([shell, ...withoutDrafts], { activeConversationId: shell.id }).slice(0, maxRecents);
+    state.conversations = dedupeEmptyConversationDrafts([shell, ...withoutDrafts], {
+      activeConversationId: shell.id
+    }).slice(0, maxRecents);
     setActiveConversation(shell.id);
     return shell;
   }
@@ -422,7 +445,11 @@ function createChatActions(options = {}) {
     state.conversations = result.conversations;
     if (result.activeConversationId && result.activeConversationId !== state.activeConversationId) {
       state.activeConversationId = result.activeConversationId;
-      try { window.localStorage.setItem(activeConvKey, state.activeConversationId); } catch (error) { /* ignore */ }
+      try {
+        window.localStorage.setItem(activeConvKey, state.activeConversationId);
+      } catch (error) {
+        /* ignore */
+      }
     }
     onActiveConversationChanged();
   }
@@ -447,19 +474,22 @@ function createChatActions(options = {}) {
       });
       return;
     }
-    upsertConversationSummary({
-      id,
-      conversation_id: id,
-      title: title || 'New chat',
-      preview: title || '',
-      scope: scope || currentScope(),
-      mode: normalizeModeId(mode || currentConversationMode()),
-      created_at: now,
-      updated_at: now,
-      last_message_at: now,
-      turn_count: 0,
-      draft: false
-    }, { replaceId });
+    upsertConversationSummary(
+      {
+        id,
+        conversation_id: id,
+        title: title || 'New chat',
+        preview: title || '',
+        scope: scope || currentScope(),
+        mode: normalizeModeId(mode || currentConversationMode()),
+        created_at: now,
+        updated_at: now,
+        last_message_at: now,
+        turn_count: 0,
+        draft: false
+      },
+      { replaceId }
+    );
   }
 
   async function createConversationShellForMode(mode, opts = {}) {
@@ -480,9 +510,12 @@ function createChatActions(options = {}) {
         scope: currentScope()
       });
       if (data.conversation) {
-        upsertConversationSummary({ ...data.conversation, draft: true }, {
-          replaceId: isLocalConversationId(replaceId) ? replaceId : ''
-        });
+        upsertConversationSummary(
+          { ...data.conversation, draft: true },
+          {
+            replaceId: isLocalConversationId(replaceId) ? replaceId : ''
+          }
+        );
         setActiveConversation(data.conversation.id || data.conversation.conversation_id);
         return data.conversation;
       }
@@ -516,18 +549,23 @@ function createChatActions(options = {}) {
         if (!entry?.id) return false;
         return isLocalConversationId(entry.id) || entry.id === state.activeConversationId;
       });
-      const serverConversations = (data.conversations || []).map((entry) => ({
-        ...entry,
-        id: entry.id || entry.conversation_id,
-        local: false
-      })).filter((entry) => entry.id)
+      const serverConversations = (data.conversations || [])
+        .map((entry) => ({
+          ...entry,
+          id: entry.id || entry.conversation_id,
+          local: false
+        }))
+        .filter((entry) => entry.id)
         // Dispatch planning conversations belong to the /dispatch/ surface.
         .filter((entry) => String(entry.mode || '') !== 'dispatch');
       const serverIds = new Set(serverConversations.map((entry) => entry.id));
-      const keptClientShells = clientActiveShells.filter((entry) => entry.id === state.activeConversationId && !serverIds.has(entry.id));
+      const keptClientShells = clientActiveShells.filter(
+        (entry) => entry.id === state.activeConversationId && !serverIds.has(entry.id)
+      );
       state.conversations = dedupeEmptyConversationDrafts(
-        [...keptClientShells, ...serverConversations]
-          .sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))
+        [...keptClientShells, ...serverConversations].sort((a, b) =>
+          String(b.updated_at || '').localeCompare(String(a.updated_at || ''))
+        )
       ).slice(0, maxRecents);
       if (state.activeConversationId && !state.conversations.some((entry) => entry.id === state.activeConversationId)) {
         setActiveConversation('');
@@ -535,7 +573,7 @@ function createChatActions(options = {}) {
       onActiveConversationChanged();
       return state.conversations;
     } catch (error) {
-      if (opts.retryAuth !== false && isAuthError(error) && await refreshStoredAuth()) {
+      if (opts.retryAuth !== false && isAuthError(error) && (await refreshStoredAuth())) {
         return refreshConversations({ retryAuth: false });
       }
       track('librarian.conversations_error', 'list');
@@ -554,11 +592,9 @@ function createChatActions(options = {}) {
     const trimmed = String(title || '').trim();
     if (!trimmed) return false;
     if (isLocalConversationId(id)) {
-      state.conversations = state.conversations.map((entry) => (
-        entry.id === id
-          ? { ...entry, title: trimmed, draft: false, updated_at: new Date().toISOString() }
-          : entry
-      ));
+      state.conversations = state.conversations.map((entry) =>
+        entry.id === id ? { ...entry, title: trimmed, draft: false, updated_at: new Date().toISOString() } : entry
+      );
       onActiveConversationChanged();
       return true;
     }
@@ -582,13 +618,19 @@ function createChatActions(options = {}) {
     if (!conversationId) return { ok: false, wasActive: false };
     const wasActive = conversationId === state.activeConversationId;
     if (isLocalConversationId(conversationId)) {
-      ({ conversations: state.conversations, activeConversationId: state.activeConversationId } = deleteConversationSummaryList(state.conversations, conversationId, { activeConversationId: state.activeConversationId }));
+      ({ conversations: state.conversations, activeConversationId: state.activeConversationId } =
+        deleteConversationSummaryList(state.conversations, conversationId, {
+          activeConversationId: state.activeConversationId
+        }));
       onActiveConversationChanged();
       return { ok: true, wasActive };
     }
     try {
       await conversationAction({ action: 'delete', conversation_id: conversationId });
-      ({ conversations: state.conversations, activeConversationId: state.activeConversationId } = deleteConversationSummaryList(state.conversations, conversationId, { activeConversationId: state.activeConversationId }));
+      ({ conversations: state.conversations, activeConversationId: state.activeConversationId } =
+        deleteConversationSummaryList(state.conversations, conversationId, {
+          activeConversationId: state.activeConversationId
+        }));
       onActiveConversationChanged();
       return { ok: true, wasActive };
     } catch (error) {
@@ -637,7 +679,7 @@ function createChatActions(options = {}) {
     }
 
     let requestId = '';
-    let conversationId = isLocalConversationId(state.activeConversationId) ? '' : (state.activeConversationId || '');
+    let conversationId = isLocalConversationId(state.activeConversationId) ? '' : state.activeConversationId || '';
     let conversation = null;
     chatStopRequested = false;
     chatAbortController = new AbortController();
@@ -666,7 +708,15 @@ function createChatActions(options = {}) {
     } catch (error) {
       if (chatStopRequested) {
         model.status.value = 'stopped';
-        return { answer: '', citations: [], experience: null, stopped: true, request_id: '', conversation_id: conversationId, conversation: null };
+        return {
+          answer: '',
+          citations: [],
+          experience: null,
+          stopped: true,
+          request_id: '',
+          conversation_id: conversationId,
+          conversation: null
+        };
       }
       throw error;
     }

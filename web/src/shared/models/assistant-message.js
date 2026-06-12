@@ -1,3 +1,4 @@
+// @ts-check
 // One assistant message's reactive state. Each running answer has its own
 // model; the stream renderer writes deltas into the model's signals, and the
 // AssistantMessage component subscribes to render. Activity, citations, and

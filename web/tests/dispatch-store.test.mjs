@@ -31,7 +31,10 @@ test('dispatch signals are independently mutable', () => {
   activeDraftId.value = 'a';
   dispatchStatusMessage.value = 'Ready';
   dispatchStatusKind.value = 'success';
-  assert.deepEqual(drafts.value.map((d) => d.id), ['a']);
+  assert.deepEqual(
+    drafts.value.map((d) => d.id),
+    ['a']
+  );
   assert.equal(activeDraftId.value, 'a');
   assert.equal(dispatchStatusMessage.value, 'Ready');
   assert.equal(dispatchStatusKind.value, 'success');

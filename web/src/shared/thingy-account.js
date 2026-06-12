@@ -1,3 +1,4 @@
+// @ts-check
 // Pure account-identity helpers reused by the AccountMenu component, the
 // chat bootstrap (for preferred-name inference from messages), and the
 // Discord verification page. The previous createAccountPanel /
@@ -6,16 +7,13 @@
 
 function hasSupportingAccess(profile = {}) {
   const entitlements = Array.isArray(profile.entitlements) ? profile.entitlements : [];
-  return Boolean(profile.supporting_member || entitlements.includes('supporting_member') || entitlements.includes('owner'));
+  return Boolean(
+    profile.supporting_member || entitlements.includes('supporting_member') || entitlements.includes('owner')
+  );
 }
 
 function discordConnection(profile = {}) {
-  const candidates = [
-    profile.discord_connection,
-    profile.discordConnection,
-    profile.discord_user,
-    profile.discordUser
-  ];
+  const candidates = [profile.discord_connection, profile.discordConnection, profile.discord_user, profile.discordUser];
   const connection = candidates.find((value) => value && typeof value === 'object') || null;
   if (!connection || connection.connected === false) return null;
   const username = String(connection.username || connection.user_name || '').trim();
@@ -37,7 +35,10 @@ function discordConnectionName(profile = {}) {
 }
 
 function normalizePreferredName(value) {
-  const candidate = String(value || '').trim().replace(/[.!]+$/, '').replace(/\s+/g, ' ');
+  const candidate = String(value || '')
+    .trim()
+    .replace(/[.!]+$/, '')
+    .replace(/\s+/g, ' ');
   if (!/^[a-z][a-z .'’-]{0,78}$/i.test(candidate)) return '';
   const words = candidate.split(/\s+/).filter(Boolean);
   if (words.length < 1 || words.length > 4) return '';
@@ -56,7 +57,11 @@ function extractPreferredNameFromMessage(message) {
 async function savePreferredName(session, name, normalizeName = normalizePreferredName) {
   const nextName = normalizeName(name);
   if (!nextName) throw new Error('Enter a name Thingy should use.');
-  const data = await session.postJson('/auth', { action: 'update_profile', preferred_name: nextName }, session.authHeaders());
+  const data = await session.postJson(
+    '/auth',
+    { action: 'update_profile', preferred_name: nextName },
+    session.authHeaders()
+  );
   const savedName = String(data?.profile?.preferred_name || '').trim();
   if (savedName.toLowerCase() !== nextName.toLowerCase()) {
     throw new Error('Thingy could not confirm that name was saved. Please try again.');

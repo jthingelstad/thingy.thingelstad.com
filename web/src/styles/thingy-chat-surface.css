@@ -38,7 +38,7 @@
   width: min(100%, 14rem);
   height: auto;
   justify-self: end;
-  filter: drop-shadow(0 20px 34px rgba(23, 33, 31, 0.16));
+  filter: drop-shadow(0 20px 34px rgb(23 33 31 / 16%));
 }
 
 .thingy-chat-welcome-copy {
@@ -118,7 +118,7 @@
   bottom: 0;
   padding: 8px clamp(18px, 5vw, 72px) 24px;
   background:
-    linear-gradient(180deg, rgba(246, 248, 245, 0), var(--bg) 24%, var(--bg));
+    linear-gradient(180deg, rgb(246 248 245 / 0%), var(--bg) 24%, var(--bg));
   z-index: 20;
 }
 
@@ -173,8 +173,8 @@
   border-radius: 28px;
   background: color-mix(in srgb, var(--surface) 94%, var(--ink) 6%);
   box-shadow:
-    0 18px 50px rgba(23, 33, 31, 0.16),
-    0 2px 8px rgba(23, 33, 31, 0.08);
+    0 18px 50px rgb(23 33 31 / 16%),
+    0 2px 8px rgb(23 33 31 / 8%);
   transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
 }
 
@@ -182,7 +182,7 @@
   border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
   background: var(--surface);
   box-shadow:
-    0 20px 54px rgba(23, 33, 31, 0.18),
+    0 20px 54px rgb(23 33 31 / 18%),
     0 0 0 2px color-mix(in srgb, var(--accent-soft) 58%, transparent);
 }
 
@@ -200,8 +200,7 @@
 .librarian-question-form {
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-rows: minmax(2.7rem, auto) 2.3rem;
-  column-gap: 10px;
-  row-gap: 2px;
+  gap: 2px 10px;
   align-items: end;
 }
 
@@ -264,7 +263,7 @@
   width: 18px;
   height: 18px;
   fill: none;
-  stroke: currentColor;
+  stroke: currentcolor;
   stroke-width: 2.2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -320,7 +319,7 @@
   width: 16px;
   height: 16px;
   fill: none;
-  stroke: currentColor;
+  stroke: currentcolor;
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -331,7 +330,7 @@
   margin-left: 6px;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .thingy-chat-scroll {
     padding-top: 24px;
   }
