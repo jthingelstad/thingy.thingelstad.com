@@ -36,6 +36,6 @@
   "dependencies": {
     "@preact/signals": "^2.9.2",
     "lucide-static": "^1.21.0",
-    "preact": "^10.29.2"
+    "preact": "^10.29.3"
   }
 }
