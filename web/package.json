@@ -27,7 +27,7 @@
     "globals": "^17.6.0",
     "knip": "^6.17.1",
     "playwright": "^1.61.1",
-    "prettier": "^3.8.4",
+    "prettier": "^3.8.5",
     "stylelint": "^17.13.0",
     "stylelint-config-standard": "^40.0.0",
     "typescript": "^6.0.3",
