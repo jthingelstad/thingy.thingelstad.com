@@ -20,6 +20,10 @@ product direction.
   commands, but it is not the right home for nuanced, multi-conversation user experience.
 - **The backend stays authoritative.** Auth, entitlements, conversation history, evaluation, tools, and
   corpus intelligence live in Studio/Librarian. This repo is the thin web surface and bridge client.
+- **Durable source metadata over prompt cleverness.** Retrieval quality comes from the corpus and its
+  link graph, not from ever-longer prompts.
+- **Server-side conversations are the canonical record.** The client never owns history.
+- **Operator review is asynchronous.** Discord is for notifications; it is never in the user request path.
 
 ## Shipped
 
@@ -138,6 +142,27 @@ the material itself.
 If private material is ever introduced, it should be treated as a separate product decision with explicit
 visibility guarantees, tests, and operator reporting. It should not sneak in as an implementation detail
 of Thought Partner.
+
+## Near-Term Direction
+
+- **Mode rollout and permissions**: finish the operational path for granting Trusted Circle access
+  through Buttondown tags and make the operator report clearly surface mode usage.
+- **Better operator dashboard**: keep Discord webhooks as notifications, but move deeper review to a
+  local/web operator interface grounded in server-side conversations.
+- **Corpus freshness observability**: make it obvious when the API corpus was last built from each
+  source and whether new blog/podcast content has landed.
+- **Citation discipline**: keep improving evaluator checks for citation-footer mismatches,
+  retrospective evidence mislabeled as contemporaneous, and title-only recommendations.
+- **Runtime resilience**: continue improving timeout handling, partial-answer handling, and evaluator
+  interpretation of runtime exhaustion.
+- **Browser QA discipline**: keep mobile/tablet/desktop interaction tests for rail, mode selection,
+  conversations, curiosity maps, source picker, and input controls.
+- **Corpus coverage dashboard** (idea): show source counts, freshness, link graph health, missing
+  transcript/post metadata, and source-specific search quality checks.
+- **Deeper feedback loop** (idea): let downvote comments and eval notes become a structured
+  improvement queue, not just passive metadata.
+
+Backend/API follow-ups implementing these live in the Studio repo's `docs/librarian-tasks.md`.
 
 ## Intelligence Roadmap
 

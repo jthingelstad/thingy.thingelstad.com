@@ -1,6 +1,6 @@
 # Thingy Tasks
 
-Concrete follow-ups for the web surface and bridge. Backend/API tasks live in the Studio repo's `TASKS.md`.
+Concrete follow-ups for the web surface and bridge. Backend/API tasks live in the Studio repo's `docs/librarian-tasks.md`.
 
 ## Access And Modes
 
@@ -27,5 +27,5 @@ Concrete follow-ups for the web surface and bridge. Backend/API tasks live in th
 
 ## Docs
 
-- [ ] Keep this repo's `docs/ROADMAP.md` aligned with Studio's `ROADMAP.md` and `reference/librarian.md` when backend capabilities change.
+- [ ] Keep this repo's `docs/ROADMAP.md` (the single Thingy product roadmap) aligned with Studio's `docs/librarian-tasks.md` and `reference/librarian.md` when backend capabilities change.
 - [ ] Keep URL parameter docs aligned with `web/vite.config.js` and the route HTML files in `web/`.
