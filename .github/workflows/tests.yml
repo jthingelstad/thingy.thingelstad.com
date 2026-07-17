@@ -1,34 +1,23 @@
-name: tests
+name: Bridge tests
 
 on:
   push:
     branches: [main]
-  pull_request:
+    paths:
+      - 'apps/thingy_bridge/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - '.python-version'
+      - '.github/workflows/tests.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  web:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "24"
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-      - run: npm ci
-      - name: Lint
-        run: npm run lint
-      - name: Tests
-        run: npm test
-
   bridge:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
@@ -40,5 +29,9 @@ jobs:
         run: uv run --locked ruff check apps/thingy_bridge
       - name: Format
         run: uv run --locked ruff format --check apps/thingy_bridge
+      - name: Audit locked dependencies
+        run: |
+          uv export --locked --no-dev --no-emit-project --format requirements-txt > /tmp/requirements.txt
+          uvx --from pip-audit==2.10.1 pip-audit --requirement /tmp/requirements.txt --disable-pip
       - name: Tests
         run: uv run --locked pytest apps/thingy_bridge/tests/ -q

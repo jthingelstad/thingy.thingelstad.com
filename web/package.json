@@ -4,6 +4,9 @@
   "private": true,
   "description": "Standalone Thingy web app — thin client of the Librarian API.",
   "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
   "scripts": {
     "build": "vite build",
     "serve": "vite --host 0.0.0.0",
@@ -34,8 +37,8 @@
     "vite": "^8.1.5"
   },
   "dependencies": {
-    "@preact/signals": "^2.9.2",
+    "@preact/signals": "^2.9.4",
     "lucide-static": "^1.25.0",
-    "preact": "^10.29.3"
+    "preact": "^10.29.7"
   }
 }

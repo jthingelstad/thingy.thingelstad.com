@@ -21,6 +21,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: web
@@ -29,11 +30,13 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version-file: 'web/.node-version'
           cache: 'npm'
           cache-dependency-path: web/package-lock.json
 
       - run: npm ci
+
+      - run: npm audit --audit-level=high
 
       - run: npx playwright install --with-deps chromium
 
@@ -64,7 +67,7 @@ jobs:
           npx vite preview --host 0.0.0.0 --port=8080 > /tmp/thingy-vite-preview.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
-          for attempt in {1..30}; do
+          for _ in {1..30}; do
             if curl -fsS http://localhost:8080/chat/ > /dev/null; then
               break
             fi
@@ -80,6 +83,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       pages: write
       id-token: write
