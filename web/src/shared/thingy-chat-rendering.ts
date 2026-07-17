@@ -1,6 +1,14 @@
 import { escapeHtml, renderMarkdown, safeMarkdownUrl } from './thingy-markdown.ts';
 
-function sourceAccentClass(kind) {
+interface ActivityRenderOptions {
+  commentary?: string[];
+  active?: boolean;
+  label?: string;
+  elapsedLabel?: string;
+  collapsible?: boolean;
+}
+
+function sourceAccentClass(kind: unknown) {
   const normalized = String(kind || '')
     .toLowerCase()
     .replace(/[\s-]+/g, '_');
@@ -11,14 +19,14 @@ function sourceAccentClass(kind) {
   return '';
 }
 
-function experienceIcon(kind) {
+function experienceIcon(kind: string) {
   if (kind === 'spark') {
     return '<svg class="thingy-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v3"></path><path d="M12 18v3"></path><path d="m5.6 5.6 2.1 2.1"></path><path d="m16.3 16.3 2.1 2.1"></path><path d="M3 12h3"></path><path d="M18 12h3"></path><path d="m5.6 18.4 2.1-2.1"></path><path d="m16.3 7.7 2.1-2.1"></path><path d="M12 8l1.2 2.8L16 12l-2.8 1.2L12 16l-1.2-2.8L8 12l2.8-1.2L12 8z"></path></svg>';
   }
   return '<svg class="thingy-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 3v6"></path><path d="M18 3v6"></path><path d="M12 15v6"></path><path d="M6 9h12"></path><path d="M12 15 6 9"></path><path d="m12 15 6-6"></path><rect x="4" y="3" width="4" height="6" rx="1"></rect><rect x="16" y="3" width="4" height="6" rx="1"></rect><rect x="10" y="15" width="4" height="6" rx="1"></rect></svg>';
 }
 
-function renderExperience(experience) {
+function renderExperience(experience: ThingyExperience | null) {
   if (!experience || typeof experience !== 'object') return '';
   const items = Array.isArray(experience.items) ? experience.items.slice(0, 5) : [];
   if (!items.length && !experience.intro) return '';
@@ -60,8 +68,8 @@ function renderExperience(experience) {
     </aside>`;
 }
 
-function curiosityMapPositions(nodes) {
-  const positioned = new Map();
+function curiosityMapPositions(nodes: ThingyCuriosityNode[]) {
+  const positioned = new Map<string, { x: number; y: number; scale: number }>();
   const total = Math.max(nodes.length - 1, 1);
   const compact = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
   nodes.forEach((node, index) => {
@@ -82,7 +90,7 @@ function curiosityMapPositions(nodes) {
   return positioned;
 }
 
-function renderCuriosityMap(map) {
+function renderCuriosityMap(map: ThingyCuriosityMap | null) {
   if (!map || typeof map !== 'object') return '';
   const rawNodes = Array.isArray(map.nodes)
     ? map.nodes.filter((node) => node && node.id && node.label).slice(0, 8)
@@ -99,6 +107,7 @@ function renderCuriosityMap(map) {
     .map((edge) => {
       const from = positions.get(edge.from);
       const to = positions.get(edge.to);
+      if (!from || !to) return '';
       return `<line x1="${from.x}%" y1="${from.y}%" x2="${to.x}%" y2="${to.y}%"></line>`;
     })
     .join('');
@@ -148,11 +157,11 @@ function renderCuriosityMap(map) {
     </aside>`;
 }
 
-function renderAnswer(answer, citations = [], experience = null) {
+function renderAnswer(answer: unknown, citations: ThingyCitation[] = [], experience: ThingyExperience | null = null) {
   return renderMarkdown(answer, citations) + renderExperience(experience);
 }
 
-function humanToolName(value) {
+function humanToolName(value: unknown) {
   return String(value || '')
     .replace(/_/g, ' ')
     .replace(/\s+/g, ' ')
@@ -160,12 +169,12 @@ function humanToolName(value) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function activityMessageFromToolName(value) {
+function activityMessageFromToolName(value: unknown) {
   const name = humanToolName(value);
   return name ? `Checked ${name}` : '';
 }
 
-function normalizeActivityCommentary(value) {
+function normalizeActivityCommentary(value: unknown) {
   return String(value || '')
     .replace(/\r\n?/g, '\n')
     .split(/\n+/)
@@ -181,7 +190,7 @@ function normalizeActivityCommentary(value) {
     .trim();
 }
 
-function normalizeActivityStep(data, fallback = 'Thingy is working...') {
+function normalizeActivityStep(data: ThingyStreamData | string, fallback = 'Thingy is working...') {
   if (typeof data === 'string') return String(data || fallback).trim();
   const toolName = data?.tool_name || data?.toolName || '';
   if (toolName) return activityMessageFromToolName(toolName);
@@ -190,12 +199,18 @@ function normalizeActivityStep(data, fallback = 'Thingy is working...') {
     .replace(/\.\.\.$/, '');
 }
 
-function appendActivityStep(steps, data, fallback) {
+function appendActivityStep(
+  steps: ThingyActivityStep[],
+  data: ThingyStreamData | string,
+  fallback: string
+): ThingyActivityStep[] {
   const label = normalizeActivityStep(data, fallback).replace(/\s+/g, ' ').slice(0, 120);
-  const note = normalizeActivityCommentary(data?.commentary || data?.detail || data?.note || '');
+  const note = normalizeActivityCommentary(
+    typeof data === 'string' ? '' : data.commentary || data.detail || data.note || ''
+  );
   if (!label) return steps;
-  const last = steps[steps.length - 1] || {};
-  if (String(last.label || last).toLowerCase() === label.toLowerCase()) {
+  const last = steps[steps.length - 1];
+  if (last && last.label.toLowerCase() === label.toLowerCase()) {
     if (
       note &&
       !String(last.note || '')
@@ -210,29 +225,22 @@ function appendActivityStep(steps, data, fallback) {
   return steps.slice(-8);
 }
 
-function appendActivityCommentary(items, value) {
+function appendActivityCommentary(items: string[], value: unknown): string[] {
   const text = normalizeActivityCommentary(value);
   if (!text) return items;
   const last = items[items.length - 1];
-  if (!last) return [{ label: 'Thinking through the path', note: text, kind: 'note' }];
-  if (
-    String(last.note || '')
-      .toLowerCase()
-      .includes(text.toLowerCase())
-  )
-    return items;
-  last.note = [last.note, text].filter(Boolean).join('\n\n');
-  return items;
+  if (last?.toLowerCase().includes(text.toLowerCase())) return items;
+  return [...items, text].slice(-8);
 }
 
-function activityStepsFromToolNames(toolNames = []) {
+function activityStepsFromToolNames(toolNames: unknown[] = []): ThingyActivityStep[] {
   return Array.from(new Set((toolNames || []).map(activityMessageFromToolName).filter(Boolean))).map((label) => ({
     label,
     note: ''
   }));
 }
 
-function renderActivityLog(steps = [], options: ThingyOptions = {}) {
+function renderActivityLog(steps: Array<ThingyActivityStep | string> = [], options: ActivityRenderOptions = {}) {
   const commentary = (options.commentary || [])
     .filter(Boolean)
     .map((note) => ({ label: 'Thinking through the path', note, kind: 'note' }));
@@ -241,7 +249,7 @@ function renderActivityLog(steps = [], options: ThingyOptions = {}) {
     .map((step) => {
       if (typeof step === 'string') return { label: step, note: '' };
       return {
-        label: String(step.label || step.text || '').trim(),
+        label: String(step.label || '').trim(),
         note: String(step.note || '').trim(),
         kind: step.kind || ''
       };
@@ -292,11 +300,11 @@ function renderActivityLog(steps = [], options: ThingyOptions = {}) {
 
 function renderAssistantResponse(
   answer: unknown,
-  citations: unknown[] = [],
+  citations: ThingyCitation[] = [],
   experience: ThingyExperience | null = null,
   activitySteps: ThingyActivityStep[] = [],
   activityCommentary: string[] = [],
-  options: ThingyOptions = {}
+  options: ActivityRenderOptions = {}
 ) {
   const hasAnswer = String(answer || '').trim() || experience;
   const activity = renderActivityLog(activitySteps, {

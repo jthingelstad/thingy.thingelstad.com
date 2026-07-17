@@ -10,7 +10,14 @@ import { batch } from '@preact/signals';
 // signals Preact batches its own renders — rAF coalescing just means
 // the macrotask never fires while readStream's microtask chain is hot,
 // so every delta accumulates and the answer appears all at once.
-function createAssistantStreamRenderer(options: ThingyOptions = {}) {
+interface AssistantStreamRendererOptions {
+  model: AssistantMessageModel;
+  scroll?: (options?: { force?: boolean }) => void;
+  statusFallback?: string;
+  label?: string;
+}
+
+function createAssistantStreamRenderer(options: AssistantStreamRendererOptions) {
   const model = options.model;
   if (!model) throw new Error('createAssistantStreamRenderer requires a model');
   const scroll = typeof options.scroll === 'function' ? options.scroll : () => {};
@@ -23,7 +30,7 @@ function createAssistantStreamRenderer(options: ThingyOptions = {}) {
     if (model.status.peek() === 'pending') model.status.value = 'streaming';
   }
 
-  function appendDelta(delta) {
+  function appendDelta(delta: string | undefined) {
     if (!delta) return;
     const next = (model.content.peek() + delta).replace(/^\s+/, '');
     model.content.value = next;
@@ -31,37 +38,37 @@ function createAssistantStreamRenderer(options: ThingyOptions = {}) {
     scroll();
   }
 
-  function setAnswer(value) {
+  function setAnswer(value: unknown) {
     model.content.value = String(value || '');
     ensureStreaming();
     scroll();
   }
 
-  function setCitations(citations) {
+  function setCitations(citations: ThingyCitation[] | undefined) {
     model.citations.value = Array.isArray(citations) ? citations : [];
     scroll();
   }
 
-  function setExperience(experience) {
+  function setExperience(experience: ThingyExperience | null | undefined) {
     model.experience.value = experience || null;
     scroll();
   }
 
-  function status(data) {
+  function status(data: ThingyStreamData | string) {
     const next = appendActivityStep(model.activity.peek().slice(), data, fallback);
     model.activity.value = next;
     ensureStreaming();
     scroll({ force: true });
   }
 
-  function commentary(value) {
+  function commentary(value: unknown) {
     const next = appendActivityCommentary(model.commentary.peek().slice(), value);
     model.commentary.value = next;
     ensureStreaming();
     scroll({ force: true });
   }
 
-  function finish(nextStatus = 'done') {
+  function finish(nextStatus: AssistantMessageStatus = 'done') {
     batch(() => {
       model.status.value = nextStatus;
     });
@@ -72,7 +79,7 @@ function createAssistantStreamRenderer(options: ThingyOptions = {}) {
     };
   }
 
-  function fail(message, retryPrompt) {
+  function fail(message: unknown, retryPrompt?: string) {
     batch(() => {
       model.errorMessage.value = String(message || 'Thingy is unavailable.');
       if (retryPrompt) model.retryPrompt.value = retryPrompt;

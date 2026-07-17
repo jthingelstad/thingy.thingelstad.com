@@ -23,6 +23,7 @@ import { createDictationController } from './thingy-voice.ts';
 import { createChatMessageActions } from './thingy-message-actions.ts';
 import { librarianStreamUrl, tinylyticsId } from './thingy-config.ts';
 import { isAuthError } from './thingy-url.ts';
+import { errorMessage } from './thingy-errors.ts';
 import { updateChatComposerState } from './thingy-chat-composer-state.ts';
 import { chatState as state, createChatActions } from './thingy-chat-actions.ts';
 import {
@@ -49,11 +50,41 @@ import { mountComposerSubmit } from './components/ComposerSubmit.tsx';
 import { mountNotice } from './components/Notice.tsx';
 import { mountRailRecents } from './components/RailRecents.tsx';
 
+interface ChatScrollOptions {
+  force?: boolean;
+}
+
+interface ActiveScopeOptions {
+  track?: boolean;
+}
+
+interface ClearTokenOptions {
+  message?: string;
+  preserveEmail?: boolean;
+  scrubAuthParams?: boolean;
+}
+
+interface CuriosityMapOptions {
+  attachToCurrent?: boolean;
+}
+
+interface ThingyConversationMessage {
+  role?: string;
+  content?: string;
+  scope?: string;
+  artifact?: ThingyCuriosityMap & { kind?: string };
+  tool_names?: string[];
+  toolNames?: string[];
+  request_id?: string;
+  requestId?: string;
+  citations?: ThingyCitation[];
+}
+
 function bootChat() {
   applyReturnChip();
   const streamBase = librarianStreamUrl();
-  const authPanel = document.getElementById('librarian-auth');
-  const chatPanel = document.getElementById('librarian-chat');
+  const authPanel = document.getElementById('librarian-auth') as HTMLElement;
+  const chatPanel = document.getElementById('librarian-chat') as HTMLElement;
   const appShell = document.getElementById('thingy-app-shell');
   const questionForm = document.getElementById('librarian-question-form') as HTMLFormElement;
   const accountMount = document.getElementById('rail-account-mount');
@@ -66,17 +97,17 @@ function bootChat() {
   const modeMenu = document.getElementById('thingy-mode-menu');
   const modeBanner = document.getElementById('thingy-mode-banner');
   const questionInput = document.getElementById('librarian-question') as HTMLTextAreaElement;
-  const questionButton = questionForm.querySelector<HTMLButtonElement>('button[type="submit"]');
+  const questionButton = questionForm.querySelector<HTMLButtonElement>('button[type="submit"]') as HTMLButtonElement;
   const voiceButton = document.getElementById('composer-voice') as HTMLButtonElement;
   const composerMapButton = document.getElementById('composer-map') as HTMLButtonElement;
   const voiceStatus = document.getElementById('composer-voice-status');
   const sourceError = document.getElementById('librarian-source-error');
   const scopeInputs = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="scope"]'));
-  const questionCount = document.getElementById('librarian-question-count');
+  const questionCount = document.getElementById('librarian-question-count') as HTMLElement;
   const messages = document.getElementById('librarian-messages') as HTMLDivElement;
   const chatScroll = document.querySelector<HTMLElement>('.thingy-chat-scroll');
   const composerZone = document.querySelector<HTMLElement>('.thingy-composer-zone');
-  const prompts = document.getElementById('librarian-prompts');
+  const prompts = document.getElementById('librarian-prompts') as HTMLElement;
   const mobileConversationTitle = document.getElementById('mobile-conversation-title');
   const mobileConversationsToggle = document.getElementById('mobile-conversations-toggle');
   const mobileNewChatButton = document.getElementById('mobile-new-chat');
@@ -100,11 +131,11 @@ function bootChat() {
   let autoFollowChat = true;
   let scrollFrame = 0;
   let composerReserveFrame = 0;
-  let composerControls = null;
+  let composerControls: ReturnType<typeof createComposer> | null = null;
   let welcomeShownThisVisit = false;
-  let welcomeAbortController = null;
-  let welcomePendingMessage = null;
-  let dictationControls = null;
+  let welcomeAbortController: AbortController | null = null;
+  let welcomePendingMessage: HTMLElement | null = null;
+  let dictationControls: ReturnType<typeof createDictationController> | null = null;
 
   const params = new URLSearchParams(window.location.search);
   const initialEmailFromUrl = session.normalizeEmail(params.get('email'));
@@ -197,7 +228,7 @@ function bootChat() {
     messages.innerHTML = '';
   }
 
-  function normalizeInitialPrompt(value) {
+  function normalizeInitialPrompt(value: unknown) {
     return String(value || '')
       .trim()
       .slice(0, maxQuestionChars);
@@ -268,7 +299,7 @@ function bootChat() {
     dictationControls?.stop?.();
   }
 
-  function setActiveScope(value, options: ThingyOptions = {}) {
+  function setActiveScope(value: string, options: ActiveScopeOptions = {}) {
     activeScope = sourceControls.setScope(value);
     if (options.track !== false) trackTinylyticsEvent('librarian.scope_change', activeScope);
     updateQuestionState();
@@ -277,9 +308,8 @@ function bootChat() {
   setActiveScope(activeScope, { track: false });
 
   // Wraps the store-level teardown with the chat view's DOM cleanup.
-  function clearToken(options: ThingyOptions = {}) {
-    const config = typeof options === 'string' ? { message: options } : options || {};
-    actions.clearAuthState(config);
+  function clearToken(options: ClearTokenOptions = {}) {
+    actions.clearAuthState(options);
   }
 
   function nearChatBottom() {
@@ -287,13 +317,13 @@ function bootChat() {
     return chatScroll.scrollHeight - chatScroll.scrollTop - chatScroll.clientHeight < 64;
   }
 
-  function scrollChatToBottom(options: ThingyOptions = {}) {
+  function scrollChatToBottom(options: ChatScrollOptions = {}) {
     if (!chatScroll) return;
     if (!options.force && !autoFollowChat && !nearChatBottom()) return;
     chatScroll.scrollTop = chatScroll.scrollHeight;
   }
 
-  function scheduleChatScroll(options: ThingyOptions = {}) {
+  function scheduleChatScroll(options: ChatScrollOptions = {}) {
     if (!chatScroll) return;
     if (!options.force && !nearChatBottom()) {
       autoFollowChat = false;
@@ -307,7 +337,7 @@ function bootChat() {
     });
   }
 
-  function addMessage(kind, html) {
+  function addMessage(kind: string, html: string) {
     const item = document.createElement('div');
     item.className = `librarian-message librarian-message-${kind}`;
     item.innerHTML = html;
@@ -319,7 +349,7 @@ function bootChat() {
   // Creates an assistant message backed by a reactive model. The DOM root
   // is returned so other helpers (addResponseActions, scroll bookkeeping)
   // keep working; the model is what stream code writes into.
-  function addAssistantMessage(modelOptions: ThingyOptions = {}) {
+  function addAssistantMessage(modelOptions: AssistantMessageOptions = {}) {
     const item = document.createElement('div');
     item.className = 'librarian-message librarian-message-assistant';
     messages.appendChild(item);
@@ -343,9 +373,9 @@ function bootChat() {
     });
   }
 
-  function removeMessageElement(item) {
+  function removeMessageElement(item: Element | null) {
     if (!item) return;
-    if (typeof item._thingyUnmount === 'function') item._thingyUnmount();
+    if (item instanceof HTMLElement && typeof item._thingyUnmount === 'function') item._thingyUnmount();
     item.remove();
   }
 
@@ -396,7 +426,7 @@ function bootChat() {
     return interactionBusySignal.value;
   }
 
-  function setQuestionInputValue(value) {
+  function setQuestionInputValue(value: string) {
     questionInput.value = value;
     questionTextSignal.value = value;
   }
@@ -437,7 +467,7 @@ function bootChat() {
     });
   }
 
-  function trackTinylyticsEvent(name, value = '') {
+  function trackTinylyticsEvent(name: string, value = '') {
     analytics.track(name, value);
   }
 
@@ -445,7 +475,7 @@ function bootChat() {
   document.body.appendChild(noticeHost);
   mountNotice(noticeHost);
 
-  function escapeHtml(value) {
+  function escapeHtml(value: unknown) {
     return escapeMarkup(value);
   }
 
@@ -498,7 +528,7 @@ function bootChat() {
     if (!hasActive) toggleMobileConversationMenu(false);
   }
 
-  function setMobileRailOpen(open) {
+  function setMobileRailOpen(open: boolean) {
     railControls.setMobileOpen(open);
   }
 
@@ -546,7 +576,7 @@ function bootChat() {
     return shell;
   }
 
-  async function showCuriosityMap(center = '', options: ThingyOptions = {}) {
+  async function showCuriosityMap(center = '', options: CuriosityMapOptions = {}) {
     if (!actions.token() || interactionBusy()) return;
     if (!(await actions.ensureFreshToken())) {
       return;
@@ -578,7 +608,7 @@ function bootChat() {
       statusFallback: 'Thingy is drawing connections...'
     });
     try {
-      const map = await actions.postStreamJson(
+      const response = await actions.postStreamJson(
         '/curiosity-map',
         {
           scope,
@@ -589,10 +619,11 @@ function bootChat() {
         },
         actions.authHeaders()
       );
-      if (map.conversation_id) {
-        actions.setActiveConversation(map.conversation_id);
+      if (response.conversation_id) {
+        actions.setActiveConversation(response.conversation_id);
       }
-      if (map.conversation) actions.upsertConversationSummary(map.conversation);
+      if (response.conversation) actions.upsertConversationSummary(response.conversation);
+      const map = response as ThingyApiResponse & ThingyCuriosityMap;
       const mapHtml =
         renderCuriosityMap(map) || '<p>Thingy could not find enough connected threads to draw a map yet.</p>';
       model.artifactHtml.value = mapHtml;
@@ -604,9 +635,12 @@ function bootChat() {
         `${(map.nodes || []).length}.${(map.sources || []).length}`
       );
     } catch (error) {
-      model.errorMessage.value = error.message;
+      model.errorMessage.value = errorMessage(error, 'Thingy could not draw that map.');
       model.status.value = 'error';
-      trackTinylyticsEvent('librarian.curiosity_map_error', error.requestId ? 'server' : 'client');
+      trackTinylyticsEvent(
+        'librarian.curiosity_map_error',
+        error instanceof Error && error.requestId ? 'server' : 'client'
+      );
       if (isAuthError(error)) actions.redirectToSignIn();
     } finally {
       mapInFlightSignal.value = false;
@@ -614,7 +648,7 @@ function bootChat() {
     }
   }
 
-  async function loadConversationIntoChat(id) {
+  async function loadConversationIntoChat(id: string) {
     if (interactionBusy()) return;
     const conversationId = String(id || '').trim();
     if (!conversationId) return;
@@ -638,7 +672,8 @@ function bootChat() {
       hidePrompts();
       const scopeFallback = sourceControls.currentScope();
       let lastUserPrompt = '';
-      for (const msg of data.messages || []) {
+      const conversationMessages = (data.messages || []) as ThingyConversationMessage[];
+      for (const msg of conversationMessages) {
         if (msg.role === 'user') {
           lastUserPrompt = msg.content || '';
           const el = addMessage('user', `<p>${escapeHtml(msg.content || '')}</p>`);
@@ -718,7 +753,7 @@ function bootChat() {
       model.commentary.value = [];
       model.content.value = "Hi. I'm Thingy. Ask me what you're curious about and I'll help you explore the archive.";
       model.status.value = 'done';
-      trackTinylyticsEvent('librarian.welcome_error', error.requestId ? 'server' : 'client');
+      trackTinylyticsEvent('librarian.welcome_error', error instanceof Error && error.requestId ? 'server' : 'client');
     } finally {
       if (pending.isConnected) {
         welcomeInFlightSignal.value = false;
@@ -829,10 +864,10 @@ function bootChat() {
       if (!data.stopped)
         trackTinylyticsEvent('librarian.answer_success', `${questionSize}.${(data.citations || []).length}`);
     } catch (error) {
-      model.errorMessage.value = error.message;
+      model.errorMessage.value = errorMessage(error, 'Thingy could not answer that question.');
       if (!isAuthError(error)) model.retryPrompt.value = message;
       model.status.value = 'error';
-      trackTinylyticsEvent('librarian.answer_error', error.requestId ? 'server' : 'client');
+      trackTinylyticsEvent('librarian.answer_error', error instanceof Error && error.requestId ? 'server' : 'client');
       if (isAuthError(error)) {
         actions.redirectToSignIn();
       }
@@ -850,7 +885,7 @@ function bootChat() {
   questionCount.replaceChildren();
   mountComposerCount(questionCount, { maxChars: maxQuestionChars });
   const submitMount = document.createElement('span');
-  questionButton.parentElement.insertBefore(submitMount, questionButton);
+  questionButton.parentElement?.insertBefore(submitMount, questionButton);
   mountComposerSubmit(submitMount, {
     maxChars: maxQuestionChars,
     onStop: () => {
@@ -927,7 +962,7 @@ function bootChat() {
       setMobileRailOpen(false);
     });
   }
-  async function chooseMode(value) {
+  async function chooseMode(value: string) {
     if (!modeSelect) return;
     if (interactionBusy()) {
       modeSelect.dataset.value = state.activeMode;
@@ -1045,14 +1080,14 @@ function bootChat() {
   });
 
   /* Recents list interactions, wired into the Preact island. */
-  async function handleRecentOpen(id) {
+  async function handleRecentOpen(id: string) {
     if (interactionBusy()) return;
     toggleMobileConversationMenu(false);
     await loadConversationIntoChat(id);
     setMobileRailOpen(false);
   }
 
-  async function handleRecentDelete(id) {
+  async function handleRecentDelete(id: string) {
     if (interactionBusy()) return;
     if (!id) return;
     if (!window.confirm('Delete this conversation?')) return;

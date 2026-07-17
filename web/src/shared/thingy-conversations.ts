@@ -124,7 +124,8 @@ function deleteConversationSummaryList(
 ) {
   const removedId = String(id || '').trim();
   const conversations = list.filter((entry) => conversationId(entry) !== removedId);
-  const activeConversationId = options.activeConversationId === removedId ? '' : options.activeConversationId;
+  const currentActiveId = options.activeConversationId || '';
+  const activeConversationId = currentActiveId === removedId ? '' : currentActiveId;
   return { conversations, activeConversationId };
 }
 

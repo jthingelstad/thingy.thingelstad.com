@@ -23,6 +23,7 @@ import {
 import { userLocalContext } from './thingy-local-context.ts';
 import { isAuthError, scrubUrlParams } from './thingy-url.ts';
 import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-response.ts';
+import { errorMessage } from './thingy-errors.ts';
 import {
   activeConversationId as activeConversationIdSignal,
   activeMode as activeModeSignal,
@@ -47,6 +48,48 @@ import {
 
 const EMAIL_RE =
   /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+
+interface ChatUiHooks {
+  currentScope?: () => string;
+  scheduleChatScroll?: (options?: { force?: boolean }) => void;
+  track?: (name: string, value?: string) => void;
+  onModesChanged?: () => void;
+  onActiveConversationChanged?: () => void;
+  onQuestionStateChanged?: () => void;
+  onAuthenticated?: (data: ThingyAuthData, options: AuthFlowOptions) => void;
+  onAuthCleared?: (options: ClearAuthOptions) => void;
+}
+
+interface ChatActionsOptions {
+  session?: typeof defaultSession;
+  streamBase?: string;
+  maxRecents?: number;
+  localConversationPrefix?: string;
+  activeConvKey?: string;
+  ui?: ChatUiHooks;
+}
+
+interface AuthFlowOptions {
+  track?: boolean;
+  scrubEmailParam?: boolean;
+}
+
+interface ClearAuthOptions {
+  message?: string;
+  preserveEmail?: boolean;
+  scrubAuthParams?: boolean;
+}
+
+interface PendingConversationInput {
+  conversationId: string;
+  title?: string;
+  scope?: string;
+  mode?: string;
+}
+
+interface WelcomeStreamOptions {
+  controller?: AbortController;
+}
 
 // Signals are the source of truth for chat state. `chatState` is a
 // setter-backed proxy: writing `chatState.conversations = [...]` notifies
@@ -87,7 +130,7 @@ const chatState: ThingyChatState = {
   }
 };
 
-function createChatActions(options: ThingyOptions = {}) {
+function createChatActions(options: ChatActionsOptions = {}) {
   const session = options.session || defaultSession;
   const streamBase = String(options.streamBase || '');
   const maxRecents = Number(options.maxRecents || 20);
@@ -108,13 +151,13 @@ function createChatActions(options: ThingyOptions = {}) {
   let awaitingName = false;
   let authRequestGeneration = 0;
   let accountProfileRefreshAt = 0;
-  let accountProfileRefreshPromise = null;
-  let chatAbortController = null;
+  let accountProfileRefreshPromise: Promise<boolean> | null = null;
+  let chatAbortController: AbortController | null = null;
   let chatStopRequested = false;
 
   // --- Session / identity ----------------------------------------------------
 
-  function normalizeEmail(value) {
+  function normalizeEmail(value: unknown) {
     return session.normalizeEmail(value);
   }
 
@@ -150,7 +193,7 @@ function createChatActions(options: ThingyOptions = {}) {
     return false;
   }
 
-  function setUserProfile(data) {
+  function setUserProfile(data: ThingyApiResponse | ThingyAuthData) {
     const profile = session.mergeProfile(data || {}, storedEmail());
     const modes = normalizeModes(profile.modes || data?.modes || data?.profile?.modes || []);
     state.availableModes = modes.length ? modes : [{ id: 'thingy', label: 'Thingy' }];
@@ -169,14 +212,14 @@ function createChatActions(options: ThingyOptions = {}) {
     onModesChanged();
   }
 
-  function rememberPreferredName(name) {
+  function rememberPreferredName(name: unknown) {
     const cleanName = String(name || '').trim();
     if (!cleanName) return;
     state.preferredName = cleanName;
     session.updateStoredProfile({ preferred_name: cleanName });
   }
 
-  async function persistInferredPreferredName(name) {
+  async function persistInferredPreferredName(name: unknown) {
     const { savedName } = await savePreferredName(session, name, normalizePreferredName);
     rememberPreferredName(savedName);
     refreshAccountIdentity();
@@ -195,11 +238,11 @@ function createChatActions(options: ThingyOptions = {}) {
     return awaitingName;
   }
 
-  function setAwaitingName(value) {
+  function setAwaitingName(value: boolean) {
     awaitingName = Boolean(value);
   }
 
-  function persistToken(value, data: ThingyAuthData = {}) {
+  function persistToken(value: string, data: ThingyAuthData = {}) {
     session.persistAuth({ ...data, token: value }, data.email || storedEmail());
     setUserProfile(data);
     if (data.email) authEmailSignal.value = normalizeEmail(data.email);
@@ -207,7 +250,7 @@ function createChatActions(options: ThingyOptions = {}) {
     refreshAccountIdentity();
   }
 
-  async function refreshStoredAuth(opts: ThingyOptions = {}) {
+  async function refreshStoredAuth(opts: AuthFlowOptions = {}) {
     if (!token() || tokenExpired()) return false;
     const shouldTrack = opts.track !== false;
     const data = await session.refreshAuth();
@@ -230,7 +273,7 @@ function createChatActions(options: ThingyOptions = {}) {
     window.location.href = session.signInUrl(returnTo);
   }
 
-  async function refreshAccountProfile(opts: ThingyOptions = {}) {
+  async function refreshAccountProfile(opts: { force?: boolean } = {}) {
     if (!token() || tokenExpired()) return false;
     const now = Date.now();
     if (!opts.force && now - accountProfileRefreshAt < 30000) return false;
@@ -254,7 +297,7 @@ function createChatActions(options: ThingyOptions = {}) {
 
   // Tears down the authenticated state in the stores. The DOM-side cleanup
   // (prompts, focus, welcome bookkeeping) runs through the onAuthCleared hook.
-  function clearAuthState(config: ThingyOptions = {}) {
+  function clearAuthState(config: ClearAuthOptions = {}) {
     authRequestGeneration += 1;
     const message = String(config.message || '').trim();
     const existingMessage = authMessageSignal.value;
@@ -273,27 +316,27 @@ function createChatActions(options: ThingyOptions = {}) {
     onAuthCleared(config);
   }
 
-  function handleAuthResponse(data, opts: ThingyOptions = {}) {
+  function handleAuthResponse(data: ThingyAuthData, opts: AuthFlowOptions = {}) {
     return handleAuthResponseStatus(data, {
       hideActions: () => {
         authActionSignal.value = 'none';
       },
-      onToken: (authData) => {
-        persistToken(authData.token, authData);
+      onToken: (authData: ThingyAuthData) => {
+        persistToken(authData.token || '', authData);
         authActionSignal.value = 'none';
         onAuthenticated(authData, opts);
       },
-      setMessage: (message) => {
+      setMessage: (message: string) => {
         authMessageSignal.value = message || '';
       },
-      showAction: (action) => {
-        authActionSignal.value = action || 'none';
+      showAction: (action: 'subscribe' | 'resend_confirmation') => {
+        authActionSignal.value = action;
       },
       track
     });
   }
 
-  async function submitAuthAction(action) {
+  async function submitAuthAction(action: string) {
     if (!validateEmail()) return;
     const generation = authRequestGeneration;
     authBusySignal.value = true;
@@ -302,38 +345,42 @@ function createChatActions(options: ThingyOptions = {}) {
       action === 'subscribe' ? 'Adding you to the Weekly Thing...' : 'Sending the confirmation email...';
     try {
       const payload = { email: String(authEmailSignal.value || ''), action, source: 'thingy' };
-      const data = await session.postJson('/auth', payload);
+      const data = await session.postJson('/auth', payload, {});
       if (generation !== authRequestGeneration) return;
       handleAuthResponse(data);
     } catch (error) {
       if (generation !== authRequestGeneration) return;
-      authMessageSignal.value = error.message;
-      track('librarian.auth_error', error.requestId ? 'server' : 'client');
+      authMessageSignal.value = errorMessage(error, 'Thingy could not complete that request.');
+      track('librarian.auth_error', error instanceof Error && error.requestId ? 'server' : 'client');
     } finally {
       authBusySignal.value = false;
     }
   }
 
-  async function submitAuthCheck(opts: ThingyOptions = {}) {
+  async function submitAuthCheck(opts: AuthFlowOptions = {}) {
     if (!validateEmail()) return false;
     const generation = authRequestGeneration;
     authBusySignal.value = true;
     authActionSignal.value = 'none';
     authMessageSignal.value = 'Sending a sign-in link...';
     try {
-      const data = await session.postJson('/auth', {
-        email: String(authEmailSignal.value || '').trim(),
-        action: 'check',
-        source: 'thingy'
-      });
+      const data = await session.postJson(
+        '/auth',
+        {
+          email: String(authEmailSignal.value || '').trim(),
+          action: 'check',
+          source: 'thingy'
+        },
+        {}
+      );
       if (generation !== authRequestGeneration) return false;
       handleAuthResponse(data, opts);
       if (opts.scrubEmailParam) scrubUrlParams(['email']);
       return true;
     } catch (error) {
       if (generation !== authRequestGeneration) return false;
-      authMessageSignal.value = error.message;
-      track('librarian.auth_error', error.requestId ? 'server' : 'client');
+      authMessageSignal.value = errorMessage(error, 'Thingy could not send a sign-in link.');
+      track('librarian.auth_error', error instanceof Error && error.requestId ? 'server' : 'client');
       return false;
     } finally {
       authBusySignal.value = false;
@@ -347,11 +394,11 @@ function createChatActions(options: ThingyOptions = {}) {
     return session.authHeaders();
   }
 
-  async function conversationAction(payload) {
+  async function conversationAction(payload: Record<string, unknown>) {
     return session.postJson('/conversations', payload, authHeaders());
   }
 
-  function isLocalConversationId(id) {
+  function isLocalConversationId(id: unknown) {
     return isLocalConversationIdValue(id, localConversationPrefix);
   }
 
@@ -382,7 +429,7 @@ function createChatActions(options: ThingyOptions = {}) {
     return active?.title || 'Current chat';
   }
 
-  function setActiveConversation(id) {
+  function setActiveConversation(id: unknown) {
     state.activeConversationId = String(id || '').trim() || null;
     try {
       if (state.activeConversationId) {
@@ -405,11 +452,14 @@ function createChatActions(options: ThingyOptions = {}) {
     }
   }
 
-  function isEmptyConversationDraft(entry, mode = '') {
+  function isEmptyConversationDraft(entry: ThingyConversationSummary, mode = '') {
     return isEmptyConversationDraftEntry(entry, mode, modeLabel);
   }
 
-  function dedupeEmptyConversationDrafts(list = [], opts: ThingyOptions = {}) {
+  function dedupeEmptyConversationDrafts(
+    list: ThingyConversationSummary[] = [],
+    opts: { activeConversationId?: string | null } = {}
+  ) {
     return dedupeConversationDrafts(list, {
       activeConversationId: opts.activeConversationId || state.activeConversationId,
       labelForMode: modeLabel
@@ -444,7 +494,7 @@ function createChatActions(options: ThingyOptions = {}) {
     return shell;
   }
 
-  function upsertConversationSummary(conversation, opts: ThingyOptions = {}) {
+  function upsertConversationSummary(conversation: ThingyConversationSummary, opts: { replaceId?: string } = {}) {
     if (!conversation || !(conversation.id || conversation.conversation_id)) return;
     const replaceId = String(opts.replaceId || '').trim();
     const result = upsertConversationSummaryList(state.conversations, conversation, {
@@ -465,10 +515,10 @@ function createChatActions(options: ThingyOptions = {}) {
     onActiveConversationChanged();
   }
 
-  function upsertPendingConversation({ conversationId, title, scope, mode }) {
+  function upsertPendingConversation({ conversationId, title, scope, mode }: PendingConversationInput) {
     const id = String(conversationId || '').trim();
     if (!id) return;
-    const replaceId = isLocalConversationId(state.activeConversationId) ? state.activeConversationId : '';
+    const replaceId = isLocalConversationId(state.activeConversationId) ? state.activeConversationId || '' : '';
     const now = new Date().toISOString();
     const existing = state.conversations.find((entry) => entry.id === id || entry.conversation_id === id);
     if (!replaceId && existing) {
@@ -503,7 +553,7 @@ function createChatActions(options: ThingyOptions = {}) {
     );
   }
 
-  async function createConversationShellForMode(mode, opts: ThingyOptions = {}) {
+  async function createConversationShellForMode(mode: unknown, opts: { replaceId?: string } = {}) {
     const normalized = normalizeModeId(mode);
     if (!token() || normalized === 'thingy') return activeConversation();
     if (!state.availableModes.some((entry) => entry.id === normalized)) return null;
@@ -544,7 +594,7 @@ function createChatActions(options: ThingyOptions = {}) {
     return null;
   }
 
-  async function refreshConversations(opts: ThingyOptions = {}) {
+  async function refreshConversations(opts: { retryAuth?: boolean } = {}): Promise<ThingyConversationSummary[]> {
     if (!token()) {
       state.conversations = [];
       onActiveConversationChanged();
@@ -563,7 +613,7 @@ function createChatActions(options: ThingyOptions = {}) {
       const serverConversations = (data.conversations || [])
         .map((entry) => ({
           ...entry,
-          id: entry.id || entry.conversation_id,
+          id: String(entry.id || entry.conversation_id || ''),
           local: false
         }))
         .filter((entry) => entry.id)
@@ -599,7 +649,7 @@ function createChatActions(options: ThingyOptions = {}) {
 
   // Renames a conversation. Local shells update in the store; server
   // conversations round-trip through the API. Returns true on success.
-  async function renameConversation(id, title) {
+  async function renameConversation(id: string, title: unknown) {
     const trimmed = String(title || '').trim();
     if (!trimmed) return false;
     if (isLocalConversationId(id)) {
@@ -624,7 +674,7 @@ function createChatActions(options: ThingyOptions = {}) {
   // Deletes a conversation from the store (and the server for non-local
   // ids). Returns { ok, wasActive } so the caller can decide what view to
   // show next; returns { ok: false } when the server delete fails.
-  async function deleteConversation(id) {
+  async function deleteConversation(id: unknown) {
     const conversationId = String(id || '').trim();
     if (!conversationId) return { ok: false, wasActive: false };
     const wasActive = conversationId === state.activeConversationId;
@@ -651,13 +701,13 @@ function createChatActions(options: ThingyOptions = {}) {
     }
   }
 
-  async function fetchConversation(id) {
+  async function fetchConversation(id: string) {
     return conversationAction({ action: 'get', conversation_id: id });
   }
 
   // --- Streaming ----------------------------------------------------------------
 
-  async function postStreamJson(path, payload, headers = {}) {
+  async function postStreamJson(path: string, payload: unknown, headers: Record<string, string> = {}) {
     return postJsonRequest({
       baseUrl: streamBase,
       path,
@@ -684,14 +734,14 @@ function createChatActions(options: ThingyOptions = {}) {
     return Boolean(chatAbortController);
   }
 
-  async function postStreamingChat(message, model, scope) {
+  async function postStreamingChat(message: string, model: AssistantMessageModel, scope: string) {
     if (!streamBase) {
       throw new Error('Thingy has not been connected to the archive stream API yet.');
     }
 
     let requestId = '';
     let conversationId = isLocalConversationId(state.activeConversationId) ? '' : state.activeConversationId || '';
-    let conversation = null;
+    let conversation: ThingyConversationSummary | null = null;
     chatStopRequested = false;
     chatAbortController = new AbortController();
     stoppableSignal.value = answerInFlightSignal.value;
@@ -734,7 +784,7 @@ function createChatActions(options: ThingyOptions = {}) {
 
     const renderer = createAssistantStreamRenderer({ model, scroll: scheduleChatScroll });
 
-    function applyEvent(eventName, data) {
+    function applyEvent(eventName: string, data: ThingyStreamData) {
       if (eventName === 'meta') {
         requestId = data.request_id || requestId;
         if (data.mode) {
@@ -796,7 +846,7 @@ function createChatActions(options: ThingyOptions = {}) {
     return { ...result, stopped, request_id: requestId, conversation_id: conversationId, conversation };
   }
 
-  async function postStreamingWelcome(model, scope, opts: ThingyOptions = {}) {
+  async function postStreamingWelcome(model: AssistantMessageModel, scope: string, opts: WelcomeStreamOptions = {}) {
     if (!streamBase) {
       throw new Error('Thingy has not been connected to the archive stream API yet.');
     }
@@ -826,7 +876,7 @@ function createChatActions(options: ThingyOptions = {}) {
       statusFallback: 'Thingy is getting oriented...'
     });
 
-    function applyEvent(eventName, data) {
+    function applyEvent(eventName: string, data: ThingyStreamData) {
       if (eventName === 'meta') {
         requestId = data.request_id || requestId;
         if (data.mode) {

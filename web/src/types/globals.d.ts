@@ -124,6 +124,28 @@ interface ThingyCitation {
   section?: string;
 }
 
+interface ThingyCuriosityNode {
+  id: string;
+  label: string;
+  kind?: string;
+  prompt?: string;
+  why?: string;
+  weight?: number;
+}
+
+interface ThingyCuriosityEdge {
+  from: string;
+  to: string;
+}
+
+interface ThingyCuriosityMap {
+  title?: string;
+  prompt?: string;
+  nodes?: ThingyCuriosityNode[];
+  edges?: ThingyCuriosityEdge[];
+  sources?: ThingyArchiveItem[];
+}
+
 type AssistantMessageStatus = 'pending' | 'streaming' | 'done' | 'stopped' | 'error' | 'static';
 
 interface AssistantMessageModel {

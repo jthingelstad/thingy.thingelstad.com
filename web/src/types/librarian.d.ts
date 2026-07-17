@@ -69,6 +69,7 @@ interface ThingyApiResponse extends ThingyAuthData, DispatchRow {
 }
 
 interface ThingyStreamData extends ThingyApiResponse {
+  mode?: string;
   delta?: string;
   answer?: string;
   citations?: ThingyCitation[];
