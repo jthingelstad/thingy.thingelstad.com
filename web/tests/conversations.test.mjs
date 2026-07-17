@@ -6,7 +6,7 @@ import {
   deleteConversationSummaryList,
   isEmptyConversationDraft,
   upsertConversationSummaryList
-} from '../src/shared/thingy-conversations.js';
+} from '../src/shared/thingy-conversations.ts';
 
 test('upsertConversationSummaryList replaces a local draft with the server conversation', () => {
   const local = {

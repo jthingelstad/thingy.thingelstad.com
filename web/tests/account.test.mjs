@@ -8,7 +8,7 @@ import {
   normalizePreferredName,
   savePreferredName,
   hasSupportingAccess
-} from '../src/shared/thingy-account.js';
+} from '../src/shared/thingy-account.ts';
 test('savePreferredName persists through the auth API before updating cached profile', async () => {
   const calls = [];
   let cachedProfile = {};

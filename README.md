@@ -145,12 +145,12 @@ Key web files:
 - `web/src/shared/`: browser-side app modules.
 - `web/src/styles/`: shared styles imported by the page entrypoints.
 - `web/public/`: static files copied as-is to `_site`.
-- `web/vite.config.js`: build-time config injection and multi-page inputs.
+- `web/vite.config.ts`: build-time config injection and multi-page inputs.
 
 ## Tinylytics
 
 Thingy uses its own Tinylytics site ID via `TINYLYTICS_SITE_UID`, falling back to
-the production ID in `web/vite.config.js`.
+the production ID in `web/vite.config.ts`.
 
 Enabled Tinylytics features:
 

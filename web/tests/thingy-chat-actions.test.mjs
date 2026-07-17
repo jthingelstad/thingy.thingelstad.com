@@ -12,8 +12,8 @@ function storage() {
 global.window = global.window || {};
 global.window.localStorage = storage();
 
-const { chatState, createChatActions } = await import('../src/shared/thingy-chat-actions.js');
-const { activeConversationId, conversations } = await import('../src/shared/stores/chat-store.js');
+const { chatState, createChatActions } = await import('../src/shared/thingy-chat-actions.ts');
+const { activeConversationId, conversations } = await import('../src/shared/stores/chat-store.ts');
 
 function fakeSession(overrides = {}) {
   return {
@@ -140,7 +140,7 @@ test('upsertPendingConversation replaces the active local shell with the server 
 
 test('validateEmail writes the inline error signal', async () => {
   const actions = freshActions();
-  const { authEmail, authEmailError } = await import('../src/shared/stores/chat-store.js');
+  const { authEmail, authEmailError } = await import('../src/shared/stores/chat-store.ts');
   authEmail.value = 'not-an-email';
   assert.equal(actions.validateEmail(), false);
   assert.match(authEmailError.value, /valid email/);

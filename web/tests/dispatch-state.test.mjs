@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { dispatchEditable } from '../src/shared/thingy-dispatch-state.js';
+import { dispatchEditable } from '../src/shared/thingy-dispatch-state.ts';
 
 test('dispatch editability follows the client interaction model', () => {
   for (const stage of ['empty', 'draft', 'shaping', 'needs_clarification', 'ready', 'upgrade']) {

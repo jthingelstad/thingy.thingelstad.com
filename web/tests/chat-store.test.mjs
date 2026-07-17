@@ -17,8 +17,8 @@ import {
   questionText,
   stoppable,
   welcomeInFlight
-} from '../src/shared/stores/chat-store.js';
-import { signedIn } from '../src/shared/stores/ui-store.js';
+} from '../src/shared/stores/chat-store.ts';
+import { signedIn } from '../src/shared/stores/ui-store.ts';
 
 function resetInFlight() {
   answerInFlight.value = false;

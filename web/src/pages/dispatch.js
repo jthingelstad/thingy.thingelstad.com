@@ -1,8 +1,0 @@
-import '../styles/thingy.css';
-import { hydrateThingyIcons } from '../shared/thingy-icons.js';
-import { bootDispatch } from '../shared/thingy-dispatch.js';
-import { loadTinylytics } from '../shared/thingy-tinylytics-loader.js';
-
-hydrateThingyIcons();
-bootDispatch();
-loadTinylytics();

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createAssistantMessageModel, formatElapsedTime } from '../src/shared/models/assistant-message.js';
+import { createAssistantMessageModel, formatElapsedTime } from '../src/shared/models/assistant-message.ts';
 
 test('formatElapsedTime matches chat-style elapsed labels', () => {
   assert.equal(formatElapsedTime(0), '0s');

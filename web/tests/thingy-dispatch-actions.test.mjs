@@ -17,8 +17,8 @@ global.window.setInterval = () => 0;
 global.window.clearInterval = () => {};
 
 const { createDispatchActions, dispatchBriefMarkdown, draftTitle, inputPlaceholderForDraft, titleFromPrompt } =
-  await import('../src/shared/thingy-dispatch-actions.js');
-const { AGENT_RESPONSE_TIMEOUT_MS } = await import('../src/shared/thingy-timeouts.js');
+  await import('../src/shared/thingy-dispatch-actions.ts');
+const { AGENT_RESPONSE_TIMEOUT_MS } = await import('../src/shared/thingy-timeouts.ts');
 
 const {
   dispatchBusy,
@@ -27,7 +27,7 @@ const {
   dispatchMessages,
   drafts: draftsSignal,
   activeDraftId
-} = await import('../src/shared/stores/dispatch-store.js');
+} = await import('../src/shared/stores/dispatch-store.ts');
 
 test('titleFromPrompt collapses whitespace and caps at 80 chars', () => {
   assert.equal(titleFromPrompt('  What   about\nRSS?  '), 'What about RSS?');

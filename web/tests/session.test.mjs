@@ -27,7 +27,7 @@ test('signInUrl keeps private app params out of the visible sign-in return URL',
   const win = installWindow(
     'http://localhost:8080/chat/?email=reader@example.com&prompt=What%20about%20RSS%3F&from=https%3A%2F%2Fweekly.thingelstad.com%2Farchive%2F123%2F&corpus=blog&mode=thingy'
   );
-  const session = await import('../src/shared/thingy-session.js');
+  const session = await import('../src/shared/thingy-session.ts');
 
   const url = new URL(session.signInUrl(), win.location.origin);
   const returnTo = url.searchParams.get('return');
@@ -46,7 +46,7 @@ test('signInUrl keeps private app params out of the visible sign-in return URL',
 
 test('returnPath rejects external and protocol-relative return targets', async () => {
   installWindow('http://localhost:8080/signin/?return=https%3A%2F%2Fevil.example%2F');
-  const session = await import('../src/shared/thingy-session.js');
+  const session = await import('../src/shared/thingy-session.ts');
 
   assert.equal(session.returnPath('/chat/'), '/chat/');
 
@@ -56,7 +56,7 @@ test('returnPath rejects external and protocol-relative return targets', async (
 
 test('mergeProfile preserves top-level Discord connection from auth responses', async () => {
   installWindow();
-  const session = await import('../src/shared/thingy-session.js');
+  const session = await import('../src/shared/thingy-session.ts');
 
   const profile = session.mergeProfile({
     email: 'reader@example.com',
@@ -76,7 +76,7 @@ test('mergeProfile preserves top-level Discord connection from auth responses', 
 
 test('mergeProfile preserves alternate top-level Discord connection shapes from auth responses', async () => {
   installWindow();
-  const session = await import('../src/shared/thingy-session.js');
+  const session = await import('../src/shared/thingy-session.ts');
 
   const profile = session.mergeProfile({
     email: 'reader@example.com',
@@ -95,7 +95,7 @@ test('mergeProfile preserves alternate top-level Discord connection shapes from 
 
 test('mergeProfile treats server Discord null as authoritative', async () => {
   installWindow();
-  const session = await import('../src/shared/thingy-session.js');
+  const session = await import('../src/shared/thingy-session.ts');
 
   session.mergeProfile({
     email: 'reader@example.com',
@@ -117,7 +117,7 @@ test('mergeProfile treats server Discord null as authoritative', async () => {
 
 test('mergeProfile treats top-level Discord null as authoritative', async () => {
   installWindow();
-  const session = await import('../src/shared/thingy-session.js');
+  const session = await import('../src/shared/thingy-session.ts');
 
   session.mergeProfile({
     email: 'reader@example.com',

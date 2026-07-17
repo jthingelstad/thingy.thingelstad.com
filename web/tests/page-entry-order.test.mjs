@@ -7,7 +7,7 @@ async function source(path) {
 }
 
 test('chat reads URL params before Tinylytics strips them', async () => {
-  const entry = await source('../src/pages/chat.js');
+  const entry = await source('../src/pages/chat.ts');
 
   assert.ok(entry.indexOf('bootChat();') > -1);
   assert.ok(entry.indexOf('loadTinylytics();') > -1);
@@ -18,7 +18,7 @@ test('chat reads URL params before Tinylytics strips them', async () => {
 });
 
 test('dispatch reads URL params before Tinylytics strips them', async () => {
-  const entry = await source('../src/pages/dispatch.js');
+  const entry = await source('../src/pages/dispatch.ts');
 
   assert.ok(entry.indexOf('bootDispatch();') > -1);
   assert.ok(entry.indexOf('loadTinylytics();') > -1);
@@ -29,7 +29,7 @@ test('dispatch reads URL params before Tinylytics strips them', async () => {
 });
 
 test('chat keeps signed-in invite links out of the sign-in redirect loop', async () => {
-  const sourceText = await source('../src/shared/thingy-chat.js');
+  const sourceText = await source('../src/shared/thingy-chat.ts');
   const tokenBranch = sourceText.indexOf('} else if (actions.token()) {');
   const emailBranch = sourceText.indexOf('} else if (initialEmailFromUrl) {');
 

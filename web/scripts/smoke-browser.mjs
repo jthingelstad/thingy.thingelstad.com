@@ -44,6 +44,25 @@ async function seedSession(context) {
 }
 
 async function routeMockApi(page) {
+  await page.route(`${apiHost}/auth`, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        token: fakeToken(),
+        email: 'thingy@thingelstad.com',
+        status: 'premium',
+        supporting_member: true,
+        entitlements: ['supporting_member'],
+        profile: {
+          preferred_name: 'Smoke',
+          supporting_member: true,
+          entitlements: ['supporting_member'],
+          modes: [{ id: 'thingy', label: 'Thingy' }]
+        }
+      })
+    });
+  });
+
   await page.route(`${apiHost}/dispatch`, async (route) => {
     const body = route.request().postDataJSON?.() || {};
     if (body.action === 'list') {
@@ -87,15 +106,30 @@ async function routeMockApi(page) {
   });
 }
 
+function collectUiFailures(page) {
+  const failures = [];
+  page.on('pageerror', (error) => failures.push(`page: ${error.message}`));
+  page.on('console', (message) => {
+    if (message.type() === 'error') failures.push(`console: ${message.text()}`);
+  });
+  return failures;
+}
+
+function assertNoUiFailures(failures, surface) {
+  assert.deepEqual(failures, [], `${surface} emitted browser errors`);
+}
+
 async function checkSignInRedirect(browser) {
   const context = await browser.newContext();
   const page = await context.newPage();
+  const failures = collectUiFailures(page);
   await page.goto(
     `${baseUrl}/chat/?email=thingy%40thingelstad.com&prompt=What%20about%20RSS%3F&from=https%3A%2F%2Fweekly.thingelstad.com%2Farchive%2F123%2F&corpus=blog`
   );
   await page.waitForURL(/\/signin\/\?return=%2Fchat%2F$/);
   assert.equal(new URL(page.url()).searchParams.get('return'), '/chat/');
   assert.doesNotMatch(page.url(), /thingy%40thingelstad|What%20about|weekly\.thingelstad|corpus=blog/);
+  assertNoUiFailures(failures, 'sign-in redirect');
   await context.close();
 }
 
@@ -103,6 +137,7 @@ async function checkChatIslands(browser) {
   const context = await browser.newContext();
   await seedSession(context);
   const page = await context.newPage();
+  const failures = collectUiFailures(page);
   await routeMockApi(page);
   await page.goto(`${baseUrl}/chat/`);
 
@@ -141,6 +176,15 @@ async function checkChatIslands(browser) {
   assert.match((await page.locator('.rail-menu-build').textContent()).trim(), /^Build .+/);
   await page.keyboard.press('Escape');
 
+  // The source picker is an imperative popover. Exercise open and outside-click
+  // cleanup because this boundary has historically been easy to break.
+  await page.locator('#srcpick-btn').click();
+  await page.waitForSelector('#srcpick-pop:not([hidden])');
+  await page.locator('.thingy-chat-scroll').click({ position: { x: 10, y: 10 } });
+  assert.equal(await page.locator('#srcpick-pop').isHidden(), true, 'outside click closes the source picker');
+
+  assertNoUiFailures(failures, 'chat');
+
   await context.close();
 }
 
@@ -148,6 +192,7 @@ async function checkDispatchIslands(browser) {
   const context = await browser.newContext();
   await seedSession(context);
   const page = await context.newPage();
+  const failures = collectUiFailures(page);
   await routeMockApi(page);
   await page.goto(`${baseUrl}/dispatch/`);
 
@@ -170,6 +215,8 @@ async function checkDispatchIslands(browser) {
     'Start a new Dispatch to shape another request...'
   );
 
+  assertNoUiFailures(failures, 'dispatch');
+
   await context.close();
 }
 
@@ -177,6 +224,7 @@ async function checkMobileChat(browser) {
   const context = await browser.newContext();
   await seedSession(context);
   const page = await context.newPage();
+  const failures = collectUiFailures(page);
   await routeMockApi(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${baseUrl}/chat/`);
@@ -199,6 +247,9 @@ async function checkMobileChat(browser) {
   await page.waitForSelector('.thingy-app-shell.is-mobile-rail-open');
   assert.equal((await page.locator('.rail-surface-switch a.is-active').textContent()).trim(), 'Chat');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
+  await page.locator('#rail-scrim').click({ position: { x: 380, y: 400 } });
+  await page.waitForSelector('.thingy-app-shell:not(.is-mobile-rail-open)');
+  assertNoUiFailures(failures, 'mobile chat');
   await context.close();
 }
 

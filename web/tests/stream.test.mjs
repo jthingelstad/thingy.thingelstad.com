@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { parseBlock, postJsonStream } from '../src/shared/thingy-stream.js';
+import { parseBlock, postJsonStream } from '../src/shared/thingy-stream.ts';
 
 test('parseBlock parses standard server-sent events', () => {
   assert.deepEqual(parseBlock('event: answer\ndata: {"answer":"hello"}'), {

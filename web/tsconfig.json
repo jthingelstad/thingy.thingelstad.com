@@ -4,14 +4,17 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "jsxImportSource": "preact",
-    "allowJs": true,
-    "checkJs": false,
     "noEmit": true,
-    "strict": false,
-    "skipLibCheck": true
+    "strict": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "useUnknownInCatchVariables": false,
+    "skipLibCheck": true,
+    "types": ["node", "vite/client"]
   },
-  "include": ["src", "tests", "scripts", "vite.config.js"],
+  "include": ["src", "vite.config.ts"],
   "exclude": ["node_modules", "_site"]
 }

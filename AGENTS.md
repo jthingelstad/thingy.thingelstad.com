@@ -70,9 +70,9 @@ For web work, also inspect:
 sed -n '1,220p' README.md
 sed -n '1,220p' AGENTS.md
 sed -n '1,220p' docs/ROADMAP.md
-sed -n '1,220p' web/vite.config.js
-sed -n '1,220p' web/src/pages/chat.js
-sed -n '1,220p' web/src/pages/dispatch.js
+sed -n '1,220p' web/vite.config.ts
+sed -n '1,220p' web/src/pages/chat.ts
+sed -n '1,220p' web/src/pages/dispatch.ts
 ```
 
 For bridge work, read:
@@ -136,7 +136,7 @@ Key files:
 - `web/src/styles/thingy.css`: stylesheet manifest imported by page entries.
 - `web/public/robots.txt`: `robots.txt`.
 - `web/public/sitemap.xml`: `sitemap.xml`.
-- `web/vite.config.js`: multi-page build config and build-time public config
+- `web/vite.config.ts`: multi-page build config and build-time public config
   injection for Librarian API URLs, network links, and Tinylytics ID.
 
 The web app is a Vite-built static app served by GitHub Pages from `web/_site`.
@@ -184,7 +184,7 @@ browser URL before analytics loads. Preserve this.
 
 ## Tinylytics
 
-Thingy has its own Tinylytics site ID in `web/vite.config.js`, overridable with
+Thingy has its own Tinylytics site ID in `web/vite.config.ts`, overridable with
 `TINYLYTICS_SITE_UID`.
 
 Current Tinylytics usage:

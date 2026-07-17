@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { appendActivityStep, renderAssistantResponse } from '../src/shared/thingy-chat-rendering.js';
+import { appendActivityStep, renderAssistantResponse } from '../src/shared/thingy-chat-rendering.ts';
 
 test('activity notes preserve newline-separated status updates', () => {
   const steps = appendActivityStep(

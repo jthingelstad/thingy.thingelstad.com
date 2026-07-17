@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-const { createAssistantStreamRenderer } = await import('../src/shared/thingy-chat-stream-renderer.js');
-const { createAssistantMessageModel } = await import('../src/shared/models/assistant-message.js');
+const { createAssistantStreamRenderer } = await import('../src/shared/thingy-chat-stream-renderer.ts');
+const { createAssistantMessageModel } = await import('../src/shared/models/assistant-message.ts');
 
 // No rAF shim needed — the renderer now updates signals directly on every
 // delta so Preact's own batching handles rendering. The old rAF approach

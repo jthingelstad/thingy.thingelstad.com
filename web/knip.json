@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@latest/schema.json",
-  "entry": ["src/pages/*.js", "scripts/*.mjs", "tests/*.test.mjs", "vite.config.js", "eslint.config.js"],
-  "project": ["src/**/*.{js,jsx}", "scripts/**/*.mjs"],
+  "entry": ["src/pages/*.ts", "scripts/*.mjs", "tests/*.test.mjs", "vite.config.ts"],
+  "project": ["src/**/*.{ts,tsx}", "scripts/**/*.mjs"],
   "vite": false
 }

@@ -28,4 +28,4 @@ Concrete follow-ups for the web surface and bridge. Backend/API tasks live in th
 ## Docs
 
 - [ ] Keep this repo's `docs/ROADMAP.md` (the single Thingy product roadmap) aligned with Studio's `docs/librarian-tasks.md` and `reference/librarian.md` when backend capabilities change.
-- [ ] Keep URL parameter docs aligned with `web/vite.config.js` and the route HTML files in `web/`.
+- [ ] Keep URL parameter docs aligned with `web/vite.config.ts` and the route HTML files in `web/`.

@@ -11,7 +11,7 @@ import {
   dispatchStatusMessage,
   dispatchText,
   drafts
-} from '../src/shared/stores/dispatch-store.js';
+} from '../src/shared/stores/dispatch-store.ts';
 
 test('dispatch-store ships sensible initial values', () => {
   assert.deepEqual(drafts.value, []);

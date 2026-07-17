@@ -11,11 +11,17 @@ interface LibrarianDiscordConnection {
   guild_id?: string;
   connected_at?: string;
   last_verified_at?: string;
+  user_name?: string;
+  globalName?: string;
+  displayName?: string;
+  connectedAt?: string;
 }
 
 // Profile block returned by /auth and /memory responses. The empty arrays
 // are a frozen legacy shape kept for older deployed clients.
 interface LibrarianProfile {
+  email?: string;
+  status?: string;
   returning?: boolean;
   first_seen_at?: string;
   last_seen_at?: string;
@@ -25,11 +31,53 @@ interface LibrarianProfile {
   modes?: Array<{ id: string; label: string; description?: string }>;
   supporting_member?: boolean;
   discord_connection?: LibrarianDiscordConnection | null;
+  discordConnection?: LibrarianDiscordConnection | null;
+  discord_user?: LibrarianDiscordConnection | null;
+  discordUser?: LibrarianDiscordConnection | null;
   current_session_questions?: unknown[];
   recent_prompts?: unknown[];
   prior_session_summaries?: unknown[];
   learned_profile?: unknown[];
   memory_synthesis?: Record<string, never>;
+}
+
+interface ThingyAuthData {
+  token?: string;
+  email?: string;
+  status?: string;
+  message?: string;
+  error?: string;
+  profile?: LibrarianProfile;
+  entitlements?: string[];
+  modes?: ThingyMode[];
+}
+
+interface ThingyApiResponse extends ThingyAuthData, DispatchRow {
+  request_id?: string;
+  requestId?: string;
+  errorMessage?: string;
+  conversations?: ThingyConversationSummary[];
+  conversation?: ThingyConversationSummary;
+  dispatches?: DispatchRow[];
+  items?: DispatchRow[];
+  data?: unknown;
+  code?: string;
+  nodes?: ThingyOptions[];
+  sources?: ThingyOptions[];
+}
+
+interface ThingyStreamData extends ThingyApiResponse {
+  delta?: string;
+  answer?: string;
+  citations?: unknown[];
+  experience?: ThingyExperience;
+  commentary?: string;
+  detail?: string;
+  note?: string;
+  kind?: string;
+  tool_name?: string;
+  toolName?: string;
+  brief?: DispatchBrief;
 }
 
 // Account overview returned by /memory `get`.

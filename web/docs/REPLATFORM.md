@@ -3,13 +3,13 @@
 > **Status: COMPLETE (June 2026).** All six steps below shipped, plus the
 > follow-ups: shell/account components, signal-backed chat state (the
 > `state` Proxy in `bootChat`), and the extracted dispatch action layer
-> (`dispatch-actions.js`). Remaining intentionally-unmigrated surfaces:
+> (`thingy-dispatch-actions.ts`). Remaining intentionally-unmigrated surfaces:
 > the signin and discord pages (small, self-contained vanilla modules)
 > and the source picker / mode select / mobile title inside chat.
 > This document is retained as the design brief and architecture map.
 
 A build brief for moving the Thingy web app's two controller blobs
-(`thingy-chat.js`, ~1,700 lines; `thingy-dispatch.js`, ~730 lines) onto
+(`thingy-chat.ts`, ~1,700 lines; `thingy-dispatch.ts`, ~730 lines) onto
 Preact + `@preact/signals`. The goal is to delete the hand-rolled
 mutation→render orchestration that makes the app brittle, not to rewrite it.
 
@@ -31,9 +31,9 @@ mutation→render orchestration that makes the app brittle, not to rewrite it.
 - **Hosting**: static `vite build` → `_site/` → GitHub Pages. No server, no SSR.
 - **Multi-page structure**: `/`, `/chat/`, `/dispatch/`, `/signin/`, `/discord/`
   remain separate Vite entry points.
-- **The module layer**: `thingy-markdown.js`, `thingy-stream.js` (SSE parser),
-  `thingy-modes.js`, `thingy-scope.js`, `thingy-icons.js`, `thingy-http.js`,
-  `thingy-session.js`, `thingy-conversations.js` stay vanilla. They are pure
+- **The module layer**: `thingy-markdown.ts`, `thingy-stream.ts` (SSE parser),
+  `thingy-modes.ts`, `thingy-scope.ts`, `thingy-icons.ts`, `thingy-http.ts`,
+  `thingy-session.ts`, `thingy-conversations.ts` stay framework-free. They are pure
   logic and already tested. Components call them.
 - **The Librarian API contract**: untouched.
 
@@ -44,13 +44,13 @@ npm install preact @preact/signals
 npm install -D @preact/preset-vite
 ```
 
-One plugin line in `vite.config.js`. Bundle cost ≈ 4 KB gzip (Preact) + 2 KB
+One plugin line in `vite.config.ts`. Bundle cost ≈ 4 KB gzip (Preact) + 2 KB
 (signals). JSX is optional — `htm` tagged templates work if we want to avoid a
 transform, but the preset is already wired into Vite, so use JSX.
 
 ## Store shape (signals)
 
-One module, `src/shared/stores/chat-store.js`, replacing the closure variables:
+One module, `src/shared/stores/chat-store.ts`, replacing the closure variables:
 
 ```js
 // identity
@@ -119,8 +119,8 @@ Each step ships independently; the IIFE keeps running around the islands.
    becomes signal appends. This is the biggest win and the trickiest step;
    port the Phase 0 behaviors (stop, partial-preserve, retry) as store actions.
 5. **Auth gate + bootstrap** — last, because it touches redirects. After this
-   the chat IIFE is gone; `chat.js` renders `<ChatApp>`.
-6. **Dispatch** — port onto the shared components; delete `thingy-dispatch.js`
+   the chat IIFE is gone; `chat.ts` renders `<ChatApp>`.
+6. **Dispatch** — port onto the shared components; delete the original `thingy-dispatch.js`
    and the duplicated `dispatch-*` ID namespace from its HTML.
 
 ## Test strategy
@@ -136,7 +136,7 @@ Each step ships independently; the IIFE keeps running around the islands.
 ## Contract notes for the Librarian side (do alongside, not blocking)
 
 - Structured error codes on every error response (`code` field is already
-  whitelisted client-side in `thingy-url.js`; make the server always send it).
+  whitelisted client-side in `thingy-url.ts`; make the server always send it).
 - `draft`/`auto_titled` marker on conversation rows so the client's empty-draft
   cleanup stops needing any title heuristic at all (Phase 0 added an explicit
   client-side `draft` flag; server rows still use the title fallback).
