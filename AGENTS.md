@@ -244,14 +244,14 @@ Hard constraints:
 - Do not grow a second backend here. If a feature needs server logic, add it to
   the Librarian Lambda in Studio. This repo stays front-ends only.
 
-When you do need to deploy Studio's Librarian Lambdas, use Studio's repo-local
-virtualenv:
+When you do need to deploy Studio's Librarian Lambdas, use Studio's locked uv
+environment:
 
 ```sh
 cd ../studio-thing
 make librarian-deploy ARGS="--skip-corpus-upload"
 # or directly:
-venv/bin/python pipeline/deploy/aws.py --skip-corpus-upload
+uv run --locked python pipeline/deploy/aws.py --skip-corpus-upload
 ```
 
 Do not use plain `python`/`python3` for that deploy unless you have confirmed
