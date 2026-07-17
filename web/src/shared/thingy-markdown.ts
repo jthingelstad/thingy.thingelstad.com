@@ -1,19 +1,21 @@
 // @ts-check
-function escapeHtml(value) {
+function escapeHtml(value: unknown): string {
   return String(value || '').replace(
     /[&<>"']/g,
     (char) =>
-      ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-      })[char]
+      (
+        ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }) as Record<string, string>
+      )[char] || char
   );
 }
 
-function safeMarkdownUrl(url) {
+function safeMarkdownUrl(url: unknown): string {
   const value = String(url || '').trim();
   if (/^https?:/i.test(value) || /^mailto:/i.test(value)) return escapeHtml(value);
   if (/^\/archive\//i.test(value)) return escapeHtml(`https://weekly.thingelstad.com${value}`);
@@ -21,8 +23,8 @@ function safeMarkdownUrl(url) {
   return '#';
 }
 
-function citationMap(citations) {
-  const map = new Map();
+function citationMap(citations: ThingyCitation[] = []): Map<string, ThingyCitation> {
+  const map = new Map<string, ThingyCitation>();
   (citations || []).forEach((citation) => {
     const issue = String(citation.issue_number || '').trim();
     if (issue && citation.url && !map.has(issue)) map.set(issue, citation);
@@ -30,20 +32,20 @@ function citationMap(citations) {
   return map;
 }
 
-function citationTitle(citation) {
+function citationTitle(citation: ThingyCitation): string {
   const parts = [`WT${citation.issue_number}: ${citation.subject || 'Weekly Thing'}`];
   if (citation.publish_date) parts.push(String(citation.publish_date).slice(0, 10));
   if (citation.section) parts.push(citation.section);
   return parts.join(' | ');
 }
 
-function linkIssueReferences(html, citationsByIssue) {
+function linkIssueReferences(html: string, citationsByIssue: Map<string, ThingyCitation>): string {
   if (!citationsByIssue || citationsByIssue.size === 0) return html;
   return html
     .split(/(<[^>]+>)/g)
     .map((part) => {
       if (part.startsWith('<')) return part;
-      return part.replace(/(^|[^\w&])(?:WT|#)(\d{1,4})\b/g, (match, prefix, issue) => {
+      return part.replace(/(^|[^\w&])(?:WT|#)(\d{1,4})\b/g, (match: string, prefix: string, issue: string) => {
         const citation = citationsByIssue.get(issue);
         if (!citation) return match;
         return `${prefix}<a href="${safeMarkdownUrl(citation.url)}" title="${escapeHtml(citationTitle(citation))}" data-tinylytics-event="librarian.source_click" data-tinylytics-event-value="${escapeHtml(issue)}">WT${escapeHtml(issue)}</a>`;
@@ -52,17 +54,17 @@ function linkIssueReferences(html, citationsByIssue) {
     .join('');
 }
 
-function renderInlineMarkdown(text, citationsByIssue = new Map()) {
+function renderInlineMarkdown(text: unknown, citationsByIssue = new Map<string, ThingyCitation>()): string {
   let html = escapeHtml(text);
-  const code = [];
-  html = html.replace(/`([^`]+)`/g, (_, value) => {
+  const code: string[] = [];
+  html = html.replace(/`([^`]+)`/g, (_match: string, value: string) => {
     const token = `@@CODE${code.length}@@`;
     code.push(`<code>${value}</code>`);
     return token;
   });
   html = html.replace(
     /\[([^\]]+)\]\(([^)\s]+)\)/g,
-    (_, label, url) => `<a href="${safeMarkdownUrl(url)}">${label}</a>`
+    (_match: string, label: string, url: string) => `<a href="${safeMarkdownUrl(url)}">${label}</a>`
   );
   html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
@@ -75,15 +77,15 @@ function renderInlineMarkdown(text, citationsByIssue = new Map()) {
   return html;
 }
 
-function renderMarkdown(markdown, citations = []) {
+function renderMarkdown(markdown: unknown, citations: ThingyCitation[] = []): string {
   const text = String(markdown || '').trim();
   if (!text) return '<p>Thingy is thinking...</p>';
   const citationsByIssue = citationMap(citations);
   const lines = text.split(/\r?\n/);
-  const html = [];
-  let paragraph = [];
-  let listType = null;
-  let blockquote = [];
+  const html: string[] = [];
+  let paragraph: string[] = [];
+  let listType: 'ul' | 'ol' | null = null;
+  let blockquote: string[] = [];
 
   function flushParagraph() {
     if (!paragraph.length) return;
@@ -103,7 +105,7 @@ function renderMarkdown(markdown, citations = []) {
     blockquote = [];
   }
 
-  function openList(type) {
+  function openList(type: 'ul' | 'ol') {
     if (listType === type) return;
     flushParagraph();
     flushBlockquote();
@@ -112,12 +114,12 @@ function renderMarkdown(markdown, citations = []) {
     html.push(`<${type}>`);
   }
 
-  function isTableRow(value) {
+  function isTableRow(value: unknown) {
     const trimmed = String(value || '').trim();
     return trimmed.startsWith('|') && trimmed.endsWith('|') && trimmed.slice(1, -1).includes('|');
   }
 
-  function tableCells(value) {
+  function tableCells(value: unknown) {
     return String(value || '')
       .trim()
       .replace(/^\|/, '')
@@ -126,12 +128,12 @@ function renderMarkdown(markdown, citations = []) {
       .map((cell) => cell.trim());
   }
 
-  function isTableSeparator(value) {
+  function isTableSeparator(value: unknown) {
     if (!isTableRow(value)) return false;
     return tableCells(value).every((cell) => /^:?-{3,}:?$/.test(cell));
   }
 
-  function renderTableCell(tag, value) {
+  function renderTableCell(tag: 'th' | 'td', value: string) {
     return `<${tag}>${renderInlineMarkdown(value, citationsByIssue)}</${tag}>`;
   }
 
@@ -159,7 +161,7 @@ function renderMarkdown(markdown, citations = []) {
       flushList();
       const headers = tableCells(trimmed);
       index += 2;
-      const rows = [];
+      const rows: string[][] = [];
       while (index < lines.length && isTableRow(lines[index])) {
         rows.push(tableCells(lines[index]));
         index += 1;

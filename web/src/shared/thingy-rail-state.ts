@@ -7,7 +7,17 @@
 import { effect } from '@preact/signals';
 import { mobileRailOpen, railCollapsed } from './stores/ui-store.ts';
 
-function persistCollapsed(key, value) {
+interface RailStateOptions {
+  shell?: HTMLElement | null;
+  mobileToggle?: HTMLElement | null;
+  scrim?: HTMLElement | null;
+  collapseButton?: HTMLElement | null;
+  collapsedKey?: string;
+  showLabel?: string;
+  hideLabel?: string;
+}
+
+function persistCollapsed(key: string, value: boolean) {
   try {
     window.localStorage.setItem(key, value ? '1' : '0');
   } catch (error) {
@@ -15,7 +25,7 @@ function persistCollapsed(key, value) {
   }
 }
 
-function attachRailState(options: ThingyOptions = {}) {
+function attachRailState(options: RailStateOptions = {}) {
   const shell = options.shell || null;
   const mobileToggle = options.mobileToggle || null;
   const scrim = options.scrim || null;
@@ -33,7 +43,7 @@ function attachRailState(options: ThingyOptions = {}) {
     }
   }
 
-  const disposers = [];
+  const disposers: Array<() => void> = [];
 
   // Mirror the collapsed signal onto the shell class and the button's aria.
   disposers.push(
@@ -82,13 +92,13 @@ function attachRailState(options: ThingyOptions = {}) {
   }
 
   return {
-    setMobileOpen: (open) => {
+    setMobileOpen: (open: boolean) => {
       mobileRailOpen.value = Boolean(open);
     },
     closeMobile: () => {
       mobileRailOpen.value = false;
     },
-    setCollapsed: (collapsed) => {
+    setCollapsed: (collapsed: boolean) => {
       railCollapsed.value = Boolean(collapsed);
     },
     dispose: () => disposers.forEach((d) => d())

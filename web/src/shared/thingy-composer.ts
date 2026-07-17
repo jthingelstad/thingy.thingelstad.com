@@ -7,7 +7,20 @@ function defaultBusy() {
 // The character count and the send button used to live here too; both moved
 // to the ComposerCount and ComposerSubmit signal-backed islands and the
 // `count` option was retired with them.
-function createComposer(options: ThingyOptions = {}) {
+interface ComposerOptions {
+  form?: HTMLFormElement | null;
+  input?: HTMLTextAreaElement | null;
+  isBusy?: () => boolean;
+  onSubmit?: (event: SubmitEvent) => void | Promise<void>;
+  onError?: (error: unknown) => void;
+  onInput?: (event: Event) => void;
+  autoSize?: boolean;
+  maxChars?: number;
+  maxHeight?: number;
+  onAutoSize?: () => void;
+}
+
+function createComposer(options: ComposerOptions = {}) {
   const form = options.form || null;
   const input = options.input || null;
   const isBusy = typeof options.isBusy === 'function' ? options.isBusy : defaultBusy;
@@ -30,7 +43,7 @@ function createComposer(options: ThingyOptions = {}) {
   }
 
   if (form) {
-    form.addEventListener('submit', async (event) => {
+    form.addEventListener('submit', async (event: SubmitEvent) => {
       event.preventDefault();
       if (isBusy()) return;
       if (!onSubmit) return;
@@ -47,7 +60,7 @@ function createComposer(options: ThingyOptions = {}) {
   }
 
   if (input) {
-    input.addEventListener('keydown', (event) => {
+    input.addEventListener('keydown', (event: KeyboardEvent) => {
       if (event.key !== 'Enter' || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
       event.preventDefault();
       if (form && typeof form.requestSubmit === 'function') {
@@ -56,7 +69,7 @@ function createComposer(options: ThingyOptions = {}) {
         form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
       }
     });
-    input.addEventListener('input', (event) => {
+    input.addEventListener('input', (event: Event) => {
       sync();
       if (onInput) onInput(event);
     });

@@ -59,7 +59,7 @@ function tokenNeedsRefresh(value?: string): boolean {
   return Boolean(expiresAt) && expiresAt <= Math.floor(Date.now() / 1000) + refreshWindowSeconds;
 }
 
-function authHeaders() {
+function authHeaders(): Record<string, string> {
   return token() ? { authorization: `Bearer ${token()}` } : {};
 }
 

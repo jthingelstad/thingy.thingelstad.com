@@ -1,7 +1,7 @@
 // @ts-check
 const sourceOrder: string[] = ['weekly_thing', 'blog', 'podcast'];
 
-function normalizeScopeParam(value) {
+function normalizeScopeParam(value: unknown): string {
   const raw = String(value || '')
     .trim()
     .toLowerCase();
@@ -50,7 +50,7 @@ function normalizeScopeParam(value) {
   return '';
 }
 
-function scopeForSources(sources) {
+function scopeForSources(sources: string[]): string {
   const selected = sourceOrder.filter((source) => sources.includes(source));
   if (selected.length === 3) return 'all';
   if (selected.length === 1) return selected[0];
@@ -61,7 +61,7 @@ function scopeForSources(sources) {
   return '';
 }
 
-function sourcesForScope(scope) {
+function sourcesForScope(scope: unknown): string[] {
   switch (normalizeScopeParam(scope) || 'all') {
     case 'weekly_thing':
       return ['weekly_thing'];

@@ -1,8 +1,13 @@
 // @ts-check
-function createTinylyticsTracker(options: ThingyOptions = {}) {
+interface TinylyticsEvent {
+  name: string;
+  value?: string;
+}
+
+function createTinylyticsTracker(options: { enabled?: boolean } = {}) {
   const enabled = Boolean(options.enabled);
   const sink = document.createElement('button');
-  const pending = [];
+  const pending: TinylyticsEvent[] = [];
   let ready = false;
 
   sink.type = 'button';
@@ -10,7 +15,7 @@ function createTinylyticsTracker(options: ThingyOptions = {}) {
   sink.setAttribute('aria-hidden', 'true');
   document.body.appendChild(sink);
 
-  function send(name, value) {
+  function send(name: string, value?: string) {
     if (!enabled || !name) return;
     sink.setAttribute('data-tinylytics-event', name);
     if (value) {
@@ -25,11 +30,11 @@ function createTinylyticsTracker(options: ThingyOptions = {}) {
     ready = true;
     while (pending.length) {
       const event = pending.shift();
-      send(event.name, event.value);
+      if (event) send(event.name, event.value);
     }
   }
 
-  function track(name, value) {
+  function track(name: string, value?: string) {
     if (!enabled || !name) return;
     if (!ready) {
       pending.push({ name, value });

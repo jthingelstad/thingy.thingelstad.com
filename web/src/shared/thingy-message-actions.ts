@@ -1,6 +1,30 @@
 import { iconSvg } from './thingy-icons.ts';
 
-function actionIcon(name) {
+type MessageActionName = 'copy' | 'play' | 'pause' | 'retry' | 'up' | 'down' | 'share';
+
+interface FeedbackInput {
+  requestId: string;
+  reaction: string;
+  comment: string;
+}
+
+interface FeedbackResult {
+  reaction?: string;
+}
+
+interface ChatMessageActionOptions {
+  submitFeedback?: (input: FeedbackInput) => Promise<FeedbackResult>;
+  track?: (name: string, value?: string) => void;
+  promptShareUrl?: (prompt: string, scope: string) => string;
+  promptShareTitle?: string;
+}
+
+interface ResponseActionOptions {
+  feedback?: boolean;
+  retryPrompt?: string;
+}
+
+function actionIcon(name: MessageActionName) {
   const iconNames = {
     copy: 'copy',
     play: 'play',
@@ -13,7 +37,7 @@ function actionIcon(name) {
   return iconSvg(iconNames[name]);
 }
 
-function escapeAttribute(value) {
+function escapeAttribute(value: unknown) {
   return String(value || '')
     .replaceAll('&', '&amp;')
     .replaceAll('"', '&quot;')
@@ -21,7 +45,7 @@ function escapeAttribute(value) {
     .replaceAll('>', '&gt;');
 }
 
-async function copyToClipboard(value) {
+async function copyToClipboard(value: string) {
   if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') return false;
   try {
     await navigator.clipboard.writeText(value);
@@ -31,22 +55,23 @@ async function copyToClipboard(value) {
   }
 }
 
-function buildSharePromptUrl(prompt, scope) {
+function buildSharePromptUrl(prompt: string, scope: string) {
   const url = new URL('/chat/', window.location.origin);
   url.searchParams.set('prompt', prompt);
   url.searchParams.set('scope', scope || 'all');
   return url.toString();
 }
 
-function answerClipboardPayload(messageElement) {
-  const clone = messageElement.cloneNode(true);
+function answerClipboardPayload(messageElement: HTMLElement) {
+  const clone = messageElement.cloneNode(true) as HTMLElement;
   clone
     .querySelectorAll('.librarian-feedback, .librarian-prompt-actions, .librarian-activity')
-    .forEach((node) => node.remove());
-  clone.querySelectorAll('[aria-hidden="true"]').forEach((node) => node.remove());
-  clone.querySelectorAll('a[href]').forEach((link) => {
+    .forEach((node: Element) => node.remove());
+  clone.querySelectorAll('[aria-hidden="true"]').forEach((node: Element) => node.remove());
+  clone.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((link) => {
     try {
-      link.setAttribute('href', new URL(link.getAttribute('href'), window.location.origin).toString());
+      const href = link.getAttribute('href');
+      if (href) link.setAttribute('href', new URL(href, window.location.origin).toString());
     } catch (error) {
       /* leave original href */
     }
@@ -69,7 +94,7 @@ function speechOutputSupported() {
   return 'speechSynthesis' in window && typeof window.SpeechSynthesisUtterance === 'function';
 }
 
-function setSpeechButtonState(button, playing) {
+function setSpeechButtonState(button: HTMLButtonElement | null, playing: boolean) {
   if (!button) return;
   button.classList.toggle('selected', playing);
   button.setAttribute('aria-label', playing ? 'Stop reading answer' : 'Read answer aloud');
@@ -77,7 +102,7 @@ function setSpeechButtonState(button, playing) {
   button.innerHTML = actionIcon(playing ? 'pause' : 'play');
 }
 
-function legacyCopyRichHtml(html, text) {
+function legacyCopyRichHtml(html: string, text: string) {
   if (typeof document.execCommand !== 'function') return false;
   const scratch = document.createElement('div');
   scratch.contentEditable = 'true';
@@ -89,15 +114,19 @@ function legacyCopyRichHtml(html, text) {
   document.body.appendChild(scratch);
 
   const selection = window.getSelection();
+  if (!selection) {
+    scratch.remove();
+    return false;
+  }
   const previousRange = selection && selection.rangeCount ? selection.getRangeAt(0) : null;
   const range = document.createRange();
   range.selectNodeContents(scratch);
   selection.removeAllRanges();
   selection.addRange(range);
 
-  const onCopy = (event) => {
-    event.clipboardData.setData('text/html', html);
-    event.clipboardData.setData('text/plain', text);
+  const onCopy = (event: ClipboardEvent) => {
+    event.clipboardData?.setData('text/html', html);
+    event.clipboardData?.setData('text/plain', text);
     event.preventDefault();
   };
 
@@ -116,7 +145,7 @@ function legacyCopyRichHtml(html, text) {
   return copied;
 }
 
-async function copyRichHtmlToClipboard(html, text) {
+async function copyRichHtmlToClipboard(html: unknown, text: unknown) {
   const normalizedHtml = String(html || '').trim();
   const normalizedText = String(text || '').trim();
   if (!normalizedHtml && !normalizedText) return 'empty';
@@ -138,17 +167,18 @@ async function copyRichHtmlToClipboard(html, text) {
   return 'failed';
 }
 
-function createChatMessageActions(options: ThingyOptions = {}) {
-  const submitFeedback = typeof options.submitFeedback === 'function' ? options.submitFeedback : async () => ({});
+function createChatMessageActions(options: ChatMessageActionOptions = {}) {
+  const submitFeedback: (input: FeedbackInput) => Promise<FeedbackResult> =
+    typeof options.submitFeedback === 'function' ? options.submitFeedback : async () => ({});
   const track = typeof options.track === 'function' ? options.track : () => {};
   const promptShareUrl =
     typeof options.promptShareUrl === 'function'
       ? options.promptShareUrl
-      : (prompt, scope) => buildSharePromptUrl(prompt, scope);
+      : (prompt: string, scope: string) => buildSharePromptUrl(prompt, scope);
   const promptShareTitle = String(options.promptShareTitle || 'Ask Thingy');
   let feedbackStatusTimer = 0;
-  let speechUtterance = null;
-  let speechButton = null;
+  let speechUtterance: SpeechSynthesisUtterance | null = null;
+  let speechButton: HTMLButtonElement | null = null;
 
   function stopSpeaking() {
     if (speechOutputSupported()) window.speechSynthesis.cancel();
@@ -157,15 +187,15 @@ function createChatMessageActions(options: ThingyOptions = {}) {
     speechButton = null;
   }
 
-  function setFeedbackState(container, reaction) {
-    container.querySelectorAll('button[data-reaction]').forEach((button) => {
+  function setFeedbackState(container: HTMLElement, reaction: string) {
+    container.querySelectorAll<HTMLButtonElement>('button[data-reaction]').forEach((button) => {
       const selected = button.dataset.reaction === reaction;
       button.classList.toggle('selected', selected);
       button.setAttribute('aria-pressed', selected ? 'true' : 'false');
     });
   }
 
-  function flashActionStatus(container, message) {
+  function flashActionStatus(container: HTMLElement, message: string) {
     const status = container.querySelector('.librarian-feedback-status');
     if (!status) return;
     status.textContent = message;
@@ -175,9 +205,9 @@ function createChatMessageActions(options: ThingyOptions = {}) {
     }, 1800);
   }
 
-  async function saveFeedback(requestId, reaction, container, comment = '') {
+  async function saveFeedback(requestId: string, reaction: string, container: HTMLElement, comment = '') {
     const status = container.querySelector('.librarian-feedback-status');
-    container.querySelectorAll('button[data-reaction]').forEach((button) => {
+    container.querySelectorAll<HTMLButtonElement>('button[data-reaction]').forEach((button) => {
       button.disabled = true;
     });
     if (status) status.textContent = 'Saving...';
@@ -193,15 +223,15 @@ function createChatMessageActions(options: ThingyOptions = {}) {
       if (comment) track('librarian.feedback_comment', reaction);
     } catch (error) {
       if (status) status.textContent = 'Could not save';
-      track('librarian.feedback_error', error.requestId ? 'server' : 'client');
+      track('librarian.feedback_error', error instanceof Error && error.requestId ? 'server' : 'client');
     } finally {
-      container.querySelectorAll('button[data-reaction]').forEach((button) => {
+      container.querySelectorAll<HTMLButtonElement>('button[data-reaction]').forEach((button) => {
         button.disabled = false;
       });
     }
   }
 
-  function toggleSpeakAnswer(messageElement, button) {
+  function toggleSpeakAnswer(messageElement: HTMLElement, button: HTMLButtonElement) {
     if (!speechOutputSupported()) return 'Speech playback not supported';
     if (speechButton === button && speechUtterance) {
       stopSpeaking();
@@ -227,7 +257,7 @@ function createChatMessageActions(options: ThingyOptions = {}) {
     return 'Reading';
   }
 
-  async function copyAnswerRichText(messageElement) {
+  async function copyAnswerRichText(messageElement: HTMLElement) {
     const payload = answerClipboardPayload(messageElement);
     const result = await copyRichHtmlToClipboard(payload.html, payload.text);
     if (result === 'rich') return 'Rich text copied';
@@ -236,7 +266,7 @@ function createChatMessageActions(options: ThingyOptions = {}) {
     return 'Could not copy';
   }
 
-  async function shareAnswer(messageElement) {
+  async function shareAnswer(messageElement: HTMLElement) {
     const payload = answerClipboardPayload(messageElement);
     if (!payload.text && !payload.html) return 'Nothing to share';
     if (typeof navigator.share === 'function') {
@@ -245,7 +275,7 @@ function createChatMessageActions(options: ThingyOptions = {}) {
         track('librarian.answer_share_native');
         return 'Shared';
       } catch (error) {
-        if (error && error.name === 'AbortError') return '';
+        if (error instanceof Error && error.name === 'AbortError') return '';
       }
     }
     const result = await copyRichHtmlToClipboard(payload.html, payload.text);
@@ -254,7 +284,7 @@ function createChatMessageActions(options: ThingyOptions = {}) {
     return 'Could not share';
   }
 
-  async function sharePrompt(prompt, scope) {
+  async function sharePrompt(prompt: string, scope: string) {
     const shareUrl = promptShareUrl(prompt, scope);
     if (typeof navigator.share === 'function') {
       try {
@@ -264,7 +294,7 @@ function createChatMessageActions(options: ThingyOptions = {}) {
         track('librarian.share_native');
         return 'Shared';
       } catch (error) {
-        if (error && error.name === 'AbortError') return '';
+        if (error instanceof Error && error.name === 'AbortError') return '';
       }
     }
     const copied = await copyToClipboard(shareUrl || prompt);
@@ -275,7 +305,7 @@ function createChatMessageActions(options: ThingyOptions = {}) {
     return 'Could not copy';
   }
 
-  async function copyPrompt(prompt) {
+  async function copyPrompt(prompt: string) {
     const copied = await copyToClipboard(prompt);
     if (copied) {
       track('librarian.prompt_copy');
@@ -284,7 +314,7 @@ function createChatMessageActions(options: ThingyOptions = {}) {
     return 'Could not copy';
   }
 
-  function addPromptActions(messageElement, prompt, scope) {
+  function addPromptActions(messageElement: HTMLElement, prompt: string, scope: string) {
     if (!prompt) return;
     const controls = document.createElement('div');
     controls.className = 'librarian-prompt-actions';
@@ -310,7 +340,11 @@ function createChatMessageActions(options: ThingyOptions = {}) {
     messageElement.appendChild(controls);
   }
 
-  function addResponseActions(messageElement, requestId, actionOptions: ThingyOptions = {}) {
+  function addResponseActions(
+    messageElement: HTMLElement,
+    requestId: string,
+    actionOptions: ResponseActionOptions = {}
+  ) {
     const includeFeedback = actionOptions.feedback !== false && Boolean(requestId);
     const retryPrompt = String(actionOptions.retryPrompt || '').trim();
     if (!requestId && includeFeedback) return;

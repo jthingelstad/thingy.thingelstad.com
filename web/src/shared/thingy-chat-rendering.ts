@@ -291,11 +291,11 @@ function renderActivityLog(steps = [], options: ThingyOptions = {}) {
 }
 
 function renderAssistantResponse(
-  answer,
-  citations = [],
-  experience = null,
-  activitySteps = [],
-  activityCommentary = [],
+  answer: unknown,
+  citations: unknown[] = [],
+  experience: ThingyExperience | null = null,
+  activitySteps: ThingyActivityStep[] = [],
+  activityCommentary: string[] = [],
   options: ThingyOptions = {}
 ) {
   const hasAnswer = String(answer || '').trim() || experience;

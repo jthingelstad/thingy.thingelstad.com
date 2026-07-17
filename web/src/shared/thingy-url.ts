@@ -1,5 +1,5 @@
 // @ts-check
-function scrubUrlParams(names = []) {
+function scrubUrlParams(names: string[] = []) {
   if (!names.length) return;
   const url = new URL(window.location.href);
   let changed = false;
@@ -27,10 +27,11 @@ const AUTH_ERROR_CODES = new Set([
   'unauthorized'
 ]);
 
-function isAuthError(error) {
-  if (!error) return false;
-  if (error.status === 401) return true;
-  const code = String(error.code || error.data?.code || '').trim();
+function isAuthError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as Error & { code?: string; data?: { code?: string } };
+  if (candidate.status === 401) return true;
+  const code = String(candidate.code || candidate.data?.code || '').trim();
   return code ? AUTH_ERROR_CODES.has(code) : false;
 }
 

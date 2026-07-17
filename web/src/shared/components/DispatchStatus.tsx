@@ -11,7 +11,7 @@ function DispatchStatus() {
   );
 }
 
-function mountDispatchStatus(host) {
+function mountDispatchStatus(host: HTMLElement | null) {
   if (!host) return () => {};
   render(<DispatchStatus />, host);
   return () => render(null, host);

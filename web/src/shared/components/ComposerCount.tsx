@@ -1,11 +1,17 @@
 import { render } from 'preact';
+import type { Signal } from '@preact/signals';
 import { questionText } from '../stores/chat-store.ts';
 
 // Renders a "n / max" counter that subscribes to a text signal. Defaults to
 // the chat composer's questionText so existing chat call sites work without
 // passing the signal explicitly; dispatch passes its own (dispatchText from
 // dispatch-store) via the `text` prop.
-function ComposerCount({ maxChars, text = questionText }) {
+interface ComposerCountProps {
+  maxChars: number;
+  text?: Signal<string>;
+}
+
+function ComposerCount({ maxChars, text = questionText }: ComposerCountProps) {
   const length = text.value.length;
   const warning = length > maxChars * 0.9;
   return (
@@ -15,7 +21,7 @@ function ComposerCount({ maxChars, text = questionText }) {
   );
 }
 
-function mountComposerCount(host, props: Parameters<typeof ComposerCount>[0]) {
+function mountComposerCount(host: HTMLElement | null, props: ComposerCountProps) {
   if (!host) return () => {};
   render(<ComposerCount {...props} />, host);
   return () => render(null, host);

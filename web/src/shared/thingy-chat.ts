@@ -115,7 +115,7 @@ function bootChat() {
   let activeScope = initialScope || 'all';
   const sourceControls = createSourcePicker({
     inputs: scopeInputs,
-    button: document.getElementById('srcpick-btn'),
+    button: document.getElementById('srcpick-btn') as HTMLButtonElement,
     popover: document.getElementById('srcpick-pop'),
     label: document.getElementById('srcpick-label'),
     dots: document.getElementById('srcpick-dots'),

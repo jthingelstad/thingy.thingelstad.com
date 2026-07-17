@@ -5,11 +5,11 @@ import { renderAssistantResponse, renderCuriosityMap } from '../thingy-chat-rend
 import { escapeHtml } from '../thingy-markdown.ts';
 import { formatElapsedTime } from '../models/assistant-message.ts';
 
-function StreamNote({ text }) {
+function StreamNote({ text }: { text: string }) {
   return <p class="librarian-stream-note">{text}</p>;
 }
 
-function StreamError({ message, retryPrompt }) {
+function StreamError({ message, retryPrompt }: { message: string; retryPrompt: string }) {
   return (
     <div class="librarian-stream-error">
       <p>{message}</p>
@@ -22,7 +22,7 @@ function StreamError({ message, retryPrompt }) {
   );
 }
 
-function AssistantBody({ model }) {
+function AssistantBody({ model }: { model: AssistantMessageModel }) {
   const elapsedLabel = useComputed(() => formatElapsedTime(model.elapsedSeconds.value));
   const html = useComputed(() => {
     const artifact = model.artifactHtml.value;
@@ -45,7 +45,7 @@ function AssistantBody({ model }) {
   return <div dangerouslySetInnerHTML={{ __html: html.value }} />;
 }
 
-function AssistantMessage({ model }) {
+function AssistantMessage({ model }: { model: AssistantMessageModel }) {
   const status = model.status.value;
   useEffect(() => {
     if (status !== 'pending' && status !== 'streaming') return undefined;
@@ -75,7 +75,7 @@ function AssistantMessage({ model }) {
   );
 }
 
-function mountAssistantMessage(host, model) {
+function mountAssistantMessage(host: HTMLElement | null, model: AssistantMessageModel) {
   if (!host) return () => {};
   render(<AssistantMessage model={model} />, host);
   return () => render(null, host);

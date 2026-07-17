@@ -1,11 +1,18 @@
-import { render } from 'preact';
+import { render, type JSX } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import { authAction, authBusy, authEmail, authEmailError, authMessage } from '../stores/chat-store.ts';
 
 let authInput: HTMLInputElement | null = null;
 
-function AuthPanel({ onSubmit, onAddSubscriber, onResendConfirmation, onEmailInput }) {
-  const inputRef = useRef(null);
+interface AuthPanelProps {
+  onSubmit: () => void;
+  onAddSubscriber: JSX.MouseEventHandler<HTMLButtonElement>;
+  onResendConfirmation: JSX.MouseEventHandler<HTMLButtonElement>;
+  onEmailInput: JSX.GenericEventHandler<HTMLInputElement>;
+}
+
+function AuthPanel({ onSubmit, onAddSubscriber, onResendConfirmation, onEmailInput }: AuthPanelProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Keep the imperative focus bridge at this component boundary.
   useEffect(() => {
@@ -21,12 +28,12 @@ function AuthPanel({ onSubmit, onAddSubscriber, onResendConfirmation, onEmailInp
   const message = authMessage.value;
   const email = authEmail.value;
 
-  function handleInput(event) {
+  function handleInput(event: JSX.TargetedEvent<HTMLInputElement, Event>) {
     authEmail.value = event.currentTarget.value;
     if (typeof onEmailInput === 'function') onEmailInput(event);
   }
 
-  function handleSubmit(event) {
+  function handleSubmit(event: JSX.TargetedSubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     if (typeof onSubmit === 'function') onSubmit();
   }
@@ -101,7 +108,7 @@ function AuthPanel({ onSubmit, onAddSubscriber, onResendConfirmation, onEmailInp
   );
 }
 
-function mountAuthPanel(host, props: Parameters<typeof AuthPanel>[0]) {
+function mountAuthPanel(host: HTMLElement | null, props: AuthPanelProps) {
   if (!host) return () => {};
   render(<AuthPanel {...props} />, host);
   return () => render(null, host);

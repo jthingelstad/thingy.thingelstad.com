@@ -1,11 +1,16 @@
-import { render } from 'preact';
+import { render, type JSX } from 'preact';
 import { iconSvg } from '../thingy-icons.ts';
 import { hasSources, interactionBusy, questionText, stoppable } from '../stores/chat-store.ts';
 
 const ASK_ICON = iconSvg('arrow-up');
 const STOP_ICON = iconSvg('square');
 
-function ComposerSubmit({ maxChars, onStop }) {
+interface ComposerSubmitProps {
+  maxChars: number;
+  onStop: () => void;
+}
+
+function ComposerSubmit({ maxChars, onStop }: ComposerSubmitProps) {
   const stop = stoppable.value;
   const busy = interactionBusy.value;
   const text = questionText.value;
@@ -14,7 +19,7 @@ function ComposerSubmit({ maxChars, onStop }) {
   const disabled = stop ? false : busy || !hasSources.value || !hasText || overLimit;
   const label = stop ? 'Stop answer' : busy ? 'Thingy is answering' : 'Ask Thingy';
 
-  function handleClick(event) {
+  function handleClick(event: JSX.TargetedMouseEvent<HTMLButtonElement>) {
     if (!stop) return;
     event.preventDefault();
     onStop?.();
@@ -36,7 +41,7 @@ function ComposerSubmit({ maxChars, onStop }) {
   );
 }
 
-function mountComposerSubmit(host, props: Parameters<typeof ComposerSubmit>[0]) {
+function mountComposerSubmit(host: HTMLElement | null, props: ComposerSubmitProps) {
   if (!host) return () => {};
   render(<ComposerSubmit {...props} />, host);
   return () => render(null, host);

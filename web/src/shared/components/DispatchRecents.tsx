@@ -5,11 +5,22 @@ import { activeDraftId, drafts } from '../stores/dispatch-store.ts';
 
 const EMPTY_LABEL = "Your Dispatches show up here. Start a new one and we'll keep track of it.";
 
-function safeStateClass(value) {
+interface DispatchRecentsProps {
+  onOpen: (id: string) => void;
+  onDelete: (id: string) => void;
+  maxRecents?: number;
+}
+
+interface DispatchRowProps extends Pick<DispatchRecentsProps, 'onOpen' | 'onDelete'> {
+  draft: ThingyDispatchDraftSummary;
+  isActive: boolean;
+}
+
+function safeStateClass(value: unknown) {
   return String(value || '').replace(/[^a-z0-9_-]/gi, '');
 }
 
-function DispatchRow({ draft, isActive, onOpen, onDelete }) {
+function DispatchRow({ draft, isActive, onOpen, onDelete }: DispatchRowProps) {
   const id = String(draft.id || '');
   const title = draft.title || 'New Dispatch';
   const stage = draft.stage || '';
@@ -48,7 +59,7 @@ function DispatchRow({ draft, isActive, onOpen, onDelete }) {
   );
 }
 
-function DispatchRecents({ onOpen, onDelete, maxRecents = 24 }) {
+function DispatchRecents({ onOpen, onDelete, maxRecents = 24 }: DispatchRecentsProps) {
   const list = drafts.value.filter((draft) => draft && draft.id).slice(0, maxRecents);
   const activeId = activeDraftId.value;
   if (!list.length) {
@@ -69,7 +80,7 @@ function DispatchRecents({ onOpen, onDelete, maxRecents = 24 }) {
   );
 }
 
-function mountDispatchRecents(host, props: Parameters<typeof DispatchRecents>[0]) {
+function mountDispatchRecents(host: HTMLElement | null, props: DispatchRecentsProps) {
   if (!host) return () => {};
   render(<DispatchRecents {...props} />, host);
   return () => render(null, host);

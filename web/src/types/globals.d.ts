@@ -116,12 +116,20 @@ interface ThingyExperience {
   items?: ThingyArchiveItem[];
 }
 
+interface ThingyCitation {
+  issue_number?: string | number;
+  url?: string;
+  subject?: string;
+  publish_date?: string;
+  section?: string;
+}
+
 type AssistantMessageStatus = 'pending' | 'streaming' | 'done' | 'stopped' | 'error' | 'static';
 
 interface AssistantMessageModel {
   id: string;
   content: import('@preact/signals').Signal<string>;
-  citations: import('@preact/signals').Signal<unknown[]>;
+  citations: import('@preact/signals').Signal<ThingyCitation[]>;
   activity: import('@preact/signals').Signal<ThingyActivityStep[]>;
   commentary: import('@preact/signals').Signal<string[]>;
   experience: import('@preact/signals').Signal<ThingyExperience | null>;
@@ -138,7 +146,7 @@ interface AssistantMessageModel {
 
 interface AssistantMessageOptions {
   content?: unknown;
-  citations?: unknown[];
+  citations?: ThingyCitation[];
   activity?: ThingyActivityStep[];
   commentary?: string[];
   experience?: ThingyExperience | null;

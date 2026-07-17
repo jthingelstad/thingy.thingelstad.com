@@ -38,7 +38,7 @@ function Notice() {
   );
 }
 
-function mountNotice(host) {
+function mountNotice(host: HTMLElement | null) {
   if (!host) return () => {};
   render(<Notice />, host);
   return () => render(null, host);

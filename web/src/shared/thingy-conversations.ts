@@ -1,10 +1,23 @@
 import { normalizeModeId } from './thingy-modes.ts';
 
-function isLocalConversationId(id, prefix = 'local-chat-') {
+interface ConversationListOptions {
+  activeConversationId?: string | null;
+  labelForMode?: (modeId: string) => string;
+  maxRecents?: number;
+  replaceId?: string;
+}
+
+interface CreateConversationOptions extends ConversationListOptions {
+  prefix?: string;
+  mode?: string;
+  scope?: string;
+}
+
+function isLocalConversationId(id: unknown, prefix = 'local-chat-') {
   return String(id || '').startsWith(prefix);
 }
 
-function conversationId(entry) {
+function conversationId(entry: Partial<ThingyConversationSummary> | null | undefined) {
   return String(entry?.id || entry?.conversation_id || '').trim();
 }
 
@@ -13,7 +26,10 @@ function conversationTitle(mode = 'thingy', labelForMode: (modeId: string) => st
   return normalized === 'thingy' ? 'New chat' : `${labelForMode(normalized)} chat`;
 }
 
-function emptyConversationDraftKey(entry, labelForMode: (modeId: string) => string = () => 'Thingy') {
+function emptyConversationDraftKey(
+  entry: ThingyConversationSummary,
+  labelForMode: (modeId: string) => string = () => 'Thingy'
+) {
   if (!entry?.id) return '';
   const normalized = normalizeModeId(entry.mode || 'thingy');
   if (entry.draft === true) return `${normalized}:${conversationTitle(normalized, labelForMode)}`;
@@ -24,7 +40,11 @@ function emptyConversationDraftKey(entry, labelForMode: (modeId: string) => stri
 
 // `draft` is an explicit client-side marker; the title comparison only exists
 // as a fallback for server rows that predate the marker.
-function isEmptyConversationDraft(entry, mode = '', labelForMode: (modeId: string) => string = () => 'Thingy') {
+function isEmptyConversationDraft(
+  entry: ThingyConversationSummary,
+  mode = '',
+  labelForMode: (modeId: string) => string = () => 'Thingy'
+) {
   if (!entry?.id) return false;
   if (entry.draft === false) return false;
   const normalized = normalizeModeId(mode || entry.mode || 'thingy');
@@ -34,7 +54,7 @@ function isEmptyConversationDraft(entry, mode = '', labelForMode: (modeId: strin
   return String(entry.title || '') === conversationTitle(normalized, labelForMode);
 }
 
-function dedupeEmptyConversationDrafts(list = [], options: ThingyOptions = {}) {
+function dedupeEmptyConversationDrafts(list: ThingyConversationSummary[] = [], options: ConversationListOptions = {}) {
   const activeConversationId = String(options.activeConversationId || '');
   const labelForMode = typeof options.labelForMode === 'function' ? options.labelForMode : () => 'Thingy';
   const nonEmptyDraftKeys = new Set(
@@ -43,8 +63,8 @@ function dedupeEmptyConversationDrafts(list = [], options: ThingyOptions = {}) {
       .map((entry) => emptyConversationDraftKey(entry, labelForMode))
       .filter(Boolean)
   );
-  const seen = new Map();
-  const out = [];
+  const seen = new Map<string, number>();
+  const out: ThingyConversationSummary[] = [];
   for (const entry of list) {
     if (!isEmptyConversationDraft(entry, '', labelForMode)) {
       out.push(entry);
@@ -65,11 +85,11 @@ function dedupeEmptyConversationDrafts(list = [], options: ThingyOptions = {}) {
   return out;
 }
 
-function sortConversationSummaries(list = []) {
+function sortConversationSummaries(list: ThingyConversationSummary[] = []) {
   return [...list].sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')));
 }
 
-function trimConversationSummaries(list = [], options: ThingyOptions = {}) {
+function trimConversationSummaries(list: ThingyConversationSummary[] = [], options: ConversationListOptions = {}) {
   const maxRecents = Number(options.maxRecents || 20);
   return dedupeEmptyConversationDrafts(list, {
     activeConversationId: options.activeConversationId,
@@ -77,7 +97,11 @@ function trimConversationSummaries(list = [], options: ThingyOptions = {}) {
   }).slice(0, maxRecents);
 }
 
-function upsertConversationSummaryList(list = [], conversation, options: ThingyOptions = {}) {
+function upsertConversationSummaryList(
+  list: ThingyConversationSummary[] = [],
+  conversation: ThingyConversationSummary,
+  options: ConversationListOptions = {}
+) {
   const id = conversationId(conversation);
   if (!id) return { conversations: list, activeConversationId: options.activeConversationId || '' };
   const replaceId = String(options.replaceId || '').trim();
@@ -93,14 +117,18 @@ function upsertConversationSummaryList(list = [], conversation, options: ThingyO
   };
 }
 
-function deleteConversationSummaryList(list = [], id, options: ThingyOptions = {}) {
+function deleteConversationSummaryList(
+  list: ThingyConversationSummary[] = [],
+  id: unknown,
+  options: ConversationListOptions = {}
+) {
   const removedId = String(id || '').trim();
   const conversations = list.filter((entry) => conversationId(entry) !== removedId);
   const activeConversationId = options.activeConversationId === removedId ? '' : options.activeConversationId;
   return { conversations, activeConversationId };
 }
 
-function createLocalConversation(options: ThingyOptions = {}) {
+function createLocalConversation(options: CreateConversationOptions = {}): ThingyConversationSummary {
   const now = new Date().toISOString();
   const prefix = options.prefix || 'local-chat-';
   const mode = normalizeModeId(options.mode || 'thingy');

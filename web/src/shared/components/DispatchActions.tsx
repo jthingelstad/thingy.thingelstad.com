@@ -1,7 +1,11 @@
 import { render } from 'preact';
 import { dispatchActions } from '../stores/dispatch-store.ts';
 
-function DispatchActions({ onAction }) {
+interface DispatchActionsProps {
+  onAction: (id: string) => void;
+}
+
+function DispatchActions({ onAction }: DispatchActionsProps) {
   const items = dispatchActions.value;
   if (!items.length) return null;
   return (
@@ -25,7 +29,7 @@ function DispatchActions({ onAction }) {
   );
 }
 
-function mountDispatchActions(host, props: Parameters<typeof DispatchActions>[0]) {
+function mountDispatchActions(host: HTMLElement | null, props: DispatchActionsProps) {
   if (!host) return () => {};
   render(<DispatchActions {...props} />, host);
   return () => render(null, host);

@@ -25,6 +25,7 @@ import pause from 'lucide-static/icons/pause.svg?raw';
 import pencil from 'lucide-static/icons/pencil.svg?raw';
 import play from 'lucide-static/icons/play.svg?raw';
 import plus from 'lucide-static/icons/plus.svg?raw';
+import rotateCcw from 'lucide-static/icons/rotate-ccw.svg?raw';
 import search from 'lucide-static/icons/search.svg?raw';
 import sendHorizontal from 'lucide-static/icons/send-horizontal.svg?raw';
 import share2 from 'lucide-static/icons/share-2.svg?raw';
@@ -66,6 +67,7 @@ const icons = {
   pencil,
   play,
   plus,
+  'rotate-ccw': rotateCcw,
   search,
   send: sendHorizontal,
   'send-horizontal': sendHorizontal,
@@ -82,7 +84,14 @@ const icons = {
   x
 };
 
-function escapeAttribute(value) {
+type ThingyIconName = keyof typeof icons;
+
+interface IconOptions {
+  className?: string;
+  label?: string;
+}
+
+function escapeAttribute(value: unknown) {
   return String(value || '')
     .replaceAll('&', '&amp;')
     .replaceAll('"', '&quot;')
@@ -90,8 +99,9 @@ function escapeAttribute(value) {
     .replaceAll('>', '&gt;');
 }
 
-function iconSvg(name, options: ThingyOptions = {}) {
-  const raw = icons[String(name || '').trim()] || '';
+function iconSvg(name: unknown, options: IconOptions = {}) {
+  const key = String(name || '').trim() as ThingyIconName;
+  const raw = icons[key] || '';
   if (!raw) return '';
   const className = String(options.className || '').trim();
   const label = String(options.label || '').trim();
@@ -104,13 +114,13 @@ function iconSvg(name, options: ThingyOptions = {}) {
     : withAria.replace('<svg', `<svg class="${classes}"`);
 }
 
-function iconElement(name, options: ThingyOptions = {}) {
+function iconElement(name: unknown, options: IconOptions = {}): Element | Text {
   const template = document.createElement('template');
   template.innerHTML = iconSvg(name, options);
   return template.content.firstElementChild || document.createTextNode('');
 }
 
-function hydrateThingyIcons(root = document) {
+function hydrateThingyIcons(root: ParentNode = document) {
   root.querySelectorAll('[data-thingy-icon]').forEach((element) => {
     const name = element.getAttribute('data-thingy-icon') || '';
     const className = element.getAttribute('data-thingy-icon-class') || '';

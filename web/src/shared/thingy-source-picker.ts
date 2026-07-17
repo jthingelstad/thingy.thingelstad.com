@@ -4,13 +4,27 @@ import {
   sourcesForScope as defaultSourcesForScope
 } from './thingy-scope.ts';
 
-const sourceMeta = {
+const sourceMeta: Record<string, { name: string; cls: string }> = {
   weekly_thing: { name: 'Weekly Thing', cls: 'dot-wt' },
   blog: { name: 'Blog', cls: 'dot-blog' },
   podcast: { name: 'Another Thing', cls: 'dot-podcast' }
 };
 
-function createSourcePicker(options: ThingyOptions = {}) {
+interface SourcePickerOptions {
+  scopeForSources?: (sources: string[]) => string;
+  sourcesForScope?: (scope: unknown) => string[];
+  inputs?: HTMLInputElement[];
+  button?: HTMLButtonElement | null;
+  popover?: HTMLElement | null;
+  label?: HTMLElement | null;
+  dots?: HTMLElement | null;
+  note?: HTMLElement | null;
+  error?: HTMLElement | null;
+  scrollContainer?: HTMLElement | null;
+  onChange?: (scope: string, detail: { keptSelection: boolean }) => void;
+}
+
+function createSourcePicker(options: SourcePickerOptions = {}) {
   const scopeForSources = options.scopeForSources || defaultScopeForSources;
   const sourcesForScope = options.sourcesForScope || defaultSourcesForScope;
   const inputs = Array.isArray(options.inputs) ? options.inputs : [];
@@ -37,12 +51,12 @@ function createSourcePicker(options: ThingyOptions = {}) {
     return scopeForSources(selectedSources());
   }
 
-  function setSourceMessage(message) {
+  function setSourceMessage(message: string) {
     if (error) error.textContent = message || '';
     if (note && message) note.textContent = message;
   }
 
-  function ensureOneSourceSelected(changedInput = null) {
+  function ensureOneSourceSelected(changedInput: HTMLInputElement | null = null) {
     if (sourceCount() > 0) return true;
     const fallback = changedInput || inputs[0];
     if (fallback) fallback.checked = true;
@@ -130,22 +144,22 @@ function createSourcePicker(options: ThingyOptions = {}) {
       note.textContent = `Thingy can draw from ${on.length} of ${inputs.length} sources.`;
     }
     if (popover) {
-      popover.querySelectorAll('.srcpick-row').forEach((row) => {
-        const input = row.querySelector('input[name="scope"]');
+      popover.querySelectorAll<HTMLElement>('.srcpick-row').forEach((row) => {
+        const input = row.querySelector<HTMLInputElement>('input[name="scope"]');
         row.setAttribute('aria-checked', input?.checked ? 'true' : 'false');
       });
     }
     schedulePosition();
   }
 
-  function notifyChange(changedInput = null) {
+  function notifyChange(changedInput: HTMLInputElement | null = null) {
     const keptSelection = ensureOneSourceSelected(changedInput);
     if (!keptSelection) setSourceMessage('Keep at least one source selected.');
     refresh();
     onChange(currentScope() || 'none', { keptSelection });
   }
 
-  function toggleInput(input) {
+  function toggleInput(input: HTMLInputElement | null) {
     if (!input || input.disabled || disabled) return;
     if (input.checked && sourceCount() <= 1) {
       setSourceMessage('Keep at least one source selected.');
@@ -161,7 +175,7 @@ function createSourcePicker(options: ThingyOptions = {}) {
     window.setTimeout(open, 0);
   }
 
-  function setScope(value) {
+  function setScope(value: unknown) {
     const sources = sourcesForScope(value);
     inputs.forEach((input) => {
       input.checked = sources.includes(input.value);
@@ -171,7 +185,7 @@ function createSourcePicker(options: ThingyOptions = {}) {
     return currentScope();
   }
 
-  function setDisabled(value) {
+  function setDisabled(value: boolean) {
     disabled = Boolean(value);
     inputs.forEach((input) => {
       input.disabled = disabled;
@@ -180,7 +194,7 @@ function createSourcePicker(options: ThingyOptions = {}) {
     if (disabled) close();
   }
 
-  function contains(target) {
+  function contains(target: Node | null) {
     return Boolean(target && (button?.contains(target) || popover?.contains(target)));
   }
 
@@ -189,7 +203,7 @@ function createSourcePicker(options: ThingyOptions = {}) {
   });
 
   if (button) {
-    button.addEventListener('click', (event) => {
+    button.addEventListener('click', (event: MouseEvent) => {
       event.stopPropagation();
       toggle();
     });
@@ -197,20 +211,20 @@ function createSourcePicker(options: ThingyOptions = {}) {
 
   if (popover) {
     ['pointerdown', 'mousedown', 'click'].forEach((eventName) => {
-      popover.addEventListener(eventName, (event) => event.stopPropagation());
+      popover.addEventListener(eventName, (event: Event) => event.stopPropagation());
     });
-    popover.querySelectorAll('.srcpick-row').forEach((row) => {
-      const input = row.querySelector('input[name="scope"]');
+    popover.querySelectorAll<HTMLElement>('.srcpick-row').forEach((row) => {
+      const input = row.querySelector<HTMLInputElement>('input[name="scope"]');
       row.setAttribute('role', 'checkbox');
       row.setAttribute('tabindex', '0');
       row.setAttribute('aria-checked', input?.checked ? 'true' : 'false');
-      row.addEventListener('click', (event) => {
+      row.addEventListener('click', (event: MouseEvent) => {
         event.preventDefault();
         event.stopPropagation();
         toggleInput(input);
         keepOpen();
       });
-      row.addEventListener('keydown', (event) => {
+      row.addEventListener('keydown', (event: KeyboardEvent) => {
         if (event.key !== ' ' && event.key !== 'Enter') return;
         event.preventDefault();
         event.stopPropagation();

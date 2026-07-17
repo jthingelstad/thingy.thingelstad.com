@@ -3,12 +3,15 @@ import { networkLinks } from './thingy-config.ts';
 const links = networkLinks();
 
 function buildFromMap() {
-  const map = new Map();
+  const map = new Map<string, { name: string; href: string }>();
   for (const link of links) {
+    if (!link.href || !link.label) continue;
+    const name = link.label;
+    const href = link.href;
     try {
-      const host = new URL(link.href).hostname.toLowerCase().replace(/^www\./, '');
-      map.set(host, { name: link.label, href: link.href });
-      map.set(`www.${host}`, { name: link.label, href: link.href });
+      const host = new URL(href).hostname.toLowerCase().replace(/^www\./, '');
+      map.set(host, { name, href });
+      map.set(`www.${host}`, { name, href });
     } catch (error) {
       /* ignore */
     }
@@ -16,14 +19,14 @@ function buildFromMap() {
       const key = String(alias || '')
         .toLowerCase()
         .trim();
-      if (key) map.set(key, { name: link.label, href: link.href });
+      if (key) map.set(key, { name, href });
     });
-    if (link.key) map.set(String(link.key).toLowerCase(), { name: link.label, href: link.href });
+    if (link.key) map.set(String(link.key).toLowerCase(), { name, href });
   }
   return map;
 }
 
-function resolveFromValue(value) {
+function resolveFromValue(value: unknown): { name: string; href: string } | null {
   if (!value) return null;
   const raw = String(value).trim();
   if (!raw) return null;

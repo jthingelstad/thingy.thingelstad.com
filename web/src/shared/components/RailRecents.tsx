@@ -6,15 +6,27 @@ import { activeConversationId, availableModes, conversations } from '../stores/c
 const DEFAULT_MAX_RECENTS = 20;
 const EMPTY_LABEL = 'Your conversations sync with Thingy. Start one and it’ll show up here.';
 
-function labelForMode(modes, id) {
+interface RailRecentsProps {
+  maxRecents?: number;
+  onOpen: (id: string) => void;
+  onDelete: (id: string) => void;
+}
+
+interface RecentRowProps extends Pick<RailRecentsProps, 'onOpen' | 'onDelete'> {
+  entry: ThingyConversationSummary;
+  modes: ThingyMode[];
+  isActive: boolean;
+}
+
+function labelForMode(modes: ThingyMode[], id: string) {
   return modes.find((mode) => mode.id === id)?.label || 'Thingy';
 }
 
-function RecentRow({ entry, modes, isActive, onOpen, onDelete }) {
+function RecentRow({ entry, modes, isActive, onOpen, onDelete }: RecentRowProps) {
   const id = String(entry.id || '');
   const title = entry.title || 'Untitled chat';
   const showMode = Boolean(entry.mode && entry.mode !== 'thingy');
-  const modeText = showMode ? labelForMode(modes, entry.mode) : '';
+  const modeText = showMode ? labelForMode(modes, entry.mode || 'thingy') : '';
   const rowClass = ['rail-recent', isActive ? 'is-active' : '', showMode ? 'has-mode' : ''].filter(Boolean).join(' ');
   const buttonTitle = showMode ? `${title} - ${modeText}` : title;
   return (
@@ -48,7 +60,7 @@ function RecentRow({ entry, modes, isActive, onOpen, onDelete }) {
   );
 }
 
-function RailRecents({ maxRecents = DEFAULT_MAX_RECENTS, onOpen, onDelete }) {
+function RailRecents({ maxRecents = DEFAULT_MAX_RECENTS, onOpen, onDelete }: RailRecentsProps) {
   const list = conversations.value.filter((entry) => entry && entry.id).slice(0, maxRecents);
   const modes = availableModes.value;
   const activeId = activeConversationId.value;
@@ -73,7 +85,7 @@ function RailRecents({ maxRecents = DEFAULT_MAX_RECENTS, onOpen, onDelete }) {
   );
 }
 
-function mountRailRecents(host, props: Parameters<typeof RailRecents>[0]) {
+function mountRailRecents(host: HTMLElement | null, props: RailRecentsProps) {
   if (!host) return;
   render(<RailRecents {...props} />, host);
 }

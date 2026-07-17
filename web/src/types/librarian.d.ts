@@ -64,12 +64,14 @@ interface ThingyApiResponse extends ThingyAuthData, DispatchRow {
   code?: string;
   nodes?: ThingyOptions[];
   sources?: ThingyOptions[];
+  account?: LibrarianAccountOverview;
+  reaction?: string;
 }
 
 interface ThingyStreamData extends ThingyApiResponse {
   delta?: string;
   answer?: string;
-  citations?: unknown[];
+  citations?: ThingyCitation[];
   experience?: ThingyExperience;
   commentary?: string;
   detail?: string;

@@ -6,14 +6,27 @@ import { renderMarkdown } from '../thingy-markdown.ts';
 import { formatElapsedTime } from '../models/assistant-message.ts';
 import { dispatchMessages } from '../stores/dispatch-store.ts';
 
-function splitProgressHtml(html) {
+interface DispatchMessagesProps {
+  scrollContainer: () => HTMLElement | null;
+  track?: (name: string, value?: string) => void;
+}
+
+function splitProgressHtml(html: unknown) {
   const value = String(html || '').trim();
   const match = value.match(/^(<p>[\s\S]*?<\/p>)([\s\S]*)$/);
   if (!match) return { lead: value, rest: '' };
   return { lead: match[1], rest: match[2] || '' };
 }
 
-function DispatchMessage({ message, index, elapsedLabel = '' }) {
+function DispatchMessage({
+  message,
+  index,
+  elapsedLabel = ''
+}: {
+  message: ThingyDispatchMessage;
+  index: number;
+  elapsedLabel?: string;
+}) {
   const role = message.role === 'user' ? 'user' : message.role === 'system' ? 'system' : 'assistant';
   const html = renderMarkdown(message.text || '');
   const kind = message.kind ? ` is-${String(message.kind).replace(/[^a-z0-9_-]/gi, '')}` : '';
@@ -66,10 +79,10 @@ function DispatchMessage({ message, index, elapsedLabel = '' }) {
   );
 }
 
-function DispatchMessages({ scrollContainer, track = (_name: string, _value?: string) => {} }) {
+function DispatchMessages({ scrollContainer, track = (_name: string, _value?: string) => {} }: DispatchMessagesProps) {
   const messages = dispatchMessages.value;
-  const ref = useRef(null);
-  const actionsRef = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const actionsRef = useRef<ReturnType<typeof createChatMessageActions> | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
   if (!actionsRef.current) {
     actionsRef.current = createChatMessageActions({
@@ -83,7 +96,7 @@ function DispatchMessages({ scrollContainer, track = (_name: string, _value?: st
     const root = ref.current;
     const actions = actionsRef.current;
     if (root && actions) {
-      root.querySelectorAll('[data-dispatch-message-index]').forEach((element) => {
+      root.querySelectorAll<HTMLElement>('[data-dispatch-message-index]').forEach((element) => {
         if (element.dataset.dispatchActionsAttached === 'true') return;
         const message = messages[Number(element.dataset.dispatchMessageIndex || -1)];
         if (!message) return;
@@ -135,7 +148,7 @@ function DispatchMessages({ scrollContainer, track = (_name: string, _value?: st
   );
 }
 
-function mountDispatchMessages(host, props: Parameters<typeof DispatchMessages>[0]) {
+function mountDispatchMessages(host: HTMLElement | null, props: DispatchMessagesProps) {
   if (!host) return () => {};
   render(<DispatchMessages {...props} />, host);
   return () => render(null, host);

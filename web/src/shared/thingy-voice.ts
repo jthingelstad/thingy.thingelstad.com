@@ -2,7 +2,17 @@ function speechInputCtor() {
   return window.SpeechRecognition || window.webkitSpeechRecognition || null;
 }
 
-function createDictationController(options: ThingyOptions = {}) {
+interface DictationOptions {
+  input?: HTMLTextAreaElement | null;
+  button?: HTMLButtonElement | null;
+  status?: HTMLElement | null;
+  maxChars?: number;
+  isBusy?: () => boolean;
+  onInput?: () => void;
+  onTrack?: (name: string, value?: string) => void;
+}
+
+function createDictationController(options: DictationOptions = {}) {
   const input = options.input || null;
   const button = options.button || null;
   const status = options.status || null;
@@ -10,7 +20,7 @@ function createDictationController(options: ThingyOptions = {}) {
   const isBusy = typeof options.isBusy === 'function' ? options.isBusy : () => false;
   const onInput = typeof options.onInput === 'function' ? options.onInput : () => {};
   const onTrack = typeof options.onTrack === 'function' ? options.onTrack : () => {};
-  let recognition = null;
+  let recognition: ThingySpeechRecognition | null = null;
   let listening = false;
   let baseText = '';
   let finalText = '';
@@ -19,7 +29,7 @@ function createDictationController(options: ThingyOptions = {}) {
     return Boolean(speechInputCtor());
   }
 
-  function setStatus(message) {
+  function setStatus(message: string) {
     if (status) status.textContent = message || '';
   }
 

@@ -1,9 +1,10 @@
-import { Fragment, render } from 'preact';
+import { Fragment, render, type JSX } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { useComputed } from '@preact/signals';
+import { useComputed, type Signal } from '@preact/signals';
 import { iconSvg } from '../thingy-icons.ts';
 import { buildId } from '../thingy-config.ts';
 import { discordConnection, discordConnectionName, hasSupportingAccess, savePreferredName } from '../thingy-account.ts';
+import { errorMessage } from '../thingy-errors.ts';
 import {
   accountMenuOpen,
   accountNameStatus,
@@ -17,7 +18,34 @@ const LOG_OUT_ICON = iconSvg('log-out');
 const PROFILE_ICON = iconSvg('users-round');
 const CLOSE_ICON = iconSvg('x');
 
-function ProfileTrigger({ onOpen }) {
+type SessionApi = typeof import('../thingy-session.ts');
+
+interface ProfileModalProps {
+  open: boolean;
+  onClose: () => void;
+  onProfileDeleted: () => void;
+  session: SessionApi;
+  profile: LibrarianProfile;
+  email: string;
+  preferredName: string;
+  connectedName: string;
+  supporting: boolean;
+}
+
+interface AccountMenuProps {
+  session: SessionApi;
+  signedIn?: Signal<boolean>;
+  returnTo?: string;
+  signedOutEmailLabel?: string;
+  signedOutSubLabel?: string;
+  normalizeName?: (value: unknown) => string;
+  onOpen?: () => void;
+  onSignedOutClick?: () => void;
+  onLogout?: () => void;
+  onSaved?: (savedName: string, data: ThingyApiResponse) => void;
+}
+
+function ProfileTrigger({ onOpen }: { onOpen: JSX.MouseEventHandler<HTMLButtonElement> }) {
   return (
     <button type="button" class="rail-memory-trigger" onClick={onOpen}>
       <span class="rail-memory-trigger-icon" aria-hidden="true" dangerouslySetInnerHTML={{ __html: PROFILE_ICON }} />
@@ -29,36 +57,36 @@ function ProfileTrigger({ onOpen }) {
   );
 }
 
-function formatProfileDate(value) {
+function formatProfileDate(value: unknown) {
   const text = String(value || '').trim();
   if (!text) return '';
   const date = new Date(text);
   return Number.isNaN(date.getTime()) ? text : date.toLocaleString();
 }
 
-function formatProfileCount(value, label) {
+function formatProfileCount(value: unknown, label: string) {
   const count = Number(value || 0);
   return `${count.toLocaleString()} ${label}${count === 1 ? '' : 's'}`;
 }
 
-function profileNumber(value) {
+function profileNumber(value: unknown) {
   const count = Number(value || 0);
   return Number.isFinite(count) ? count : 0;
 }
 
-function formatDurationParts(milliseconds) {
+function formatDurationParts(milliseconds: number) {
   const minutes = Math.max(0, Math.floor(milliseconds / 60000));
   const days = Math.floor(minutes / 1440);
   const hours = Math.floor((minutes % 1440) / 60);
   const remainingMinutes = minutes % 60;
-  const parts = [];
+  const parts: string[] = [];
   if (days) parts.push(`${days.toLocaleString()} day${days === 1 ? '' : 's'}`);
   if (hours && parts.length < 2) parts.push(`${hours} hour${hours === 1 ? '' : 's'}`);
   if (!parts.length && remainingMinutes) parts.push(`${remainingMinutes} minute${remainingMinutes === 1 ? '' : 's'}`);
   return parts.length ? parts.join(', ') : 'Less than a minute';
 }
 
-function formatActiveSpan(startValue, endValue) {
+function formatActiveSpan(startValue: unknown, endValue: unknown) {
   const start = new Date(String(startValue || '').trim());
   const end = new Date(String(endValue || '').trim());
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'Not enough activity yet';
@@ -89,7 +117,7 @@ function ProfileModal({
   preferredName,
   connectedName,
   supporting
-}) {
+}: ProfileModalProps) {
   const [viewProfile, setViewProfile] = useState<LibrarianProfile>(profile || {});
   const [accountOverview, setAccountOverview] = useState<LibrarianAccountOverview>({});
   const [busyAction, setBusyAction] = useState('');
@@ -100,18 +128,20 @@ function ProfileModal({
   const viewPreferredName = String(preferredName || viewProfile.preferred_name || '').trim();
   const firstSeen = accountOverview.first_seen_at || viewProfile.first_seen_at;
   const lastActivity = accountOverview.last_seen_at || viewProfile.last_seen_at;
-  const profileRows = [
-    viewPreferredName ? ['Name', viewPreferredName] : ['Name', 'Not set'],
-    email ? ['Email', email] : null,
-    ['Access', supporting ? 'Supporting Member' : 'Weekly Thing reader'],
-    viewConnectedName ? ['Discord', viewConnectedName] : ['Discord', 'Not connected in Thingy profile'],
-    ['First seen', formatProfileDate(firstSeen) || 'Not recorded'],
-    ['Last activity', formatProfileDate(lastActivity) || 'Not recorded'],
-    ['Active span', formatActiveSpan(firstSeen, lastActivity)],
-    ['Thingy activity', formatProfileActivity(accountOverview, viewProfile)]
-  ].filter(Boolean);
+  const profileRows = (
+    [
+      viewPreferredName ? ['Name', viewPreferredName] : ['Name', 'Not set'],
+      email ? ['Email', email] : null,
+      ['Access', supporting ? 'Supporting Member' : 'Weekly Thing reader'],
+      viewConnectedName ? ['Discord', viewConnectedName] : ['Discord', 'Not connected in Thingy profile'],
+      ['First seen', formatProfileDate(firstSeen) || 'Not recorded'],
+      ['Last activity', formatProfileDate(lastActivity) || 'Not recorded'],
+      ['Active span', formatActiveSpan(firstSeen, lastActivity)],
+      ['Thingy activity', formatProfileActivity(accountOverview, viewProfile)]
+    ] as Array<[string, string] | null>
+  ).filter((row): row is [string, string] => row !== null);
 
-  function applyProfileData(data) {
+  function applyProfileData(data: ThingyApiResponse) {
     if (!data?.profile) return;
     const nextProfile =
       typeof session?.mergeProfile === 'function'
@@ -133,7 +163,7 @@ function ProfileModal({
       const data = await session.postJson('/memory', { action: 'get' }, session.authHeaders());
       applyProfileData(data);
     } catch (error) {
-      setProfileError(error.message || 'Thingy could not load this profile right now.');
+      setProfileError(errorMessage(error, 'Thingy could not load this profile right now.'));
     } finally {
       setBusyAction('');
     }
@@ -148,7 +178,7 @@ function ProfileModal({
       setConfirmDelete(false);
       if (typeof onProfileDeleted === 'function') onProfileDeleted();
     } catch (error) {
-      setProfileError(error.message || 'Thingy could not delete this profile right now.');
+      setProfileError(errorMessage(error, 'Thingy could not delete this profile right now.'));
     } finally {
       setBusyAction('');
     }
@@ -160,7 +190,7 @@ function ProfileModal({
 
   useEffect(() => {
     if (!open) return undefined;
-    function onKey(event) {
+    function onKey(event: KeyboardEvent) {
       if (event.key === 'Escape') onCloseRef.current();
     }
     document.addEventListener('keydown', onKey);
@@ -181,7 +211,7 @@ function ProfileModal({
 
   if (!open) return null;
 
-  function handleBackdropClick(event) {
+  function handleBackdropClick(event: JSX.TargetedMouseEvent<HTMLDivElement>) {
     if (event.target === event.currentTarget) onClose();
   }
 
@@ -267,12 +297,12 @@ function AccountMenu({
   returnTo = '/chat/',
   signedOutEmailLabel = 'Sign in',
   signedOutSubLabel = 'Weekly Thing readers',
-  normalizeName = (value) => String(value || '').trim(),
+  normalizeName = (value: unknown) => String(value || '').trim(),
   onOpen = () => {},
   onSignedOutClick = () => {},
   onLogout = () => {},
   onSaved = (_savedName: string, _data: ThingyApiResponse) => {}
-}) {
+}: AccountMenuProps) {
   const isSignedIn = signedIn.value;
   const open = accountMenuOpen.value;
   const email = displayEmail.value.trim();
@@ -287,21 +317,21 @@ function AccountMenu({
     return value ? value[0].toUpperCase() : 'T';
   });
 
-  const buttonRef = useRef(null);
-  const formRef = useRef(null);
-  const inputRef = useRef(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [profileOpen, setProfileOpen] = useState(false);
 
   // Close on document click outside the menu, and on Escape.
   useEffect(() => {
-    function onDocClick(event) {
+    function onDocClick(event: MouseEvent) {
       const button = buttonRef.current;
       const menu = button?.parentElement?.querySelector('.rail-menu');
       if (!button || !menu) return;
       if (event.target instanceof Element && (button.contains(event.target) || menu.contains(event.target))) return;
       accountMenuOpen.value = false;
     }
-    function onKey(event) {
+    function onKey(event: KeyboardEvent) {
       if (event.key === 'Escape') accountMenuOpen.value = false;
     }
     document.addEventListener('click', onDocClick);
@@ -319,7 +349,7 @@ function AccountMenu({
     if (open && typeof onOpen === 'function') onOpen();
   }, [preferredName, open, onOpen]);
 
-  function handleButtonClick(event) {
+  function handleButtonClick(event: JSX.TargetedMouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
     if (!isSignedIn) {
       accountMenuOpen.value = false;
@@ -329,7 +359,7 @@ function AccountMenu({
     accountMenuOpen.value = !open;
   }
 
-  async function handleNameSubmit(event) {
+  async function handleNameSubmit(event: JSX.TargetedSubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!isSignedIn) return;
     const proposed = inputRef.current?.value || '';
@@ -340,7 +370,7 @@ function AccountMenu({
       if (typeof onSaved === 'function') onSaved(savedName, data);
       accountNameStatus.value = 'Saved.';
     } catch (error) {
-      accountNameStatus.value = error.message || 'Could not save that right now.';
+      accountNameStatus.value = errorMessage(error, 'Could not save that right now.');
     }
   }
 
@@ -358,7 +388,7 @@ function AccountMenu({
   const connection = discordConnection(profile);
   const connectedName = discordConnectionName(profile);
 
-  function handleProfileOpen(event) {
+  function handleProfileOpen(event: JSX.TargetedMouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
     setProfileOpen(true);
     accountMenuOpen.value = false;
@@ -452,7 +482,7 @@ function AccountMenu({
   );
 }
 
-function mountAccountMenu(host, props: Parameters<typeof AccountMenu>[0]) {
+function mountAccountMenu(host: HTMLElement | null, props: AccountMenuProps) {
   if (!host) return () => {};
   render(<AccountMenu {...props} />, host);
   return () => render(null, host);
