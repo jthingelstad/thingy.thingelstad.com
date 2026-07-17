@@ -7,5 +7,4 @@ Discord webhook, so the bridge has no polling handler to run.
 
 from __future__ import annotations
 
-
 __all__: tuple[str, ...] = ()

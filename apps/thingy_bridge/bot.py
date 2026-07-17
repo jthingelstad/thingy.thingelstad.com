@@ -1,6 +1,6 @@
 """thingy_bridge entrypoint.
 
-Run with ``apps/thingy_bridge/venv/bin/python -m apps.thingy_bridge.bot``
+Run with ``uv run python -m apps.thingy_bridge.bot``
 from the repo root.
 
 Spins up a single discord.py Client (the Thingy bot), runs DB
@@ -27,7 +27,6 @@ import sys
 import time
 from pathlib import Path
 
-import discord
 from dotenv import load_dotenv
 
 from .commands import register_thingy_commands
@@ -134,7 +133,8 @@ async def _gateway_watchdog(
     last_change_at = armed_at
     logger.info(
         "watchdog: armed (no-ack threshold %.0fs, grace %.0fs)",
-        ack_stale_secs, grace_secs,
+        ack_stale_secs,
+        grace_secs,
     )
 
     while not stop_event.is_set():
@@ -145,9 +145,7 @@ async def _gateway_watchdog(
             pass
 
         if bot.is_closed():
-            logger.error(
-                "watchdog: bot.is_closed() is True; exiting so launchd restarts us"
-            )
+            logger.error("watchdog: bot.is_closed() is True; exiting so launchd restarts us")
             os._exit(1)
 
         current = bot.latency  # float seconds, or inf when no WS / no ACK yet
@@ -160,7 +158,10 @@ async def _gateway_watchdog(
                 logger.error(
                     "watchdog: bot.latency has been non-finite for %.0fs "
                     "(grace %.0fs + threshold %.0fs); exiting so launchd "
-                    "restarts us", since_armed, grace_secs, ack_stale_secs,
+                    "restarts us",
+                    since_armed,
+                    grace_secs,
+                    ack_stale_secs,
                 )
                 os._exit(1)
             continue
@@ -176,7 +177,8 @@ async def _gateway_watchdog(
                 "watchdog: bot.latency hasn't changed in %.0fs "
                 "(threshold %.0fs); HEARTBEAT_ACKs have stopped — "
                 "exiting so launchd restarts us",
-                stale, ack_stale_secs,
+                stale,
+                ack_stale_secs,
             )
             os._exit(1)
 
@@ -197,6 +199,7 @@ async def run() -> int:
 
     class _Deps:
         pass
+
     deps = _Deps()
     deps.team = team  # type: ignore[attr-defined]
     bot.deps = deps  # type: ignore[attr-defined]
@@ -222,6 +225,7 @@ async def run() -> int:
         # on_ready behaviour (single-shot flag on the bot).
         try:
             from .tools import startup
+
             await startup.post_startup_card(bot)
         except Exception:  # noqa: BLE001
             logger.exception("startup announce failed")
@@ -268,8 +272,10 @@ async def run() -> int:
 
     persona_task = asyncio.create_task(_start(), name="persona:thingy")
 
-    scheduler_enabled = (
-        os.environ.get("THINGY_BRIDGE_SCHEDULER_ENABLED", "1").strip() not in ("0", "false", "")
+    scheduler_enabled = os.environ.get("THINGY_BRIDGE_SCHEDULER_ENABLED", "1").strip() not in (
+        "0",
+        "false",
+        "",
     )
     runner = SchedulerRunner(team, deps=deps) if scheduler_enabled else None
 
@@ -277,7 +283,9 @@ async def run() -> int:
         try:
             await asyncio.wait_for(bot.ready_event.wait(), timeout=READY_WAIT_SECONDS)
         except asyncio.TimeoutError:
-            logger.warning("Thingy not ready after %ds; scheduler will start anyway", READY_WAIT_SECONDS)
+            logger.warning(
+                "Thingy not ready after %ds; scheduler will start anyway", READY_WAIT_SECONDS
+            )
         if runner is not None:
             try:
                 runner.start()

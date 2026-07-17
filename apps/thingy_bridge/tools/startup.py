@@ -47,7 +47,9 @@ def git_hash() -> str:
     try:
         out = subprocess.check_output(
             ["git", "rev-parse", "--short", "HEAD"],
-            cwd=REPO, text=True, stderr=subprocess.DEVNULL,
+            cwd=REPO,
+            text=True,
+            stderr=subprocess.DEVNULL,
         ).strip()
         return out or "unknown"
     except Exception:  # noqa: BLE001
@@ -58,7 +60,9 @@ def git_dirty() -> bool:
     try:
         out = subprocess.check_output(
             ["git", "status", "--porcelain"],
-            cwd=REPO, text=True, stderr=subprocess.DEVNULL,
+            cwd=REPO,
+            text=True,
+            stderr=subprocess.DEVNULL,
         )
         return bool(out.strip())
     except Exception:  # noqa: BLE001
@@ -121,7 +125,9 @@ def audit(bot) -> list[tuple[str, Optional[str], list[str]]]:
                 role_issues.append("could not resolve bot member in guild")
             elif not getattr(me.guild_permissions, "manage_roles", False):
                 role_issues.append("missing guild perm: manage_roles")
-            elif role is not None and getattr(me.top_role, "position", 0) <= getattr(role, "position", 0):
+            elif role is not None and getattr(me.top_role, "position", 0) <= getattr(
+                role, "position", 0
+            ):
                 role_issues.append("bot role must be above supporter role")
     rows.append(("DISCORD_SUPPORTER_ROLE_ID", "supporter-role", role_issues))
     return rows
@@ -189,7 +195,8 @@ async def announce(bot, message: str) -> None:
         await channel.send(message, suppress_embeds=True)
         logger.info(
             "startup announce posted to #%s by %s",
-            getattr(channel, "name", "?"), bot.name,
+            getattr(channel, "name", "?"),
+            bot.name,
         )
     except discord.DiscordException as exc:
         logger.warning("thingy-bridge: couldn't post startup card — %s", exc)

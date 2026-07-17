@@ -72,7 +72,9 @@ async def confirm_discord_link(*, code: str, identity: dict[str, str]) -> dict[s
     return await _post_json(_api_base(), "/auth", payload)
 
 
-async def discord_mention(*, identity: dict[str, str], message: str, context: Optional[list[dict[str, str]]] = None) -> dict[str, Any]:
+async def discord_mention(
+    *, identity: dict[str, str], message: str, context: Optional[list[dict[str, str]]] = None
+) -> dict[str, Any]:
     payload = {
         "bridge_secret": _bridge_secret(),
         "message": message,
@@ -91,9 +93,9 @@ def _parse_sse_block(block: str) -> Optional[tuple[str, dict[str, Any]]]:
         if not line or line.startswith(":"):
             continue
         if line.startswith("event:"):
-            event_name = line[len("event:"):].strip() or "message"
+            event_name = line[len("event:") :].strip() or "message"
         elif line.startswith("data:"):
-            data_lines.append(line[len("data:"):].strip())
+            data_lines.append(line[len("data:") :].strip())
     if not data_lines:
         return None
     raw_data = "\n".join(data_lines)

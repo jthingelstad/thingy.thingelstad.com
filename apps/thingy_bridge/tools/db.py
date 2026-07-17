@@ -53,7 +53,7 @@ def run_migrations() -> None:
 def _pid_alive(pid: int) -> bool:
     try:
         pid = int(pid)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return False
     if pid <= 0:
         return False

@@ -26,7 +26,9 @@ class SlashCommandShapeTests(unittest.TestCase):
         thingy = next(g for g in root.groups if getattr(g, "_cmd_name", None) == "thingy")
 
         self.assertIsNone(getattr(thingy, "default_permissions", None))
-        self.assertEqual({getattr(c, "_cmd_name", None) for c in thingy.commands}, {"verify", "confirm"})
+        self.assertEqual(
+            {getattr(c, "_cmd_name", None) for c in thingy.commands}, {"verify", "confirm"}
+        )
 
 
 if __name__ == "__main__":

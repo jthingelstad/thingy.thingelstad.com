@@ -188,19 +188,23 @@ class HistoryCompactionTests(unittest.TestCase):
     """Mirrors the web chat history-compaction rules."""
 
     def test_drops_invalid_roles(self):
-        out = thingy_render.compact_history([
-            {"role": "user", "content": "hi"},
-            {"role": "system", "content": "ignored"},
-            {"role": "assistant", "content": "hello"},
-            {"role": "tool", "content": "ignored"},
-        ])
+        out = thingy_render.compact_history(
+            [
+                {"role": "user", "content": "hi"},
+                {"role": "system", "content": "ignored"},
+                {"role": "assistant", "content": "hello"},
+                {"role": "tool", "content": "ignored"},
+            ]
+        )
         self.assertEqual([m["role"] for m in out], ["user", "assistant"])
 
     def test_drops_empty_content(self):
-        out = thingy_render.compact_history([
-            {"role": "user", "content": ""},
-            {"role": "assistant", "content": "hello"},
-        ])
+        out = thingy_render.compact_history(
+            [
+                {"role": "user", "content": ""},
+                {"role": "assistant", "content": "hello"},
+            ]
+        )
         self.assertEqual(len(out), 1)
         self.assertEqual(out[0]["content"], "hello")
 
@@ -210,9 +214,7 @@ class HistoryCompactionTests(unittest.TestCase):
         self.assertEqual(len(out[0]["content"]), thingy_render.HISTORY_MAX_PER_MESSAGE_CHARS)
 
     def test_caps_message_count(self):
-        raw = [
-            {"role": "user", "content": f"q{i}"} for i in range(20)
-        ]
+        raw = [{"role": "user", "content": f"q{i}"} for i in range(20)]
         out = thingy_render.compact_history(raw)
         self.assertEqual(len(out), thingy_render.HISTORY_MAX_MESSAGES)
         # Most recent kept.
@@ -221,9 +223,7 @@ class HistoryCompactionTests(unittest.TestCase):
     def test_caps_total_chars_keeps_last(self):
         # Eight messages of 700 chars each = 5600 > 4000 cap; should
         # trim from front but keep at least one.
-        raw = [
-            {"role": "user", "content": "x" * 700} for _ in range(8)
-        ]
+        raw = [{"role": "user", "content": "x" * 700} for _ in range(8)]
         out = thingy_render.compact_history(raw)
         self.assertGreaterEqual(len(out), 1)
         self.assertLessEqual(
@@ -237,7 +237,7 @@ class SseParserTests(unittest.TestCase):
     streamed response."""
 
     def test_event_and_data(self):
-        block = "event: meta\ndata: {\"request_id\": \"abc\"}"
+        block = 'event: meta\ndata: {"request_id": "abc"}'
         parsed = thingy_client._parse_sse_block(block)
         self.assertIsNotNone(parsed)
         assert parsed is not None  # for type checkers
@@ -247,7 +247,7 @@ class SseParserTests(unittest.TestCase):
 
     def test_default_event_name(self):
         # SSE spec: events without `event:` line default to "message".
-        block = "data: {\"x\": 1}"
+        block = 'data: {"x": 1}'
         parsed = thingy_client._parse_sse_block(block)
         assert parsed is not None
         name, data = parsed
@@ -255,7 +255,7 @@ class SseParserTests(unittest.TestCase):
         self.assertEqual(data, {"x": 1})
 
     def test_skips_comment_lines(self):
-        block = ":heartbeat\nevent: status\ndata: {\"message\": \"thinking\"}"
+        block = ':heartbeat\nevent: status\ndata: {"message": "thinking"}'
         parsed = thingy_client._parse_sse_block(block)
         assert parsed is not None
         name, data = parsed
@@ -275,7 +275,7 @@ class SseParserTests(unittest.TestCase):
         self.assertEqual(data, {"raw": "not json"})
 
     def test_carriage_return_tolerated(self):
-        block = "event: meta\r\ndata: {\"id\": 1}\r"
+        block = 'event: meta\r\ndata: {"id": 1}\r'
         parsed = thingy_client._parse_sse_block(block)
         assert parsed is not None
         name, data = parsed

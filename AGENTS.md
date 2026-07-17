@@ -120,7 +120,7 @@ THINGY_SMOKE_URL=http://localhost:8080 npm run smoke
 Bridge tests:
 
 ```sh
-apps/thingy_bridge/venv/bin/python -m unittest discover -s apps/thingy_bridge/tests -t .
+uv run python -m unittest discover -s apps/thingy_bridge/tests -t .
 ```
 
 Only run bridge tests when bridge code changes.

@@ -140,8 +140,7 @@ class Runner:
                 try:
                     await ctx.post(
                         ch,
-                        f"⚠️ scheduled job `{job.id}` hit an error: "
-                        f"`{type(exc).__name__}: {exc}`",
+                        f"⚠️ scheduled job `{job.id}` hit an error: `{type(exc).__name__}: {exc}`",
                     )
                 except Exception:  # noqa: BLE001
                     logger.exception("scheduler: also failed to post error notice")

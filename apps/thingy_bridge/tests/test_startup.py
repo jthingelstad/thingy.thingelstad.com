@@ -19,6 +19,7 @@ from apps.thingy_bridge.tests import _stubs  # noqa: E402
 _stubs.install()
 
 import discord  # noqa: E402  (stub)
+
 from apps.thingy_bridge.tools import startup  # noqa: E402
 
 
@@ -92,9 +93,13 @@ class AuditTests(EnvCase):
         os.environ["DISCORD_CHANNEL_CHATTER"] = "222"
         os.environ["DISCORD_SUPPORTER_ROLE_ID"] = "333"
         os.environ["DISCORD_GUILD_ID"] = "444"
-        bot = _fake_bot({111: _fake_channel("validation"),
-                         112: _fake_channel("general"),
-                         222: _fake_channel("chatter")})
+        bot = _fake_bot(
+            {
+                111: _fake_channel("validation"),
+                112: _fake_channel("general"),
+                222: _fake_channel("chatter"),
+            }
+        )
         rows = startup.audit(bot)
         self.assertEqual(len(rows), 4)
         self.assertEqual(rows[0][0], "DISCORD_VALIDATION_CHANNEL_ID")
@@ -146,9 +151,13 @@ class AuditTests(EnvCase):
         os.environ["DISCORD_CHANNEL_CHATTER"] = "222"
         os.environ["DISCORD_SUPPORTER_ROLE_ID"] = "333"
         os.environ["DISCORD_GUILD_ID"] = "444"
-        bot = _fake_bot({111: _fake_channel("validation"),
-                         112: _fake_channel("general", perms_ok=False),
-                         222: _fake_channel("chatter")})
+        bot = _fake_bot(
+            {
+                111: _fake_channel("validation"),
+                112: _fake_channel("general", perms_ok=False),
+                222: _fake_channel("chatter"),
+            }
+        )
         rows = startup.audit(bot)
         self.assertEqual(rows[1][2][0], "missing perm: view_channel")
 
@@ -158,22 +167,32 @@ class FormatTests(unittest.TestCase):
         """Clean boot: one bare line ``✓ **Thingy** online``. No channel
         list (operator noise), no command list."""
         bot = _fake_bot()
-        line = startup.format_line(bot, [
-            ("DISCORD_VALIDATION_CHANNEL_ID", "validation", []),
-            ("DISCORD_GENERAL_CHANNEL_ID", "general", []),
-            ("DISCORD_CHANNEL_CHATTER", "chatter", []),
-            ("DISCORD_SUPPORTER_ROLE_ID", "supporter-role", []),
-        ])
+        line = startup.format_line(
+            bot,
+            [
+                ("DISCORD_VALIDATION_CHANNEL_ID", "validation", []),
+                ("DISCORD_GENERAL_CHANNEL_ID", "general", []),
+                ("DISCORD_CHANNEL_CHATTER", "chatter", []),
+                ("DISCORD_SUPPORTER_ROLE_ID", "supporter-role", []),
+            ],
+        )
         self.assertEqual(line, "✓ **Thingy** online")
         self.assertNotIn("#validation", line)
         self.assertNotIn("#chatter", line)
 
     def test_issue_surfaces_only_the_broken_channel(self):
         bot = _fake_bot()
-        line = startup.format_line(bot, [
-            ("DISCORD_VALIDATION_CHANNEL_ID", "validation", []),
-            ("DISCORD_CHANNEL_CHATTER", None, ["channel id 222 not visible to Thingy (not a member?)"]),
-        ])
+        line = startup.format_line(
+            bot,
+            [
+                ("DISCORD_VALIDATION_CHANNEL_ID", "validation", []),
+                (
+                    "DISCORD_CHANNEL_CHATTER",
+                    None,
+                    ["channel id 222 not visible to Thingy (not a member?)"],
+                ),
+            ],
+        )
         self.assertTrue(line.startswith("⚠️ **Thingy** online — "))
         self.assertIn("not visible", line)
         self.assertNotIn("#validation", line)
@@ -182,10 +201,12 @@ class FormatTests(unittest.TestCase):
         bot = _fake_bot()
         out = startup.format_line(
             bot,
-            [("DISCORD_VALIDATION_CHANNEL_ID", "validation", []),
-             ("DISCORD_GENERAL_CHANNEL_ID", "general", []),
-             ("DISCORD_CHANNEL_CHATTER", "chatter", []),
-             ("DISCORD_SUPPORTER_ROLE_ID", "supporter-role", [])],
+            [
+                ("DISCORD_VALIDATION_CHANNEL_ID", "validation", []),
+                ("DISCORD_GENERAL_CHANNEL_ID", "general", []),
+                ("DISCORD_CHANNEL_CHATTER", "chatter", []),
+                ("DISCORD_SUPPORTER_ROLE_ID", "supporter-role", []),
+            ],
             header="**thingy-bridge online** — `abc1234`",
         )
         lines = out.splitlines()
@@ -201,8 +222,10 @@ class FormatTests(unittest.TestCase):
         bot = _fake_bot()
         out = startup.format_line(
             bot,
-            [("DISCORD_VALIDATION_CHANNEL_ID", "validation", []),
-             ("DISCORD_CHANNEL_CHATTER", "chatter", [])],
+            [
+                ("DISCORD_VALIDATION_CHANNEL_ID", "validation", []),
+                ("DISCORD_CHANNEL_CHATTER", "chatter", []),
+            ],
             commands_summary="/thingy recent",
         )
         self.assertEqual(out, "✓ **Thingy** online")
@@ -247,10 +270,14 @@ class PostStartupCardTests(EnvCase):
         os.environ["DISCORD_SUPPORTER_ROLE_ID"] = "333"
         os.environ["DISCORD_GUILD_ID"] = "444"
         chatter = _fake_channel("chatter")
-        bot = _fake_bot({111: _fake_channel("validation"), 112: _fake_channel("general"), 222: chatter})
+        bot = _fake_bot(
+            {111: _fake_channel("validation"), 112: _fake_channel("general"), 222: chatter}
+        )
         # Don't depend on the working tree's git state.
-        with patch.object(startup, "git_hash", return_value="abc1234"), \
-             patch.object(startup, "git_dirty", return_value=False):
+        with (
+            patch.object(startup, "git_hash", return_value="abc1234"),
+            patch.object(startup, "git_dirty", return_value=False),
+        ):
             asyncio.run(startup.post_startup_card(bot))
         chatter.send.assert_awaited_once()
         message = chatter.send.await_args.args[0]
@@ -274,9 +301,13 @@ class PostStartupCardTests(EnvCase):
         os.environ["DISCORD_SUPPORTER_ROLE_ID"] = "333"
         os.environ["DISCORD_GUILD_ID"] = "444"
         chatter = _fake_channel("chatter")
-        bot = _fake_bot({111: _fake_channel("validation"), 112: _fake_channel("general"), 222: chatter})
-        with patch.object(startup, "git_hash", return_value="abc1234"), \
-             patch.object(startup, "git_dirty", return_value=True):
+        bot = _fake_bot(
+            {111: _fake_channel("validation"), 112: _fake_channel("general"), 222: chatter}
+        )
+        with (
+            patch.object(startup, "git_hash", return_value="abc1234"),
+            patch.object(startup, "git_dirty", return_value=True),
+        ):
             asyncio.run(startup.post_startup_card(bot))
         message = chatter.send.await_args.args[0]
         self.assertIn("(dirty)", message)

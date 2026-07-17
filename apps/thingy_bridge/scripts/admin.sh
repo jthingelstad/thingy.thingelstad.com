@@ -8,31 +8,14 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BRIDGE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$BRIDGE_DIR/../.." && pwd)"
 LOG_DIR="$BRIDGE_DIR/logs"
+VENV="$REPO_ROOT/.venv"
 
-resolve_venv() {
-    if [ -n "${THINGY_BRIDGE_VENV:-}" ] && [ -x "$THINGY_BRIDGE_VENV/bin/python" ]; then
-        echo "$THINGY_BRIDGE_VENV"
-        return
-    fi
-    if [ -x "$REPO_ROOT/venv/bin/python" ]; then
-        echo "$REPO_ROOT/venv"
-        return
-    fi
-    if [ -x "$BRIDGE_DIR/venv/bin/python" ]; then
-        echo "$BRIDGE_DIR/venv"
-        return
-    fi
-    return 1
-}
-
-require_venv() {
-    if ! VENV="$(resolve_venv)"; then
-        echo "Error: no Python venv found." >&2
-        echo "  Looked in: \$THINGY_BRIDGE_VENV, $REPO_ROOT/venv, $BRIDGE_DIR/venv" >&2
-        echo "  Create one with:  python3 -m venv $REPO_ROOT/venv && $REPO_ROOT/venv/bin/pip install -r $BRIDGE_DIR/requirements.txt" >&2
+require_environment() {
+    if [ ! -x "$VENV/bin/python" ]; then
+        echo "Error: locked uv environment not found at $VENV." >&2
+        echo "  Create it with: (cd $REPO_ROOT && uv sync --locked --no-dev)" >&2
         exit 1
     fi
-    echo "$VENV"
 }
 
 status() {
@@ -68,7 +51,7 @@ restart_bot() {
 }
 
 install_bot() {
-    VENV="$(require_venv)"
+    require_environment
     mkdir -p "$LOG_DIR"
     echo "==> Installing launchd plist..."
     echo "    venv:    $VENV"
@@ -115,20 +98,19 @@ PLIST
 }
 
 upgrade_bot() {
-    VENV="$(require_venv)"
     stop_bot
 
     echo "==> Pulling latest from origin..."
-    (cd "$REPO_ROOT" && git pull origin main)
+    (cd "$REPO_ROOT" && git pull --ff-only origin main)
 
     echo "==> Updating dependencies..."
-    "$VENV/bin/pip" install -q -r "$BRIDGE_DIR/requirements.txt"
+    (cd "$REPO_ROOT" && uv sync --locked --no-dev)
 
     start_bot
 }
 
 backup_db() {
-    VENV="$(require_venv)"
+    require_environment
     echo "==> Backing up thingy_bridge.db..."
     "$VENV/bin/python" "$SCRIPT_DIR/backup_db.py"
 }

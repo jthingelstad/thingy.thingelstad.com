@@ -36,7 +36,12 @@ def _discord_identity(user: discord.abc.User, guild_id: Optional[int]) -> dict[s
         "discord_user_id": str(user.id),
         "username": str(getattr(user, "name", "") or ""),
         "global_name": str(getattr(user, "global_name", "") or ""),
-        "display_name": str(getattr(user, "display_name", "") or getattr(user, "global_name", "") or getattr(user, "name", "") or ""),
+        "display_name": str(
+            getattr(user, "display_name", "")
+            or getattr(user, "global_name", "")
+            or getattr(user, "name", "")
+            or ""
+        ),
         "guild_id": str(guild_id or ""),
     }
 
@@ -63,14 +68,20 @@ async def _sync_supporter_role(interaction: discord.Interaction, *, add: bool) -
     role = guild.get_role(role_id)
     if role is None:
         return False
-    member = interaction.user if isinstance(interaction.user, discord.Member) else guild.get_member(interaction.user.id)
+    member = (
+        interaction.user
+        if isinstance(interaction.user, discord.Member)
+        else guild.get_member(interaction.user.id)
+    )
     if member is None:
         return False
     try:
         if add and role not in member.roles:
             await member.add_roles(role, reason="Thingy Supporting Member verification")
         elif not add and role in member.roles:
-            await member.remove_roles(role, reason="Thingy Supporting Member entitlement no longer verified")
+            await member.remove_roles(
+                role, reason="Thingy Supporting Member entitlement no longer verified"
+            )
     except discord.DiscordException:
         logger.exception("Thingy could not sync Discord supporter role")
         return False
@@ -93,11 +104,16 @@ def register_thingy_commands(bot: "PersonaBot") -> app_commands.CommandTree:
     async def thingy_verify_cmd(interaction: discord.Interaction) -> None:  # type: ignore[misc]
         await interaction.response.defer(ephemeral=True, thinking=False)
         if not _in_validation_channel(interaction):
-            await _ack(interaction, "Use `/thingy verify` in the validation channel so Thingy can keep the flow tidy.")
+            await _ack(
+                interaction,
+                "Use `/thingy verify` in the validation channel so Thingy can keep the flow tidy.",
+            )
             return
         guild_id = getattr(interaction.guild, "id", None)
         try:
-            result = await thingy_client.start_discord_link(_discord_identity(interaction.user, guild_id))
+            result = await thingy_client.start_discord_link(
+                _discord_identity(interaction.user, guild_id)
+            )
         except thingy_client.ThingyError as exc:
             await _ack(interaction, f"Thingy could not start Discord verification: `{exc}`")
             return
@@ -128,7 +144,11 @@ def register_thingy_commands(bot: "PersonaBot") -> app_commands.CommandTree:
             return
         role_ok = await _sync_supporter_role(interaction, add=True)
         name = result.get("discord_connection", {}).get("display_name") or "your Discord account"
-        suffix = "" if role_ok else "\n\nThingy verified you, but could not add the Discord role. Jamie may need to check bot permissions."
+        suffix = (
+            ""
+            if role_ok
+            else "\n\nThingy verified you, but could not add the Discord role. Jamie may need to check bot permissions."
+        )
         await _ack(interaction, f"Connected {name}. Welcome in.{suffix}")
 
     tree.add_command(thingy)

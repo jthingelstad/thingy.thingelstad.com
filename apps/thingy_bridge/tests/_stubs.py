@@ -17,7 +17,6 @@ from __future__ import annotations
 import sys
 import types
 
-
 _INSTALLED = False
 
 
@@ -91,9 +90,7 @@ def _install_discord() -> None:
             return cls
 
     class _Group:
-        def __init__(
-            self, *, name=None, description=None, default_permissions=None, parent=None
-        ):
+        def __init__(self, *, name=None, description=None, default_permissions=None, parent=None):
             self.name = name
             self.description = description
             self.default_permissions = default_permissions
@@ -112,6 +109,7 @@ def _install_discord() -> None:
                 fn._cmd_description = description
                 self.commands.append(fn)
                 return fn
+
             return deco
 
     class _CommandTree:
@@ -126,12 +124,14 @@ def _install_discord() -> None:
         def deco(fn):
             fn._describe = kwargs
             return fn
+
         return deco
 
     def _choices(**kwargs):
         def deco(fn):
             fn._choices = kwargs
             return fn
+
         return deco
 
     app_commands.Choice = _Choice  # type: ignore[attr-defined]

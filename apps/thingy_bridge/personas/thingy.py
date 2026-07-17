@@ -37,7 +37,12 @@ def _identity(user: discord.abc.User, guild_id: Optional[int]) -> dict[str, str]
         "discord_user_id": str(user.id),
         "username": str(getattr(user, "name", "") or ""),
         "global_name": str(getattr(user, "global_name", "") or ""),
-        "display_name": str(getattr(user, "display_name", "") or getattr(user, "global_name", "") or getattr(user, "name", "") or ""),
+        "display_name": str(
+            getattr(user, "display_name", "")
+            or getattr(user, "global_name", "")
+            or getattr(user, "name", "")
+            or ""
+        ),
         "guild_id": str(guild_id or ""),
     }
 
@@ -48,11 +53,17 @@ async def _remove_supporter_role(message: discord.Message) -> None:
     if guild is None or role_id is None:
         return
     role = guild.get_role(role_id)
-    member = message.author if isinstance(message.author, discord.Member) else guild.get_member(message.author.id)
+    member = (
+        message.author
+        if isinstance(message.author, discord.Member)
+        else guild.get_member(message.author.id)
+    )
     if role is None or member is None or role not in member.roles:
         return
     try:
-        await member.remove_roles(role, reason="Thingy Supporting Member entitlement no longer verified")
+        await member.remove_roles(
+            role, reason="Thingy Supporting Member entitlement no longer verified"
+        )
     except discord.DiscordException:
         logger.exception("Thingy could not remove supporter role")
 
@@ -71,7 +82,10 @@ class ThingyBot(PersonaBot):
     def _mentioned(self, message: discord.Message) -> bool:
         if self.user is None:
             return False
-        return any(getattr(user, "id", None) == self.user.id for user in getattr(message, "mentions", []) or [])
+        return any(
+            getattr(user, "id", None) == self.user.id
+            for user in getattr(message, "mentions", []) or []
+        )
 
     async def _context(self, message: discord.Message) -> list[dict[str, str]]:
         channel = message.channel
@@ -83,10 +97,13 @@ class ThingyBot(PersonaBot):
                 content = (prior.content or "").strip()
                 if not content:
                     continue
-                rows.append({
-                    "author": getattr(prior.author, "display_name", None) or getattr(prior.author, "name", "member"),
-                    "content": content,
-                })
+                rows.append(
+                    {
+                        "author": getattr(prior.author, "display_name", None)
+                        or getattr(prior.author, "name", "member"),
+                        "content": content,
+                    }
+                )
         except discord.DiscordException:
             logger.warning("thingy: could not read Discord context", exc_info=True)
         rows.reverse()
@@ -137,7 +154,8 @@ class ThingyBot(PersonaBot):
 
         answer = str(result.get("answer") or "").strip()
         sources = [
-            source for source in (result.get("sources") or [])
+            source
+            for source in (result.get("sources") or [])
             if isinstance(source, dict) and source.get("url")
         ][:3]
         if sources:

@@ -20,6 +20,7 @@ CACHE_DIR_NAMES = {
 }
 SKIP_DIRS = {
     ".git",
+    ".venv",
     "venv",
     "node_modules",
 }
@@ -39,8 +40,14 @@ def _remove_path(path: Path) -> bool:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Remove local caches and optional runtime artifacts.")
-    parser.add_argument("--db", action="store_true", help="Also remove apps/thingy_bridge/data/thingy_bridge.db (destructive).")
+    parser = argparse.ArgumentParser(
+        description="Remove local caches and optional runtime artifacts."
+    )
+    parser.add_argument(
+        "--db",
+        action="store_true",
+        help="Also remove apps/thingy_bridge/data/thingy_bridge.db (destructive).",
+    )
     args = parser.parse_args()
 
     removed: list[str] = []

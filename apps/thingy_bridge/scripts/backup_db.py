@@ -74,7 +74,13 @@ def create_backup(db_path: Path | None = None, backup_dir: Path | None = None) -
     filename = f"thingy_bridge-{now.strftime(_TIMESTAMP_FMT)}.db.gz"
     dest = dest_dir / filename
 
-    result: dict = {"path": str(dest), "size_original": 0, "size_compressed": 0, "ok": False, "error": None}
+    result: dict = {
+        "path": str(dest),
+        "size_original": 0,
+        "size_compressed": 0,
+        "ok": False,
+        "error": None,
+    }
 
     try:
         src_conn = sqlite3.connect(str(src))
@@ -197,7 +203,9 @@ def main() -> int:
         log.error("Backup failed: %s", result["error"])
         return 1
 
-    ratio = result["size_compressed"] / result["size_original"] * 100 if result["size_original"] else 0
+    ratio = (
+        result["size_compressed"] / result["size_original"] * 100 if result["size_original"] else 0
+    )
     log.info(
         "Backup complete: %s (%.1f MB -> %.1f MB, %.0f%%)",
         result["path"],

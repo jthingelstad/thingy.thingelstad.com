@@ -19,6 +19,7 @@ logger = logging.getLogger("thingy_bridge.jobs")
 
 # ---------- result ----------
 
+
 @dataclass
 class JobResult:
     """What a job hands back. ``message`` is rendered to the invoker;
@@ -30,6 +31,7 @@ class JobResult:
 
 
 # ---------- context ----------
+
 
 class JobContext:
     """Per-run context handed to a job. Carries the shared ``Deps``
@@ -121,6 +123,7 @@ class JobContext:
 
 # ---------- locking ----------
 
+
 class JobLocked(Exception):
     """Raised when a job can't acquire a lock because another *running*
     job holds it. Catch it and surface a friendly "already running"
@@ -136,10 +139,7 @@ class JobLocked(Exception):
 
     @property
     def holder_desc(self) -> str:
-        return (
-            f"`{self.holder.get('job', '?')}`, started "
-            f"{self.holder.get('started_at', '?')} UTC"
-        )
+        return f"`{self.holder.get('job', '?')}`, started {self.holder.get('started_at', '?')} UTC"
 
 
 @contextmanager

@@ -15,15 +15,15 @@ apps/thingy_bridge/scripts/admin.sh start     # launchctl bootstrap
 apps/thingy_bridge/scripts/admin.sh stop      # launchctl bootout
 apps/thingy_bridge/scripts/admin.sh restart
 apps/thingy_bridge/scripts/admin.sh status
-apps/thingy_bridge/scripts/admin.sh upgrade   # stop → git pull → pip install -r → start
+apps/thingy_bridge/scripts/admin.sh upgrade   # stop → git pull --ff-only → uv sync --locked → start
 apps/thingy_bridge/scripts/admin.sh backup    # invokes backup_db.py
 apps/thingy_bridge/scripts/admin.sh tail      # tail -F logs/bridge.{log,err}
 ```
 
-The plist runs `apps/thingy_bridge/venv/bin/python -m apps.thingy_bridge.bot`
+The plist runs `.venv/bin/python -m apps.thingy_bridge.bot`
 with the repo root as working directory.
 
-**Venv resolution** — `admin.sh` looks (in order) at `$THINGY_BRIDGE_VENV`, `<repo>/venv`, `apps/thingy_bridge/venv`. If none exists, `install` and `upgrade` print the create-venv command and exit.
+**Environment** — `admin.sh` uses the root `.venv` created from `uv.lock`.
 
 **Logs** land at `apps/thingy_bridge/logs/bridge.log` and `bridge.err` (gitignored).
 
@@ -57,8 +57,7 @@ python apps/thingy_bridge/scripts/clean.py --db   # also remove apps/thingy_brid
 
 ```bash
 # from the repo root
-python3 -m venv venv
-venv/bin/pip install -r requirements.txt
+uv sync --locked --no-dev
 
 # apps/thingy_bridge/.env should already carry the Thingy Discord token
 # (DISCORD_TOKEN_THINGY) and Lambda credentials before starting.

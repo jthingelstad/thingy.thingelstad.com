@@ -115,6 +115,7 @@ def format_for_discord(
 
 # ---------- conversation history compaction ----------
 
+
 def compact_history(
     raw: Iterable[dict[str, str]],
 ) -> list[dict[str, str]]:
