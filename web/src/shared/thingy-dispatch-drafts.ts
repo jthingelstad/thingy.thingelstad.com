@@ -3,43 +3,43 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-function stageLabel(value) {
-  return (
-    {
-      empty: 'Draft',
-      shaping: 'Shaping',
-      needs_clarification: 'Clarify',
-      ready: 'Ready',
-      upgrade: 'Ready',
-      queued: 'Queued',
-      generating: 'Generating',
-      ready_to_send: 'Sending',
-      sending: 'Sending',
-      sent: 'Sent',
-      failed: 'Failed'
-    }[value] || 'Draft'
-  );
+const STAGE_LABELS: Record<string, string> = {
+  empty: 'Draft',
+  shaping: 'Shaping',
+  needs_clarification: 'Clarify',
+  ready: 'Ready',
+  upgrade: 'Ready',
+  queued: 'Queued',
+  generating: 'Generating',
+  ready_to_send: 'Sending',
+  sending: 'Sending',
+  sent: 'Sent',
+  failed: 'Failed'
+};
+
+const STAGE_ICONS: Record<string, string> = {
+  empty: 'file-pen',
+  shaping: 'wand-sparkles',
+  needs_clarification: 'circle-help',
+  ready: 'circle-check',
+  upgrade: 'circle-check',
+  queued: 'clock',
+  generating: 'loader-circle',
+  ready_to_send: 'clock',
+  sending: 'send-horizontal',
+  sent: 'check-check',
+  failed: 'triangle-alert'
+};
+
+function stageLabel(value: unknown) {
+  return STAGE_LABELS[String(value || '')] || 'Draft';
 }
 
-function stageIcon(value) {
-  return (
-    {
-      empty: 'file-pen',
-      shaping: 'wand-sparkles',
-      needs_clarification: 'circle-help',
-      ready: 'circle-check',
-      upgrade: 'circle-check',
-      queued: 'clock',
-      generating: 'loader-circle',
-      ready_to_send: 'clock',
-      sending: 'send-horizontal',
-      sent: 'check-check',
-      failed: 'triangle-alert'
-    }[value] || 'file-pen'
-  );
+function stageIcon(value: unknown) {
+  return STAGE_ICONS[String(value || '')] || 'file-pen';
 }
 
-function normalizeDraft(raw) {
+function normalizeDraft(raw: Partial<ThingyDispatchDraft> = {}): ThingyDispatchDraft {
   const draft = raw && typeof raw === 'object' ? raw : {};
   return {
     id: String(draft.id || `draft-${Date.now()}-${Math.random().toString(16).slice(2)}`),
@@ -58,18 +58,18 @@ function normalizeDraft(raw) {
   };
 }
 
-function isServerDispatchId(value) {
+function isServerDispatchId(value: unknown) {
   const id = String(value || '');
   return Boolean(id && !id.startsWith('draft-'));
 }
 
-function serverDispatchId(draft) {
+function serverDispatchId(draft: Partial<ThingyDispatchDraft>) {
   if (isServerDispatchId(draft.dispatchId)) return draft.dispatchId;
   if (isServerDispatchId(draft.id)) return draft.id;
   return '';
 }
 
-function hasDraftContent(draft, welcomeText = '') {
+function hasDraftContent(draft: Partial<ThingyDispatchDraft> | undefined, welcomeText = '') {
   if (!draft) return false;
   if (draft.prompt || draft.direction || draft.currentQuestion || draft.clarificationAnswer) return true;
   return (draft.messages || []).some(
@@ -77,14 +77,14 @@ function hasDraftContent(draft, welcomeText = '') {
   );
 }
 
-function draftStageFromRow(row) {
+function draftStageFromRow(row: DispatchRow) {
   const status = String(row.status || 'draft');
   return status === 'draft' ? 'empty' : status;
 }
 
-function fallbackMessagesForRow(row, welcomeText = '') {
+function fallbackMessagesForRow(row: DispatchRow, welcomeText = ''): ThingyDispatchMessage[] {
   if (Array.isArray(row.messages) && row.messages.length) return row.messages;
-  if (['queued', 'generating', 'ready_to_send', 'sending'].includes(row.status)) {
+  if (['queued', 'generating', 'ready_to_send', 'sending'].includes(String(row.status || ''))) {
     return [{ role: 'assistant', text: 'This Dispatch is queued and I am preparing it now.' }];
   }
   if (row.status === 'sent') {
@@ -104,7 +104,7 @@ function fallbackMessagesForRow(row, welcomeText = '') {
   return [{ role: 'assistant', text: welcomeText, kind: 'welcome' }];
 }
 
-function draftFromServerRow(row, welcomeText = '') {
+function draftFromServerRow(row: DispatchRow, welcomeText = '') {
   const id = String(row.id || row.dispatch_id || '');
   return normalizeDraft({
     id,

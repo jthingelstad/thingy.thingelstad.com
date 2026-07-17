@@ -9,9 +9,6 @@
     "jsxImportSource": "preact",
     "noEmit": true,
     "strict": true,
-    "noImplicitAny": false,
-    "strictNullChecks": false,
-    "useUnknownInCatchVariables": false,
     "skipLibCheck": true,
     "types": ["node", "vite/client"]
   },

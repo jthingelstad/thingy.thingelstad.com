@@ -70,7 +70,7 @@ function bootDispatch() {
     hideLabel: 'Hide Dispatches'
   });
 
-  let composerControls = null;
+  let composerControls: ReturnType<typeof createComposer> | null = null;
 
   function updateCount() {
     if (input) dispatchTextSignal.value = input.value;
@@ -128,7 +128,7 @@ function bootDispatch() {
     onSaved: () => refreshIdentity()
   });
 
-  function handleAction(actionId) {
+  function handleAction(actionId: string) {
     if (actions.isBusy()) return;
     if (actionId === 'generate') actions.generateDispatch();
     if (actionId === 'check') actions.pollStatus();

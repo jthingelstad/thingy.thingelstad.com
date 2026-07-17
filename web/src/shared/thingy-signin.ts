@@ -1,4 +1,5 @@
 import * as session from './thingy-session.ts';
+import { errorMessage } from './thingy-errors.ts';
 
 const form = document.getElementById('thingy-signin-form') as HTMLFormElement;
 const emailInput = document.getElementById('thingy-signin-email') as HTMLInputElement;
@@ -22,27 +23,27 @@ function continueToDestination() {
   window.location.replace(destinationPath());
 }
 
-function setMessage(text, kind) {
+function setMessage(text: unknown, kind: string) {
   if (!message) return;
-  message.textContent = text || '';
+  message.textContent = String(text || '');
   message.dataset.kind = kind || '';
 }
 
-function setBusy(busy) {
+function setBusy(busy: boolean) {
   if (submitButton) submitButton.disabled = Boolean(busy);
   if (resendButton) resendButton.disabled = Boolean(busy);
   if (subscribeButton) subscribeButton.disabled = Boolean(busy);
 }
 
-function showSecondary(kind) {
+function showSecondary(kind: string) {
   if (!secondary) return;
   secondary.hidden = !kind;
   if (resendButton) resendButton.hidden = kind !== 'resend';
   if (subscribeButton) subscribeButton.hidden = kind !== 'subscribe';
 }
 
-function finish(data, email) {
-  session.persistAuth(data, email);
+function finish(data: ThingyAuthData, email: unknown) {
+  session.persistAuth(data, session.normalizeEmail(email));
   continueToDestination();
 }
 
@@ -76,7 +77,7 @@ async function completeMagicLink() {
     finish(data, data.email);
   } catch (error) {
     scrubMagicTokenParams();
-    setMessage(error.message || 'That sign-in link did not work.', 'error');
+    setMessage(errorMessage(error, 'That sign-in link did not work.'), 'error');
     session.clearAuth();
   } finally {
     setBusy(false);
@@ -129,7 +130,7 @@ async function requestMagicLink(action = 'check') {
     }
     setMessage(data.message || 'Check your email for the next step.', 'notice');
   } catch (error) {
-    setMessage(error.message || 'Sign-in is unavailable right now.', 'error');
+    setMessage(errorMessage(error, 'Sign-in is unavailable right now.'), 'error');
   } finally {
     setBusy(false);
   }

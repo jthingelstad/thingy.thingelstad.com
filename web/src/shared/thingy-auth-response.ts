@@ -1,5 +1,13 @@
 // @ts-check
-function handleAuthResponse(data: ThingyAuthData = {}, options: ThingyOptions = {}) {
+interface AuthResponseOptions {
+  setMessage?: (message: string) => void;
+  showAction?: (action: 'subscribe' | 'resend_confirmation') => void;
+  hideActions?: () => void;
+  track?: (name: string, value?: string) => void;
+  onToken?: (data: ThingyAuthData) => void;
+}
+
+function handleAuthResponse(data: ThingyAuthData = {}, options: AuthResponseOptions = {}) {
   const setMessage = typeof options.setMessage === 'function' ? options.setMessage : () => {};
   const showAction = typeof options.showAction === 'function' ? options.showAction : () => {};
   const hideActions = typeof options.hideActions === 'function' ? options.hideActions : () => {};

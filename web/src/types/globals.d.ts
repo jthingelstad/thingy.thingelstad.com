@@ -221,6 +221,7 @@ interface ThingyDispatchDraft {
   statusText: string;
   updatedAt: string;
   messages: ThingyDispatchMessage[];
+  generationProgressScope?: string;
 }
 
 interface ThingyTokenPayload {
@@ -239,9 +240,3 @@ interface ThingyRequestOptions {
   defaultErrorMessage?: string;
   requestIdSource?: 'header' | 'data';
 }
-
-// Imperative UI factories accept small option bags whose concrete shape is
-// narrowed inside each factory. API, session, store, and message boundaries
-// use dedicated interfaces above; this escape hatch is limited to DOM glue.
-// oxlint-disable-next-line typescript/no-explicit-any
-type ThingyOptions = Record<string, any>;

@@ -1,5 +1,6 @@
 import * as session from './thingy-session.ts';
 import { discordConnection, discordConnectionName, hasSupportingAccess } from './thingy-account.ts';
+import { errorMessage } from './thingy-errors.ts';
 
 const copy = document.getElementById('thingy-discord-copy');
 const message = document.getElementById('thingy-discord-message');
@@ -11,21 +12,21 @@ const copyCodeButton = document.getElementById('thingy-discord-copy-code');
 const connectCopy =
   'To connect to the Weekly Thing Supporting Member special Discord, join the server, run <code>/thingy verify</code> in the validation channel, and open the link Thingy gives you.';
 
-function normalizeDiscordCode(code) {
+function normalizeDiscordCode(code: unknown) {
   return String(code || '').trim();
 }
 
-function setMessage(text, kind = '') {
+function setMessage(text: unknown, kind = '') {
   if (!message) return;
-  message.textContent = text || '';
+  message.textContent = String(text || '');
   message.dataset.kind = kind;
 }
 
-function setCopy(text) {
-  if (copy) copy.textContent = text || '';
+function setCopy(text: unknown) {
+  if (copy) copy.textContent = String(text || '');
 }
 
-function setCopyHtml(html) {
+function setCopyHtml(html: string) {
   if (copy) copy.innerHTML = html || '';
 }
 
@@ -45,7 +46,7 @@ async function refreshProfile() {
   return session.storedProfile();
 }
 
-function renderDiscordCode(code) {
+function renderDiscordCode(code: unknown) {
   const clean = normalizeDiscordCode(code);
   if (!clean) {
     if (codeWrap) codeWrap.hidden = true;
@@ -57,7 +58,7 @@ function renderDiscordCode(code) {
   return clean;
 }
 
-async function copyText(value) {
+async function copyText(value: string) {
   if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
     await navigator.clipboard.writeText(value);
     return true;
@@ -138,7 +139,7 @@ async function initDiscordLink() {
   } catch (error) {
     renderDiscordCode('');
     setCopy('Thingy could not create a Discord verification code.');
-    setMessage(error.message || 'Run /thingy verify again in Discord.', 'error');
+    setMessage(errorMessage(error, 'Run /thingy verify again in Discord.'), 'error');
   }
 }
 

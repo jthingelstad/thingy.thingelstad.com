@@ -3,7 +3,25 @@
 // voice, source picker, new-chat, source error). The textarea count and the
 // send/stop button are driven by ComposerCount / ComposerSubmit signal
 // subscriptions instead.
-function updateChatComposerState(options: ThingyOptions = {}) {
+interface ChatComposerStateOptions {
+  input?: HTMLTextAreaElement | null;
+  maxChars?: number;
+  hasSources?: boolean;
+  busy?: boolean;
+  signedIn?: boolean;
+  sourceError?: HTMLElement | null;
+  form?: HTMLFormElement | null;
+  mapDraftButton?: HTMLButtonElement | null;
+  newChatButton?: HTMLButtonElement | null;
+  curiosityMapButton?: HTMLButtonElement | null;
+  modeSelect?: HTMLButtonElement | null;
+  sourceControls?: { setDisabled?: (disabled: boolean) => void };
+  onVoiceUpdate?: () => void;
+  onConversationTitleUpdate?: () => void;
+  onAutoSize?: () => void;
+}
+
+function updateChatComposerState(options: ChatComposerStateOptions = {}) {
   const input = options.input;
   const length = input ? input.value.length : 0;
   const hasText = Boolean(input?.value.trim());

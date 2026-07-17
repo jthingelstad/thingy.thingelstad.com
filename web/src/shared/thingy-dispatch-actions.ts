@@ -27,6 +27,35 @@ import {
 import { draftFromServerRow, hasDraftContent, normalizeDraft, serverDispatchId } from './thingy-dispatch-drafts.ts';
 import { dispatchEditable } from './thingy-dispatch-state.ts';
 import { AGENT_RESPONSE_TIMEOUT_MS } from './thingy-timeouts.ts';
+import { errorMessage } from './thingy-errors.ts';
+
+interface DispatchActionsOptions {
+  session?: typeof defaultSession;
+  streamBase?: string;
+  postStream?: typeof postJsonStream;
+  readEvents?: typeof readStream;
+  welcomeText?: string | ((dispatchNumber: number) => string);
+  dispatchTestMode?: boolean;
+  activeKey?: string;
+  onRender?: () => void;
+  confirmDelete?: () => boolean;
+  redirectToSignIn?: () => void;
+}
+
+interface DraftCreateOptions {
+  activate?: boolean;
+  render?: boolean;
+}
+
+interface DraftSelectionOptions {
+  render?: boolean;
+}
+
+interface DraftSaveOverrides {
+  status?: string;
+}
+
+type DispatchPayload = Record<string, unknown>;
 
 const DEFAULT_WELCOME =
   "Alright, let's make your first Dispatch. Give me the topic, question, or archive thread you want to shape, and I'll help turn it into a clear direction before you generate it.";
@@ -34,11 +63,11 @@ const MAX_DRAFTS = 24;
 
 // --- Pure helpers (exported for tests) --------------------------------------
 
-function draftTitle(draft) {
+function draftTitle(draft: Partial<ThingyDispatchDraft>) {
   return draft.title || draft.prompt || draft.direction || 'New Dispatch';
 }
 
-function titleFromPrompt(value) {
+function titleFromPrompt(value: unknown) {
   return (
     String(value || 'Dispatch')
       .replace(/\s+/g, ' ')
@@ -47,9 +76,9 @@ function titleFromPrompt(value) {
   );
 }
 
-function ordinal(value) {
+function ordinal(value: unknown) {
   const number = Math.max(1, Number(value || 1));
-  const words = {
+  const words: Record<number, string> = {
     1: 'first',
     2: 'second',
     3: 'third',
@@ -64,22 +93,22 @@ function ordinal(value) {
   if (words[number]) return words[number];
   const mod100 = number % 100;
   if (mod100 >= 11 && mod100 <= 13) return `${number}th`;
-  return `${number}${{ 1: 'st', 2: 'nd', 3: 'rd' }[number % 10] || 'th'}`;
+  const suffixes: Record<number, string> = { 1: 'st', 2: 'nd', 3: 'rd' };
+  return `${number}${suffixes[number % 10] || 'th'}`;
 }
 
 function defaultWelcomeText(dispatchNumber = 1) {
   return `Alright, let's make your ${ordinal(dispatchNumber)} Dispatch. Give me the topic, question, or archive thread you want to shape, and I'll help turn it into a clear direction before you generate it.`;
 }
 
-function coverageLabel(value) {
-  return (
-    {
-      thin: 'Thin',
-      focused: 'Focused',
-      broad: 'Broad',
-      ambiguous: 'Needs steering'
-    }[String(value || '').toLowerCase()] || 'Checked'
-  );
+function coverageLabel(value: unknown) {
+  const labels: Record<string, string> = {
+    thin: 'Thin',
+    focused: 'Focused',
+    broad: 'Broad',
+    ambiguous: 'Needs steering'
+  };
+  return labels[String(value || '').toLowerCase()] || 'Checked';
 }
 
 function briefSourceLine(source: DispatchBriefSource = {}) {
@@ -136,7 +165,7 @@ function generationContextText(draft: Partial<ThingyDispatchDraft> = {}, dispatc
   return lines.join('\n\n');
 }
 
-function statusProgressText(status) {
+function statusProgressText(status: string) {
   const normalized = String(status || '').replace(/_/g, ' ');
   if (status === 'queued') return 'The Dispatch is queued. I am watching for the worker to pick it up.';
   if (status === 'generating') return 'The worker has the request. I am writing from the planned archive packet now.';
@@ -145,7 +174,7 @@ function statusProgressText(status) {
   return `Thingy is ${normalized} this Dispatch. I will keep checking until it is sent.`;
 }
 
-function inputPlaceholderForDraft(draft, editable) {
+function inputPlaceholderForDraft(draft: Partial<ThingyDispatchDraft>, editable: boolean) {
   if (!editable) return 'Start a new Dispatch to shape another request...';
   if (draft.stage === 'needs_clarification') return 'Answer Thingy, or steer the plan another way...';
   if (draft.stage === 'ready' || draft.stage === 'upgrade') return 'Adjust the direction, or generate when ready...';
@@ -154,7 +183,7 @@ function inputPlaceholderForDraft(draft, editable) {
 
 // --- Stateful action layer ---------------------------------------------------
 
-function createDispatchActions(options: ThingyOptions = {}) {
+function createDispatchActions(options: DispatchActionsOptions = {}) {
   const session = options.session || defaultSession;
   const streamBase = () => String(options.streamBase ?? librarianStreamUrl() ?? '').replace(/\/$/, '');
   // Stream seams are injectable so tests can drive planner events without
@@ -174,7 +203,7 @@ function createDispatchActions(options: ThingyOptions = {}) {
           window.location.href = session.signInUrl('/dispatch/');
         };
 
-  let drafts = [];
+  let drafts: ThingyDispatchDraft[] = [];
   let activeId = '';
   try {
     activeId = window.localStorage.getItem(activeKey) || '';
@@ -193,7 +222,7 @@ function createDispatchActions(options: ThingyOptions = {}) {
     return dispatchBusySignal.value;
   }
 
-  function draftEditable(draft) {
+  function draftEditable(draft: Partial<ThingyDispatchDraft>) {
     return dispatchEditable(draft?.stage);
   }
 
@@ -214,7 +243,7 @@ function createDispatchActions(options: ThingyOptions = {}) {
     return draft;
   }
 
-  function draftById(id) {
+  function draftById(id: string) {
     return drafts.find((entry) => entry.id === id);
   }
 
@@ -228,7 +257,7 @@ function createDispatchActions(options: ThingyOptions = {}) {
     if (!activeId && drafts[0]) setActiveDraft(drafts[0].id, { render: false });
   }
 
-  function createDraft(opts: ThingyOptions = {}) {
+  function createDraft(opts: DraftCreateOptions = {}) {
     const nextDispatchNumber = drafts.filter((entry) => hasDraftContent(entry)).length + 1;
     const draft = normalizeDraft({
       stage: 'empty',
@@ -247,14 +276,14 @@ function createDispatchActions(options: ThingyOptions = {}) {
     return draft;
   }
 
-  function updateDraft(patch: ThingyOptions = {}) {
+  function updateDraft(patch: Partial<ThingyDispatchDraft> = {}) {
     const draft = activeDraft();
     Object.assign(draft, patch, { updatedAt: nowIso() });
     saveDrafts();
     return draft;
   }
 
-  function addMessage(role, text, extra: ThingyOptions = {}) {
+  function addMessage(role: ThingyDispatchMessage['role'], text: unknown, extra: Partial<ThingyDispatchMessage> = {}) {
     const draft = activeDraft();
     draft.messages.push({
       role,
@@ -272,7 +301,7 @@ function createDispatchActions(options: ThingyOptions = {}) {
     return `${kind}-${progressRunCounter}`;
   }
 
-  function scopedProgressId(scope, id) {
+  function scopedProgressId(scope: string, id: string) {
     const base =
       String(id || 'progress')
         .trim()
@@ -280,7 +309,12 @@ function createDispatchActions(options: ThingyOptions = {}) {
     return scope ? `${scope}:${base}` : base;
   }
 
-  function upsertProgressMessage(id, text, targetDraft = activeDraft(), extra: ThingyOptions = {}) {
+  function upsertProgressMessage(
+    id: string,
+    text: unknown,
+    targetDraft = activeDraft(),
+    extra: Partial<ThingyDispatchMessage> = {}
+  ) {
     const draft = targetDraft;
     const key = String(id || '').trim();
     const existing = key ? draft.messages.find((message) => message.kind === 'progress' && message.id === key) : null;
@@ -316,7 +350,13 @@ function createDispatchActions(options: ThingyOptions = {}) {
     return draft;
   }
 
-  function upsertScopedProgressMessage(scope, id, text, targetDraft = activeDraft(), extra: ThingyOptions = {}) {
+  function upsertScopedProgressMessage(
+    scope: string,
+    id: string,
+    text: unknown,
+    targetDraft = activeDraft(),
+    extra: Partial<ThingyDispatchMessage> = {}
+  ) {
     return upsertProgressMessage(scopedProgressId(scope, id), text, targetDraft, {
       ...extra,
       baseId: id,
@@ -324,7 +364,7 @@ function createDispatchActions(options: ThingyOptions = {}) {
     });
   }
 
-  function setActiveDraft(id, opts: ThingyOptions = {}) {
+  function setActiveDraft(id: string, opts: DraftSelectionOptions = {}) {
     activeId = String(id || '');
     if (activeId) {
       try {
@@ -337,7 +377,7 @@ function createDispatchActions(options: ThingyOptions = {}) {
   }
 
   function signedIn() {
-    return session.token() && !session.tokenExpired();
+    return Boolean(session.token()) && !session.tokenExpired();
   }
 
   function requireAuth() {
@@ -346,7 +386,7 @@ function createDispatchActions(options: ThingyOptions = {}) {
     return false;
   }
 
-  async function dispatchPost(action, extra, options: ThingyOptions = {}) {
+  async function dispatchPost(action: string, extra: DispatchPayload = {}, options: ThingyRequestOptions = {}) {
     if (!(await session.ensureFreshToken())) {
       session.clearAuth();
       requireAuth();
@@ -355,7 +395,7 @@ function createDispatchActions(options: ThingyOptions = {}) {
     return await session.postJson('/dispatch', { action, ...(extra || {}) }, session.authHeaders(), options);
   }
 
-  async function saveDraftToServer(draft = activeDraft(), overrides: ThingyOptions = {}) {
+  async function saveDraftToServer(draft = activeDraft(), overrides: DraftSaveOverrides = {}) {
     if (!signedIn() || !hasDraftContent(draft)) return draft;
     const serverId = serverDispatchId(draft);
     const data = await dispatchPost('save_draft', {
@@ -386,19 +426,19 @@ function createDispatchActions(options: ThingyOptions = {}) {
     return draft;
   }
 
-  function setBusy(value, text = '') {
+  function setBusy(value: boolean, text = '') {
     dispatchBusySignal.value = Boolean(value);
     setStatus(text || '');
     onRender();
   }
 
-  function setStatus(text, kind = '') {
+  function setStatus(text: string, kind = '') {
     dispatchStatusMessageSignal.value = text || '';
     dispatchStatusKindSignal.value = kind || '';
   }
 
-  function renderActions(draft) {
-    const items = [];
+  function renderActions(draft: ThingyDispatchDraft) {
+    const items: ThingyDispatchAction[] = [];
     if (draft.stage === 'ready' || draft.stage === 'upgrade') {
       items.push({
         id: 'generate',
@@ -491,11 +531,11 @@ function createDispatchActions(options: ThingyOptions = {}) {
       }
       render();
     } catch (error) {
-      setStatus(error.message || 'Could not load Dispatch history.', 'error');
+      setStatus(errorMessage(error, 'Could not load Dispatch history.'), 'error');
     }
   }
 
-  function upsertBriefMessage(text, targetDraft = activeDraft()) {
+  function upsertBriefMessage(text: unknown, targetDraft = activeDraft()) {
     const existing = targetDraft.messages.find((message) => message.kind === 'brief');
     if (existing) {
       existing.text = String(text || '');
@@ -517,11 +557,15 @@ function createDispatchActions(options: ThingyOptions = {}) {
   // mirror its events into the draft. The planner streams answer deltas,
   // tool status, and dispatch_brief events; the brief card and stage are
   // derived from the last brief the planner published.
-  async function planWithThingy(text) {
+  async function planWithThingy(text: string) {
     const draft = activeDraft();
     const progressScope = nextProgressScope('plan');
-    const progress = (id, value, targetDraft = activeDraft(), extra: ThingyOptions = {}) =>
-      upsertScopedProgressMessage(progressScope, id, value, targetDraft, extra);
+    const progress = (
+      id: string,
+      value: unknown,
+      targetDraft = activeDraft(),
+      extra: Partial<ThingyDispatchMessage> = {}
+    ) => upsertScopedProgressMessage(progressScope, id, value, targetDraft, extra);
     const previous = {
       stage: draft.stage,
       prompt: draft.prompt,
@@ -537,8 +581,9 @@ function createDispatchActions(options: ThingyOptions = {}) {
     });
     render();
     let briefStatus = '';
-    let answerMessage = null;
-    const ensureAnswerMessage = () => {
+    let answerMessage: ThingyDispatchMessage | null = null;
+    let answerHasContent = false;
+    const ensureAnswerMessage = (): ThingyDispatchMessage => {
       if (!answerMessage) {
         const target = activeDraft();
         answerMessage = { role: 'assistant', text: '', time: nowIso() };
@@ -568,7 +613,7 @@ function createDispatchActions(options: ThingyOptions = {}) {
       });
       progress('planning', 'Thingy is planning against the archive...', activeDraft(), { status: 'pending' });
       render();
-      await readEvents(response, (eventName, data) => {
+      await readEvents(response, (eventName: string, data: ThingyStreamData) => {
         if (eventName === 'meta') {
           if (data.conversation_id) updateDraft({ conversationId: data.conversation_id });
         } else if (eventName === 'status') {
@@ -579,10 +624,12 @@ function createDispatchActions(options: ThingyOptions = {}) {
           }
         } else if (eventName === 'answer_delta') {
           ensureAnswerMessage().text += String(data.delta || '');
+          answerHasContent = Boolean(String(ensureAnswerMessage().text || '').trim());
           render();
         } else if (eventName === 'answer') {
           if (String(data.answer || '').trim()) {
             ensureAnswerMessage().text = String(data.answer || '');
+            answerHasContent = true;
             render();
           }
         } else if (eventName === 'dispatch_brief') {
@@ -613,8 +660,8 @@ function createDispatchActions(options: ThingyOptions = {}) {
       progress('planning', 'Planning stopped before Thingy could finish this pass.', activeDraft(), {
         status: 'failed'
       });
-      if (!String(answerMessage?.text || '').trim()) {
-        addMessage('assistant', error.message || 'I could not plan that Dispatch right now.');
+      if (!answerHasContent) {
+        addMessage('assistant', errorMessage(error, 'I could not plan that Dispatch right now.'));
       }
       saveDraftToServer(activeDraft(), {
         status: activeDraft().stage === 'empty' ? 'draft' : activeDraft().stage
@@ -629,8 +676,12 @@ function createDispatchActions(options: ThingyOptions = {}) {
   async function generateDispatch() {
     const draft = activeDraft();
     const progressScope = nextProgressScope('generate');
-    const progress = (id, value, targetDraft = activeDraft(), extra: ThingyOptions = {}) =>
-      upsertScopedProgressMessage(progressScope, id, value, targetDraft, extra);
+    const progress = (
+      id: string,
+      value: unknown,
+      targetDraft = activeDraft(),
+      extra: Partial<ThingyDispatchMessage> = {}
+    ) => upsertScopedProgressMessage(progressScope, id, value, targetDraft, extra);
     const email = session.storedEmail();
     if (!email) {
       redirectToSignIn();
@@ -684,7 +735,10 @@ function createDispatchActions(options: ThingyOptions = {}) {
       );
       startPolling();
     } catch (error) {
-      if (error.status === 403 && error.data && error.data.status === 'supporting_member_required') {
+      const requestError = error instanceof Error ? error : null;
+      const responseData =
+        requestError?.data && typeof requestError.data === 'object' ? (requestError.data as { status?: string }) : null;
+      if (requestError?.status === 403 && responseData?.status === 'supporting_member_required') {
         updateDraft({ stage: 'upgrade' });
         addMessage(
           'assistant',
@@ -696,11 +750,11 @@ function createDispatchActions(options: ThingyOptions = {}) {
         );
         saveDraftToServer(activeDraft(), { status: 'ready' }).catch(() => {});
         setStatus('Ready to send after Supporting Membership.', 'notice');
-      } else if (error.status === 429) {
-        addMessage('assistant', error.message || 'Dispatch is rate limited right now.');
+      } else if (requestError?.status === 429) {
+        addMessage('assistant', errorMessage(error, 'Dispatch is rate limited right now.'));
         setStatus('Dispatch is rate limited right now.', 'notice');
       } else {
-        addMessage('assistant', error.message || 'I could not queue this Dispatch.');
+        addMessage('assistant', errorMessage(error, 'I could not queue this Dispatch.'));
         setStatus('Could not queue this Dispatch.', 'error');
       }
       if (
@@ -724,7 +778,7 @@ function createDispatchActions(options: ThingyOptions = {}) {
     }
   }
 
-  function stopPollingFor(draftId) {
+  function stopPollingFor(draftId: string) {
     if (pollingDraftId === draftId) {
       window.clearInterval(pollTimer);
       pollTimer = 0;
@@ -736,8 +790,9 @@ function createDispatchActions(options: ThingyOptions = {}) {
     const draft = draftById(draftId) || activeDraft();
     if (!draft.dispatchId) return;
     if (!draft.generationProgressScope) draft.generationProgressScope = nextProgressScope('generate');
-    const progress = (id, value, targetDraft = draft, extra: ThingyOptions = {}) =>
-      upsertScopedProgressMessage(draft.generationProgressScope, id, value, targetDraft, extra);
+    const progressScope = draft.generationProgressScope;
+    const progress = (id: string, value: unknown, targetDraft = draft, extra: Partial<ThingyDispatchMessage> = {}) =>
+      upsertScopedProgressMessage(progressScope, id, value, targetDraft, extra);
     try {
       const data = await dispatchPost('status', { dispatch_id: draft.dispatchId });
       const row = data.dispatch || {};
@@ -801,7 +856,7 @@ function createDispatchActions(options: ThingyOptions = {}) {
     pollStatus(pollingDraftId);
   }
 
-  async function deleteDispatch(id) {
+  async function deleteDispatch(id: string) {
     const dispatchId = String(id || '').trim();
     if (!dispatchId || isBusy()) return;
     const draft = draftById(dispatchId);
@@ -823,7 +878,7 @@ function createDispatchActions(options: ThingyOptions = {}) {
       saveDrafts();
       render();
     } catch (error) {
-      setStatus(error.message || 'Could not delete that Dispatch.', 'error');
+      setStatus(errorMessage(error, 'Could not delete that Dispatch.'), 'error');
     }
   }
 

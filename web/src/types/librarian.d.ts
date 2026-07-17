@@ -59,11 +59,13 @@ interface ThingyApiResponse extends ThingyAuthData, DispatchRow {
   conversations?: ThingyConversationSummary[];
   conversation?: ThingyConversationSummary;
   dispatches?: DispatchRow[];
+  dispatch?: DispatchRow;
+  supporting_member?: boolean;
   items?: DispatchRow[];
   data?: unknown;
   code?: string;
-  nodes?: ThingyOptions[];
-  sources?: ThingyOptions[];
+  nodes?: ThingyCuriosityNode[];
+  sources?: ThingyArchiveItem[];
   account?: LibrarianAccountOverview;
   reaction?: string;
 }
@@ -133,7 +135,7 @@ interface DispatchRow {
   title?: string;
   preview?: string;
   error?: string;
-  messages?: unknown[];
+  messages?: ThingyDispatchMessage[];
   created_at?: string;
   updated_at?: string;
   template_test?: boolean;

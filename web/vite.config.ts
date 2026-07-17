@@ -1,6 +1,6 @@
 import { execSync } from 'node:child_process';
 import { resolve } from 'node:path';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import preact from '@preact/preset-vite';
 
 const SITE = {
@@ -30,12 +30,12 @@ const SITE = {
   ]
 };
 
-function env(name, fallback = '') {
+function env(name: string, fallback = '') {
   const value = process.env[name];
   return value && value.trim() ? value.trim() : fallback;
 }
 
-function requiredEnv(name) {
+function requiredEnv(name: string) {
   const value = env(name);
   if (!value) throw new Error(`${name} is required to build Thingy.`);
   return value;
@@ -58,13 +58,13 @@ function buildId() {
   return hash ? `${hash} · ${date}` : 'dev';
 }
 
-function htmlConfigPlugin() {
+function htmlConfigPlugin(): Plugin {
   const librarianApiUrl = requiredEnv('LIBRARIAN_API_URL');
   const librarianStreamUrl = requiredEnv('LIBRARIAN_STREAM_URL');
   const tinylyticsId = SITE.tinylyticsId;
   return {
     name: 'thingy-html-config',
-    transformIndexHtml(html) {
+    transformIndexHtml(html: string) {
       const config = {
         librarianApiUrl,
         librarianStreamUrl,
