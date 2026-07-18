@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "vite build",
+    "contract:sync": "npm --prefix ../../studio-thing/apps/librarian/lambda run contract:sync-thingy",
     "serve": "vite --host 0.0.0.0",
     "clean": "rm -rf _site",
     "format": "prettier --write \"src/**/*.{ts,tsx}\" \"tests/**/*.mjs\" \"scripts/**/*.mjs\" \"*.{ts,json}\"",
@@ -39,7 +40,6 @@
   "dependencies": {
     "@preact/signals": "^2.9.4",
     "lucide-static": "^1.25.0",
-    "preact": "^10.29.7",
-    "zod": "^4.4.3"
+    "preact": "^10.29.7"
   }
 }

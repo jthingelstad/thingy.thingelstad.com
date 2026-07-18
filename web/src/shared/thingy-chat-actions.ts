@@ -7,21 +7,10 @@
 import * as defaultSession from './thingy-session.ts';
 import { normalizePreferredName, savePreferredName } from './thingy-account.ts';
 import { postJsonRequest } from './thingy-http.ts';
-import { postJsonStream, read as readStream } from './thingy-stream.ts';
-import { AGENT_RESPONSE_TIMEOUT_MS, AGENT_SETUP_TIMEOUT_MS } from './thingy-timeouts.ts';
-import { createAssistantStreamRenderer } from './thingy-chat-stream-renderer.ts';
-import { normalizeModeId, normalizeModes } from './thingy-modes.ts';
-import {
-  conversationTitle,
-  createLocalConversation,
-  dedupeEmptyConversationDrafts as dedupeConversationDrafts,
-  deleteConversationSummaryList,
-  isEmptyConversationDraft as isEmptyConversationDraftEntry,
-  isLocalConversationId as isLocalConversationIdValue,
-  upsertConversationSummaryList
-} from './thingy-conversations.ts';
-import { userLocalContext } from './thingy-local-context.ts';
-import { isAuthError, scrubUrlParams } from './thingy-url.ts';
+import { createChatStreamActions } from './thingy-chat-stream-actions.ts';
+import { normalizeModes } from './thingy-modes.ts';
+import { createChatConversationActions } from './thingy-chat-conversation-actions.ts';
+import { scrubUrlParams } from './thingy-url.ts';
 import { handleAuthResponse as handleAuthResponseStatus } from './thingy-auth-response.ts';
 import { errorMessage } from './thingy-errors.ts';
 import {
@@ -42,7 +31,6 @@ import {
   displayEmail as displayEmailSignal,
   displayPreferredName as displayPreferredNameSignal,
   displayProfile as displayProfileSignal,
-  showNotice,
   signedIn as signedInSignal
 } from './stores/ui-store.ts';
 
@@ -78,17 +66,6 @@ interface ClearAuthOptions {
   message?: string;
   preserveEmail?: boolean;
   scrubAuthParams?: boolean;
-}
-
-interface PendingConversationInput {
-  conversationId: string;
-  title?: string;
-  scope?: string;
-  mode?: string;
-}
-
-interface WelcomeStreamOptions {
-  controller?: AbortController;
 }
 
 // Signals are the source of truth for chat state. `chatState` is a
@@ -152,8 +129,6 @@ function createChatActions(options: ChatActionsOptions = {}) {
   let authRequestGeneration = 0;
   let accountProfileRefreshAt = 0;
   let accountProfileRefreshPromise: Promise<boolean> | null = null;
-  let chatAbortController: AbortController | null = null;
-  let chatStopRequested = false;
 
   // --- Session / identity ----------------------------------------------------
 
@@ -309,7 +284,7 @@ function createChatActions(options: ChatActionsOptions = {}) {
     state.conversations = [];
     state.availableModes = [{ id: 'thingy', label: 'Thingy' }];
     state.activeMode = 'thingy';
-    setActiveConversation('');
+    conversationActions.setActiveConversation('');
     authActionSignal.value = 'none';
     authMessageSignal.value = message || existingMessage || '';
     refreshAccountIdentity();
@@ -398,312 +373,23 @@ function createChatActions(options: ChatActionsOptions = {}) {
     return session.postJson('/conversations', payload, authHeaders());
   }
 
-  function isLocalConversationId(id: unknown) {
-    return isLocalConversationIdValue(id, localConversationPrefix);
-  }
-
-  function modeLabel(id = state.activeMode) {
-    return state.availableModes.find((mode) => mode.id === id)?.label || 'Thingy';
-  }
-
-  function newConversationTitle(mode = state.activeMode) {
-    return conversationTitle(mode, modeLabel);
-  }
-
-  function activeConversation() {
-    if (!state.activeConversationId) return null;
-    return (
-      state.conversations.find(
-        (entry) => entry.id === state.activeConversationId || entry.conversation_id === state.activeConversationId
-      ) || null
-    );
-  }
-
-  function currentConversationMode() {
-    return activeConversation()?.mode || state.activeMode || 'thingy';
-  }
-
-  function currentConversationTitle() {
-    if (!state.activeConversationId) return 'New chat';
-    const active = activeConversation();
-    return active?.title || 'Current chat';
-  }
-
-  function setActiveConversation(id: unknown) {
-    state.activeConversationId = String(id || '').trim() || null;
-    try {
-      if (state.activeConversationId) {
-        window.localStorage.setItem(activeConvKey, state.activeConversationId);
-      } else {
-        window.localStorage.removeItem(activeConvKey);
-      }
-    } catch (error) {
-      /* ignore */
-    }
-    onActiveConversationChanged();
-    return state.activeConversationId;
-  }
-
-  function savedActiveConversation() {
-    try {
-      return window.localStorage.getItem(activeConvKey) || '';
-    } catch (error) {
-      return '';
-    }
-  }
-
-  function isEmptyConversationDraft(entry: ThingyConversationSummary, mode = '') {
-    return isEmptyConversationDraftEntry(entry, mode, modeLabel);
-  }
-
-  function dedupeEmptyConversationDrafts(
-    list: ThingyConversationSummary[] = [],
-    opts: { activeConversationId?: string | null } = {}
-  ) {
-    return dedupeConversationDrafts(list, {
-      activeConversationId: opts.activeConversationId || state.activeConversationId,
-      labelForMode: modeLabel
-    });
-  }
-
-  function createLocalConversationShell(mode = state.activeMode) {
-    const normalized = normalizeModeId(mode);
-    const existing = activeConversation();
-    if (existing?.id && isLocalConversationId(existing.id)) {
-      const updated = {
-        ...existing,
-        mode: normalized,
-        title: existing.title || newConversationTitle(normalized),
-        updated_at: new Date().toISOString()
-      };
-      state.conversations = state.conversations.map((entry) => (entry.id === existing.id ? updated : entry));
-      setActiveConversation(updated.id);
-      return updated;
-    }
-    const shell = createLocalConversation({
-      mode: normalized,
-      scope: currentScope(),
-      prefix: localConversationPrefix,
-      labelForMode: modeLabel
-    });
-    const withoutDrafts = state.conversations.filter((entry) => !isEmptyConversationDraft(entry, normalized));
-    state.conversations = dedupeEmptyConversationDrafts([shell, ...withoutDrafts], {
-      activeConversationId: shell.id
-    }).slice(0, maxRecents);
-    setActiveConversation(shell.id);
-    return shell;
-  }
-
-  function upsertConversationSummary(conversation: ThingyConversationSummary, opts: { replaceId?: string } = {}) {
-    if (!conversation || !(conversation.id || conversation.conversation_id)) return;
-    const replaceId = String(opts.replaceId || '').trim();
-    const result = upsertConversationSummaryList(state.conversations, conversation, {
-      activeConversationId: state.activeConversationId,
-      labelForMode: modeLabel,
-      maxRecents,
-      replaceId
-    });
-    state.conversations = result.conversations;
-    if (result.activeConversationId && result.activeConversationId !== state.activeConversationId) {
-      state.activeConversationId = result.activeConversationId;
-      try {
-        window.localStorage.setItem(activeConvKey, state.activeConversationId);
-      } catch (error) {
-        /* ignore */
-      }
-    }
-    onActiveConversationChanged();
-  }
-
-  function upsertPendingConversation({ conversationId, title, scope, mode }: PendingConversationInput) {
-    const id = String(conversationId || '').trim();
-    if (!id) return;
-    const replaceId = isLocalConversationId(state.activeConversationId) ? state.activeConversationId || '' : '';
-    const now = new Date().toISOString();
-    const existing = state.conversations.find((entry) => entry.id === id || entry.conversation_id === id);
-    if (!replaceId && existing) {
-      upsertConversationSummary({
-        ...existing,
-        id,
-        conversation_id: id,
-        title: existing.title || title || 'New chat',
-        scope: existing.scope || scope || currentScope(),
-        mode: normalizeModeId(existing.mode || mode || currentConversationMode()),
-        updated_at: now,
-        last_message_at: now,
-        draft: false
-      });
-      return;
-    }
-    upsertConversationSummary(
-      {
-        id,
-        conversation_id: id,
-        title: title || 'New chat',
-        preview: title || '',
-        scope: scope || currentScope(),
-        mode: normalizeModeId(mode || currentConversationMode()),
-        created_at: now,
-        updated_at: now,
-        last_message_at: now,
-        turn_count: 0,
-        draft: false
-      },
-      { replaceId }
-    );
-  }
-
-  async function createConversationShellForMode(mode: unknown, opts: { replaceId?: string } = {}) {
-    const normalized = normalizeModeId(mode);
-    if (!token() || normalized === 'thingy') return activeConversation();
-    if (!state.availableModes.some((entry) => entry.id === normalized)) return null;
-    if (!(await ensureFreshToken())) {
-      return null;
-    }
-    const replaceId = String(opts.replaceId || state.activeConversationId || '').trim();
-    conversationCreateInFlightSignal.value = true;
-    onQuestionStateChanged();
-    try {
-      const data = await conversationAction({
-        action: 'create',
-        mode: normalized,
-        title: newConversationTitle(normalized),
-        scope: currentScope()
-      });
-      if (data.conversation) {
-        upsertConversationSummary(
-          { ...data.conversation, draft: true },
-          {
-            replaceId: isLocalConversationId(replaceId) ? replaceId : ''
-          }
-        );
-        setActiveConversation(data.conversation.id || data.conversation.conversation_id);
-        return data.conversation;
-      }
-    } catch (error) {
-      if (isAuthError(error)) {
-        redirectToSignIn();
-      } else {
-        showNotice(`Could not start a ${modeLabel(normalized)} chat. Please try again.`);
-      }
-      track('librarian.conversations_error', 'create');
-    } finally {
-      conversationCreateInFlightSignal.value = false;
-      onQuestionStateChanged();
-    }
-    return null;
-  }
-
-  async function refreshConversations(opts: { retryAuth?: boolean } = {}): Promise<ThingyConversationSummary[]> {
-    if (!token()) {
-      state.conversations = [];
-      onActiveConversationChanged();
-      return [];
-    }
-    if (!(await ensureFreshToken())) {
-      return [];
-    }
-    try {
-      const data = await conversationAction({ action: 'list', limit: maxRecents });
-      if (data.modes || data.entitlements) setUserProfile(data);
-      const clientActiveShells = state.conversations.filter((entry) => {
-        if (!entry?.id) return false;
-        return isLocalConversationId(entry.id) || entry.id === state.activeConversationId;
-      });
-      const serverConversations = (data.conversations || [])
-        .map((entry) => ({
-          ...entry,
-          id: String(entry.id || entry.conversation_id || ''),
-          local: false
-        }))
-        .filter((entry) => entry.id)
-        // Dispatch planning conversations belong to the /dispatch/ surface.
-        .filter((entry) => String(entry.mode || '') !== 'dispatch');
-      const serverIds = new Set(serverConversations.map((entry) => entry.id));
-      const keptClientShells = clientActiveShells.filter(
-        (entry) => entry.id === state.activeConversationId && !serverIds.has(entry.id)
-      );
-      state.conversations = dedupeEmptyConversationDrafts(
-        [...keptClientShells, ...serverConversations].sort((a, b) =>
-          String(b.updated_at || '').localeCompare(String(a.updated_at || ''))
-        )
-      ).slice(0, maxRecents);
-      if (state.activeConversationId && !state.conversations.some((entry) => entry.id === state.activeConversationId)) {
-        setActiveConversation('');
-      }
-      onActiveConversationChanged();
-      return state.conversations;
-    } catch (error) {
-      if (opts.retryAuth !== false && isAuthError(error) && (await refreshStoredAuth())) {
-        return refreshConversations({ retryAuth: false });
-      }
-      track('librarian.conversations_error', 'list');
-      if (isAuthError(error)) {
-        redirectToSignIn();
-        return [];
-      }
-      onActiveConversationChanged();
-      return state.conversations;
-    }
-  }
-
-  // Renames a conversation. Local shells update in the store; server
-  // conversations round-trip through the API. Returns true on success.
-  async function renameConversation(id: string, title: unknown) {
-    const trimmed = String(title || '').trim();
-    if (!trimmed) return false;
-    if (isLocalConversationId(id)) {
-      state.conversations = state.conversations.map((entry) =>
-        entry.id === id ? { ...entry, title: trimmed, draft: false, updated_at: new Date().toISOString() } : entry
-      );
-      onActiveConversationChanged();
-      return true;
-    }
-    try {
-      const data = await conversationAction({ action: 'rename', conversation_id: id, title: trimmed });
-      if (data.conversation) upsertConversationSummary({ ...data.conversation, draft: false });
-      track('librarian.conversation_rename');
-      return true;
-    } catch (error) {
-      showNotice('Could not rename the conversation. Please try again.');
-      track('librarian.conversations_error', 'rename');
-      return false;
-    }
-  }
-
-  // Deletes a conversation from the store (and the server for non-local
-  // ids). Returns { ok, wasActive } so the caller can decide what view to
-  // show next; returns { ok: false } when the server delete fails.
-  async function deleteConversation(id: unknown) {
-    const conversationId = String(id || '').trim();
-    if (!conversationId) return { ok: false, wasActive: false };
-    const wasActive = conversationId === state.activeConversationId;
-    if (isLocalConversationId(conversationId)) {
-      ({ conversations: state.conversations, activeConversationId: state.activeConversationId } =
-        deleteConversationSummaryList(state.conversations, conversationId, {
-          activeConversationId: state.activeConversationId
-        }));
-      onActiveConversationChanged();
-      return { ok: true, wasActive };
-    }
-    try {
-      await conversationAction({ action: 'delete', conversation_id: conversationId });
-      ({ conversations: state.conversations, activeConversationId: state.activeConversationId } =
-        deleteConversationSummaryList(state.conversations, conversationId, {
-          activeConversationId: state.activeConversationId
-        }));
-      onActiveConversationChanged();
-      return { ok: true, wasActive };
-    } catch (error) {
-      showNotice('Could not delete the conversation. Please try again.');
-      track('librarian.conversations_error', 'delete');
-      return { ok: false, wasActive };
-    }
-  }
-
-  async function fetchConversation(id: string) {
-    return conversationAction({ action: 'get', conversation_id: id });
-  }
+  const conversationActions = createChatConversationActions({
+    state,
+    maxRecents,
+    localConversationPrefix,
+    activeConvKey,
+    currentScope,
+    token,
+    ensureFreshToken,
+    setUserProfile,
+    refreshStoredAuth,
+    redirectToSignIn,
+    post: conversationAction,
+    track,
+    onActiveConversationChanged,
+    onQuestionStateChanged,
+    setCreateInFlight: (value) => (conversationCreateInFlightSignal.value = value)
+  });
 
   // --- Streaming ----------------------------------------------------------------
 
@@ -719,240 +405,67 @@ function createChatActions(options: ChatActionsOptions = {}) {
     });
   }
 
-  function stopActiveAnswer() {
-    if (!chatAbortController) return;
-    chatStopRequested = true;
-    chatAbortController.abort();
-  }
-
-  function clearAnswerAbortState() {
-    chatAbortController = null;
-    chatStopRequested = false;
-  }
-
-  function isStoppable() {
-    return Boolean(chatAbortController);
-  }
-
-  async function postStreamingChat(message: string, model: AssistantMessageModel, scope: string) {
-    if (!streamBase) {
-      throw new Error('Thingy has not been connected to the archive stream API yet.');
-    }
-
-    let requestId = '';
-    let conversationId = isLocalConversationId(state.activeConversationId) ? '' : state.activeConversationId || '';
-    let conversation: ThingyConversationSummary | null = null;
-    chatStopRequested = false;
-    chatAbortController = new AbortController();
-    stoppableSignal.value = answerInFlightSignal.value;
-    onQuestionStateChanged();
-    let response;
-    try {
-      response = await postJsonStream({
-        baseUrl: streamBase,
-        path: '/chat',
-        controller: chatAbortController,
-        timeoutMs: AGENT_RESPONSE_TIMEOUT_MS,
-        abortMessage: 'Thingy spent too long in the archive. Please try again with a narrower angle.',
-        headers: {
-          authorization: `Bearer ${token()}`
-        },
-        payload: {
-          message,
-          scope,
-          mode: currentConversationMode(),
-          conversation_id: conversationId || undefined,
-          client_context: userLocalContext(),
-          user_profile: readerProfileContext()
-        }
-      });
-    } catch (error) {
-      if (chatStopRequested) {
-        model.status.value = 'stopped';
-        return {
-          answer: '',
-          citations: [],
-          experience: null,
-          stopped: true,
-          request_id: '',
-          conversation_id: conversationId,
-          conversation: null
-        };
-      }
-      throw error;
-    }
-
-    const renderer = createAssistantStreamRenderer({ model, scroll: scheduleChatScroll });
-
-    function applyEvent(eventName: string, data: ThingyStreamData) {
-      if (eventName === 'meta') {
-        requestId = data.request_id || requestId;
-        if (data.mode) {
-          state.activeMode = data.mode;
-          onModesChanged();
-        }
-        if (data.conversation_id) {
-          conversationId = data.conversation_id;
-          upsertPendingConversation({
-            conversationId,
-            title: message,
-            scope,
-            mode: data.mode || currentConversationMode()
-          });
-          setActiveConversation(conversationId);
-        }
-      } else if (eventName === 'status') {
-        renderer.status(data);
-      } else if (eventName === 'commentary') {
-        renderer.commentary(data.message || data.delta || '');
-      } else if (eventName === 'answer_delta') {
-        renderer.appendDelta(data.delta);
-      } else if (eventName === 'answer') {
-        renderer.setAnswer(data.answer);
-      } else if (eventName === 'citations') {
-        renderer.setCitations(data.citations);
-      } else if (eventName === 'experience') {
-        renderer.setExperience(data.experience);
-      } else if (eventName === 'done') {
-        requestId = data.request_id || requestId;
-        if (data.mode) {
-          state.activeMode = data.mode;
-          onModesChanged();
-        }
-        if (data.conversation_id) {
-          conversationId = data.conversation_id;
-          setActiveConversation(conversationId);
-        }
-        if (data.conversation) conversation = data.conversation;
-      } else if (eventName === 'error') {
-        const error = new Error(data.error || 'Thingy is unavailable.');
-        error.requestId = data.request_id || requestId;
-        throw error;
-      }
-    }
-
-    let stopped = false;
-    try {
-      await readStream(response, applyEvent);
-    } catch (error) {
-      if (!chatStopRequested) throw error;
-      stopped = true;
-    }
-    const result = renderer.finish(stopped ? 'stopped' : 'done');
-    if (model.requestId.peek() !== requestId) model.requestId.value = requestId;
-    if (!stopped && !String(result.answer || '').trim() && !result.experience) {
-      throw new Error('Thingy did not return an answer. Please try again.');
-    }
-    return { ...result, stopped, request_id: requestId, conversation_id: conversationId, conversation };
-  }
-
-  async function postStreamingWelcome(model: AssistantMessageModel, scope: string, opts: WelcomeStreamOptions = {}) {
-    if (!streamBase) {
-      throw new Error('Thingy has not been connected to the archive stream API yet.');
-    }
-
-    let requestId = '';
-    const response = await postJsonStream({
-      baseUrl: streamBase,
-      path: '/welcome',
-      controller: opts.controller,
-      timeoutMs: AGENT_SETUP_TIMEOUT_MS,
-      abortMessage: 'Thingy took too long to get oriented. Please try asking a question.',
-      headers: {
-        authorization: `Bearer ${token()}`
-      },
-      payload: {
-        scope,
-        mode: currentConversationMode(),
-        client_context: userLocalContext(),
-        user_profile: readerProfileContext()
-      }
-    });
-
-    const renderer = createAssistantStreamRenderer({
-      model,
-      scroll: scheduleChatScroll,
-      label: 'Session Setup',
-      statusFallback: 'Thingy is getting oriented...'
-    });
-
-    function applyEvent(eventName: string, data: ThingyStreamData) {
-      if (eventName === 'meta') {
-        requestId = data.request_id || requestId;
-        if (data.mode) {
-          state.activeMode = data.mode;
-          onModesChanged();
-        }
-      } else if (eventName === 'status') {
-        renderer.status(data);
-      } else if (eventName === 'commentary') {
-        renderer.commentary(data.message || data.delta || '');
-      } else if (eventName === 'answer_delta') {
-        renderer.appendDelta(data.delta);
-      } else if (eventName === 'answer') {
-        renderer.setAnswer(data.answer);
-      } else if (eventName === 'experience') {
-        renderer.setExperience(data.experience);
-      } else if (eventName === 'done') {
-        requestId = data.request_id || requestId;
-        if (data.mode) {
-          state.activeMode = data.mode;
-          onModesChanged();
-        }
-      } else if (eventName === 'error') {
-        const error = new Error(data.error || 'Thingy is unavailable.');
-        error.requestId = data.request_id || requestId;
-        throw error;
-      }
-    }
-
-    await readStream(response, applyEvent);
-    const { answer, experience } = renderer.finish('done');
-    return { answer, experience, request_id: requestId };
-  }
+  const streamActions = createChatStreamActions({
+    streamBase,
+    token,
+    getActiveConversationId: () => state.activeConversationId,
+    isLocalConversationId: conversationActions.isLocalConversationId,
+    currentConversationMode: conversationActions.currentConversationMode,
+    readerProfileContext,
+    upsertPendingConversation: conversationActions.upsertPendingConversation,
+    setActiveConversation: conversationActions.setActiveConversation,
+    onMode: (mode) => {
+      state.activeMode = mode;
+      onModesChanged();
+    },
+    onQuestionStateChanged,
+    scheduleChatScroll,
+    answerInFlight: () => answerInFlightSignal.value,
+    setStoppable: (value) => (stoppableSignal.value = value)
+  });
 
   return {
-    activeConversation,
+    activeConversation: conversationActions.activeConversation,
     authHeaders,
-    clearAnswerAbortState,
+    clearAnswerAbortState: streamActions.clearAnswerAbortState,
     clearAuthState,
     conversationAction,
-    createConversationShellForMode,
-    createLocalConversationShell,
-    currentConversationMode,
-    currentConversationTitle,
-    deleteConversation,
+    createConversationShellForMode: conversationActions.createConversationShellForMode,
+    createLocalConversationShell: conversationActions.createLocalConversationShell,
+    currentConversationMode: conversationActions.currentConversationMode,
+    currentConversationTitle: conversationActions.currentConversationTitle,
+    deleteConversation: conversationActions.deleteConversation,
     ensureFreshToken,
-    fetchConversation,
+    fetchConversation: conversationActions.fetchConversation,
     isAwaitingName,
-    isLocalConversationId,
-    isStoppable,
-    modeLabel,
+    isLocalConversationId: conversationActions.isLocalConversationId,
+    isStoppable: streamActions.isStoppable,
+    modeLabel: conversationActions.modeLabel,
     normalizeEmail,
     persistInferredPreferredName,
     postStreamJson,
-    postStreamingChat,
-    postStreamingWelcome,
+    postStreamingChat: streamActions.postStreamingChat,
+    postStreamingWelcome: streamActions.postStreamingWelcome,
     readerProfileContext,
     redirectToSignIn,
     refreshAccountIdentity,
     refreshAccountProfile,
-    refreshConversations,
+    refreshConversations: conversationActions.refreshConversations,
     refreshStoredAuth,
     rememberPreferredName,
-    renameConversation,
-    savedActiveConversation,
-    setActiveConversation,
+    renameConversation: conversationActions.renameConversation,
+    savedActiveConversation: conversationActions.savedActiveConversation,
+    setActiveConversation: conversationActions.setActiveConversation,
     setAwaitingName,
     setUserProfile,
-    stopActiveAnswer,
+    stopActiveAnswer: streamActions.stopActiveAnswer,
     storedEmail,
     submitAuthAction,
     submitAuthCheck,
     token,
     tokenExpired,
-    upsertConversationSummary,
-    upsertPendingConversation,
+    upsertConversationSummary: conversationActions.upsertConversationSummary,
+    upsertPendingConversation: conversationActions.upsertPendingConversation,
     userProfile,
     validateEmail
   };

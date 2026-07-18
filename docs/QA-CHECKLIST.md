@@ -37,6 +37,9 @@ cd web
 THINGY_QA_EMAIL=thingy@thingelstad.com npm run qa:real
 ```
 
+Focused reruns can use `--chat-only` (desktop Chat plus both mobile rails) or
+`--dispatch-only` (planner, generation, and email delivery).
+
 Cleanup only for QA-prefixed conversations and Dispatch drafts:
 
 ```sh

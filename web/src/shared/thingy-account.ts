@@ -12,6 +12,11 @@ function hasSupportingAccess(profile: LibrarianProfile = {}): boolean {
   );
 }
 
+function hasOwnerAccess(profile: LibrarianProfile = {}): boolean {
+  const entitlements = Array.isArray(profile.entitlements) ? profile.entitlements : [];
+  return entitlements.includes('owner');
+}
+
 function discordConnection(profile: LibrarianProfile = {}): LibrarianDiscordConnection | null {
   const candidates = [profile.discord_connection, profile.discordConnection, profile.discord_user, profile.discordUser];
   const connection = candidates.find((value) => value && typeof value === 'object') || null;
@@ -78,6 +83,7 @@ export {
   discordConnection,
   discordConnectionName,
   extractPreferredNameFromMessage,
+  hasOwnerAccess,
   hasSupportingAccess,
   normalizePreferredName,
   savePreferredName

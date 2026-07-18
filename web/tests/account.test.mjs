@@ -5,6 +5,7 @@ import {
   discordConnection,
   discordConnectionName,
   extractPreferredNameFromMessage,
+  hasOwnerAccess,
   normalizePreferredName,
   savePreferredName,
   hasSupportingAccess
@@ -35,6 +36,12 @@ test('savePreferredName persists through the auth API before updating cached pro
     }
   ]);
   assert.equal(cachedProfile.preferred_name, 'Jamie');
+});
+
+test('hasOwnerAccess requires the explicit owner entitlement', () => {
+  assert.equal(hasOwnerAccess({ entitlements: ['reader', 'owner'] }), true);
+  assert.equal(hasOwnerAccess({ entitlements: ['reader', 'supporting_member'] }), false);
+  assert.equal(hasOwnerAccess({ supporting_member: true }), false);
 });
 
 test('savePreferredName rejects names the API does not confirm', async () => {

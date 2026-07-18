@@ -147,6 +147,24 @@ Key web files:
 - `web/public/`: static files copied as-is to `_site`.
 - `web/vite.config.ts`: build-time config injection and multi-page inputs.
 
+### Librarian contract
+
+Studio owns the versioned Librarian request, response, and SSE contract. Thingy vendors
+`web/contracts/librarian-api.v1.json` and validates successful responses directly against
+that generated artifact. Requests carry `x-librarian-contract-version`; the backend also
+returns it so an incompatible deployment fails clearly instead of being accepted through
+TypeScript casts.
+
+After changing the authoritative contract in `studio-thing`:
+
+```sh
+cd web
+npm run contract:sync
+```
+
+The Studio contract test verifies its generated artifact, and Thingy's contract tests
+verify the vendored artifact against the browser validators.
+
 ## Tinylytics
 
 Thingy uses its own Tinylytics site ID via `TINYLYTICS_SITE_UID`, falling back to

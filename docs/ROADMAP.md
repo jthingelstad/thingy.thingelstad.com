@@ -70,13 +70,20 @@ product direction.
 
 ### Delight Features
 
-- Agentic welcome behavior uses local time, conversation history, and membership context.
+- Agentic welcome behavior uses local time, conversation history, and membership context. A deterministic
+  greeting renders immediately, so personalization never blocks the composer or delays the first question.
 - Thingy can remember the user's name. The earlier AI-synthesized reader memory was deliberately
   removed: server-side conversations cover continuity, and the profile is now basic account metadata
   (name, Discord link, activity counts).
 - Curiosity map creates visual trails through the archive and can seed new conversations.
 - Archive work/tool activity is visible in the chat, then collapses after completion.
 - Archive Sparks can surface adjacent ideas, though emission needs continued tuning.
+
+### Runtime Contract
+
+- Studio owns one generated, versioned contract for successful Librarian JSON responses and SSE events.
+- Thingy validates live payloads against that artifact and negotiates the supported major contract version
+  on every request. Additive changes remain compatible within v1; breaking changes require a new major.
 
 ## Current Mode Model
 

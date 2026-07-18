@@ -1,7 +1,18 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-const { validateApiResponse, validateStreamData } = await import('../src/shared/thingy-contracts.ts');
+const { LIBRARIAN_CONTRACT_VERSION, contractRequestHeaders, validateApiResponse, validateStreamData } =
+  await import('../src/shared/thingy-contracts.ts');
+
+test('runtime validators and requests use the generated Librarian contract version', () => {
+  assert.equal(contractRequestHeaders()['x-librarian-contract-version'], LIBRARIAN_CONTRACT_VERSION);
+  assert.equal(
+    validateStreamData('meta', { contract_version: LIBRARIAN_CONTRACT_VERSION }).contract_version,
+    LIBRARIAN_CONTRACT_VERSION
+  );
+  assert.equal(validateStreamData('meta', { contract_version: '1.9.0' }).contract_version, '1.9.0');
+  assert.throws(() => validateStreamData('meta', { contract_version: '99.0.0' }), /this client expects/);
+});
 
 test('endpoint contracts accept additive Librarian fields while preserving typed records', () => {
   const response = validateApiResponse(
@@ -23,6 +34,8 @@ test('endpoint contracts reject malformed successful JSON', () => {
     /invalid \/dispatch response/
   );
   assert.throws(() => validateApiResponse({ profile: { modes: 'thingy' } }, '/auth'), /invalid \/auth response/);
+  assert.throws(() => validateApiResponse({ ok: true }, '/conversations', 'list'), /required property/);
+  assert.throws(() => validateApiResponse({ dispatches: {} }, '/dispatch', 'list'), /must be array/);
 });
 
 test('stream contracts validate event-specific payloads', () => {

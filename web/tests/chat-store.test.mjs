@@ -53,9 +53,16 @@ test('interactionBusy reflects answerInFlight', () => {
   assert.equal(interactionBusy.value, false);
 });
 
-test('interactionBusy reflects welcomeInFlight, mapInFlight, and conversationCreateInFlight', () => {
+test('interactionBusy leaves the composer available during the asynchronous welcome', () => {
   resetInFlight();
-  for (const sig of [welcomeInFlight, mapInFlight, conversationCreateInFlight]) {
+  welcomeInFlight.value = true;
+  assert.equal(interactionBusy.value, false);
+  welcomeInFlight.value = false;
+});
+
+test('interactionBusy reflects mapInFlight and conversationCreateInFlight', () => {
+  resetInFlight();
+  for (const sig of [mapInFlight, conversationCreateInFlight]) {
     sig.value = true;
     assert.equal(interactionBusy.value, true, `${sig} makes interactionBusy true`);
     sig.value = false;
@@ -69,8 +76,7 @@ test('interactionBusy stays true when multiple flags overlap', () => {
   welcomeInFlight.value = true;
   assert.equal(interactionBusy.value, true);
   answerInFlight.value = false;
-  // Still true because welcome is still running.
-  assert.equal(interactionBusy.value, true);
+  assert.equal(interactionBusy.value, false, 'welcome does not block a new question');
   welcomeInFlight.value = false;
   assert.equal(interactionBusy.value, false);
 });

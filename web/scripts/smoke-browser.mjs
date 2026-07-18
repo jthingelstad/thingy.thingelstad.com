@@ -46,7 +46,12 @@ async function seedSession(context) {
   }, fakeToken());
 }
 
-async function routeMockApi(page) {
+async function routeMockApi(page, { holdWelcome = false } = {}) {
+  let releaseWelcome = () => {};
+  const welcomeGate = new Promise((resolve) => {
+    releaseWelcome = resolve;
+  });
+  if (!holdWelcome) releaseWelcome();
   await page.route(`${apiHost}/auth`, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
@@ -102,11 +107,14 @@ async function routeMockApi(page) {
   });
 
   await page.route(`${streamHost}/welcome`, async (route) => {
+    await welcomeGate;
     await route.fulfill({
       contentType: 'text/event-stream; charset=utf-8',
       body: 'event: answer_delta\ndata: {"delta":"Hi. I am Thingy."}\n\nevent: done\ndata: {"request_id":"smoke"}\n\n'
     });
   });
+
+  return { releaseWelcome };
 }
 
 function collectUiFailures(page) {
@@ -166,7 +174,7 @@ async function checkChat(browser) {
   await seedSession(context);
   const page = await context.newPage();
   const failures = collectUiFailures(page);
-  await routeMockApi(page);
+  const mocks = await routeMockApi(page, { holdWelcome: true });
   await page.goto(`${baseUrl}/chat/`);
 
   // The route-level root owns the entire authenticated shell.
@@ -177,7 +185,12 @@ async function checkChat(browser) {
   const emptyText = (await page.locator('.rail-body .rail-empty').textContent()).trim();
   assert.match(emptyText, /Your conversations sync with Thingy/);
 
-  // Controlled composer state should update character count and submit state.
+  // A deterministic welcome renders immediately, but personalization remains
+  // asynchronous and must not lock the composer.
+  await page.waitForSelector('.librarian-message-assistant');
+  assert.match(await page.locator('.librarian-message-assistant').first().textContent(), /Hi\. I'm Thingy/);
+
+  // Controlled composer state should update while the welcome request is held.
   await page.waitForSelector('#librarian-question-count .composer-count');
   const countLocator = page.locator('#librarian-question-count .composer-count');
   assert.equal((await countLocator.textContent()).trim(), '0 / 1200', 'count starts at 0');
@@ -186,11 +199,13 @@ async function checkChat(browser) {
     const el = document.querySelector('#librarian-question-count .composer-count');
     return el && /^12 \/ 1200/.test(el.textContent || '');
   });
-
-  // The mocked welcome stream runs during bootstrap, so wait for that state
-  // transition before asserting the composer's idle contract.
   await page.waitForSelector('button.composer-send[aria-label="Ask Thingy"]');
   const sendButton = page.locator('button.composer-send').first();
+  assert.equal(await sendButton.isEnabled(), true, 'welcome personalization does not disable the composer');
+  mocks.releaseWelcome();
+  await page.waitForFunction(() =>
+    document.querySelector('.librarian-message-assistant')?.textContent?.includes('Hi. I am Thingy.')
+  );
   assert.equal((await sendButton.getAttribute('aria-label')) || '', 'Ask Thingy', 'send button at rest');
   assert.equal(
     await sendButton.evaluate((el) => el.classList.contains('is-stop')),

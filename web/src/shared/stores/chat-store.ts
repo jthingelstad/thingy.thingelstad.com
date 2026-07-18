@@ -74,9 +74,7 @@ const conversationCreateInFlight = signal(false);
 // True while an answer is streaming AND the user can abort it.
 const stoppable = signal(false);
 
-const interactionBusy = computed(
-  () => answerInFlight.value || welcomeInFlight.value || mapInFlight.value || conversationCreateInFlight.value
-);
+const interactionBusy = computed(() => answerInFlight.value || mapInFlight.value || conversationCreateInFlight.value);
 
 export {
   activeConversationId,

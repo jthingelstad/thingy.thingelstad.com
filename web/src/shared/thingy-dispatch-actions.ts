@@ -26,8 +26,17 @@ import {
 } from './stores/dispatch-store.ts';
 import { draftFromServerRow, hasDraftContent, normalizeDraft, serverDispatchId } from './thingy-dispatch-drafts.ts';
 import { dispatchEditable } from './thingy-dispatch-state.ts';
-import { AGENT_RESPONSE_TIMEOUT_MS } from './thingy-timeouts.ts';
 import { errorMessage } from './thingy-errors.ts';
+import { createDispatchPlanner } from './thingy-dispatch-planner.ts';
+import { createDispatchLifecycle } from './thingy-dispatch-lifecycle.ts';
+import {
+  MAX_DRAFTS,
+  defaultWelcomeText,
+  dispatchBriefMarkdown,
+  draftTitle,
+  inputPlaceholderForDraft,
+  titleFromPrompt
+} from './thingy-dispatch-presenters.ts';
 
 interface DispatchActionsOptions {
   session?: typeof defaultSession;
@@ -56,130 +65,6 @@ interface DraftSaveOverrides {
 }
 
 type DispatchPayload = Record<string, unknown>;
-
-const DEFAULT_WELCOME =
-  "Alright, let's make your first Dispatch. Give me the topic, question, or archive thread you want to shape, and I'll help turn it into a clear direction before you generate it.";
-const MAX_DRAFTS = 24;
-
-// --- Pure helpers (exported for tests) --------------------------------------
-
-function draftTitle(draft: Partial<ThingyDispatchDraft>) {
-  return draft.title || draft.prompt || draft.direction || 'New Dispatch';
-}
-
-function titleFromPrompt(value: unknown) {
-  return (
-    String(value || 'Dispatch')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 80) || 'Dispatch'
-  );
-}
-
-function ordinal(value: unknown) {
-  const number = Math.max(1, Number(value || 1));
-  const words: Record<number, string> = {
-    1: 'first',
-    2: 'second',
-    3: 'third',
-    4: 'fourth',
-    5: 'fifth',
-    6: 'sixth',
-    7: 'seventh',
-    8: 'eighth',
-    9: 'ninth',
-    10: 'tenth'
-  };
-  if (words[number]) return words[number];
-  const mod100 = number % 100;
-  if (mod100 >= 11 && mod100 <= 13) return `${number}th`;
-  const suffixes: Record<number, string> = { 1: 'st', 2: 'nd', 3: 'rd' };
-  return `${number}${suffixes[number % 10] || 'th'}`;
-}
-
-function defaultWelcomeText(dispatchNumber = 1) {
-  return `Alright, let's make your ${ordinal(dispatchNumber)} Dispatch. Give me the topic, question, or archive thread you want to shape, and I'll help turn it into a clear direction before you generate it.`;
-}
-
-function coverageLabel(value: unknown) {
-  const labels: Record<string, string> = {
-    thin: 'Thin',
-    focused: 'Focused',
-    broad: 'Broad',
-    ambiguous: 'Needs steering'
-  };
-  return labels[String(value || '').toLowerCase()] || 'Checked';
-}
-
-function briefSourceLine(source: DispatchBriefSource = {}) {
-  const title = String(source.title || '').trim();
-  const label = String(source.label || '').trim();
-  const why = String(source.why || '').trim();
-  const url = String(source.url || '').trim();
-  const name = [label, title].filter(Boolean).join(' - ') || url || 'Archive source';
-  return `${name}${why ? `: ${why}` : ''}`;
-}
-
-function dispatchBriefMarkdown(brief: DispatchBrief = {}) {
-  if (!brief || typeof brief !== 'object' || Array.isArray(brief)) return '';
-  const angle = String(brief.working_angle || brief.generation_instructions || '').trim();
-  const goal = String(brief.user_goal || '').trim();
-  const sources = Array.isArray(brief.selected_sources)
-    ? brief.selected_sources.map(briefSourceLine).filter(Boolean).slice(0, 6)
-    : [];
-  const excluded = Array.isArray(brief.excluded_scope)
-    ? brief.excluded_scope
-        .map((item) => String(item || '').trim())
-        .filter(Boolean)
-        .slice(0, 5)
-    : [];
-  if (!angle && !goal && !sources.length) return '';
-  return [
-    '**Dispatch brief**',
-    goal ? `- **Goal:** ${goal}` : '',
-    angle ? `- **Angle:** ${angle}` : '',
-    `- **Archive fit:** ${coverageLabel(brief.coverage_status)}`,
-    sources.length ? `- **Planned sources:**\n${sources.map((source) => `  - ${source}`).join('\n')}` : '',
-    excluded.length ? `- **Keep out:** ${excluded.join('; ')}` : ''
-  ]
-    .filter(Boolean)
-    .join('\n');
-}
-
-function generationContextText(draft: Partial<ThingyDispatchDraft> = {}, dispatchTestMode = false) {
-  const brief = draft.brief && typeof draft.brief === 'object' ? draft.brief : {};
-  const sources = Array.isArray(brief.selected_sources) ? brief.selected_sources : [];
-  const lines = [
-    dispatchTestMode
-      ? 'I am preparing the template test with the current Dispatch brief.'
-      : 'I am preparing this Dispatch with the brief we shaped together.',
-    brief.coverage_status ? `Archive fit: ${coverageLabel(brief.coverage_status)}.` : '',
-    sources.length
-      ? `Planned sources: ${sources
-          .slice(0, 4)
-          .map((source) => source.label || source.title)
-          .filter(Boolean)
-          .join(', ')}.`
-      : ''
-  ].filter(Boolean);
-  return lines.join('\n\n');
-}
-
-function statusProgressText(status: string) {
-  const normalized = String(status || '').replace(/_/g, ' ');
-  if (status === 'queued') return 'The Dispatch is queued. I am watching for the worker to pick it up.';
-  if (status === 'generating') return 'The worker has the request. I am writing from the planned archive packet now.';
-  if (status === 'ready_to_send') return 'The Dispatch draft is written. I am handing it to the email sender.';
-  if (status === 'sending') return 'The email sender has the Dispatch. I am waiting for delivery confirmation.';
-  return `Thingy is ${normalized} this Dispatch. I will keep checking until it is sent.`;
-}
-
-function inputPlaceholderForDraft(draft: Partial<ThingyDispatchDraft>, editable: boolean) {
-  if (!editable) return 'Start a new Dispatch to shape another request...';
-  if (draft.stage === 'needs_clarification') return 'Answer Thingy, or steer the plan another way...';
-  if (draft.stage === 'ready' || draft.stage === 'upgrade') return 'Adjust the direction, or generate when ready...';
-  return 'Tell Thingy what this Dispatch should explore...';
-}
 
 // --- Stateful action layer ---------------------------------------------------
 
@@ -210,8 +95,6 @@ function createDispatchActions(options: DispatchActionsOptions = {}) {
   } catch (error) {
     /* private mode */
   }
-  let pollTimer = 0;
-  let pollingDraftId = '';
   let progressRunCounter = 0;
 
   function nowIso() {
@@ -227,7 +110,8 @@ function createDispatchActions(options: DispatchActionsOptions = {}) {
   }
 
   function welcomeForDraft(dispatchNumber = drafts.length + 1) {
-    if (typeof welcomeTextOption === 'function') return String(welcomeTextOption(dispatchNumber) || DEFAULT_WELCOME);
+    if (typeof welcomeTextOption === 'function')
+      return String(welcomeTextOption(dispatchNumber) || defaultWelcomeText(dispatchNumber));
     if (welcomeTextOption) return String(welcomeTextOption);
     return defaultWelcomeText(dispatchNumber);
   }
@@ -553,309 +437,48 @@ function createDispatchActions(options: DispatchActionsOptions = {}) {
     return targetDraft;
   }
 
-  // One planning turn: stream the dispatch-mode /chat conversation and
-  // mirror its events into the draft. The planner streams answer deltas,
-  // tool status, and dispatch_brief events; the brief card and stage are
-  // derived from the last brief the planner published.
-  async function planWithThingy(text: string) {
-    const draft = activeDraft();
-    const progressScope = nextProgressScope('plan');
-    const progress = (
-      id: string,
-      value: unknown,
-      targetDraft = activeDraft(),
-      extra: Partial<ThingyDispatchMessage> = {}
-    ) => upsertScopedProgressMessage(progressScope, id, value, targetDraft, extra);
-    const previous = {
-      stage: draft.stage,
-      prompt: draft.prompt,
-      direction: draft.direction,
-      title: draft.title,
-      brief: draft.brief
-    };
-    setBusy(true, 'Thingy is planning this Dispatch...');
-    updateDraft({
-      stage: 'shaping',
-      prompt: draft.prompt || text,
-      title: draft.prompt ? draft.title : titleFromPrompt(text)
-    });
-    render();
-    let briefStatus = '';
-    let answerMessage: ThingyDispatchMessage | null = null;
-    let answerHasContent = false;
-    const ensureAnswerMessage = (): ThingyDispatchMessage => {
-      if (!answerMessage) {
-        const target = activeDraft();
-        answerMessage = { role: 'assistant', text: '', time: nowIso() };
-        target.messages.push(answerMessage);
-        target.updatedAt = nowIso();
-      }
-      return answerMessage;
-    };
-    try {
-      if (!(await session.ensureFreshToken())) {
-        session.clearAuth();
-        requireAuth();
-        throw new Error('Sign in again to continue.');
-      }
-      const response = await postStream({
-        baseUrl: streamBase(),
-        path: '/chat',
-        timeoutMs: AGENT_RESPONSE_TIMEOUT_MS,
-        abortMessage: 'Thingy spent too long planning this Dispatch. Please try again with a narrower angle.',
-        headers: { authorization: `Bearer ${session.token()}` },
-        payload: {
-          message: text,
-          scope: 'all',
-          mode: 'dispatch',
-          conversation_id: activeDraft().conversationId || undefined
-        }
-      });
-      progress('planning', 'Thingy is planning against the archive...', activeDraft(), { status: 'pending' });
-      render();
-      await readEvents(response, (eventName: string, data: ThingyStreamData) => {
-        if (eventName === 'meta') {
-          if (data.conversation_id) updateDraft({ conversationId: data.conversation_id });
-        } else if (eventName === 'status') {
-          const message = String(data.commentary || data.message || '').trim();
-          if (message) {
-            progress('planning', message, activeDraft(), { status: 'pending' });
-            render();
-          }
-        } else if (eventName === 'answer_delta') {
-          ensureAnswerMessage().text += String(data.delta || '');
-          answerHasContent = Boolean(String(ensureAnswerMessage().text || '').trim());
-          render();
-        } else if (eventName === 'answer') {
-          if (String(data.answer || '').trim()) {
-            ensureAnswerMessage().text = String(data.answer || '');
-            answerHasContent = true;
-            render();
-          }
-        } else if (eventName === 'dispatch_brief') {
-          const brief = data.brief && typeof data.brief === 'object' ? data.brief : {};
-          briefStatus = String(data.status || brief.status || 'draft');
-          updateDraft({ brief });
-          const briefText = dispatchBriefMarkdown(brief);
-          if (briefText) upsertBriefMessage(briefText);
-          render();
-        } else if (eventName === 'error') {
-          throw new Error(data.error || 'Thingy is unavailable.');
-        }
-      });
-      progress('planning', 'Finished this planning pass.', activeDraft(), { status: 'complete' });
-      const current = activeDraft();
-      const brief = current.brief && typeof current.brief === 'object' ? current.brief : {};
-      const ready = briefStatus === 'ready' || String(brief.status || '') === 'ready';
-      updateDraft({
-        stage: ready ? 'ready' : 'needs_clarification',
-        direction: String(
-          brief.working_angle || brief.generation_instructions || current.direction || current.prompt || ''
-        ).trim()
-      });
-      await saveDraftToServer(activeDraft(), { status: ready ? 'ready' : 'needs_clarification' });
-      setStatus('');
-    } catch (error) {
-      const failureMessage = errorMessage(error, 'I could not plan that Dispatch right now.');
-      updateDraft(previous);
-      progress('planning', 'Planning stopped before Thingy could finish this pass.', activeDraft(), {
-        status: 'failed'
-      });
-      if (!answerHasContent) {
-        addMessage('assistant', failureMessage);
-      }
-      saveDraftToServer(activeDraft(), {
-        status: activeDraft().stage === 'empty' ? 'draft' : activeDraft().stage
-      }).catch(() => {});
-      setStatus(failureMessage, 'error');
-    } finally {
-      setBusy(false);
-      render();
-    }
-  }
+  const planWithThingy = createDispatchPlanner({
+    session,
+    streamBase,
+    postStream,
+    readEvents,
+    activeDraft,
+    nextProgressScope,
+    progress: (scope, id, value, draft = activeDraft(), extra = {}) =>
+      upsertScopedProgressMessage(scope, id, value, draft, extra),
+    setBusy,
+    updateDraft,
+    render,
+    requireAuth,
+    nowIso,
+    upsertBriefMessage,
+    saveDraftToServer,
+    setStatus,
+    addMessage
+  });
 
-  async function generateDispatch() {
-    const draft = activeDraft();
-    const progressScope = nextProgressScope('generate');
-    const progress = (
-      id: string,
-      value: unknown,
-      targetDraft = activeDraft(),
-      extra: Partial<ThingyDispatchMessage> = {}
-    ) => upsertScopedProgressMessage(progressScope, id, value, targetDraft, extra);
-    const email = session.storedEmail();
-    if (!email) {
-      redirectToSignIn();
-      return;
-    }
-    setBusy(true, dispatchTestMode ? 'Queueing template test...' : 'Queueing Dispatch...');
-    draft.generationProgressScope = progressScope;
-    progress('generate-start', generationContextText(draft, dispatchTestMode), draft, { status: 'pending' });
-    render();
-    try {
-      await saveDraftToServer(draft, { status: draft.stage === 'upgrade' ? 'ready' : draft.stage });
-      progress('generate-start', generationContextText(draft, dispatchTestMode), draft, { status: 'complete' });
-      progress(
-        'generate-save',
-        'Saved the Dispatch direction and brief.\n\nSending the generation request now.',
-        draft,
-        { status: 'pending' }
-      );
-      render();
-      const data = await dispatchPost('create', {
-        dispatch_id: serverDispatchId(draft),
-        prompt: draft.prompt,
-        topic: draft.prompt,
-        direction: draft.direction || draft.prompt,
-        clarification_question: draft.currentQuestion,
-        clarification_answer: draft.clarificationAnswer,
-        brief: draft.brief || {},
-        template_test: dispatchTestMode,
-        email
-      });
-      progress(
-        'generate-save',
-        'Saved the Dispatch direction and brief.\n\nSending the generation request now.',
-        activeDraft(),
-        { status: 'complete' }
-      );
-      const row = data.dispatch || {};
-      updateDraft({
-        stage: row.status || 'queued',
-        dispatchId: row.id || row.dispatch_id || '',
-        statusText: dispatchTestMode ? 'Template test queued.' : 'Dispatch queued.'
-      });
-      activeDraft().generationProgressScope = progressScope;
-      progress(
-        'generate-queue',
-        dispatchTestMode
-          ? 'Template test queued. I am checking the generation status now.'
-          : 'Dispatch queued. I am checking the generation status now.',
-        activeDraft(),
-        { status: 'complete' }
-      );
-      startPolling();
-    } catch (error) {
-      const requestError = error instanceof Error ? error : null;
-      const responseData =
-        requestError?.data && typeof requestError.data === 'object' ? (requestError.data as { status?: string }) : null;
-      if (requestError?.status === 403 && responseData?.status === 'supporting_member_required') {
-        updateDraft({ stage: 'upgrade' });
-        addMessage(
-          'assistant',
-          [
-            'This Dispatch is shaped and ready.',
-            'Sending Dispatches is a Supporting Member feature. Supporting Membership helps sustain The Weekly Thing and Jamie directs the membership proceeds as a charitable giving pool rather than treating this as a paywall for Thingy.',
-            'You can become a Supporting Member, come back here, sign in again so I can see the updated membership, and generate this same Dispatch.'
-          ].join('\n\n')
-        );
-        saveDraftToServer(activeDraft(), { status: 'ready' }).catch(() => {});
-        setStatus('Ready to send after Supporting Membership.', 'notice');
-      } else if (requestError?.status === 429) {
-        addMessage('assistant', errorMessage(error, 'Dispatch is rate limited right now.'));
-        setStatus('Dispatch is rate limited right now.', 'notice');
-      } else {
-        addMessage('assistant', errorMessage(error, 'I could not queue this Dispatch.'));
-        setStatus('Could not queue this Dispatch.', 'error');
-      }
-      if (
-        activeDraft().messages.some(
-          (message) =>
-            message.kind === 'progress' &&
-            message.id === scopedProgressId(progressScope, 'generate-start') &&
-            message.status === 'pending'
-        )
-      ) {
-        progress('generate-start', 'Dispatch preparation stopped before the request could be queued.', activeDraft(), {
-          status: 'failed'
-        });
-      }
-      progress('generate-save', 'The Dispatch generation request stopped before it could be queued.', activeDraft(), {
-        status: 'failed'
-      });
-    } finally {
-      setBusy(false);
-      render();
-    }
-  }
-
-  function stopPollingFor(draftId: string) {
-    if (pollingDraftId === draftId) {
-      window.clearInterval(pollTimer);
-      pollTimer = 0;
-      pollingDraftId = '';
-    }
-  }
-
-  async function pollStatus(draftId = activeId) {
-    const draft = draftById(draftId) || activeDraft();
-    if (!draft.dispatchId) return;
-    if (!draft.generationProgressScope) draft.generationProgressScope = nextProgressScope('generate');
-    const progressScope = draft.generationProgressScope;
-    const progress = (id: string, value: unknown, targetDraft = draft, extra: Partial<ThingyDispatchMessage> = {}) =>
-      upsertScopedProgressMessage(progressScope, id, value, targetDraft, extra);
-    try {
-      const data = await dispatchPost('status', { dispatch_id: draft.dispatchId });
-      const row = data.dispatch || {};
-      if (row.status === 'sent') {
-        Object.assign(draft, {
-          stage: 'sent',
-          title: row.title || row.subject || draft.title,
-          statusText: 'Sent',
-          updatedAt: nowIso()
-        });
-        if (!draft.messages.some((message) => message.kind === 'sent')) {
-          progress('generate-status', 'Generation finished and the email handoff completed.', draft, {
-            status: 'complete'
-          });
-          draft.messages.push({
-            role: 'assistant',
-            text: 'Dispatch sent. Check your email.',
-            time: nowIso(),
-            kind: 'sent'
-          });
-          saveDrafts();
-        }
-        stopPollingFor(draft.id);
-        await loadHistory();
-      } else if (row.status === 'failed') {
-        Object.assign(draft, {
-          stage: 'failed',
-          statusText: row.error || 'Failed',
-          updatedAt: nowIso()
-        });
-        progress('generate-status', 'Generation failed before the email could be sent.', draft, { status: 'failed' });
-        draft.messages.push({
-          role: 'assistant',
-          text: row.error || 'Dispatch failed while generating.',
-          time: nowIso()
-        });
-        saveDrafts();
-        stopPollingFor(draft.id);
-        await loadHistory();
-      } else if (row.status) {
-        Object.assign(draft, {
-          stage: row.status,
-          updatedAt: nowIso()
-        });
-        progress('generate-status', statusProgressText(row.status), draft, { status: 'pending' });
-        saveDrafts();
-        render();
-      }
-    } catch (error) {
-      // Polling is best-effort.
-    }
-  }
-
-  function startPolling(draftId = activeId) {
-    const draft = draftById(draftId) || activeDraft();
-    if (!draft.dispatchId) return;
-    if (pollTimer && pollingDraftId === draft.id) return;
-    if (pollTimer) window.clearInterval(pollTimer);
-    pollingDraftId = draft.id;
-    pollTimer = window.setInterval(() => pollStatus(pollingDraftId), 6000);
-    pollStatus(pollingDraftId);
-  }
+  const lifecycle = createDispatchLifecycle({
+    session,
+    dispatchTestMode,
+    redirectToSignIn,
+    activeDraft,
+    draftById,
+    getActiveId: () => activeId,
+    nextProgressScope,
+    progress: (scope, id, value, draft = activeDraft(), extra = {}) =>
+      upsertScopedProgressMessage(scope, id, value, draft, extra),
+    scopedProgressId,
+    setBusy,
+    render,
+    saveDraftToServer,
+    dispatchPost,
+    updateDraft,
+    addMessage,
+    setStatus,
+    saveDrafts,
+    loadHistory,
+    nowIso
+  });
 
   async function deleteDispatch(id: string) {
     const dispatchId = String(id || '').trim();
@@ -866,7 +489,7 @@ function createDispatchActions(options: DispatchActionsOptions = {}) {
     try {
       const serverId = serverDispatchId(draft);
       if (serverId) await dispatchPost('delete', { dispatch_id: serverId });
-      stopPollingFor(draft.id);
+      lifecycle.stopPollingFor(draft.id);
       drafts = drafts.filter((entry) => entry.id !== draft.id);
       if (activeId === draft.id) {
         const next = drafts[0];
@@ -893,17 +516,17 @@ function createDispatchActions(options: DispatchActionsOptions = {}) {
     draftEditable,
     draftTitle,
     ensureActiveDraft,
-    generateDispatch,
+    generateDispatch: lifecycle.generateDispatch,
     hasDrafts,
     isBusy,
     loadHistory,
-    pollStatus,
+    pollStatus: lifecycle.pollStatus,
     render,
     requireAuth,
     setActiveDraft,
     setStatus,
     signedIn,
-    startPolling
+    startPolling: lifecycle.startPolling
   };
 }
 

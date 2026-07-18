@@ -10,6 +10,7 @@ const jmapToken =
 const suppliedSessionToken = process.env.THINGY_SESSION_TOKEN || '';
 const cleanupOnly = args.has('--cleanup-only');
 const dispatchOnly = args.has('--dispatch-only');
+const chatOnly = args.has('--chat-only');
 const qaPrefix = process.env.THINGY_QA_PREFIX || 'QA real-api';
 
 if (!apiUrl) fail('LIBRARIAN_API_URL is required.');
@@ -304,18 +305,29 @@ async function checkDesktopChat(browser, data, result) {
   const prompt = `${qaPrefix}: one sentence smoke check ${Date.now()}`;
   await page.locator('#librarian-question').fill(prompt);
   await page.getByRole('button', { name: 'Ask Thingy' }).click();
-  await page.waitForSelector('button[aria-label="Copy answer"]', { timeout: 90000 });
+  try {
+    await page.waitForSelector('button[aria-label="Copy answer"]', { timeout: 90000 });
+  } catch (error) {
+    const transcript = (await page.locator('.librarian-messages').innerText()).replace(/\s+/g, ' ').slice(-3000);
+    throw new Error(
+      `chat answer did not complete. Transcript: ${transcript || 'none'}. Browser errors: ${failures.join(' | ') || 'none'}`,
+      { cause: error }
+    );
+  }
   result.prompt = prompt;
   result.failures = failures;
   await context.close();
 }
 
 async function checkDesktopDispatch(browser, data, result) {
+  const entitlements = new Set([...(data.entitlements || []), ...(data.profile?.entitlements || [])].map(String));
+  const owner = entitlements.has('owner');
+  const canSend = owner || data.status === 'premium' || entitlements.has('supporting_member');
   const context = await browser.newContext({ viewport: { width: 1280, height: 820 } });
   await seedSession(context, data);
   const page = await context.newPage();
   const failures = collectFailures(page);
-  await page.goto(`${baseUrl.replace(/\/$/, '')}/dispatch/?dispatch_test=template`);
+  await page.goto(`${baseUrl.replace(/\/$/, '')}/dispatch/${owner ? '?dispatch_test=template' : ''}`);
   await page.waitForSelector('.dispatch-chat:not([hidden])', { timeout: 20000 });
   await page.waitForSelector(`text=${data.email || email}`, { timeout: 20000 });
   assert((await page.locator('.rail-body').count()) === 1, 'dispatch recents region missing');
@@ -330,7 +342,8 @@ async function checkDesktopDispatch(browser, data, result) {
   await page.getByRole('button', { name: 'Send to Thingy' }).click();
   await page.waitForFunction(() => document.querySelector('#dispatch-input')?.disabled, null, { timeout: 10000 });
   await page.waitForFunction(() => !document.querySelector('#dispatch-input')?.disabled, null, { timeout: 190000 });
-  const sendButton = page.getByRole('button', { name: 'Send Template Test' });
+  const sendLabel = owner ? 'Send Template Test' : 'Generate Dispatch';
+  const sendButton = page.getByRole('button', { name: sendLabel });
   for (let turn = 0; turn < 2 && (await sendButton.count()) === 0; turn += 1) {
     if ((await page.locator('.dispatch-status[data-kind="error"]').count()) > 0) break;
     await page
@@ -346,12 +359,33 @@ async function checkDesktopDispatch(browser, data, result) {
     const transcript = (await page.locator('.dispatch-messages').innerText()).replace(/\s+/g, ' ').slice(-3000);
     const status = (await page.locator('.dispatch-status').innerText()).replace(/\s+/g, ' ').trim();
     throw new Error(
-      `dispatch planner did not reach the template-send action. Status: ${status || 'none'}. Transcript: ${transcript}. Browser errors: ${failures.join(' | ') || 'none'}`
+      `dispatch planner did not reach ${sendLabel}. Status: ${status || 'none'}. Transcript: ${transcript}. Browser errors: ${failures.join(' | ') || 'none'}`
     );
+  }
+
+  if (!canSend) {
+    await sendButton.click();
+    await page.getByText('Ready to send after Supporting Membership.').waitFor({ timeout: 30000 });
+    result.access = 'supporting-member gate verified';
+    result.prompt = prompt;
+    result.failures = failures;
+    await context.close();
+    return;
   }
   const requestedAt = new Date(Date.now() - 5000);
   await sendButton.click();
-  await page.getByText('Dispatch sent. Check your email.').waitFor({ timeout: 120000 });
+  try {
+    // The worker Lambda has a 300-second generation window. Leave headroom for
+    // the next six-second status poll and email handoff after generation.
+    await page.getByText('Dispatch sent. Check your email.').waitFor({ timeout: 330000 });
+  } catch (error) {
+    const transcript = (await page.locator('.dispatch-messages').innerText()).replace(/\s+/g, ' ').slice(-3000);
+    const status = (await page.locator('.dispatch-status').innerText()).replace(/\s+/g, ' ').trim();
+    throw new Error(
+      `dispatch send did not complete. Status: ${status || 'none'}. Transcript: ${transcript}. Browser errors: ${failures.join(' | ') || 'none'}`,
+      { cause: error }
+    );
+  }
   if (jmapToken) {
     let delivered = null;
     for (let attempt = 0; attempt < 12; attempt += 1) {
@@ -419,15 +453,20 @@ try {
     results.checks.push({ name: 'desktop chat real stream', ok: true, failures: chatResult.failures });
   }
 
-  const dispatchResult = {};
-  await checkDesktopDispatch(browser, data, dispatchResult);
-  results.checks.push({
-    name: 'desktop dispatch real clarify and template email',
-    ok: true,
-    email_received_at: dispatchResult.email_received_at || '',
-    email_subject: dispatchResult.email_subject || '',
-    failures: dispatchResult.failures
-  });
+  if (!chatOnly) {
+    const dispatchResult = {};
+    await checkDesktopDispatch(browser, data, dispatchResult);
+    results.checks.push({
+      name: dispatchResult.access
+        ? 'desktop dispatch real planner and entitlement gate'
+        : 'desktop dispatch real email',
+      ok: true,
+      access: dispatchResult.access || '',
+      email_received_at: dispatchResult.email_received_at || '',
+      email_subject: dispatchResult.email_subject || '',
+      failures: dispatchResult.failures
+    });
+  }
 
   if (!dispatchOnly) {
     const mobileChatFailures = await checkMobile(browser, data, '/chat/', '.mobile-chatbar-circle', 'mobile chat');

@@ -53,6 +53,7 @@ interface ThingyAuthData {
 }
 
 interface ThingyApiResponse extends ThingyAuthData, DispatchRow {
+  contract_version?: string;
   request_id?: string;
   requestId?: string;
   errorMessage?: string;

@@ -1,6 +1,11 @@
 // @ts-check
 import { DEFAULT_API_TIMEOUT_MS } from './thingy-timeouts.ts';
-import { looseApiError, validateApiResponse } from './thingy-contracts.ts';
+import {
+  assertContractResponseVersion,
+  contractRequestHeaders,
+  looseApiError,
+  validateApiResponse
+} from './thingy-contracts.ts';
 
 async function postJsonRequest(options: ThingyRequestOptions = {}): Promise<ThingyApiResponse> {
   const baseUrl = String(options.baseUrl || '').replace(/\/$/, '');
@@ -13,6 +18,7 @@ async function postJsonRequest(options: ThingyRequestOptions = {}): Promise<Thin
       method: 'POST',
       headers: {
         'content-type': 'application/json',
+        ...contractRequestHeaders(),
         ...(options.headers || {})
       },
       body: JSON.stringify(options.payload || {}),
@@ -28,8 +34,16 @@ async function postJsonRequest(options: ThingyRequestOptions = {}): Promise<Thin
       window.clearTimeout(timeout);
     });
 
+  assertContractResponseVersion(response);
   const raw = await response.json().catch(() => ({}));
-  if (response.ok) return validateApiResponse(raw, options.path || 'API');
+  const action =
+    options.payload &&
+    typeof options.payload === 'object' &&
+    !Array.isArray(options.payload) &&
+    'action' in options.payload
+      ? String(options.payload.action || '')
+      : '';
+  if (response.ok) return validateApiResponse(raw, options.path || 'API', action);
   const data = looseApiError(raw);
 
   const headerRequestId = response.headers.get('x-request-id') || '';

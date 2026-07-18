@@ -1,6 +1,11 @@
 // @ts-check
 import { DEFAULT_API_TIMEOUT_MS } from './thingy-timeouts.ts';
-import { looseApiError, validateStreamData } from './thingy-contracts.ts';
+import {
+  assertContractResponseVersion,
+  contractRequestHeaders,
+  looseApiError,
+  validateStreamData
+} from './thingy-contracts.ts';
 
 function parseBlock(block: unknown): { eventName: string; data: ThingyStreamData } | null {
   let eventName = 'message';
@@ -61,6 +66,7 @@ async function postJsonStream(options: ThingyRequestOptions = {}): Promise<Respo
     method: 'POST',
     headers: {
       'content-type': 'application/json',
+      ...contractRequestHeaders(),
       ...(options.headers || {})
     },
     body: JSON.stringify(options.payload || {}),
@@ -75,6 +81,7 @@ async function postJsonStream(options: ThingyRequestOptions = {}): Promise<Respo
     .finally(() => {
       window.clearTimeout(timeout);
     });
+  assertContractResponseVersion(response);
   if (!response.ok || !response.body) {
     const requestId = response.headers.get('x-request-id') || '';
     const data = looseApiError(await response.json().catch(() => ({})));

@@ -1,7 +1,7 @@
 import { render, type JSX } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import * as session from '../thingy-session.ts';
-import { normalizePreferredName } from '../thingy-account.ts';
+import { hasOwnerAccess, normalizePreferredName } from '../thingy-account.ts';
 import { createTinylyticsTracker } from '../thingy-analytics.ts';
 import { tinylyticsId } from '../thingy-config.ts';
 import { createDispatchActions } from '../thingy-dispatch-actions.ts';
@@ -39,7 +39,7 @@ function dispatchTestMode() {
   const value = String(params.get('dispatch_test') || params.get('test') || '')
     .trim()
     .toLowerCase();
-  return value === 'template' || value === 'template_test';
+  return (value === 'template' || value === 'template_test') && hasOwnerAccess(session.storedProfile());
 }
 
 function restoreCollapsedRail() {

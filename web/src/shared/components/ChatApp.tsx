@@ -7,12 +7,13 @@ import { activityStepsFromToolNames, renderCuriosityMap } from '../thingy-chat-r
 import { chatState as state, createChatActions } from '../thingy-chat-actions.ts';
 import { librarianStreamUrl, tinylyticsId } from '../thingy-config.ts';
 import { resolveFromValue } from '../thingy-from.ts';
-import { modeClass, modeIcon, normalizeModeId, normalizeModes } from '../thingy-modes.ts';
+import { normalizeModeId, normalizeModes } from '../thingy-modes.ts';
 import { createAssistantMessageModel } from '../models/assistant-message.ts';
 import { normalizeScopeParam, scopeForSources, sourcesForScope } from '../thingy-scope.ts';
 import { createDictationController, speechInputSupported } from '../thingy-voice.ts';
 import { errorMessage } from '../thingy-errors.ts';
 import { isAuthError } from '../thingy-url.ts';
+import { DEFAULT_WELCOME, createChatWelcomeController } from '../thingy-chat-welcome.ts';
 import {
   activeConversationId,
   activeMode,
@@ -38,14 +39,10 @@ import {
   signedIn
 } from '../stores/ui-store.ts';
 import { AccountMenu } from './AccountMenu.tsx';
-import { AuthPanel, focusAuthEmail } from './AuthPanel.tsx';
-import { ChatMessages } from './ChatMessages.tsx';
-import { ComposerCount } from './ComposerCount.tsx';
-import { ComposerSubmit } from './ComposerSubmit.tsx';
+import { focusAuthEmail } from './AuthPanel.tsx';
+import { ChatConversationView } from './ChatConversationView.tsx';
+import { ChatRail } from './ChatNavigation.tsx';
 import { Notice } from './Notice.tsx';
-import { RailRecents } from './RailRecents.tsx';
-import { SourcePicker } from './SourcePicker.tsx';
-import { ThingyIcon } from './ThingyIcon.tsx';
 
 const MAX_QUESTION_CHARS = 1200;
 const MAX_RECENTS = 20;
@@ -84,9 +81,7 @@ function ChatApp() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const actionsRef = useRef<ReturnType<typeof createChatActions> | null>(null);
   const dictationRef = useRef<ReturnType<typeof createDictationController> | null>(null);
-  const welcomeShownRef = useRef(false);
-  const welcomeAbortRef = useRef<AbortController | null>(null);
-  const welcomeMessageIdRef = useRef('');
+  const welcomeControllerRef = useRef<ReturnType<typeof createChatWelcomeController> | null>(null);
   const initialPromptSubmittedRef = useRef(false);
   const autoFollowRef = useRef(true);
   const scrollFrameRef = useRef(0);
@@ -173,13 +168,7 @@ function ChatApp() {
   }
 
   function cancelWelcome() {
-    welcomeInFlight.value = false;
-    welcomeAbortRef.current?.abort();
-    welcomeAbortRef.current = null;
-    if (welcomeMessageIdRef.current) {
-      chatMessages.value = chatMessages.value.filter((message) => message.id !== welcomeMessageIdRef.current);
-    }
-    welcomeMessageIdRef.current = '';
+    welcomeControllerRef.current?.cancel();
   }
 
   function updateComposerMeasurements() {
@@ -222,13 +211,33 @@ function ChatApp() {
           inputRef.current?.focus();
         },
         onAuthCleared: () => {
-          welcomeShownRef.current = false;
+          welcomeControllerRef.current?.reset();
           focusAuthEmail();
         }
       }
     });
   }
   const actions = actionsRef.current;
+  if (!welcomeControllerRef.current) {
+    welcomeControllerRef.current = createChatWelcomeController({
+      canStart: () =>
+        Boolean(actions.token() && !interactionBusy.value && !welcomeInFlight.value && !initial.hasPrompt),
+      ensureFreshToken: () => actions.ensureFreshToken(),
+      prepareProfile: () => actions.setAwaitingName(!state.preferredName),
+      createMessage: () =>
+        addAssistantMessage({
+          content: DEFAULT_WELCOME,
+          label: 'Session Setup',
+          statusFallback: 'Thingy is finding a thread from the archive...'
+        }),
+      removeMessage: (id) => {
+        chatMessages.value = chatMessages.value.filter((message) => message.id !== id);
+      },
+      stream: (model, controller) => actions.postStreamingWelcome(model, currentScope(), { controller }),
+      setInFlight: (value) => (welcomeInFlight.value = value),
+      track
+    });
+  }
   const isSignedIn = signedIn.value;
   const busy = interactionBusy.value;
   const currentText = questionText.value;
@@ -391,7 +400,7 @@ function ChatApp() {
       window.removeEventListener('focus', refreshProfile);
       window.removeEventListener('storage', onStorage);
       if (scrollFrameRef.current) window.cancelAnimationFrame(scrollFrameRef.current);
-      welcomeAbortRef.current?.abort();
+      welcomeControllerRef.current?.cancel();
       actions.stopActiveAnswer();
     };
     // Global lifecycle listeners are bound once to the route's stable action
@@ -400,40 +409,7 @@ function ChatApp() {
   }, [actions]);
 
   async function startAgentWelcome() {
-    if (
-      !actions.token() ||
-      interactionBusy.value ||
-      welcomeInFlight.value ||
-      welcomeShownRef.current ||
-      initial.hasPrompt
-    )
-      return;
-    if (!(await actions.ensureFreshToken())) return;
-    actions.setAwaitingName(!state.preferredName);
-    welcomeShownRef.current = true;
-    welcomeInFlight.value = true;
-    const controller = new AbortController();
-    welcomeAbortRef.current = controller;
-    const pending = addAssistantMessage({ label: 'Session Setup', statusFallback: 'Thingy is getting oriented...' });
-    welcomeMessageIdRef.current = pending.id;
-    try {
-      await actions.postStreamingWelcome(pending.model, currentScope(), { controller });
-      track('librarian.welcome_success');
-    } catch (error) {
-      if (!welcomeInFlight.value || welcomeMessageIdRef.current !== pending.id) return;
-      pending.model.activity.value = [];
-      pending.model.commentary.value = [];
-      pending.model.content.value =
-        "Hi. I'm Thingy. Ask me what you're curious about and I'll help you explore the archive.";
-      pending.model.status.value = 'done';
-      track('librarian.welcome_error', error instanceof Error && error.requestId ? 'server' : 'client');
-    } finally {
-      if (welcomeMessageIdRef.current === pending.id) {
-        welcomeInFlight.value = false;
-        welcomeAbortRef.current = null;
-        welcomeMessageIdRef.current = '';
-      }
-    }
+    await welcomeControllerRef.current?.start();
   }
 
   function startBlankConversation() {
@@ -453,7 +429,7 @@ function ChatApp() {
   async function newConversation() {
     if (interactionBusy.value) return;
     cancelWelcome();
-    welcomeShownRef.current = true;
+    welcomeControllerRef.current?.markShown();
     const shell = startNewConversation(state.activeMode);
     await actions.createConversationShellForMode(state.activeMode, { replaceId: shell?.id });
     setMobileMenuOpen(false);
@@ -468,7 +444,7 @@ function ChatApp() {
     if (!state.availableModes.some((mode) => mode.id === nextMode)) return;
     if (nextMode === state.activeMode && !state.activeConversationId) return;
     state.activeMode = nextMode;
-    welcomeShownRef.current = false;
+    welcomeControllerRef.current?.reset();
     const shell = startNewConversation(nextMode);
     setModeMenuOpen(false);
     const conversation = await actions.createConversationShellForMode(nextMode, { replaceId: shell?.id });
@@ -565,7 +541,7 @@ function ChatApp() {
     );
     const conversationId = attach ? state.activeConversationId || '' : '';
     if (!attach) {
-      welcomeShownRef.current = true;
+      welcomeControllerRef.current?.markShown();
       actions.setActiveConversation('');
       resetMessages();
     }
@@ -697,124 +673,26 @@ function ChatApp() {
     <>
       <section class="thingy-page">
         <div class={shellClass} id="thingy-app-shell">
-          <aside class="rail" aria-label="Thingy">
-            <div class="rail-top">
-              <a
-                class="rail-brand"
-                href="/"
-                aria-label="Thingy home"
-                data-tinylytics-event="network.home"
-                data-tinylytics-event-value="thingy"
-              >
-                <img class="rail-mark" src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager" />
-              </a>
-              <button
-                class="rail-iconbtn rail-collapse"
-                type="button"
-                aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                aria-pressed={collapsed}
-                title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                onClick={() => (railCollapsed.value = !collapsed)}
-              >
-                <ThingyIcon name="panel-left" />
-              </button>
-            </div>
-
-            <nav class="rail-surface-switch" aria-label="Thingy surfaces">
-              <a class="is-active" href="/chat/" aria-current="page">
-                <ThingyIcon name="message-square" />
-                <span>Chat</span>
-              </a>
-              <a href="/dispatch/">
-                <ThingyIcon name="newspaper" />
-                <span>Dispatch</span>
-              </a>
-            </nav>
-
-            <div class="rail-newchat-combo">
-              <button
-                class="rail-newchat"
-                type="button"
-                disabled={busy}
-                title="New chat"
-                onClick={() => void newConversation()}
-              >
-                <ThingyIcon name="plus" />
-                <span class="label">New chat</span>
-                <span class="kbd">⌘K</span>
-              </button>
-              <div class="rail-newchat-mode" hidden={!showModeUi}>
-                <button
-                  class="rail-newchat-mode-button"
-                  type="button"
-                  disabled={busy}
-                  aria-haspopup="listbox"
-                  aria-expanded={modeMenuOpen}
-                  aria-controls="thingy-mode-menu"
-                  aria-label={`New chat mode: ${selectedModeLabel}`}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setModeMenuOpen(!modeMenuOpen);
-                  }}
-                >
-                  <span class="rail-newchat-mode-icon">
-                    <ThingyIcon name={modeIcon(selectedMode)} />
-                  </span>
-                  <span class="rail-newchat-mode-label">{selectedModeLabel}</span>
-                  <span class="rail-newchat-mode-caret">
-                    <ThingyIcon name="chevron-down" />
-                  </span>
-                </button>
-                <div
-                  class="rail-newchat-mode-menu"
-                  id="thingy-mode-menu"
-                  hidden={!modeMenuOpen}
-                  role="listbox"
-                  aria-label="New chat mode"
-                >
-                  {modes.map((mode) => (
-                    <button
-                      key={mode.id}
-                      type="button"
-                      role="option"
-                      class="rail-newchat-mode-option"
-                      aria-selected={mode.id === selectedMode}
-                      onClick={() => void chooseMode(mode.id)}
-                    >
-                      <span class="rail-newchat-mode-option-icon">
-                        <ThingyIcon name={modeIcon(mode.id)} />
-                      </span>
-                      <span>{mode.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <button
-              class="rail-newchat rail-map"
-              type="button"
-              disabled={busy || !isSignedIn || !sourcesAvailable}
-              title="Curiosity map"
-              onClick={() => void showCuriosityMap()}
-            >
-              <ThingyIcon name="network" />
-              <span class="label">Curiosity map</span>
-            </button>
-
-            <div class="rail-body">
-              <p class="rail-recents-label">Recents</p>
-              <RailRecents
-                maxRecents={MAX_RECENTS}
-                onOpen={(id) => {
-                  void loadConversation(id);
-                  mobileRailOpen.value = false;
-                }}
-                onDelete={(id) => void deleteConversation(id)}
-              />
-            </div>
-
-            <div class="rail-account">
+          <ChatRail
+            collapsed={collapsed}
+            busy={busy}
+            showModeUi={showModeUi}
+            modeMenuOpen={modeMenuOpen}
+            selectedMode={selectedMode}
+            selectedModeLabel={selectedModeLabel}
+            modes={modes}
+            sourcesAvailable={isSignedIn && sourcesAvailable}
+            onToggleCollapsed={() => (railCollapsed.value = !collapsed)}
+            onNewConversation={() => void newConversation()}
+            onToggleModeMenu={() => setModeMenuOpen(!modeMenuOpen)}
+            onChooseMode={(mode) => void chooseMode(mode)}
+            onCuriosityMap={() => void showCuriosityMap()}
+            onOpenConversation={(id) => {
+              void loadConversation(id);
+              mobileRailOpen.value = false;
+            }}
+            onDeleteConversation={(id) => void deleteConversation(id)}
+            accountMenu={
               <AccountMenu
                 session={session}
                 signedIn={signedIn}
@@ -831,8 +709,8 @@ function ChatApp() {
                 }}
                 onOpen={() => void actions.refreshAccountProfile({ force: true })}
               />
-            </div>
-          </aside>
+            }
+          />
 
           <button
             type="button"
@@ -842,208 +720,63 @@ function ChatApp() {
             onClick={() => (mobileRailOpen.value = false)}
           />
 
-          <section class="thingy-conversation" aria-label="Thingy chat">
-            <h1 class="sr-only">Thingy chat</h1>
-            <div class="mobile-chatbar" aria-label="Conversation">
-              <button
-                class="mobile-chatbar-circle"
-                type="button"
-                aria-label={mobileOpen ? 'Hide conversations' : 'Show conversations'}
-                aria-expanded={mobileOpen}
-                title={mobileOpen ? 'Hide conversations' : 'Show conversations'}
-                onClick={() => (mobileRailOpen.value = !mobileOpen)}
-              >
-                <ThingyIcon name="chevron-left" />
-              </button>
-              <div class="mobile-chatbar-title">
-                <span>{conversationTitle}</span>
-              </div>
-              <div class="mobile-chatbar-actions">
-                <button
-                  class="mobile-chatbar-action"
-                  type="button"
-                  disabled={busy}
-                  aria-label="New chat"
-                  title="New chat"
-                  onClick={() => void newConversation()}
-                >
-                  <ThingyIcon name="pencil" />
-                </button>
-                <button
-                  class="mobile-chatbar-menu-button"
-                  type="button"
-                  disabled={!hasActiveConversation || busy}
-                  aria-label="Conversation actions"
-                  aria-expanded={mobileMenuOpen}
-                  aria-controls="mobile-conversation-menu"
-                  title={hasActiveConversation ? 'Conversation actions' : 'No conversation actions'}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setMobileMenuOpen(!mobileMenuOpen);
-                  }}
-                >
-                  <ThingyIcon name="more-horizontal" />
-                </button>
-                <div
-                  class="mobile-conversation-menu"
-                  id="mobile-conversation-menu"
-                  hidden={!mobileMenuOpen}
-                  role="menu"
-                >
-                  <button type="button" role="menuitem" onClick={() => void renameActiveConversation()}>
-                    Rename
-                  </button>
-                  <button type="button" role="menuitem" class="danger" onClick={() => void deleteActiveConversation()}>
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {initial.from ? (
-              <a class="return-chip" href={initial.from.href} data-tinylytics-event="network.return">
-                <ThingyIcon name="arrow-left" />
-                <span>
-                  Return to <strong>{initial.from.name}</strong>
-                </span>
-              </a>
-            ) : null}
-
-            <div class="librarian-auth thingy-auth" hidden={isSignedIn}>
-              <AuthPanel
-                onSubmit={() => void actions.submitAuthCheck()}
-                onAddSubscriber={() => void actions.submitAuthAction('subscribe')}
-                onResendConfirmation={() => void actions.submitAuthAction('resend_confirmation')}
-                onEmailInput={() => {
-                  actions.validateEmail();
-                  authAction.value = 'none';
-                }}
-              />
-            </div>
-
-            <div ref={chatPanelRef} class="librarian-chat thingy-chat" hidden={!isSignedIn}>
-              <div ref={scrollRef} class="thingy-chat-scroll" onScroll={() => (autoFollowRef.current = nearBottom())}>
-                {showModeBanner ? (
-                  <div
-                    class="thingy-mode-banner"
-                    data-mode={modeClass(currentMode)}
-                    aria-live="polite"
-                    aria-label={`${actions.modeLabel(currentMode)} mode`}
-                  >
-                    <span class="thingy-mode-banner-icon">
-                      <ThingyIcon name={modeIcon(currentMode)} />
-                    </span>
-                    <span>{actions.modeLabel(currentMode)}</span>
-                  </div>
-                ) : null}
-                <div class="librarian-messages" aria-live="polite">
-                  <ChatMessages
-                    scrollContainer={() => scrollRef.current}
-                    onRetry={retryAnswer}
-                    onEmbeddedPrompt={embeddedPrompt}
-                    submitFeedback={submitFeedback}
-                    track={track}
-                  />
-                </div>
-              </div>
-
-              <div ref={composerRef} class="thingy-composer-zone">
-                <form
-                  class={`librarian-form librarian-question-form thingy-input composer-box${busy ? ' is-busy' : ''}`}
-                  onSubmit={handleSubmit}
-                >
-                  <label for="librarian-question" class="sr-only">
-                    Ask Thingy
-                  </label>
-                  <textarea
-                    ref={inputRef}
-                    id="librarian-question"
-                    name="message"
-                    rows={1}
-                    required
-                    maxLength={MAX_QUESTION_CHARS}
-                    value={currentText}
-                    placeholder="Ask Thingy, or seed a map…"
-                    aria-describedby="librarian-question-count librarian-source-error thingy-ai-note"
-                    onInput={(event) => setQuestion(event.currentTarget.value)}
-                  />
-                  <div class="composer-toolbar">
-                    <button
-                      class={`composer-voice${dictationListening ? ' is-listening' : ''}`}
-                      type="button"
-                      disabled={!speechSupported || (busy && !dictationListening)}
-                      aria-pressed={dictationListening}
-                      aria-label={
-                        !speechSupported
-                          ? 'Speech input not supported'
-                          : dictationListening
-                            ? 'Stop dictation'
-                            : 'Dictate prompt'
-                      }
-                      title={
-                        !speechSupported
-                          ? 'Speech input not supported in this browser'
-                          : dictationListening
-                            ? 'Stop dictation'
-                            : 'Dictate prompt'
-                      }
-                      onClick={() => dictationRef.current?.start()}
-                    >
-                      <ThingyIcon name="mic" />
-                    </button>
-                    <button
-                      class="composer-map"
-                      type="button"
-                      disabled={busy || !canMapDraft}
-                      aria-label={canMapDraft ? 'Seed curiosity map with this text' : 'Type a topic to seed a map'}
-                      title={canMapDraft ? 'Seed curiosity map with this text' : 'Type a topic to seed a map'}
-                      onClick={() => {
-                        const seed = questionText.value.trim();
-                        if (!seed) return;
-                        void showCuriosityMap(seed, true);
-                        track(
-                          'librarian.curiosity_map_seed',
-                          seed.length < 20 ? 'short' : seed.length < 80 ? 'medium' : 'long'
-                        );
-                      }}
-                    >
-                      <ThingyIcon name="network" />
-                      <span>Map</span>
-                    </button>
-                    <span class="composer-voice-status" aria-live="polite">
-                      {voiceStatus}
-                    </span>
-                    <SourcePicker
-                      selected={selectedSources}
-                      disabled={busy}
-                      scrollContainer={scrollRef.current}
-                      onChange={(scope) => {
-                        hasSources.value = Boolean(scope);
-                        track('librarian.scope_change', scope || 'none');
-                      }}
-                    />
-                    <span class="composer-spacer" />
-                    <span id="librarian-question-count">
-                      <ComposerCount maxChars={MAX_QUESTION_CHARS} />
-                    </span>
-                    <ComposerSubmit
-                      maxChars={MAX_QUESTION_CHARS}
-                      onStop={() => {
-                        actions.stopActiveAnswer();
-                        track('librarian.answer_stop_click');
-                      }}
-                    />
-                  </div>
-                  <span class="sr-only" id="librarian-source-error" aria-live="polite">
-                    {sourcesAvailable ? '' : 'Switch on at least one source.'}
-                  </span>
-                </form>
-                <p class="thingy-ai-note" id="thingy-ai-note">
-                  Thingy is AI and can make mistakes. Please double-check responses.
-                </p>
-              </div>
-            </div>
-          </section>
+          <ChatConversationView
+            chatPanelRef={chatPanelRef}
+            scrollRef={scrollRef}
+            composerRef={composerRef}
+            inputRef={inputRef}
+            mobileOpen={mobileOpen}
+            mobileMenuOpen={mobileMenuOpen}
+            conversationTitle={conversationTitle}
+            busy={busy}
+            hasActiveConversation={hasActiveConversation}
+            from={initial.from}
+            signedIn={isSignedIn}
+            showModeBanner={showModeBanner}
+            currentMode={currentMode}
+            modeLabel={actions.modeLabel}
+            currentText={currentText}
+            maxQuestionChars={MAX_QUESTION_CHARS}
+            dictationListening={dictationListening}
+            speechSupported={speechSupported}
+            voiceStatus={voiceStatus}
+            canMapDraft={canMapDraft}
+            sourcesAvailable={sourcesAvailable}
+            selectedSources={selectedSources}
+            onToggleMobileRail={() => (mobileRailOpen.value = !mobileOpen)}
+            onNewConversation={() => void newConversation()}
+            onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onRename={() => void renameActiveConversation()}
+            onDelete={() => void deleteActiveConversation()}
+            onAuthSubmit={() => void actions.submitAuthCheck()}
+            onAddSubscriber={() => void actions.submitAuthAction('subscribe')}
+            onResendConfirmation={() => void actions.submitAuthAction('resend_confirmation')}
+            onAuthEmailInput={() => {
+              actions.validateEmail();
+              authAction.value = 'none';
+            }}
+            onScroll={() => (autoFollowRef.current = nearBottom())}
+            onRetry={retryAnswer}
+            onEmbeddedPrompt={embeddedPrompt}
+            submitFeedback={submitFeedback}
+            track={track}
+            onSubmit={handleSubmit}
+            onQuestionInput={setQuestion}
+            onDictation={() => dictationRef.current?.start()}
+            onMapSeed={(seed) => {
+              if (!seed) return;
+              void showCuriosityMap(seed, true);
+              track('librarian.curiosity_map_seed', seed.length < 20 ? 'short' : seed.length < 80 ? 'medium' : 'long');
+            }}
+            onScopeChange={(scope) => {
+              hasSources.value = Boolean(scope);
+              track('librarian.scope_change', scope || 'none');
+            }}
+            onStopAnswer={() => {
+              actions.stopActiveAnswer();
+              track('librarian.answer_stop_click');
+            }}
+          />
         </div>
       </section>
       <Notice />
