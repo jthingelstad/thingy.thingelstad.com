@@ -20,14 +20,14 @@ retrieval, generation, and operator visibility.
 ```bash
 uv sync --locked
 cp .env.example .env
-uv run python -m apps.thingy_bridge.bot
+uv run --locked python -m apps.thingy_bridge.bot
 ```
 
 In normal use, run under `caffeinate` so the Mac does not sleep and drop the
 Discord gateway:
 
 ```bash
-caffeinate -is .venv/bin/python -m apps.thingy_bridge.bot
+caffeinate -is uv run --locked python -m apps.thingy_bridge.bot
 ```
 
 ## Environment
@@ -53,5 +53,5 @@ above the Supporting Member role.
 ## Tests
 
 ```bash
-uv run python -m unittest discover -s apps/thingy_bridge/tests -t .
+uv run --locked python -m unittest discover -s apps/thingy_bridge/tests -t .
 ```

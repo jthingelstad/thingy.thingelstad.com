@@ -120,7 +120,7 @@ THINGY_SMOKE_URL=http://localhost:8080 npm run smoke
 Bridge tests:
 
 ```sh
-uv run python -m unittest discover -s apps/thingy_bridge/tests -t .
+uv run --locked python -m unittest discover -s apps/thingy_bridge/tests -t .
 ```
 
 Only run bridge tests when bridge code changes.
@@ -254,9 +254,8 @@ make librarian-deploy ARGS="--skip-corpus-upload"
 uv run --locked python pipeline/deploy/aws.py --skip-corpus-upload
 ```
 
-Do not use plain `python`/`python3` for that deploy unless you have confirmed
-the active interpreter has Studio's requirements installed; otherwise it will
-typically fail on missing packages such as `boto3`.
+Do not use plain `python`/`python3` for that deploy; run it through Studio's
+locked uv environment so dependencies such as `boto3` are guaranteed present.
 
 ## Deployment
 

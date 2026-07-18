@@ -32,7 +32,7 @@ with the repo root as working directory.
 Safe online SQLite backup of `apps/thingy_bridge/data/thingy_bridge.db` (uses `sqlite3.Connection.backup()` — no need to stop the bridge) plus tiered retention pruning.
 
 ```bash
-python apps/thingy_bridge/scripts/backup_db.py
+uv run --locked python apps/thingy_bridge/scripts/backup_db.py
 ```
 
 - Output: `~/thingy-bridge-backups/thingy_bridge-YYYY-MM-DD-HHMMSS.db.gz` (gzip level 6)
@@ -49,8 +49,8 @@ Override via env:
 Remove local cache cruft under `apps/thingy_bridge/`.
 
 ```bash
-python apps/thingy_bridge/scripts/clean.py        # __pycache__, .pytest_cache, .mypy_cache, .ruff_cache
-python apps/thingy_bridge/scripts/clean.py --db   # also remove apps/thingy_bridge/data/thingy_bridge.db (destructive)
+uv run --locked python apps/thingy_bridge/scripts/clean.py        # __pycache__, .pytest_cache, .mypy_cache, .ruff_cache
+uv run --locked python apps/thingy_bridge/scripts/clean.py --db   # also remove apps/thingy_bridge/data/thingy_bridge.db (destructive)
 ```
 
 ## First-time setup on a new server
