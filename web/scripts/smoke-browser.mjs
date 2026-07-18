@@ -213,9 +213,12 @@ async function checkChat(browser) {
     )
     .catch(async (error) => {
       const text = await page.locator('.librarian-message-assistant').textContent();
-      throw new Error(`Personalized welcome did not render. Current message: ${text}. Failures: ${failures.join('; ')}`, {
-        cause: error
-      });
+      throw new Error(
+        `Personalized welcome did not render. Current message: ${text}. Failures: ${failures.join('; ')}`,
+        {
+          cause: error
+        }
+      );
     });
   assert.equal((await sendButton.getAttribute('aria-label')) || '', 'Ask Thingy', 'send button at rest');
   assert.equal(
