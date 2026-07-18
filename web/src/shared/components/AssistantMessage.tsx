@@ -1,4 +1,4 @@
-import { useEffect } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { useComputed } from '@preact/signals';
 import { renderAssistantResponse } from '../thingy-chat-rendering.ts';
 import { escapeHtml } from '../thingy-markdown.ts';
@@ -54,6 +54,7 @@ function AssistantBody({ model }: { model: AssistantMessageModel }) {
 
 function AssistantMessage({ model, onRetry }: { model: AssistantMessageModel; onRetry?: (prompt: string) => void }) {
   const status = model.status.value;
+  const [welcomeExpanded, setWelcomeExpanded] = useState(false);
   useEffect(() => {
     if (status !== 'pending' && status !== 'streaming') return undefined;
     function tick() {
@@ -68,9 +69,24 @@ function AssistantMessage({ model, onRetry }: { model: AssistantMessageModel; on
   );
   const errorMessage = model.errorMessage.value;
   const retryPrompt = model.retryPrompt.value;
+  const isLongWelcome = model.label.value === 'Session Setup' && model.content.value.length > 240;
   return (
     <>
-      <AssistantBody model={model} />
+      <div
+        class={`assistant-message-body${isLongWelcome ? ' session-welcome-body' : ''}${welcomeExpanded ? ' is-expanded' : ''}`}
+      >
+        <AssistantBody model={model} />
+      </div>
+      {isLongWelcome && status === 'done' ? (
+        <button
+          type="button"
+          class="session-welcome-toggle"
+          aria-expanded={welcomeExpanded}
+          onClick={() => setWelcomeExpanded((value) => !value)}
+        >
+          {welcomeExpanded ? 'Show less context' : 'Show more context'}
+        </button>
+      ) : null}
       {status === 'stopped' ? <StreamNote text={hasPartial.value ? 'Answer stopped.' : 'Answer stopped.'} /> : null}
       {status === 'error' && errorMessage ? (
         <StreamError

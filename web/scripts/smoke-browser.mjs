@@ -108,9 +108,13 @@ async function routeMockApi(page, { holdWelcome = false } = {}) {
 
   await page.route(`${streamHost}/welcome`, async (route) => {
     await welcomeGate;
+    const personalizedWelcome =
+      'Hi. I am Thingy. Your recent threads have explored reader control, durable archives, and the independent web. ' +
+      'There are several useful directions to continue from here, including how those ideas changed over time and where they connect across sources. ' +
+      'You can also start somewhere completely different. Ask something specific, compare two ideas, or invite Thingy to find a surprising thread.';
     await route.fulfill({
       contentType: 'text/event-stream; charset=utf-8',
-      body: 'event: answer_delta\ndata: {"delta":"Hi. I am Thingy."}\n\nevent: done\ndata: {"request_id":"smoke"}\n\n'
+      body: `event: answer_delta\ndata: ${JSON.stringify({ delta: personalizedWelcome })}\n\nevent: done\ndata: {"request_id":"smoke"}\n\n`
     });
   });
 
@@ -203,9 +207,16 @@ async function checkChat(browser) {
   const sendButton = page.locator('button.composer-send').first();
   assert.equal(await sendButton.isEnabled(), true, 'welcome personalization does not disable the composer');
   mocks.releaseWelcome();
-  await page.waitForFunction(() =>
-    document.querySelector('.librarian-message-assistant')?.textContent?.includes('Hi. I am Thingy.')
-  );
+  await page
+    .waitForFunction(() =>
+      document.querySelector('.librarian-message-assistant')?.textContent?.includes('Hi. I am Thingy.')
+    )
+    .catch(async (error) => {
+      const text = await page.locator('.librarian-message-assistant').textContent();
+      throw new Error(`Personalized welcome did not render. Current message: ${text}. Failures: ${failures.join('; ')}`, {
+        cause: error
+      });
+    });
   assert.equal((await sendButton.getAttribute('aria-label')) || '', 'Ask Thingy', 'send button at rest');
   assert.equal(
     await sendButton.evaluate((el) => el.classList.contains('is-stop')),
@@ -271,6 +282,12 @@ async function checkDispatch(browser) {
 
   assertNoUiFailures(failures, 'dispatch');
 
+  // Dispatch uses AccountMenu's built-in logout path rather than injecting
+  // the Chat route's custom store cleanup callback.
+  await page.locator('.rail-account-btn').click();
+  await page.getByRole('menuitem', { name: 'Logout' }).click();
+  await page.waitForURL(/\/signin\/\?return=%2Fdispatch%2F/);
+
   await context.close();
 }
 
@@ -285,6 +302,13 @@ async function checkMobileChat(browser) {
   await page.waitForSelector('.mobile-chatbar');
   await page.waitForSelector('.librarian-chat:not([hidden])');
   await page.waitForSelector('.thingy-input');
+  await page.waitForSelector('.session-welcome-toggle');
+  assert.equal(await page.locator('.rail-scrim').count(), 0, 'closed mobile rail has no hidden focusable scrim');
+  assert.equal(
+    await page.locator('.session-welcome-toggle').getAttribute('aria-expanded'),
+    'false',
+    'long personalized welcome starts compact'
+  );
   assert.equal(
     await page.locator('.thingy-composer-zone').isVisible(),
     true,
@@ -299,10 +323,18 @@ async function checkMobileChat(browser) {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
   await page.locator('.mobile-chatbar-circle').click();
   await page.waitForSelector('.thingy-app-shell.is-mobile-rail-open');
+  assert.equal(await page.locator('.rail-scrim').count(), 1, 'open mobile rail renders one close scrim');
   assert.equal((await page.locator('.rail-surface-switch a.is-active').textContent()).trim(), 'Chat');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
   await page.locator('.rail-scrim').click({ position: { x: 380, y: 400 } });
   await page.waitForSelector('.thingy-app-shell:not(.is-mobile-rail-open)');
+  assert.equal(await page.locator('.rail-scrim').count(), 0, 'closing mobile rail removes the scrim from focus order');
+  await page.locator('.session-welcome-toggle').click();
+  assert.equal(
+    await page.locator('.session-welcome-toggle').getAttribute('aria-expanded'),
+    'true',
+    'personalized welcome can be expanded'
+  );
   await assertAccessible(page, 'mobile chat');
   assertNoUiFailures(failures, 'mobile chat');
   await context.close();
@@ -317,13 +349,20 @@ async function checkMobileDispatch(browser) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${baseUrl}/dispatch/`);
   await page.waitForSelector('.dispatch-chat:not([hidden])');
+  assert.equal(
+    await page.locator('.rail-scrim').count(),
+    0,
+    'closed mobile Dispatch rail has no hidden focusable scrim'
+  );
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
   await page.locator('.mobile-chatbar-circle').click();
   await page.waitForSelector('.thingy-app-shell.is-mobile-rail-open');
+  assert.equal(await page.locator('.rail-scrim').count(), 1, 'open mobile Dispatch rail renders one close scrim');
   assert.equal((await page.locator('.rail-surface-switch a.is-active').textContent()).trim(), 'Dispatch');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
   await page.locator('.rail-scrim').click({ position: { x: 380, y: 400 } });
   await page.waitForSelector('.thingy-app-shell:not(.is-mobile-rail-open)');
+  assert.equal(await page.locator('.rail-scrim').count(), 0, 'closing mobile Dispatch rail removes the scrim');
   await assertAccessible(page, 'mobile Dispatch');
   assertNoUiFailures(failures, 'mobile Dispatch');
   await context.close();

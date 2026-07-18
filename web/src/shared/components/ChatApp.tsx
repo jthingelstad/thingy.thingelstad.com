@@ -1,33 +1,29 @@
 import { render, type JSX } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import * as session from '../thingy-session.ts';
-import { extractPreferredNameFromMessage, normalizePreferredName } from '../thingy-account.ts';
+import { normalizePreferredName } from '../thingy-account.ts';
 import { createTinylyticsTracker } from '../thingy-analytics.ts';
-import { activityStepsFromToolNames, renderCuriosityMap } from '../thingy-chat-rendering.ts';
 import { chatState as state, createChatActions } from '../thingy-chat-actions.ts';
+import { conversationViewMessages } from '../thingy-chat-history.ts';
+import { createChatInteractions } from '../thingy-chat-interactions.ts';
 import { librarianStreamUrl, tinylyticsId } from '../thingy-config.ts';
 import { resolveFromValue } from '../thingy-from.ts';
 import { normalizeModeId, normalizeModes } from '../thingy-modes.ts';
 import { createAssistantMessageModel } from '../models/assistant-message.ts';
 import { normalizeScopeParam, scopeForSources, sourcesForScope } from '../thingy-scope.ts';
 import { createDictationController, speechInputSupported } from '../thingy-voice.ts';
-import { errorMessage } from '../thingy-errors.ts';
-import { isAuthError } from '../thingy-url.ts';
 import { DEFAULT_WELCOME, createChatWelcomeController } from '../thingy-chat-welcome.ts';
 import {
   activeConversationId,
   activeMode,
-  answerInFlight,
   authAction,
   authEmail,
   availableModes,
   chatMessages,
   hasSources,
   interactionBusy,
-  mapInFlight,
   questionText,
   selectedSources,
-  stoppable,
   welcomeInFlight
 } from '../stores/chat-store.ts';
 import {
@@ -43,35 +39,17 @@ import { focusAuthEmail } from './AuthPanel.tsx';
 import { ChatConversationView } from './ChatConversationView.tsx';
 import { ChatRail } from './ChatNavigation.tsx';
 import { Notice } from './Notice.tsx';
+import { MobileRailScrim } from './MobileRailScrim.tsx';
+import { useMeasuredComposer, usePersistedBooleanSignal } from '../hooks/useThingyBrowserUi.ts';
 
 const MAX_QUESTION_CHARS = 1200;
 const MAX_RECENTS = 20;
 const COLLAPSED_KEY = 'thingyRailCollapsed';
 let messageCounter = 0;
 
-interface ConversationMessage {
-  role?: string;
-  content?: string;
-  scope?: string;
-  artifact?: ThingyCuriosityMap & { kind?: string };
-  tool_names?: string[];
-  toolNames?: string[];
-  request_id?: string;
-  requestId?: string;
-  citations?: ThingyCitation[];
-}
-
 function nextMessageId(prefix: string) {
   messageCounter += 1;
   return `${prefix}-${messageCounter}`;
-}
-
-function restoreCollapsedRail() {
-  try {
-    return window.localStorage.getItem(COLLAPSED_KEY) === '1';
-  } catch (_error) {
-    return false;
-  }
 }
 
 function ChatApp() {
@@ -137,6 +115,7 @@ function ChatApp() {
   function scheduleChatScroll(options: { force?: boolean } = {}) {
     const scroll = scrollRef.current;
     if (!scroll) return;
+    if (!options.force && welcomeInFlight.value && window.matchMedia('(width <= 640px)').matches) return;
     if (!options.force && !autoFollowRef.current && !nearBottom()) return;
     autoFollowRef.current = true;
     if (scrollFrameRef.current) return;
@@ -169,21 +148,6 @@ function ChatApp() {
 
   function cancelWelcome() {
     welcomeControllerRef.current?.cancel();
-  }
-
-  function updateComposerMeasurements() {
-    const input = inputRef.current;
-    if (input) {
-      input.style.height = 'auto';
-      input.style.height = `${Math.min(input.scrollHeight, 240)}px`;
-    }
-    const composer = composerRef.current;
-    if (composer && chatPanelRef.current) {
-      chatPanelRef.current.style.setProperty(
-        '--composer-reserve',
-        `${Math.ceil(composer.getBoundingClientRect().height)}px`
-      );
-    }
   }
 
   if (!actionsRef.current) {
@@ -266,8 +230,10 @@ function ChatApp() {
     .filter(Boolean)
     .join(' ');
 
+  usePersistedBooleanSignal(railCollapsed, COLLAPSED_KEY, collapsed);
+  useMeasuredComposer(inputRef, composerRef, chatPanelRef, currentText, isSignedIn);
+
   useEffect(() => {
-    railCollapsed.value = restoreCollapsedRail();
     signedIn.value = Boolean(actions.token()) && !actions.tokenExpired();
     const storedProfile = actions.userProfile();
     state.preferredName = String(storedProfile.preferred_name || '').trim();
@@ -307,30 +273,6 @@ function ChatApp() {
     // Route bootstrap must run once for the lifetime of this root.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(COLLAPSED_KEY, collapsed ? '1' : '0');
-    } catch (_error) {
-      /* private browsing */
-    }
-  }, [collapsed]);
-
-  useEffect(() => {
-    updateComposerMeasurements();
-  }, [currentText, isSignedIn]);
-
-  useEffect(() => {
-    const composer = composerRef.current;
-    if (!composer || !('ResizeObserver' in window)) return undefined;
-    const observer = new ResizeObserver(updateComposerMeasurements);
-    observer.observe(composer);
-    window.addEventListener('resize', updateComposerMeasurements);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('resize', updateComposerMeasurements);
-    };
-  }, [isSignedIn]);
 
   useEffect(() => {
     if (!isSignedIn) return undefined;
@@ -468,31 +410,11 @@ function ChatApp() {
       actions.setActiveConversation(id);
       if (data.conversation) actions.upsertConversationSummary(data.conversation);
       if (data.conversation?.mode) state.activeMode = data.conversation.mode;
-      const next: ThingyChatViewMessage[] = [];
-      let lastPrompt = '';
-      for (const message of (data.messages || []) as ConversationMessage[]) {
-        if (message.role === 'user') {
-          lastPrompt = message.content || '';
-          next.push({
-            id: nextMessageId('user'),
-            role: 'user',
-            prompt: lastPrompt,
-            scope: message.scope || currentScope()
-          });
-        } else if (message.role === 'assistant') {
-          const artifact = message.artifact?.kind === 'curiosity_map' ? renderCuriosityMap(message.artifact) : '';
-          const model = createAssistantMessageModel({
-            content: message.content || '',
-            citations: message.citations || [],
-            activity: activityStepsFromToolNames(message.tool_names || message.toolNames || []),
-            artifactHtml: artifact,
-            status: 'done',
-            requestId: message.request_id || message.requestId || ''
-          });
-          next.push({ id: model.id, role: 'assistant', model, prompt: lastPrompt });
-        }
-      }
-      chatMessages.value = next;
+      chatMessages.value = conversationViewMessages({
+        messages: data.messages || [],
+        currentScope,
+        nextMessageId
+      });
       setQuestion('');
       scheduleChatScroll({ force: true });
       inputRef.current?.focus();
@@ -532,138 +454,34 @@ function ChatApp() {
     mobileRailOpen.value = false;
   }
 
-  async function showCuriosityMap(center = '', attachToCurrent = false) {
-    if (!actions.token() || interactionBusy.value || !(await actions.ensureFreshToken())) return;
-    const scope = currentScope();
-    if (!scope) return;
-    const attach = Boolean(
-      attachToCurrent && state.activeConversationId && !actions.isLocalConversationId(state.activeConversationId)
-    );
-    const conversationId = attach ? state.activeConversationId || '' : '';
-    if (!attach) {
-      welcomeControllerRef.current?.markShown();
-      actions.setActiveConversation('');
-      resetMessages();
-    }
-    setQuestion('');
-    mapInFlight.value = true;
-    mobileRailOpen.value = false;
-    const pending = addAssistantMessage({ statusFallback: 'Thingy is drawing connections...' });
-    try {
-      const response = await actions.postStreamJson(
-        '/curiosity-map',
-        {
-          scope,
-          mode: actions.currentConversationMode(),
-          center,
-          conversation_id: conversationId || undefined,
-          user_profile: actions.readerProfileContext()
-        },
-        actions.authHeaders()
-      );
-      if (response.conversation_id) actions.setActiveConversation(response.conversation_id);
-      if (response.conversation) actions.upsertConversationSummary(response.conversation);
-      const map = response as ThingyApiResponse & ThingyCuriosityMap;
-      pending.model.artifactHtml.value =
-        renderCuriosityMap(map) || '<p>Thingy could not find enough connected threads to draw a map yet.</p>';
-      pending.model.status.value = 'done';
-      await actions.refreshConversations();
-      track('librarian.curiosity_map_success', `${(map.nodes || []).length}.${(map.sources || []).length}`);
-    } catch (error) {
-      pending.model.errorMessage.value = errorMessage(error, 'Thingy could not draw that map.');
-      pending.model.status.value = 'error';
-      track('librarian.curiosity_map_error', error instanceof Error && error.requestId ? 'server' : 'client');
-      if (isAuthError(error)) actions.redirectToSignIn();
-    } finally {
-      mapInFlight.value = false;
-    }
-  }
-
-  async function submitQuestion() {
-    if (interactionBusy.value) return;
-    cancelWelcome();
-    const message = questionText.value.trim();
-    if (!message || message.length > MAX_QUESTION_CHARS || !currentScope()) return;
-    if (!(await actions.ensureFreshToken())) return;
-    if (dictationRef.current?.isListening()) dictationRef.current.stop();
-    answerInFlight.value = true;
-    const wordCount = message.split(/\s+/).filter(Boolean).length;
-    const size = wordCount < 6 ? 'short' : wordCount < 18 ? 'medium' : 'long';
-    if (actions.isAwaitingName() && !state.preferredName) {
-      const name = extractPreferredNameFromMessage(message);
-      if (name) await actions.persistInferredPreferredName(name).catch(() => {});
-      actions.setAwaitingName(false);
-    }
-    const scope = currentScope();
-    addUserMessage(message, scope);
-    setQuestion('');
-    const pending = addAssistantMessage({ statusFallback: 'Thingy is thinking...' });
-    const entry = chatMessages.value.find((item) => item.id === pending.id);
-    if (entry) entry.prompt = message;
-    try {
-      const data = await actions.postStreamingChat(message, pending.model, scope);
-      if (data.stopped) {
-        track('librarian.answer_stopped', String(data.answer || '').trim() || data.experience ? 'partial' : 'empty');
-      }
-      if (data.conversation_id) actions.setActiveConversation(data.conversation_id);
-      if (data.conversation) actions.upsertConversationSummary(data.conversation);
-      await actions.refreshConversations();
-      if (!data.stopped) track('librarian.answer_success', `${size}.${(data.citations || []).length}`);
-    } catch (error) {
-      pending.model.errorMessage.value = errorMessage(error, 'Thingy could not answer that question.');
-      if (!isAuthError(error)) pending.model.retryPrompt.value = message;
-      pending.model.status.value = 'error';
-      track('librarian.answer_error', error instanceof Error && error.requestId ? 'server' : 'client');
-      if (isAuthError(error)) actions.redirectToSignIn();
-    } finally {
-      answerInFlight.value = false;
-      stoppable.value = false;
-      actions.clearAnswerAbortState();
-    }
-  }
+  const interactions = createChatInteractions({
+    actions,
+    maxQuestionChars: MAX_QUESTION_CHARS,
+    currentScope,
+    cancelWelcome,
+    markWelcomeShown: () => welcomeControllerRef.current?.markShown(),
+    resetMessages,
+    setQuestion,
+    addUserMessage,
+    addAssistantMessage,
+    stopDictation: () => {
+      if (dictationRef.current?.isListening()) dictationRef.current.stop();
+    },
+    focusInput: () => inputRef.current?.focus(),
+    track
+  });
 
   async function maybeSubmitInitialPrompt() {
     if (!initial.prompt || initialPromptSubmittedRef.current || interactionBusy.value || !actions.token()) return;
     initialPromptSubmittedRef.current = true;
     setQuestion(initial.prompt);
     await Promise.resolve();
-    await submitQuestion();
-  }
-
-  function retryAnswer(messageId: string, prompt: string) {
-    if (interactionBusy.value || !prompt) return;
-    const index = chatMessages.value.findIndex((message) => message.id === messageId);
-    chatMessages.value = chatMessages.value.filter(
-      (_message, messageIndex) => messageIndex !== index && messageIndex !== index - 1
-    );
-    setQuestion(prompt);
-    track('librarian.answer_retry');
-    window.setTimeout(() => void submitQuestion(), 0);
-  }
-
-  function embeddedPrompt(prompt: string, kind: 'map' | 'experience') {
-    if (!prompt || interactionBusy.value) return;
-    setQuestion(prompt);
-    if (kind === 'map') {
-      track('librarian.curiosity_map_prompt', 'map');
-      window.setTimeout(() => void submitQuestion(), 0);
-    } else {
-      inputRef.current?.focus();
-      track('librarian.experience_prompt', 'trail');
-    }
-  }
-
-  async function submitFeedback(input: { requestId: string; reaction: string; comment: string }) {
-    return actions.postStreamJson(
-      '/feedback',
-      { request_id: input.requestId, reaction: input.reaction, comment: input.comment },
-      { authorization: `Bearer ${actions.token()}` }
-    );
+    await interactions.submitQuestion();
   }
 
   function handleSubmit(event: JSX.TargetedSubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    void submitQuestion();
+    void interactions.submitQuestion();
   }
 
   const speechSupported = speechInputSupported();
@@ -686,7 +504,7 @@ function ChatApp() {
             onNewConversation={() => void newConversation()}
             onToggleModeMenu={() => setModeMenuOpen(!modeMenuOpen)}
             onChooseMode={(mode) => void chooseMode(mode)}
-            onCuriosityMap={() => void showCuriosityMap()}
+            onCuriosityMap={() => void interactions.showCuriosityMap()}
             onOpenConversation={(id) => {
               void loadConversation(id);
               mobileRailOpen.value = false;
@@ -712,12 +530,10 @@ function ChatApp() {
             }
           />
 
-          <button
-            type="button"
-            class="rail-scrim"
-            hidden={!mobileOpen}
-            aria-label="Close conversations"
-            onClick={() => (mobileRailOpen.value = false)}
+          <MobileRailScrim
+            open={mobileOpen}
+            label="Close conversations"
+            onClose={() => (mobileRailOpen.value = false)}
           />
 
           <ChatConversationView
@@ -756,16 +572,16 @@ function ChatApp() {
               authAction.value = 'none';
             }}
             onScroll={() => (autoFollowRef.current = nearBottom())}
-            onRetry={retryAnswer}
-            onEmbeddedPrompt={embeddedPrompt}
-            submitFeedback={submitFeedback}
+            onRetry={interactions.retryAnswer}
+            onEmbeddedPrompt={interactions.embeddedPrompt}
+            submitFeedback={interactions.submitFeedback}
             track={track}
             onSubmit={handleSubmit}
             onQuestionInput={setQuestion}
             onDictation={() => dictationRef.current?.start()}
             onMapSeed={(seed) => {
               if (!seed) return;
-              void showCuriosityMap(seed, true);
+              void interactions.showCuriosityMap(seed, true);
               track('librarian.curiosity_map_seed', seed.length < 20 ? 'short' : seed.length < 80 ? 'medium' : 'long');
             }}
             onScopeChange={(scope) => {

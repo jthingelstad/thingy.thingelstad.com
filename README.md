@@ -151,9 +151,10 @@ Key web files:
 
 Studio owns the versioned Librarian request, response, and SSE contract. Thingy vendors
 `web/contracts/librarian-api.v1.json` and validates successful responses directly against
-that generated artifact. Requests carry `x-librarian-contract-version`; the backend also
-returns it so an incompatible deployment fails clearly instead of being accepted through
-TypeScript casts.
+that generated artifact. Studio publishes the artifact and its SHA-256 checksum in its
+repository; Thingy generates CSP-safe runtime validators and TypeScript contract types from
+the same JSON. Requests carry `x-librarian-contract-version`; the backend also returns it so
+an incompatible deployment fails clearly instead of being accepted through TypeScript casts.
 
 After changing the authoritative contract in `studio-thing`:
 
@@ -162,8 +163,11 @@ cd web
 npm run contract:sync
 ```
 
-The Studio contract test verifies its generated artifact, and Thingy's contract tests
-verify the vendored artifact against the browser validators.
+`contract:sync` fetches Studio's published `main` artifact by default, so it works in a clean
+checkout without a sibling repository. Set `LIBRARIAN_CONTRACT_SOURCE` to a local JSON path
+when developing both repositories together. `npm run contract:check` verifies the checksum,
+the vendored artifact, and the generated client; the Pages workflow runs that check before
+building. Studio's contract test also verifies its generated checksum.
 
 ## Tinylytics
 

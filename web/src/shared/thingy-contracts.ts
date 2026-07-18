@@ -1,89 +1,15 @@
-import contractJson from '../../contracts/librarian-api.v1.json' with { type: 'json' };
+import {
+  LIBRARIAN_CONTRACT_SHA256,
+  LIBRARIAN_CONTRACT_VERSION,
+  validateEndpointContract,
+  validateStreamContract,
+  type LibrarianApiResponse,
+  type LibrarianContractIssue,
+  type LibrarianStreamBase
+} from '../generated/librarian-contract.generated.ts';
 
-interface ContractSchema {
-  $ref?: string;
-  anyOf?: ContractSchema[];
-  enum?: unknown[];
-  type?: string;
-  properties?: Record<string, ContractSchema>;
-  required?: string[];
-  items?: ContractSchema;
-}
-
-interface ContractIssue {
-  instancePath: string;
-  message: string;
-}
-
-interface LibrarianContractArtifact {
-  $schema: string;
-  version: string;
-  $defs: Record<string, ContractSchema>;
-  endpoints: Record<
-    string,
-    {
-      schema: ContractSchema;
-      actions: Record<string, ContractSchema>;
-    }
-  >;
-  stream_events: Record<string, ContractSchema>;
-}
-
-const contract = contractJson as LibrarianContractArtifact;
-const LIBRARIAN_CONTRACT_VERSION = contract.version;
-function contractDefinition(ref: string) {
-  const prefix = '#/$defs/';
-  return ref.startsWith(prefix) ? contract.$defs[ref.slice(prefix.length)] : undefined;
-}
-
-function validateSchema(value: unknown, schema: ContractSchema, instancePath = ''): ContractIssue[] {
-  if (schema.$ref) {
-    const definition = contractDefinition(schema.$ref);
-    return definition
-      ? validateSchema(value, definition, instancePath)
-      : [{ instancePath, message: `references unknown schema ${schema.$ref}` }];
-  }
-  if (schema.anyOf) {
-    if (schema.anyOf.some((candidate) => validateSchema(value, candidate, instancePath).length === 0)) return [];
-    return [{ instancePath, message: 'must match an allowed shape' }];
-  }
-  if (schema.enum && !schema.enum.some((candidate) => Object.is(candidate, value))) {
-    return [{ instancePath, message: 'must be an allowed value' }];
-  }
-
-  if (schema.type === 'object') {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-      return [{ instancePath, message: 'must be object' }];
-    }
-    const record = value as Record<string, unknown>;
-    const issues: ContractIssue[] = [];
-    for (const key of schema.required || []) {
-      if (!Object.prototype.hasOwnProperty.call(record, key)) {
-        issues.push({ instancePath, message: `must have required property '${key}'` });
-      }
-    }
-    for (const [key, propertySchema] of Object.entries(schema.properties || {})) {
-      if (Object.prototype.hasOwnProperty.call(record, key)) {
-        issues.push(...validateSchema(record[key], propertySchema, `${instancePath}/${key}`));
-      }
-    }
-    return issues;
-  }
-  if (schema.type === 'array') {
-    if (!Array.isArray(value)) return [{ instancePath, message: 'must be array' }];
-    return schema.items
-      ? value.flatMap((item, index) => validateSchema(item, schema.items as ContractSchema, `${instancePath}/${index}`))
-      : [];
-  }
-  if (schema.type === 'null') return value === null ? [] : [{ instancePath, message: 'must be null' }];
-  if (schema.type && typeof value !== schema.type) {
-    return [{ instancePath, message: `must be ${schema.type}` }];
-  }
-  return [];
-}
-
-function contractError(context: string, errors: ContractIssue[]) {
-  const detail = (errors || [])
+function contractError(context: string, errors: LibrarianContractIssue[]) {
+  const detail = errors
     .slice(0, 3)
     .map((issue) => `${issue.instancePath.replace(/^\//, '').replaceAll('/', '.') || 'response'}: ${issue.message}`)
     .join('; ');
@@ -98,20 +24,16 @@ function compatibleContractVersion(version: string) {
   return Boolean(version) && contractMajor(version) === contractMajor(LIBRARIAN_CONTRACT_VERSION);
 }
 
-function validateApiResponse(value: unknown, context = 'API', action = ''): ThingyApiResponse {
-  const endpoint = Object.keys(contract.endpoints).find((path) => context.includes(path));
-  const endpointContract = endpoint ? contract.endpoints[endpoint] : null;
-  const schema = endpointContract?.actions[action] || endpointContract?.schema || { $ref: '#/$defs/apiResponse' };
-  const errors = validateSchema(value, schema);
+function validateApiResponse(value: unknown, context = 'API', action = ''): ThingyApiResponse & LibrarianApiResponse {
+  const errors = validateEndpointContract(value, context, action);
   if (errors.length) throw contractError(context, errors);
-  return value as ThingyApiResponse;
+  return value as ThingyApiResponse & LibrarianApiResponse;
 }
 
-function validateStreamData(eventName: string, value: unknown): ThingyStreamData {
-  const schema = contract.stream_events[eventName] || { $ref: '#/$defs/streamBase' };
-  const errors = validateSchema(value, schema);
+function validateStreamData(eventName: string, value: unknown): ThingyStreamData & LibrarianStreamBase {
+  const errors = validateStreamContract(eventName, value);
   if (errors.length) throw contractError(`${eventName || 'stream'} event`, errors);
-  const data = value as ThingyStreamData;
+  const data = value as ThingyStreamData & LibrarianStreamBase;
   if (data.contract_version && !compatibleContractVersion(data.contract_version)) {
     throw new Error(
       `Thingy received Librarian contract ${data.contract_version}; this client expects ${LIBRARIAN_CONTRACT_VERSION}.`
@@ -139,6 +61,7 @@ function looseApiError(value: unknown): ThingyApiResponse {
 }
 
 export {
+  LIBRARIAN_CONTRACT_SHA256,
   LIBRARIAN_CONTRACT_VERSION,
   assertContractResponseVersion,
   contractRequestHeaders,

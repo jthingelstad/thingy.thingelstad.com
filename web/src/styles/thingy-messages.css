@@ -9,8 +9,7 @@
 .librarian-auth.thingy-auth {
   padding-top: 22px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 48%, transparent), transparent 42%),
-    var(--surface);
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 48%, transparent), transparent 42%), var(--surface);
 }
 
 .librarian-form {
@@ -145,11 +144,18 @@
   padding: 15px 16px;
   background: var(--color-surface);
   box-shadow: var(--shadow-subtle);
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
 .librarian-message-pending {
   border-color: var(--color-highlight);
+}
+
+.session-welcome-toggle {
+  display: none;
 }
 
 .librarian-message p:last-child {
@@ -255,7 +261,10 @@
   line-height: 1.4;
   max-width: min(34rem, 86%);
 }
-.librarian-message-user p { color: #fff; }
+
+.librarian-message-user p {
+  color: #fff;
+}
 
 .librarian-message-user a {
   color: #fff;
@@ -319,6 +328,26 @@
 }
 
 @media (width <= 640px) {
+  .session-welcome-body:not(.is-expanded) {
+    position: relative;
+    max-height: 13rem;
+    overflow: hidden;
+    mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
+  }
+
+  .session-welcome-toggle {
+    display: inline-flex;
+    margin-top: 0.45rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-accent);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
   .thingy-h1 {
     font-size: 42px;
   }

@@ -1,7 +1,6 @@
-import { Fragment, type JSX } from 'preact';
+import { type JSX } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { useComputed, type Signal } from '@preact/signals';
-import { iconSvg } from '../thingy-icons.ts';
 import { buildId } from '../thingy-config.ts';
 import { discordConnection, discordConnectionName, hasSupportingAccess, savePreferredName } from '../thingy-account.ts';
 import { errorMessage } from '../thingy-errors.ts';
@@ -13,24 +12,10 @@ import {
   displayProfile,
   signedIn as sharedSignedIn
 } from '../stores/ui-store.ts';
-
-const LOG_OUT_ICON = iconSvg('log-out');
-const PROFILE_ICON = iconSvg('users-round');
-const CLOSE_ICON = iconSvg('x');
+import { AccountProfileModal } from './AccountProfileModal.tsx';
+import { ThingyIcon } from './ThingyIcon.tsx';
 
 type SessionApi = typeof import('../thingy-session.ts');
-
-interface ProfileModalProps {
-  open: boolean;
-  onClose: () => void;
-  onProfileDeleted: () => void;
-  session: SessionApi;
-  profile: LibrarianProfile;
-  email: string;
-  preferredName: string;
-  connectedName: string;
-  supporting: boolean;
-}
 
 interface AccountMenuProps {
   session: SessionApi;
@@ -48,246 +33,14 @@ interface AccountMenuProps {
 function ProfileTrigger({ onOpen }: { onOpen: JSX.MouseEventHandler<HTMLButtonElement> }) {
   return (
     <button type="button" class="rail-memory-trigger" onClick={onOpen}>
-      <span class="rail-memory-trigger-icon" aria-hidden="true" dangerouslySetInnerHTML={{ __html: PROFILE_ICON }} />
+      <span class="rail-memory-trigger-icon" aria-hidden="true">
+        <ThingyIcon name="users-round" />
+      </span>
       <span class="rail-memory-trigger-copy">
         <strong>Show Profile</strong>
         <small>Account details and activity</small>
       </span>
     </button>
-  );
-}
-
-function formatProfileDate(value: unknown) {
-  const text = String(value || '').trim();
-  if (!text) return '';
-  const date = new Date(text);
-  return Number.isNaN(date.getTime()) ? text : date.toLocaleString();
-}
-
-function formatProfileCount(value: unknown, label: string) {
-  const count = Number(value || 0);
-  return `${count.toLocaleString()} ${label}${count === 1 ? '' : 's'}`;
-}
-
-function profileNumber(value: unknown) {
-  const count = Number(value || 0);
-  return Number.isFinite(count) ? count : 0;
-}
-
-function formatDurationParts(milliseconds: number) {
-  const minutes = Math.max(0, Math.floor(milliseconds / 60000));
-  const days = Math.floor(minutes / 1440);
-  const hours = Math.floor((minutes % 1440) / 60);
-  const remainingMinutes = minutes % 60;
-  const parts: string[] = [];
-  if (days) parts.push(`${days.toLocaleString()} day${days === 1 ? '' : 's'}`);
-  if (hours && parts.length < 2) parts.push(`${hours} hour${hours === 1 ? '' : 's'}`);
-  if (!parts.length && remainingMinutes) parts.push(`${remainingMinutes} minute${remainingMinutes === 1 ? '' : 's'}`);
-  return parts.length ? parts.join(', ') : 'Less than a minute';
-}
-
-function formatActiveSpan(startValue: unknown, endValue: unknown) {
-  const start = new Date(String(startValue || '').trim());
-  const end = new Date(String(endValue || '').trim());
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'Not enough activity yet';
-  const diff = Math.max(0, end.getTime() - start.getTime());
-  return formatDurationParts(diff);
-}
-
-function formatProfileActivity(accountOverview: LibrarianAccountOverview = {}, profile: LibrarianProfile = {}) {
-  const totalTurns = profileNumber(accountOverview.memory_turn_count ?? profile.turn_count);
-  const conversationCount = profileNumber(accountOverview.conversation_count);
-  const conversationTurns = profileNumber(accountOverview.conversation_turn_count);
-  const first = totalTurns
-    ? `${formatProfileCount(totalTurns, 'total Thingy turn')} recorded.`
-    : 'No Thingy turns have been recorded yet.';
-  const second = conversationCount
-    ? `${formatProfileCount(conversationCount, 'retained conversation')} with ${formatProfileCount(conversationTurns, 'retained turn')}.`
-    : 'No retained conversations yet.';
-  return `${first} ${second}`;
-}
-
-function ProfileModal({
-  open,
-  onClose,
-  onProfileDeleted,
-  session,
-  profile,
-  email,
-  preferredName,
-  connectedName,
-  supporting
-}: ProfileModalProps) {
-  const [viewProfile, setViewProfile] = useState<LibrarianProfile>(profile || {});
-  const [accountOverview, setAccountOverview] = useState<LibrarianAccountOverview>({});
-  const [busyAction, setBusyAction] = useState('');
-  const [profileError, setProfileError] = useState('');
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const onCloseRef = useRef(onClose);
-  const viewConnectedName = discordConnectionName(viewProfile) || connectedName;
-  const viewPreferredName = String(preferredName || viewProfile.preferred_name || '').trim();
-  const firstSeen = accountOverview.first_seen_at || viewProfile.first_seen_at;
-  const lastActivity = accountOverview.last_seen_at || viewProfile.last_seen_at;
-  const profileRows = (
-    [
-      viewPreferredName ? ['Name', viewPreferredName] : ['Name', 'Not set'],
-      email ? ['Email', email] : null,
-      ['Access', supporting ? 'Supporting Member' : 'Weekly Thing reader'],
-      viewConnectedName ? ['Discord', viewConnectedName] : ['Discord', 'Not connected in Thingy profile'],
-      ['First seen', formatProfileDate(firstSeen) || 'Not recorded'],
-      ['Last activity', formatProfileDate(lastActivity) || 'Not recorded'],
-      ['Active span', formatActiveSpan(firstSeen, lastActivity)],
-      ['Thingy activity', formatProfileActivity(accountOverview, viewProfile)]
-    ] as Array<[string, string] | null>
-  ).filter((row): row is [string, string] => row !== null);
-
-  function applyProfileData(data: ThingyApiResponse) {
-    if (!data?.profile) return;
-    const nextProfile =
-      typeof session?.mergeProfile === 'function'
-        ? session.mergeProfile(data, email)
-        : typeof session?.updateStoredProfile === 'function'
-          ? session.updateStoredProfile(data.profile)
-          : data.profile;
-    displayProfile.value = nextProfile;
-    displayPreferredName.value = String(nextProfile.preferred_name || displayPreferredName.value || '').trim();
-    setViewProfile(nextProfile);
-    setAccountOverview(data.account || {});
-  }
-
-  async function loadProfile() {
-    if (!session?.postJson || !session?.authHeaders) return;
-    setBusyAction('load');
-    setProfileError('');
-    try {
-      const data = await session.postJson('/memory', { action: 'get' }, session.authHeaders());
-      applyProfileData(data);
-    } catch (error) {
-      setProfileError(errorMessage(error, 'Thingy could not load this profile right now.'));
-    } finally {
-      setBusyAction('');
-    }
-  }
-
-  async function handleDeleteProfile() {
-    if (!session?.postJson || !session?.authHeaders) return;
-    setBusyAction('delete_profile');
-    setProfileError('');
-    try {
-      await session.postJson('/memory', { action: 'delete_profile' }, session.authHeaders());
-      setConfirmDelete(false);
-      if (typeof onProfileDeleted === 'function') onProfileDeleted();
-    } catch (error) {
-      setProfileError(errorMessage(error, 'Thingy could not delete this profile right now.'));
-    } finally {
-      setBusyAction('');
-    }
-  }
-
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  }, [onClose]);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') onCloseRef.current();
-    }
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    setViewProfile(profile || {});
-    setAccountOverview({});
-    setProfileError('');
-    setConfirmDelete(false);
-    loadProfile();
-    // Reset-and-reload must run only on open/close transitions, not on
-    // every profile identity change while the modal is already open.
-    // oxlint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
-  if (!open) return null;
-
-  function handleBackdropClick(event: JSX.TargetedMouseEvent<HTMLDivElement>) {
-    if (event.target === event.currentTarget) onClose();
-  }
-
-  return (
-    <div class="thingy-memory-modal-backdrop" onClick={handleBackdropClick}>
-      <section class="thingy-memory-modal" role="dialog" aria-modal="true" aria-labelledby="thingy-memory-title">
-        <header class="thingy-memory-header">
-          <span
-            class="thingy-memory-header-icon"
-            aria-hidden="true"
-            dangerouslySetInnerHTML={{ __html: PROFILE_ICON }}
-          />
-          <div>
-            <h2 id="thingy-memory-title">Profile</h2>
-            <p>Account details and Thingy activity.</p>
-          </div>
-          <button
-            type="button"
-            class="thingy-memory-close"
-            aria-label="Close Profile"
-            onClick={onClose}
-            dangerouslySetInnerHTML={{ __html: CLOSE_ICON }}
-          />
-        </header>
-        <section class="thingy-memory-status" aria-live="polite">
-          <span>{busyAction === 'load' ? 'Loading profile...' : ''}</span>
-          {profileError ? <small>{profileError}</small> : null}
-        </section>
-        <div class="thingy-memory-panel">
-          <dl class="thingy-memory-dl">
-            {profileRows.map(([label, value]) => (
-              <Fragment key={label}>
-                <dt>{label}</dt>
-                <dd>{value}</dd>
-              </Fragment>
-            ))}
-          </dl>
-          <section class="thingy-memory-danger-zone" aria-label="Delete Thingy Profile">
-            <h3>Delete Thingy Profile</h3>
-            <p>
-              This deletes your Thingy profile, conversations, Dispatch history, and Discord link. It does not
-              unsubscribe you from Weekly Thing.
-            </p>
-            {confirmDelete ? (
-              <div class="thingy-memory-danger-actions">
-                <p class="thingy-memory-confirm-copy">Are you sure? This cannot be undone from Thingy.</p>
-                <button
-                  type="button"
-                  class="thingy-memory-danger"
-                  disabled={busyAction === 'delete_profile'}
-                  onClick={handleDeleteProfile}
-                >
-                  {busyAction === 'delete_profile' ? 'Deleting...' : 'Confirm Delete Thingy Profile'}
-                </button>
-                <button
-                  type="button"
-                  disabled={busyAction === 'delete_profile'}
-                  onClick={() => setConfirmDelete(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                class="thingy-memory-danger"
-                disabled={Boolean(busyAction)}
-                onClick={() => setConfirmDelete(true)}
-              >
-                Delete Thingy Profile
-              </button>
-            )}
-          </section>
-        </div>
-      </section>
-    </div>
   );
 }
 
@@ -300,7 +53,7 @@ function AccountMenu({
   normalizeName = (value: unknown) => String(value || '').trim(),
   onOpen = () => {},
   onSignedOutClick = () => {},
-  onLogout = () => {},
+  onLogout,
   onSaved = (_savedName: string, _data: ThingyApiResponse) => {}
 }: AccountMenuProps) {
   const isSignedIn = signedIn.value;
@@ -311,18 +64,15 @@ function AccountMenu({
   const nameStatus = accountNameStatus.value;
   const display = email || preferredName;
   const supporting = isSignedIn && hasSupportingAccess(profile);
-
   const initial = useComputed(() => {
     const value = displayEmail.value || displayPreferredName.value;
     return value ? value[0].toUpperCase() : 'T';
   });
-
   const buttonRef = useRef<HTMLButtonElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  // Close on document click outside the menu, and on Escape.
   useEffect(() => {
     function onDocClick(event: MouseEvent) {
       const button = buttonRef.current;
@@ -342,18 +92,16 @@ function AccountMenu({
     };
   }, []);
 
-  // Keep the name input's value in sync with the preferred-name signal so
-  // the form starts from the right state every time the menu opens.
   useEffect(() => {
     if (inputRef.current) inputRef.current.value = preferredName;
-    if (open && typeof onOpen === 'function') onOpen();
+    if (open) onOpen();
   }, [preferredName, open, onOpen]);
 
   function handleButtonClick(event: JSX.TargetedMouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
     if (!isSignedIn) {
       accountMenuOpen.value = false;
-      if (typeof onSignedOutClick === 'function') onSignedOutClick();
+      onSignedOutClick();
       return;
     }
     accountMenuOpen.value = !open;
@@ -362,12 +110,11 @@ function AccountMenu({
   async function handleNameSubmit(event: JSX.TargetedSubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!isSignedIn) return;
-    const proposed = inputRef.current?.value || '';
     accountNameStatus.value = 'Saving...';
     try {
-      const { data, savedName } = await savePreferredName(session, proposed, normalizeName);
+      const { data, savedName } = await savePreferredName(session, inputRef.current?.value || '', normalizeName);
       displayPreferredName.value = savedName;
-      if (typeof onSaved === 'function') onSaved(savedName, data);
+      onSaved(savedName, data);
       accountNameStatus.value = 'Saved.';
     } catch (error) {
       accountNameStatus.value = errorMessage(error, 'Could not save that right now.');
@@ -377,7 +124,7 @@ function AccountMenu({
   function handleLogout() {
     accountMenuOpen.value = false;
     setProfileOpen(false);
-    if (typeof onLogout === 'function') {
+    if (onLogout) {
       onLogout();
       return;
     }
@@ -387,16 +134,6 @@ function AccountMenu({
 
   const connection = discordConnection(profile);
   const connectedName = discordConnectionName(profile);
-
-  function handleProfileOpen(event: JSX.TargetedMouseEvent<HTMLButtonElement>) {
-    event.stopPropagation();
-    setProfileOpen(true);
-    accountMenuOpen.value = false;
-  }
-
-  function handleProfileClose() {
-    setProfileOpen(false);
-  }
 
   return (
     <>
@@ -418,12 +155,9 @@ function AccountMenu({
             {isSignedIn ? (supporting ? 'Supporting Member' : 'Weekly Thing reader') : signedOutSubLabel}
           </span>
         </span>
-        <span
-          class="rail-account-caret"
-          hidden={!isSignedIn}
-          aria-hidden="true"
-          dangerouslySetInnerHTML={{ __html: iconSvg('chevron-down') }}
-        />
+        <span class="rail-account-caret" hidden={!isSignedIn} aria-hidden="true">
+          <ThingyIcon name="chevron-down" />
+        </span>
       </button>
       <div class="rail-menu" hidden={!open} role="menu">
         <form ref={formRef} class="rail-account-setting" onSubmit={handleNameSubmit}>
@@ -457,19 +191,25 @@ function AccountMenu({
             </a>
           </div>
         ) : null}
-        <ProfileTrigger onOpen={handleProfileOpen} />
+        <ProfileTrigger
+          onOpen={(event) => {
+            event.stopPropagation();
+            setProfileOpen(true);
+            accountMenuOpen.value = false;
+          }}
+        />
         <div class="rail-menu-sep" role="separator" />
         <button type="button" role="menuitem" class="danger" onClick={handleLogout}>
-          <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: LOG_OUT_ICON }} />
+          <ThingyIcon name="log-out" />
           Logout
         </button>
         <p class="rail-menu-build" title="Thingy build">
           Build {buildId()}
         </p>
       </div>
-      <ProfileModal
+      <AccountProfileModal
         open={profileOpen}
-        onClose={handleProfileClose}
+        onClose={() => setProfileOpen(false)}
         onProfileDeleted={handleLogout}
         session={session}
         profile={profile}

@@ -1,8 +1,15 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const { LIBRARIAN_CONTRACT_VERSION, contractRequestHeaders, validateApiResponse, validateStreamData } =
-  await import('../src/shared/thingy-contracts.ts');
+const {
+  LIBRARIAN_CONTRACT_SHA256,
+  LIBRARIAN_CONTRACT_VERSION,
+  contractRequestHeaders,
+  validateApiResponse,
+  validateStreamData
+} = await import('../src/shared/thingy-contracts.ts');
 
 test('runtime validators and requests use the generated Librarian contract version', () => {
   assert.equal(contractRequestHeaders()['x-librarian-contract-version'], LIBRARIAN_CONTRACT_VERSION);
@@ -12,6 +19,11 @@ test('runtime validators and requests use the generated Librarian contract versi
   );
   assert.equal(validateStreamData('meta', { contract_version: '1.9.0' }).contract_version, '1.9.0');
   assert.throws(() => validateStreamData('meta', { contract_version: '99.0.0' }), /this client expects/);
+});
+
+test('generated client is tied to the vendored contract checksum', async () => {
+  const artifact = await readFile(new URL('../contracts/librarian-api.v1.json', import.meta.url));
+  assert.equal(createHash('sha256').update(artifact).digest('hex'), LIBRARIAN_CONTRACT_SHA256);
 });
 
 test('endpoint contracts accept additive Librarian fields while preserving typed records', () => {

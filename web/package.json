@@ -9,7 +9,10 @@
   },
   "scripts": {
     "build": "vite build",
-    "contract:sync": "npm --prefix ../../studio-thing/apps/librarian/lambda run contract:sync-thingy",
+    "contract:generate": "node scripts/generate-contract-client.mjs",
+    "contract:generate:check": "node scripts/generate-contract-client.mjs --check",
+    "contract:sync": "node scripts/sync-contract.mjs",
+    "contract:check": "node scripts/sync-contract.mjs --check",
     "serve": "vite --host 0.0.0.0",
     "clean": "rm -rf _site",
     "format": "prettier --write \"src/**/*.{ts,tsx}\" \"tests/**/*.mjs\" \"scripts/**/*.mjs\" \"*.{ts,json}\"",
@@ -22,7 +25,7 @@
     "test": "node --test tests/*.test.mjs",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=65 --test-coverage-branches=60 --test-coverage-functions=55 tests/*.test.mjs",
     "typecheck": "tsc --noEmit",
-    "verify": "npm run format:check && npm run lint && npm run lint:css && npm run typecheck && npm run knip && npm run test:coverage"
+    "verify": "npm run contract:generate:check && npm run format:check && npm run lint && npm run lint:css && npm run typecheck && npm run knip && npm run test:coverage"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",

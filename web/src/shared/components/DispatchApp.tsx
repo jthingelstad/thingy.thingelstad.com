@@ -5,14 +5,7 @@ import { hasOwnerAccess, normalizePreferredName } from '../thingy-account.ts';
 import { createTinylyticsTracker } from '../thingy-analytics.ts';
 import { tinylyticsId } from '../thingy-config.ts';
 import { createDispatchActions } from '../thingy-dispatch-actions.ts';
-import {
-  dispatchBusy,
-  dispatchInputDisabled,
-  dispatchInputPlaceholder,
-  dispatchText,
-  activeDraftId,
-  drafts
-} from '../stores/dispatch-store.ts';
+import { dispatchBusy, dispatchInputDisabled, dispatchText, activeDraftId, drafts } from '../stores/dispatch-store.ts';
 import {
   accountMenuOpen,
   accountNameStatus,
@@ -24,12 +17,10 @@ import {
   signedIn
 } from '../stores/ui-store.ts';
 import { AccountMenu } from './AccountMenu.tsx';
-import { ComposerCount } from './ComposerCount.tsx';
-import { DispatchActions } from './DispatchActions.tsx';
-import { DispatchMessages } from './DispatchMessages.tsx';
-import { DispatchRecents } from './DispatchRecents.tsx';
-import { DispatchStatus } from './DispatchStatus.tsx';
-import { ThingyIcon } from './ThingyIcon.tsx';
+import { DispatchConversationView } from './DispatchConversationView.tsx';
+import { DispatchRail } from './DispatchNavigation.tsx';
+import { MobileRailScrim } from './MobileRailScrim.tsx';
+import { useAutosizeTextarea, usePersistedBooleanSignal } from '../hooks/useThingyBrowserUi.ts';
 
 const MAX_INPUT_CHARS = 1200;
 const COLLAPSED_KEY = 'thingyRailCollapsed';
@@ -40,14 +31,6 @@ function dispatchTestMode() {
     .trim()
     .toLowerCase();
   return (value === 'template' || value === 'template_test') && hasOwnerAccess(session.storedProfile());
-}
-
-function restoreCollapsedRail() {
-  try {
-    return window.localStorage.getItem(COLLAPSED_KEY) === '1';
-  } catch (_error) {
-    return false;
-  }
 }
 
 function refreshIdentity(actions: ReturnType<typeof createDispatchActions>) {
@@ -96,8 +79,10 @@ function DispatchApp() {
     .filter(Boolean)
     .join(' ');
 
+  usePersistedBooleanSignal(railCollapsed, COLLAPSED_KEY, collapsed);
+  useAutosizeTextarea(inputRef, text);
+
   useEffect(() => {
-    railCollapsed.value = restoreCollapsedRail();
     if (!actions.requireAuth()) return;
     signedIn.value = true;
     if (!actions.hasDrafts()) actions.createDraft({ activate: true, render: false });
@@ -115,14 +100,6 @@ function DispatchApp() {
   }, []);
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(COLLAPSED_KEY, collapsed ? '1' : '0');
-    } catch (_error) {
-      /* private browsing */
-    }
-  }, [collapsed]);
-
-  useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key !== 'Escape') return;
       accountMenuOpen.value = false;
@@ -132,13 +109,6 @@ function DispatchApp() {
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, []);
-
-  useEffect(() => {
-    const input = inputRef.current;
-    if (!input) return;
-    input.style.height = 'auto';
-    input.style.height = `${Math.min(input.scrollHeight, 240)}px`;
-  }, [text]);
 
   function newDispatch() {
     if (actions.isBusy()) return;
@@ -176,65 +146,18 @@ function DispatchApp() {
   return (
     <section class="thingy-page dispatch-shell-page">
       <div class={shellClass} id="dispatch-shell">
-        <aside class="rail" aria-label="Thingy Dispatch">
-          <div class="rail-top">
-            <a
-              class="rail-brand"
-              href="/"
-              aria-label="Thingy home"
-              data-tinylytics-event="network.home"
-              data-tinylytics-event-value="thingy"
-            >
-              <img class="rail-mark" src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager" />
-            </a>
-            <button
-              class="rail-iconbtn rail-collapse"
-              type="button"
-              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              aria-pressed={collapsed}
-              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              onClick={() => (railCollapsed.value = !collapsed)}
-            >
-              <ThingyIcon name="panel-left" />
-            </button>
-          </div>
-
-          <nav class="rail-surface-switch" aria-label="Thingy surfaces">
-            <a href="/chat/">
-              <ThingyIcon name="message-square" />
-              <span>Chat</span>
-            </a>
-            <a class="is-active" href="/dispatch/" aria-current="page">
-              <ThingyIcon name="newspaper" />
-              <span>Dispatch</span>
-            </a>
-          </nav>
-
-          <button
-            class="rail-newchat dispatch-new"
-            type="button"
-            data-tinylytics-event="dispatch.new"
-            title="New Dispatch"
-            onClick={newDispatch}
-          >
-            <ThingyIcon name="plus" />
-            <span class="label">New Dispatch</span>
-          </button>
-
-          <div class="rail-body">
-            <p class="rail-recents-label">Dispatches</p>
-            <DispatchRecents
-              onOpen={(id) => {
-                if (actions.isBusy()) return;
-                actions.setActiveDraft(id);
-                dispatchText.value = '';
-                mobileRailOpen.value = false;
-              }}
-              onDelete={(id) => void actions.deleteDispatch(id)}
-            />
-          </div>
-
-          <div class="rail-account">
+        <DispatchRail
+          collapsed={collapsed}
+          onToggleCollapsed={() => (railCollapsed.value = !collapsed)}
+          onNewDispatch={newDispatch}
+          onOpen={(id) => {
+            if (actions.isBusy()) return;
+            actions.setActiveDraft(id);
+            dispatchText.value = '';
+            mobileRailOpen.value = false;
+          }}
+          onDelete={(id) => void actions.deleteDispatch(id)}
+          accountMenu={
             <AccountMenu
               session={session}
               signedIn={signedIn}
@@ -242,96 +165,29 @@ function DispatchApp() {
               normalizeName={normalizePreferredName}
               onSaved={() => refreshIdentity(actions)}
             />
-          </div>
-        </aside>
-
-        <button
-          type="button"
-          class="rail-scrim"
-          hidden={!mobileOpen}
-          aria-label="Close Dispatches"
-          onClick={() => (mobileRailOpen.value = false)}
+          }
         />
 
-        <section class="thingy-conversation dispatch-conversation" aria-label="Thingy Dispatch">
-          <h1 class="sr-only">Thingy Dispatch</h1>
-          <div class="mobile-chatbar" aria-label="Dispatch">
-            <button
-              class="mobile-chatbar-circle"
-              type="button"
-              aria-label={mobileOpen ? 'Hide Dispatches' : 'Show Dispatches'}
-              aria-expanded={mobileOpen}
-              title={mobileOpen ? 'Hide Dispatches' : 'Show Dispatches'}
-              onClick={() => (mobileRailOpen.value = !mobileOpen)}
-            >
-              <ThingyIcon name="chevron-left" />
-            </button>
-            <div class="mobile-chatbar-title">
-              <span>{title}</span>
-            </div>
-            <div class="mobile-chatbar-actions">
-              <button
-                class="mobile-chatbar-action"
-                type="button"
-                aria-label="New Dispatch"
-                title="New Dispatch"
-                onClick={newDispatch}
-              >
-                <ThingyIcon name="plus" />
-              </button>
-            </div>
-          </div>
+        <MobileRailScrim open={mobileOpen} label="Close Dispatches" onClose={() => (mobileRailOpen.value = false)} />
 
-          <div class="dispatch-chat" id="dispatch-app" hidden={!ready}>
-            <div ref={scrollRef} class="thingy-chat-scroll dispatch-scroll">
-              <div class="librarian-messages dispatch-messages" aria-live="polite">
-                <DispatchMessages scrollContainer={() => scrollRef.current} track={analytics.track} />
-              </div>
-            </div>
-
-            <div class="thingy-composer-zone dispatch-composer-zone">
-              <DispatchActions onAction={handleAction} />
-              <form
-                class="librarian-form librarian-question-form thingy-input composer-box dispatch-composer"
-                onSubmit={handleSubmit}
-              >
-                <label for="dispatch-input" class="sr-only">
-                  Message Thingy about this Dispatch
-                </label>
-                <textarea
-                  ref={inputRef}
-                  id="dispatch-input"
-                  rows={1}
-                  maxLength={MAX_INPUT_CHARS}
-                  required
-                  value={text}
-                  disabled={inputDisabled}
-                  placeholder={dispatchInputPlaceholder.value}
-                  onInput={(event) => (dispatchText.value = event.currentTarget.value)}
-                />
-                <div class="composer-toolbar">
-                  <DispatchStatus />
-                  <span class="composer-spacer" />
-                  <ComposerCount maxChars={MAX_INPUT_CHARS} text={dispatchText} />
-                  <button
-                    type="submit"
-                    class="composer-send"
-                    disabled={submitDisabled}
-                    aria-label="Send to Thingy"
-                    title={editable ? 'Send to Thingy' : 'Start a new Dispatch to continue'}
-                    data-tinylytics-event="dispatch.message"
-                  >
-                    <ThingyIcon name="arrow-up" />
-                  </button>
-                </div>
-              </form>
-              <p class="thingy-ai-note">
-                Dispatches are written by Thingy from Jamie&rsquo;s public archive, then sent by email when you generate
-                them.
-              </p>
-            </div>
-          </div>
-        </section>
+        <DispatchConversationView
+          scrollRef={scrollRef}
+          inputRef={inputRef}
+          title={title}
+          mobileOpen={mobileOpen}
+          ready={ready}
+          text={text}
+          inputDisabled={inputDisabled}
+          editable={editable}
+          submitDisabled={submitDisabled}
+          maxInputChars={MAX_INPUT_CHARS}
+          track={analytics.track}
+          onToggleMobileRail={() => (mobileRailOpen.value = !mobileOpen)}
+          onNewDispatch={newDispatch}
+          onAction={handleAction}
+          onSubmit={handleSubmit}
+          onTextInput={(value) => (dispatchText.value = value)}
+        />
       </div>
     </section>
   );
