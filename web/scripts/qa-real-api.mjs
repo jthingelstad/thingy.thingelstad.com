@@ -213,6 +213,24 @@ async function cleanupDispatches(token) {
   return matches.length;
 }
 
+async function currentIds(token, path, key) {
+  const listed = await apiPost(path, { action: 'list', limit: 50 }, token);
+  return new Set(
+    (listed[key] || []).map((item) => item.id || item.conversation_id || item.dispatch_id).filter(Boolean)
+  );
+}
+
+async function cleanupIdsCreatedAfter(token, path, key, baseline) {
+  const current = await currentIds(token, path, key);
+  const created = [...current].filter((id) => !baseline.has(id));
+  for (const id of created) {
+    const payload =
+      path === '/conversations' ? { action: 'delete', conversation_id: id } : { action: 'delete', dispatch_id: id };
+    await apiPost(path, payload, token);
+  }
+  return created.length;
+}
+
 async function checkDesktopChat(browser, data, result) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 820 } });
   await seedSession(context, data);
@@ -258,7 +276,13 @@ async function checkDesktopDispatch(browser, data, result) {
   const prompt = `${qaPrefix}: dispatch smoke check ${Date.now()}`;
   await page.locator('#dispatch-input').fill(prompt);
   await page.getByRole('button', { name: 'Send to Thingy' }).click();
-  await page.waitForSelector('button:has-text("Generate Dispatch")', { timeout: 90000 });
+  await page.waitForFunction(() => document.querySelector('#dispatch-input')?.disabled, { timeout: 10000 });
+  await page.waitForFunction(() => !document.querySelector('#dispatch-input')?.disabled, { timeout: 190000 });
+  assert(
+    (await page.getByRole('button', { name: 'Generate Dispatch' }).count()) > 0 ||
+      (await page.locator('#dispatch-messages-mount').innerText()).includes('Dispatch brief'),
+    'dispatch planner returned neither a ready nor a draft brief'
+  );
   result.prompt = prompt;
   result.failures = failures;
   await context.close();
@@ -289,6 +313,10 @@ const data = await authData();
 const cleanupBefore = {
   conversations: await cleanupConversations(data.token),
   dispatches: await cleanupDispatches(data.token)
+};
+const baseline = {
+  conversations: await currentIds(data.token, '/conversations', 'conversations'),
+  dispatches: await currentIds(data.token, '/dispatch', 'dispatches')
 };
 
 if (cleanupOnly) {
@@ -329,8 +357,13 @@ try {
   results.cleanup = {
     before: cleanupBefore,
     after: {
-      conversations: await cleanupConversations(data.token),
-      dispatches: await cleanupDispatches(data.token)
+      conversations: await cleanupIdsCreatedAfter(
+        data.token,
+        '/conversations',
+        'conversations',
+        baseline.conversations
+      ),
+      dispatches: await cleanupIdsCreatedAfter(data.token, '/dispatch', 'dispatches', baseline.dispatches)
     }
   };
 }

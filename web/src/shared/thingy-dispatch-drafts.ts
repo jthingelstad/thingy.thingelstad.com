@@ -83,15 +83,24 @@ function draftStageFromRow(row: DispatchRow) {
 }
 
 function fallbackMessagesForRow(row: DispatchRow, welcomeText = ''): ThingyDispatchMessage[] {
-  if (Array.isArray(row.messages) && row.messages.length) return row.messages;
+  const messages = (Array.isArray(row.messages) ? row.messages : []).map((message) => {
+    if (message.kind !== 'progress' || message.status !== 'pending') return message;
+    if (row.status === 'sent') return { ...message, status: 'complete' };
+    if (row.status === 'failed') return { ...message, status: 'failed' };
+    return message;
+  });
+  // Server rows retain the conversation that existed before generation.
+  // Always layer terminal delivery state onto that history so a poll-driven
+  // history refresh cannot erase the just-rendered sent/failed message.
+  if (row.status === 'sent' && !messages.some((message) => message.kind === 'sent')) {
+    return [...messages, { role: 'assistant', text: 'Dispatch sent. Check your email.', kind: 'sent' }];
+  }
+  if (row.status === 'failed' && !messages.some((message) => message.kind === 'failed')) {
+    return [...messages, { role: 'assistant', text: row.error || 'Dispatch failed while generating.', kind: 'failed' }];
+  }
+  if (messages.length) return messages;
   if (['queued', 'generating', 'ready_to_send', 'sending'].includes(String(row.status || ''))) {
     return [{ role: 'assistant', text: 'This Dispatch is queued and I am preparing it now.' }];
-  }
-  if (row.status === 'sent') {
-    return [{ role: 'assistant', text: 'Dispatch sent. Check your email.', kind: 'sent' }];
-  }
-  if (row.status === 'failed') {
-    return [{ role: 'assistant', text: row.error || 'Dispatch failed while generating.' }];
   }
   if (row.direction) {
     return [

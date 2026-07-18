@@ -162,6 +162,9 @@ async function checkChatIslands(browser) {
   });
 
   // ComposerSubmit island: send button is present and not in stop mode at rest.
+  // The mocked welcome stream runs during bootstrap, so wait for that state
+  // transition before asserting the composer's idle contract.
+  await page.waitForSelector('button.composer-send[aria-label="Ask Thingy"]');
   const sendButton = page.locator('button.composer-send').first();
   assert.equal((await sendButton.getAttribute('aria-label')) || '', 'Ask Thingy', 'send button at rest');
   assert.equal(
