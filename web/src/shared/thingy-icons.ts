@@ -114,19 +114,4 @@ function iconSvg(name: unknown, options: IconOptions = {}) {
     : withAria.replace('<svg', `<svg class="${classes}"`);
 }
 
-function iconElement(name: unknown, options: IconOptions = {}): Element | Text {
-  const template = document.createElement('template');
-  template.innerHTML = iconSvg(name, options);
-  return template.content.firstElementChild || document.createTextNode('');
-}
-
-function hydrateThingyIcons(root: ParentNode = document) {
-  root.querySelectorAll('[data-thingy-icon]').forEach((element) => {
-    const name = element.getAttribute('data-thingy-icon') || '';
-    const className = element.getAttribute('data-thingy-icon-class') || '';
-    const label = element.getAttribute('data-thingy-icon-label') || '';
-    element.innerHTML = iconSvg(name, { className, label });
-  });
-}
-
-export { hydrateThingyIcons, iconElement, iconSvg };
+export { iconSvg };

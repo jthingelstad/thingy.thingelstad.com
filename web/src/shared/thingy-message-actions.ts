@@ -1,7 +1,3 @@
-import { iconSvg } from './thingy-icons.ts';
-
-type MessageActionName = 'copy' | 'play' | 'pause' | 'retry' | 'up' | 'down' | 'share';
-
 interface FeedbackInput {
   requestId: string;
   reaction: string;
@@ -17,32 +13,7 @@ interface ChatMessageActionOptions {
   track?: (name: string, value?: string) => void;
   promptShareUrl?: (prompt: string, scope: string) => string;
   promptShareTitle?: string;
-}
-
-interface ResponseActionOptions {
-  feedback?: boolean;
-  retryPrompt?: string;
-}
-
-function actionIcon(name: MessageActionName) {
-  const iconNames = {
-    copy: 'copy',
-    play: 'play',
-    pause: 'pause',
-    retry: 'rotate-ccw',
-    up: 'thumbs-up',
-    down: 'thumbs-down',
-    share: 'share'
-  };
-  return iconSvg(iconNames[name]);
-}
-
-function escapeAttribute(value: unknown) {
-  return String(value || '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('"', '&quot;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
+  onSpeechStateChange?: (playing: boolean) => void;
 }
 
 async function copyToClipboard(value: string) {
@@ -50,7 +21,7 @@ async function copyToClipboard(value: string) {
   try {
     await navigator.clipboard.writeText(value);
     return true;
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 }
@@ -62,44 +33,35 @@ function buildSharePromptUrl(prompt: string, scope: string) {
   return url.toString();
 }
 
+// Rich clipboard APIs require a detached DOM representation. This is a
+// browser-capability adapter, not view rendering: Preact still owns every
+// visible node and listener.
 function answerClipboardPayload(messageElement: HTMLElement) {
   const clone = messageElement.cloneNode(true) as HTMLElement;
   clone
     .querySelectorAll('.librarian-feedback, .librarian-prompt-actions, .librarian-activity')
-    .forEach((node: Element) => node.remove());
-  clone.querySelectorAll('[aria-hidden="true"]').forEach((node: Element) => node.remove());
+    .forEach((node) => node.remove());
+  clone.querySelectorAll('[aria-hidden="true"]').forEach((node) => node.remove());
   clone.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((link) => {
     try {
       const href = link.getAttribute('href');
       if (href) link.setAttribute('href', new URL(href, window.location.origin).toString());
-    } catch (error) {
+    } catch (_error) {
       /* leave original href */
     }
   });
   const scratch = document.createElement('div');
   scratch.setAttribute('aria-hidden', 'true');
-  scratch.style.position = 'fixed';
-  scratch.style.left = '-9999px';
-  scratch.style.top = '0';
-  scratch.style.width = '720px';
+  scratch.style.cssText = 'position:fixed;left:-9999px;top:0;width:720px';
   scratch.appendChild(clone);
   document.body.appendChild(scratch);
-  const html = clone.innerHTML.trim();
-  const text = (clone.innerText || clone.textContent || '').trim();
+  const payload = { html: clone.innerHTML.trim(), text: (clone.innerText || clone.textContent || '').trim() };
   scratch.remove();
-  return { html, text };
+  return payload;
 }
 
 function speechOutputSupported() {
   return 'speechSynthesis' in window && typeof window.SpeechSynthesisUtterance === 'function';
-}
-
-function setSpeechButtonState(button: HTMLButtonElement | null, playing: boolean) {
-  if (!button) return;
-  button.classList.toggle('selected', playing);
-  button.setAttribute('aria-label', playing ? 'Stop reading answer' : 'Read answer aloud');
-  button.title = playing ? 'Stop reading answer' : 'Read answer aloud';
-  button.innerHTML = actionIcon(playing ? 'pause' : 'play');
 }
 
 function legacyCopyRichHtml(html: string, text: string) {
@@ -107,34 +69,29 @@ function legacyCopyRichHtml(html: string, text: string) {
   const scratch = document.createElement('div');
   scratch.contentEditable = 'true';
   scratch.setAttribute('aria-hidden', 'true');
-  scratch.style.position = 'fixed';
-  scratch.style.left = '-9999px';
-  scratch.style.top = '0';
+  scratch.style.cssText = 'position:fixed;left:-9999px;top:0';
   scratch.innerHTML = html;
   document.body.appendChild(scratch);
-
   const selection = window.getSelection();
   if (!selection) {
     scratch.remove();
     return false;
   }
-  const previousRange = selection && selection.rangeCount ? selection.getRangeAt(0) : null;
+  const previousRange = selection.rangeCount ? selection.getRangeAt(0) : null;
   const range = document.createRange();
   range.selectNodeContents(scratch);
   selection.removeAllRanges();
   selection.addRange(range);
-
   const onCopy = (event: ClipboardEvent) => {
     event.clipboardData?.setData('text/html', html);
     event.clipboardData?.setData('text/plain', text);
     event.preventDefault();
   };
-
   document.addEventListener('copy', onCopy);
-  let copied;
+  let copied = false;
   try {
     copied = document.execCommand('copy');
-  } catch (error) {
+  } catch (_error) {
     copied = false;
   } finally {
     document.removeEventListener('copy', onCopy);
@@ -158,8 +115,8 @@ async function copyRichHtmlToClipboard(html: unknown, text: unknown) {
         })
       ]);
       return 'rich';
-    } catch (error) {
-      /* fall through */
+    } catch (_error) {
+      /* fall through to the compatibility paths */
     }
   }
   if (legacyCopyRichHtml(normalizedHtml, normalizedText)) return 'rich';
@@ -169,81 +126,41 @@ async function copyRichHtmlToClipboard(html: unknown, text: unknown) {
 
 function createChatMessageActions(options: ChatMessageActionOptions = {}) {
   const submitFeedback: (input: FeedbackInput) => Promise<FeedbackResult> =
-    typeof options.submitFeedback === 'function' ? options.submitFeedback : async () => ({});
-  const track = typeof options.track === 'function' ? options.track : () => {};
-  const promptShareUrl =
-    typeof options.promptShareUrl === 'function'
-      ? options.promptShareUrl
-      : (prompt: string, scope: string) => buildSharePromptUrl(prompt, scope);
+    options.submitFeedback || (async () => ({}));
+  const track = options.track || (() => {});
+  const promptShareUrl = options.promptShareUrl || buildSharePromptUrl;
   const promptShareTitle = String(options.promptShareTitle || 'Ask Thingy');
-  let feedbackStatusTimer = 0;
+  const onSpeechStateChange = options.onSpeechStateChange || (() => {});
   let speechUtterance: SpeechSynthesisUtterance | null = null;
-  let speechButton: HTMLButtonElement | null = null;
 
   function stopSpeaking() {
     if (speechOutputSupported()) window.speechSynthesis.cancel();
-    setSpeechButtonState(speechButton, false);
     speechUtterance = null;
-    speechButton = null;
+    onSpeechStateChange(false);
   }
 
-  function setFeedbackState(container: HTMLElement, reaction: string) {
-    container.querySelectorAll<HTMLButtonElement>('button[data-reaction]').forEach((button) => {
-      const selected = button.dataset.reaction === reaction;
-      button.classList.toggle('selected', selected);
-      button.setAttribute('aria-pressed', selected ? 'true' : 'false');
-    });
-  }
-
-  function flashActionStatus(container: HTMLElement, message: string) {
-    const status = container.querySelector('.librarian-feedback-status');
-    if (!status) return;
-    status.textContent = message;
-    window.clearTimeout(feedbackStatusTimer);
-    feedbackStatusTimer = window.setTimeout(() => {
-      if (status.textContent === message) status.textContent = '';
-    }, 1800);
-  }
-
-  async function saveFeedback(requestId: string, reaction: string, container: HTMLElement, comment = '') {
-    const status = container.querySelector('.librarian-feedback-status');
-    container.querySelectorAll<HTMLButtonElement>('button[data-reaction]').forEach((button) => {
-      button.disabled = true;
-    });
-    if (status) status.textContent = 'Saving...';
+  async function saveFeedback(requestId: string, reaction: string, comment = '') {
     try {
       const data = await submitFeedback({ requestId, reaction, comment });
-      setFeedbackState(container, data.reaction || reaction);
-      if (status) status.textContent = 'Saved';
-      window.clearTimeout(feedbackStatusTimer);
-      feedbackStatusTimer = window.setTimeout(() => {
-        if (status && status.textContent === 'Saved') status.textContent = '';
-      }, 1800);
       track('librarian.feedback_submit', data.reaction || reaction);
       if (comment) track('librarian.feedback_comment', reaction);
+      return data;
     } catch (error) {
-      if (status) status.textContent = 'Could not save';
       track('librarian.feedback_error', error instanceof Error && error.requestId ? 'server' : 'client');
-    } finally {
-      container.querySelectorAll<HTMLButtonElement>('button[data-reaction]').forEach((button) => {
-        button.disabled = false;
-      });
+      throw error;
     }
   }
 
-  function toggleSpeakAnswer(messageElement: HTMLElement, button: HTMLButtonElement) {
+  function toggleSpeakAnswer(messageElement: HTMLElement) {
     if (!speechOutputSupported()) return 'Speech playback not supported';
-    if (speechButton === button && speechUtterance) {
+    if (speechUtterance) {
       stopSpeaking();
       return 'Stopped';
     }
-    stopSpeaking();
     const payload = answerClipboardPayload(messageElement);
     if (!payload.text) return 'Nothing to read';
     const utterance = new window.SpeechSynthesisUtterance(payload.text);
     utterance.lang = document.documentElement.lang || navigator.language || 'en-US';
-    utterance.rate = 1;
-    utterance.pitch = 1;
     utterance.onend = () => {
       if (speechUtterance === utterance) stopSpeaking();
     };
@@ -251,8 +168,7 @@ function createChatMessageActions(options: ChatMessageActionOptions = {}) {
       if (speechUtterance === utterance) stopSpeaking();
     };
     speechUtterance = utterance;
-    speechButton = button;
-    setSpeechButtonState(button, true);
+    onSpeechStateChange(true);
     window.speechSynthesis.speak(utterance);
     return 'Reading';
   }
@@ -288,9 +204,7 @@ function createChatMessageActions(options: ChatMessageActionOptions = {}) {
     const shareUrl = promptShareUrl(prompt, scope);
     if (typeof navigator.share === 'function') {
       try {
-        const payload: ShareData = { title: promptShareTitle, text: prompt };
-        if (shareUrl) payload.url = shareUrl;
-        await navigator.share(payload);
+        await navigator.share({ title: promptShareTitle, text: prompt, ...(shareUrl ? { url: shareUrl } : {}) });
         track('librarian.share_native');
         return 'Shared';
       } catch (error) {
@@ -314,107 +228,14 @@ function createChatMessageActions(options: ChatMessageActionOptions = {}) {
     return 'Could not copy';
   }
 
-  function addPromptActions(messageElement: HTMLElement, prompt: string, scope: string) {
-    if (!prompt) return;
-    const controls = document.createElement('div');
-    controls.className = 'librarian-prompt-actions';
-    controls.innerHTML = `
-      <button type="button" data-action="copy" aria-label="Copy prompt" title="Copy prompt">${actionIcon('copy')}</button>
-      <button type="button" data-action="share" aria-label="Share prompt" title="Share prompt">${actionIcon('share')}</button>
-      <span class="librarian-feedback-status" aria-live="polite"></span>
-    `;
-    controls.addEventListener('click', async (event) => {
-      const target = event.target instanceof Element ? event.target : null;
-      const button = target ? target.closest<HTMLButtonElement>('button[data-action]') : null;
-      if (!button || !controls.contains(button)) return;
-      if (button.dataset.action === 'copy') {
-        const message = await copyPrompt(prompt);
-        flashActionStatus(controls, message);
-        return;
-      }
-      if (button.dataset.action === 'share') {
-        const message = await sharePrompt(prompt, scope);
-        if (message) flashActionStatus(controls, message);
-      }
-    });
-    messageElement.appendChild(controls);
-  }
-
-  function addResponseActions(
-    messageElement: HTMLElement,
-    requestId: string,
-    actionOptions: ResponseActionOptions = {}
-  ) {
-    const includeFeedback = actionOptions.feedback !== false && Boolean(requestId);
-    const retryPrompt = String(actionOptions.retryPrompt || '').trim();
-    if (!requestId && includeFeedback) return;
-    const controls = document.createElement('div');
-    controls.className = 'librarian-feedback';
-    const playDisabled = speechOutputSupported() ? '' : ' disabled';
-    const playTitle = speechOutputSupported() ? 'Read answer aloud' : 'Speech playback not supported';
-    controls.innerHTML = `
-      <button type="button" data-action="copy" aria-label="Copy answer" title="Copy answer">${actionIcon('copy')}</button>
-      <button type="button" data-action="speak" aria-label="${playTitle}" title="${playTitle}"${playDisabled}>${actionIcon('play')}</button>
-      ${includeFeedback ? `<button type="button" data-reaction="up" aria-label="Good response" aria-pressed="false" title="Good response">${actionIcon('up')}</button>` : ''}
-      ${includeFeedback ? `<button type="button" data-reaction="down" aria-label="Bad response" aria-pressed="false" title="Bad response">${actionIcon('down')}</button>` : ''}
-      <button type="button" data-action="share" aria-label="Share answer" title="Share answer">${actionIcon('share')}</button>
-      ${retryPrompt ? `<button type="button" data-action="retry" data-retry-prompt="${escapeAttribute(retryPrompt)}" aria-label="Retry answer" title="Retry answer">${actionIcon('retry')}</button>` : ''}
-      <span class="librarian-feedback-status" aria-live="polite"></span>
-    `;
-    controls.addEventListener('click', async (event) => {
-      const target = event.target instanceof Element ? event.target : null;
-      const button = target ? target.closest<HTMLButtonElement>('button') : null;
-      if (!button || !controls.contains(button)) return;
-      if (button.dataset.reaction) {
-        if (button.classList.contains('selected')) return;
-        let comment = '';
-        if (button.dataset.reaction === 'down') {
-          const value = window.prompt('What went wrong?');
-          if (value === null) return;
-          comment = value.trim().slice(0, 1000);
-        }
-        saveFeedback(requestId, button.dataset.reaction, controls, comment);
-        return;
-      }
-      if (button.dataset.action === 'copy') {
-        const message = await copyAnswerRichText(messageElement);
-        flashActionStatus(controls, message);
-        track(
-          'librarian.answer_copy',
-          message === 'Rich text copied' ? 'rich' : message === 'Text copied' ? 'plain' : 'error'
-        );
-        return;
-      }
-      if (button.dataset.action === 'speak') {
-        const message = toggleSpeakAnswer(messageElement, button);
-        if (message && message !== 'Reading' && message !== 'Stopped') flashActionStatus(controls, message);
-        track('librarian.answer_speak', message === 'Reading' ? 'start' : message === 'Stopped' ? 'stop' : 'error');
-        return;
-      }
-      if (button.dataset.action === 'share') {
-        const message = await shareAnswer(messageElement);
-        if (message) flashActionStatus(controls, message);
-        track(
-          'librarian.answer_share',
-          message === 'Shared'
-            ? 'native'
-            : message === 'Rich text copied'
-              ? 'rich'
-              : message === 'Text copied'
-                ? 'plain'
-                : message
-                  ? 'error'
-                  : 'cancel'
-        );
-      }
-    });
-    messageElement.appendChild(controls);
-  }
-
   return {
-    addPromptActions,
-    addResponseActions,
-    stopSpeaking
+    copyAnswerRichText,
+    copyPrompt,
+    saveFeedback,
+    shareAnswer,
+    sharePrompt,
+    stopSpeaking,
+    toggleSpeakAnswer
   };
 }
 

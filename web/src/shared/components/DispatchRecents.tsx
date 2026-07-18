@@ -1,4 +1,3 @@
-import { render } from 'preact';
 import { iconSvg } from '../thingy-icons.ts';
 import { stageIcon, stageLabel } from '../thingy-dispatch-drafts.ts';
 import { activeDraftId, drafts } from '../stores/dispatch-store.ts';
@@ -80,10 +79,4 @@ function DispatchRecents({ onOpen, onDelete, maxRecents = 24 }: DispatchRecentsP
   );
 }
 
-function mountDispatchRecents(host: HTMLElement | null, props: DispatchRecentsProps) {
-  if (!host) return () => {};
-  render(<DispatchRecents {...props} />, host);
-  return () => render(null, host);
-}
-
-export { DispatchRecents, mountDispatchRecents };
+export { DispatchRecents };

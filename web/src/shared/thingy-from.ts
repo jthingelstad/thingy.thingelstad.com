@@ -47,16 +47,4 @@ function resolveFromValue(value: unknown): { name: string; href: string } | null
   return { name: match.name, href: href || match.href };
 }
 
-function applyReturnChip() {
-  const params = new URLSearchParams(window.location.search);
-  const returnChip = document.getElementById('return-chip') as HTMLAnchorElement;
-  const returnChipLabel = document.getElementById('return-chip-label');
-  if (!returnChip || !returnChipLabel) return;
-  const resolved = resolveFromValue(params.get('from'));
-  if (!resolved) return;
-  returnChipLabel.textContent = resolved.name;
-  returnChip.href = resolved.href;
-  returnChip.hidden = false;
-}
-
-export { applyReturnChip };
+export { resolveFromValue };

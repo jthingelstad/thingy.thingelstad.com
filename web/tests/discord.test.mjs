@@ -17,7 +17,7 @@ function installDom() {
 
 test('normalizeDiscordCode trims the code used for Discord confirmation', async () => {
   installDom();
-  const { normalizeDiscordCode } = await import('../src/shared/thingy-discord.ts');
+  const { normalizeDiscordCode } = await import('../src/shared/thingy-discord-links.ts');
 
   assert.equal(normalizeDiscordCode('ABC123'), 'ABC123');
   assert.equal(normalizeDiscordCode('  ABC123  '), 'ABC123');
@@ -26,7 +26,7 @@ test('normalizeDiscordCode trims the code used for Discord confirmation', async 
 
 test('discordSignInUrl preserves verification state in the return parameter', async () => {
   installDom();
-  const { discordSignInUrl } = await import('../src/shared/thingy-discord.ts');
+  const { discordSignInUrl } = await import('../src/shared/thingy-discord-links.ts');
   const url = new URL(discordSignInUrl('state with symbols+/='));
 
   assert.equal(url.pathname, '/signin/');

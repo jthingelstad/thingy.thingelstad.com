@@ -1,10 +1,9 @@
-import { render } from 'preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
-import { createChatMessageActions } from '../thingy-message-actions.ts';
+import { useEffect, useState } from 'preact/hooks';
 import { iconSvg } from '../thingy-icons.ts';
 import { renderMarkdown } from '../thingy-markdown.ts';
 import { formatElapsedTime } from '../models/assistant-message.ts';
 import { dispatchMessages } from '../stores/dispatch-store.ts';
+import { MessageActions } from './MessageActions.tsx';
 
 interface DispatchMessagesProps {
   scrollContainer: () => HTMLElement | null;
@@ -21,11 +20,13 @@ function splitProgressHtml(html: unknown) {
 function DispatchMessage({
   message,
   index,
-  elapsedLabel = ''
+  elapsedLabel = '',
+  track
 }: {
   message: ThingyDispatchMessage;
   index: number;
   elapsedLabel?: string;
+  track?: (name: string, value?: string) => void;
 }) {
   const role = message.role === 'user' ? 'user' : message.role === 'system' ? 'system' : 'assistant';
   const html = renderMarkdown(message.text || '');
@@ -74,43 +75,29 @@ function DispatchMessage({
       data-dispatch-message-index={index}
       data-dispatch-message-role={role}
       data-dispatch-message-kind={message.kind || ''}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
+    >
+      <div dangerouslySetInnerHTML={{ __html: html }} />
+      {role === 'user' ? (
+        <MessageActions
+          role="prompt"
+          prompt={message.text || ''}
+          scope="dispatch"
+          track={track}
+          promptShareTitle="Thingy Dispatch"
+          promptShareUrl={() => ''}
+        />
+      ) : role === 'assistant' ? (
+        <MessageActions role="response" feedback={false} track={track} />
+      ) : null}
+    </article>
   );
 }
 
 function DispatchMessages({ scrollContainer, track = (_name: string, _value?: string) => {} }: DispatchMessagesProps) {
   const messages = dispatchMessages.value;
-  const ref = useRef<HTMLDivElement>(null);
-  const actionsRef = useRef<ReturnType<typeof createChatMessageActions> | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
-  if (!actionsRef.current) {
-    actionsRef.current = createChatMessageActions({
-      promptShareTitle: 'Thingy Dispatch',
-      promptShareUrl: () => '',
-      track
-    });
-  }
 
   useEffect(() => {
-    const root = ref.current;
-    const actions = actionsRef.current;
-    if (root && actions) {
-      root.querySelectorAll<HTMLElement>('[data-dispatch-message-index]').forEach((element) => {
-        if (element.dataset.dispatchActionsAttached === 'true') return;
-        const message = messages[Number(element.dataset.dispatchMessageIndex || -1)];
-        if (!message) return;
-        const role = element.dataset.dispatchMessageRole || '';
-        const kind = element.dataset.dispatchMessageKind || '';
-        if (role === 'user') {
-          actions.addPromptActions(element, message.text || '', 'dispatch');
-          element.dataset.dispatchActionsAttached = 'true';
-        } else if (role === 'assistant' && kind !== 'progress') {
-          actions.addResponseActions(element, '', { feedback: false });
-          element.dataset.dispatchActionsAttached = 'true';
-        }
-      });
-    }
     const scroll = scrollContainer && scrollContainer();
     if (scroll) scroll.scrollTop = scroll.scrollHeight;
   }, [messages, scrollContainer]);
@@ -130,7 +117,7 @@ function DispatchMessages({ scrollContainer, track = (_name: string, _value?: st
   }, [activeProgressIndex]);
 
   return (
-    <div ref={ref} class="dispatch-messages-list">
+    <div class="dispatch-messages-list">
       {messages.map((message, index) => {
         const startedAt = Number(message.startedAt || 0);
         const elapsedLabel =
@@ -141,6 +128,7 @@ function DispatchMessages({ scrollContainer, track = (_name: string, _value?: st
             message={message}
             index={index}
             elapsedLabel={elapsedLabel}
+            track={track}
           />
         );
       })}
@@ -148,10 +136,4 @@ function DispatchMessages({ scrollContainer, track = (_name: string, _value?: st
   );
 }
 
-function mountDispatchMessages(host: HTMLElement | null, props: DispatchMessagesProps) {
-  if (!host) return () => {};
-  render(<DispatchMessages {...props} />, host);
-  return () => render(null, host);
-}
-
-export { DispatchMessages, mountDispatchMessages, splitProgressHtml };
+export { DispatchMessages };

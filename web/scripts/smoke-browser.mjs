@@ -2,8 +2,11 @@
 import assert from 'node:assert/strict';
 
 let chromium;
+let webkit;
+let AxeBuilder;
 try {
-  ({ chromium } = await import('playwright'));
+  ({ chromium, webkit } = await import('playwright'));
+  ({ default: AxeBuilder } = await import('@axe-core/playwright'));
 } catch (error) {
   console.error('Thingy browser smoke requires Playwright. Install it locally with: npm install --save-dev playwright');
   process.exit(1);
@@ -119,6 +122,15 @@ function assertNoUiFailures(failures, surface) {
   assert.deepEqual(failures, [], `${surface} emitted browser errors`);
 }
 
+async function assertAccessible(page, surface) {
+  const results = await new AxeBuilder({ page }).analyze();
+  assert.deepEqual(
+    results.violations.map(({ id, impact, nodes }) => ({ id, impact, targets: nodes.map((node) => node.target) })),
+    [],
+    `${surface} has automated accessibility violations`
+  );
+}
+
 async function checkSignInRedirect(browser) {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -129,11 +141,27 @@ async function checkSignInRedirect(browser) {
   await page.waitForURL(/\/signin\/\?return=%2Fchat%2F$/);
   assert.equal(new URL(page.url()).searchParams.get('return'), '/chat/');
   assert.doesNotMatch(page.url(), /thingy%40thingelstad|What%20about|weekly\.thingelstad|corpus=blog/);
+  await page.waitForSelector('.thingy-signin-form');
+  await assertAccessible(page, 'sign-in');
   assertNoUiFailures(failures, 'sign-in redirect');
   await context.close();
 }
 
-async function checkChatIslands(browser) {
+async function checkDiscordSignedOut(browser) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const failures = collectUiFailures(page);
+  await page.goto(`${baseUrl}/discord/?state=smoke-state`);
+  await page.waitForSelector('.thingy-discord-signin:not([hidden])');
+  const signInUrl = new URL(await page.locator('.thingy-discord-signin a').getAttribute('href'), baseUrl);
+  assert.equal(signInUrl.pathname, '/signin/');
+  assert.equal(signInUrl.searchParams.get('return'), '/discord/?state=smoke-state');
+  await assertAccessible(page, 'Discord connection');
+  assertNoUiFailures(failures, 'Discord connection');
+  await context.close();
+}
+
+async function checkChat(browser) {
   const context = await browser.newContext();
   await seedSession(context);
   const page = await context.newPage();
@@ -141,17 +169,15 @@ async function checkChatIslands(browser) {
   await routeMockApi(page);
   await page.goto(`${baseUrl}/chat/`);
 
-  // The AuthPanel mount should be hidden when signed in; the chat panel visible.
-  await page.waitForSelector('#librarian-chat:not([hidden])');
-  assert.equal(await page.locator('#librarian-auth').isHidden(), true, 'auth panel hidden when signed in');
+  // The route-level root owns the entire authenticated shell.
+  await page.waitForSelector('.librarian-chat:not([hidden])');
+  assert.equal(await page.locator('.librarian-auth').isHidden(), true, 'auth panel hidden when signed in');
 
-  // RailRecents island should render the empty-state copy from the
-  // component, not from static HTML (we removed the static <p>).
-  await page.waitForSelector('#rail-recents-mount .rail-empty');
-  const emptyText = (await page.locator('#rail-recents-mount .rail-empty').textContent()).trim();
+  await page.waitForSelector('.rail-body .rail-empty');
+  const emptyText = (await page.locator('.rail-body .rail-empty').textContent()).trim();
   assert.match(emptyText, /Your conversations sync with Thingy/);
 
-  // ComposerCount island should be reactive: count updates as the user types.
+  // Controlled composer state should update character count and submit state.
   await page.waitForSelector('#librarian-question-count .composer-count');
   const countLocator = page.locator('#librarian-question-count .composer-count');
   assert.equal((await countLocator.textContent()).trim(), '0 / 1200', 'count starts at 0');
@@ -161,7 +187,6 @@ async function checkChatIslands(browser) {
     return el && /^12 \/ 1200/.test(el.textContent || '');
   });
 
-  // ComposerSubmit island: send button is present and not in stop mode at rest.
   // The mocked welcome stream runs during bootstrap, so wait for that state
   // transition before asserting the composer's idle contract.
   await page.waitForSelector('button.composer-send[aria-label="Ask Thingy"]');
@@ -173,25 +198,37 @@ async function checkChatIslands(browser) {
     'send button not in stop mode at rest'
   );
 
-  // AccountMenu: opening it shows the build stamp injected at build time.
+  // Account menu stays inside the root and exposes the injected build stamp.
   await page.locator('.rail-account-btn').click();
   await page.waitForSelector('.rail-menu-build');
   assert.match((await page.locator('.rail-menu-build').textContent()).trim(), /^Build .+/);
   await page.keyboard.press('Escape');
 
-  // The source picker is an imperative popover. Exercise open and outside-click
-  // cleanup because this boundary has historically been easy to break.
-  await page.locator('#srcpick-btn').click();
+  // The source picker uses one native checkbox focus target per source.
+  await page.locator('.srcpick-btn').click();
   await page.waitForSelector('#srcpick-pop:not([hidden])');
+  assert.equal(await page.locator('.srcpick-row[tabindex]').count(), 0, 'source labels are not duplicate tab stops');
+  assert.equal(await page.locator('.srcpick-row input[type="checkbox"]').count(), 3);
   await page.locator('.thingy-chat-scroll').click({ position: { x: 10, y: 10 } });
   assert.equal(await page.locator('#srcpick-pop').isHidden(), true, 'outside click closes the source picker');
+
+  // Authenticated routes must not execute Tinylytics or any other third-party script.
+  assert.equal(await page.locator('script[src*="tinylytics"]').count(), 0);
+  assert.equal(
+    await page.evaluate(() =>
+      performance.getEntriesByType('resource').some((entry) => entry.name.includes('tinylytics.app'))
+    ),
+    false
+  );
+
+  await assertAccessible(page, 'chat');
 
   assertNoUiFailures(failures, 'chat');
 
   await context.close();
 }
 
-async function checkDispatchIslands(browser) {
+async function checkDispatch(browser) {
   const context = await browser.newContext();
   await seedSession(context);
   const page = await context.newPage();
@@ -199,16 +236,12 @@ async function checkDispatchIslands(browser) {
   await routeMockApi(page);
   await page.goto(`${baseUrl}/dispatch/`);
 
-  // DispatchRecents mount should render the loaded smoke draft from the
-  // mocked /dispatch list response.
-  await page.waitForSelector('#dispatch-recents-mount .rail-recent');
-  const row = page.locator('#dispatch-recents-mount .rail-recent').first();
+  await page.waitForSelector('.dispatch-rail-item');
+  const row = page.locator('.dispatch-rail-item').first();
   assert.match((await row.locator('.rail-recent-title').textContent()).trim(), /Smoke Sent Dispatch/);
 
-  // DispatchStatus mount renders an aria-live region from the component
-  // (empty when no status, but the element is in the DOM).
-  await page.waitForSelector('#dispatch-status-mount .dispatch-status', { state: 'attached' });
-  assert.equal(await page.locator('#dispatch-status-mount .dispatch-status').getAttribute('aria-live'), 'polite');
+  await page.waitForSelector('.dispatch-status', { state: 'attached' });
+  assert.equal(await page.locator('.dispatch-status').getAttribute('aria-live'), 'polite');
 
   // The sent draft is non-editable; the input should be disabled with the
   // dispatched placeholder copy.
@@ -217,6 +250,9 @@ async function checkDispatchIslands(browser) {
     await page.locator('#dispatch-input').getAttribute('placeholder'),
     'Start a new Dispatch to shape another request...'
   );
+
+  assert.equal(await page.locator('script[src*="tinylytics"]').count(), 0);
+  await assertAccessible(page, 'dispatch');
 
   assertNoUiFailures(failures, 'dispatch');
 
@@ -232,7 +268,7 @@ async function checkMobileChat(browser) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${baseUrl}/chat/`);
   await page.waitForSelector('.mobile-chatbar');
-  await page.waitForSelector('#librarian-chat:not([hidden])');
+  await page.waitForSelector('.librarian-chat:not([hidden])');
   await page.waitForSelector('.thingy-input');
   assert.equal(
     await page.locator('.thingy-composer-zone').isVisible(),
@@ -246,27 +282,56 @@ async function checkMobileChat(browser) {
     'mobile composer stays in page flow'
   );
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
-  await page.locator('#mobile-conversations-toggle').click();
+  await page.locator('.mobile-chatbar-circle').click();
   await page.waitForSelector('.thingy-app-shell.is-mobile-rail-open');
   assert.equal((await page.locator('.rail-surface-switch a.is-active').textContent()).trim(), 'Chat');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
-  await page.locator('#rail-scrim').click({ position: { x: 380, y: 400 } });
+  await page.locator('.rail-scrim').click({ position: { x: 380, y: 400 } });
   await page.waitForSelector('.thingy-app-shell:not(.is-mobile-rail-open)');
+  await assertAccessible(page, 'mobile chat');
   assertNoUiFailures(failures, 'mobile chat');
   await context.close();
 }
 
+async function checkMobileDispatch(browser) {
+  const context = await browser.newContext();
+  await seedSession(context);
+  const page = await context.newPage();
+  const failures = collectUiFailures(page);
+  await routeMockApi(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${baseUrl}/dispatch/`);
+  await page.waitForSelector('.dispatch-chat:not([hidden])');
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
+  await page.locator('.mobile-chatbar-circle').click();
+  await page.waitForSelector('.thingy-app-shell.is-mobile-rail-open');
+  assert.equal((await page.locator('.rail-surface-switch a.is-active').textContent()).trim(), 'Dispatch');
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
+  await page.locator('.rail-scrim').click({ position: { x: 380, y: 400 } });
+  await page.waitForSelector('.thingy-app-shell:not(.is-mobile-rail-open)');
+  await assertAccessible(page, 'mobile Dispatch');
+  assertNoUiFailures(failures, 'mobile Dispatch');
+  await context.close();
+}
+
 async function main() {
-  const browser = await chromium.launch();
-  try {
-    await checkSignInRedirect(browser);
-    await checkChatIslands(browser);
-    await checkDispatchIslands(browser);
-    await checkMobileChat(browser);
-  } finally {
-    await browser.close();
+  for (const [name, browserType] of [
+    ['Chromium', chromium],
+    ['WebKit', webkit]
+  ]) {
+    const browser = await browserType.launch();
+    try {
+      await checkSignInRedirect(browser);
+      await checkDiscordSignedOut(browser);
+      await checkChat(browser);
+      await checkDispatch(browser);
+      await checkMobileChat(browser);
+      await checkMobileDispatch(browser);
+    } finally {
+      await browser.close();
+    }
+    console.log(`Thingy browser smoke passed in ${name}.`);
   }
-  console.log('Thingy browser smoke passed.');
 }
 
 main().catch((error) => {

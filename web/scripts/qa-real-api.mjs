@@ -9,6 +9,7 @@ const jmapToken =
   process.env.FASTMAIL_JMAP_TOKEN || process.env.THINGY_FASTMAIL_JMAP_TOKEN || process.env.THINGY_JMAP_TOKEN;
 const suppliedSessionToken = process.env.THINGY_SESSION_TOKEN || '';
 const cleanupOnly = args.has('--cleanup-only');
+const dispatchOnly = args.has('--dispatch-only');
 const qaPrefix = process.env.THINGY_QA_PREFIX || 'QA real-api';
 
 if (!apiUrl) fail('LIBRARIAN_API_URL is required.');
@@ -106,6 +107,57 @@ async function latestMagicLinkSince(since) {
     if (url) return { url, receivedAt: item.receivedAt };
   }
   return null;
+}
+
+async function latestDispatchEmailSince(since) {
+  if (!jmapToken) return null;
+  const jmapSession = await jmapFetch('https://api.fastmail.com/jmap/session');
+  const mail = 'urn:ietf:params:jmap:mail';
+  const core = 'urn:ietf:params:jmap:core';
+  const accountId = jmapSession.primaryAccounts?.[mail];
+  const response = await jmapFetch(jmapSession.apiUrl, {
+    method: 'POST',
+    body: JSON.stringify({
+      using: [core, mail],
+      methodCalls: [
+        [
+          'Email/query',
+          {
+            accountId,
+            filter: { after: since.toISOString() },
+            sort: [{ property: 'receivedAt', isAscending: false }],
+            limit: 10
+          },
+          'q'
+        ],
+        [
+          'Email/get',
+          {
+            accountId,
+            '#ids': { resultOf: 'q', name: 'Email/query', path: '/ids' },
+            properties: ['subject', 'receivedAt', 'bodyValues'],
+            fetchTextBodyValues: true,
+            fetchHTMLBodyValues: true,
+            maxBodyValueBytes: 200000
+          },
+          'g'
+        ]
+      ]
+    })
+  });
+  const emails = response.methodResponses?.find((item) => item[2] === 'g')?.[1]?.list || [];
+  return (
+    emails.find((item) => {
+      if (new Date(item.receivedAt || 0) < since) return false;
+      const content = [item.subject, ...Object.values(item.bodyValues || {}).map((value) => value?.value || '')].join(
+        '\n'
+      );
+      return (
+        !/(sign in|private sign-in link)/i.test(content) &&
+        (content.includes(qaPrefix) || /(dispatch|prepared by thingy|template test)/i.test(content))
+      );
+    }) || null
+  );
 }
 
 async function authData() {
@@ -237,9 +289,9 @@ async function checkDesktopChat(browser, data, result) {
   const page = await context.newPage();
   const failures = collectFailures(page);
   await page.goto(`${baseUrl.replace(/\/$/, '')}/chat/`);
-  await page.waitForSelector('#librarian-chat:not([hidden])', { timeout: 20000 });
+  await page.waitForSelector('.librarian-chat:not([hidden])', { timeout: 20000 });
   await page.waitForSelector(`text=${data.email || email}`, { timeout: 20000 });
-  await page.waitForFunction(() => !document.querySelector('#librarian-question')?.disabled, { timeout: 30000 });
+  await page.waitForFunction(() => !document.querySelector('#librarian-question')?.disabled, null, { timeout: 30000 });
   assert(
     (await page.locator('text=Supporting Member').count()) > 0 || data.status !== 'premium',
     'chat account status did not render'
@@ -263,26 +315,54 @@ async function checkDesktopDispatch(browser, data, result) {
   await seedSession(context, data);
   const page = await context.newPage();
   const failures = collectFailures(page);
-  await page.goto(`${baseUrl.replace(/\/$/, '')}/dispatch/`);
-  await page.waitForSelector('#dispatch-app:not([hidden])', { timeout: 20000 });
+  await page.goto(`${baseUrl.replace(/\/$/, '')}/dispatch/?dispatch_test=template`);
+  await page.waitForSelector('.dispatch-chat:not([hidden])', { timeout: 20000 });
   await page.waitForSelector(`text=${data.email || email}`, { timeout: 20000 });
-  assert((await page.locator('#dispatch-recents-mount').count()) === 1, 'dispatch recents mount missing');
+  assert((await page.locator('.rail-body').count()) === 1, 'dispatch recents region missing');
   assert(
     await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth),
     'desktop dispatch has horizontal overflow'
   );
 
-  await page.locator('#dispatch-new').click();
-  const prompt = `${qaPrefix}: dispatch smoke check ${Date.now()}`;
+  await page.locator('.rail-newchat.dispatch-new').click();
+  const prompt = `${qaPrefix}: Create a concise Dispatch about RSS and open-web themes in Jamie's archive, using two or three sources and a practical synthesis. No clarification is needed; this direction is approved. ${Date.now()}`;
   await page.locator('#dispatch-input').fill(prompt);
   await page.getByRole('button', { name: 'Send to Thingy' }).click();
-  await page.waitForFunction(() => document.querySelector('#dispatch-input')?.disabled, { timeout: 10000 });
-  await page.waitForFunction(() => !document.querySelector('#dispatch-input')?.disabled, { timeout: 190000 });
-  assert(
-    (await page.getByRole('button', { name: 'Generate Dispatch' }).count()) > 0 ||
-      (await page.locator('#dispatch-messages-mount').innerText()).includes('Dispatch brief'),
-    'dispatch planner returned neither a ready nor a draft brief'
-  );
+  await page.waitForFunction(() => document.querySelector('#dispatch-input')?.disabled, null, { timeout: 10000 });
+  await page.waitForFunction(() => !document.querySelector('#dispatch-input')?.disabled, null, { timeout: 190000 });
+  const sendButton = page.getByRole('button', { name: 'Send Template Test' });
+  for (let turn = 0; turn < 2 && (await sendButton.count()) === 0; turn += 1) {
+    if ((await page.locator('.dispatch-status[data-kind="error"]').count()) > 0) break;
+    await page
+      .locator('#dispatch-input')
+      .fill(
+        'Proceed with that approved direction. Use your strongest archive sources and make the final editorial choices.'
+      );
+    await page.getByRole('button', { name: 'Send to Thingy' }).click();
+    await page.waitForFunction(() => document.querySelector('#dispatch-input')?.disabled, null, { timeout: 10000 });
+    await page.waitForFunction(() => !document.querySelector('#dispatch-input')?.disabled, null, { timeout: 190000 });
+  }
+  if ((await sendButton.count()) !== 1) {
+    const transcript = (await page.locator('.dispatch-messages').innerText()).replace(/\s+/g, ' ').slice(-3000);
+    const status = (await page.locator('.dispatch-status').innerText()).replace(/\s+/g, ' ').trim();
+    throw new Error(
+      `dispatch planner did not reach the template-send action. Status: ${status || 'none'}. Transcript: ${transcript}. Browser errors: ${failures.join(' | ') || 'none'}`
+    );
+  }
+  const requestedAt = new Date(Date.now() - 5000);
+  await sendButton.click();
+  await page.getByText('Dispatch sent. Check your email.').waitFor({ timeout: 120000 });
+  if (jmapToken) {
+    let delivered = null;
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      delivered = await latestDispatchEmailSince(requestedAt);
+      if (delivered) break;
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+    }
+    assert(delivered, 'template Dispatch completed but no matching email arrived through JMAP');
+    result.email_received_at = delivered.receivedAt;
+    result.email_subject = delivered.subject;
+  }
   result.prompt = prompt;
   result.failures = failures;
   await context.close();
@@ -333,25 +413,35 @@ const results = {
 };
 
 try {
-  const chatResult = {};
-  await checkDesktopChat(browser, data, chatResult);
-  results.checks.push({ name: 'desktop chat real stream', ok: true, failures: chatResult.failures });
+  if (!dispatchOnly) {
+    const chatResult = {};
+    await checkDesktopChat(browser, data, chatResult);
+    results.checks.push({ name: 'desktop chat real stream', ok: true, failures: chatResult.failures });
+  }
 
   const dispatchResult = {};
   await checkDesktopDispatch(browser, data, dispatchResult);
-  results.checks.push({ name: 'desktop dispatch real clarify', ok: true, failures: dispatchResult.failures });
+  results.checks.push({
+    name: 'desktop dispatch real clarify and template email',
+    ok: true,
+    email_received_at: dispatchResult.email_received_at || '',
+    email_subject: dispatchResult.email_subject || '',
+    failures: dispatchResult.failures
+  });
 
-  const mobileChatFailures = await checkMobile(browser, data, '/chat/', '#mobile-conversations-toggle', 'mobile chat');
-  results.checks.push({ name: 'mobile chat rail', ok: true, failures: mobileChatFailures });
+  if (!dispatchOnly) {
+    const mobileChatFailures = await checkMobile(browser, data, '/chat/', '.mobile-chatbar-circle', 'mobile chat');
+    results.checks.push({ name: 'mobile chat rail', ok: true, failures: mobileChatFailures });
 
-  const mobileDispatchFailures = await checkMobile(
-    browser,
-    data,
-    '/dispatch/',
-    '#dispatch-mobile-toggle',
-    'mobile dispatch'
-  );
-  results.checks.push({ name: 'mobile dispatch rail', ok: true, failures: mobileDispatchFailures });
+    const mobileDispatchFailures = await checkMobile(
+      browser,
+      data,
+      '/dispatch/',
+      '.mobile-chatbar-circle',
+      'mobile dispatch'
+    );
+    results.checks.push({ name: 'mobile dispatch rail', ok: true, failures: mobileDispatchFailures });
+  }
 } finally {
   await browser.close();
   results.cleanup = {

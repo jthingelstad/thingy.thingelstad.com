@@ -6,38 +6,14 @@
   <title>Connect Discord · Thingy</title>
   <meta name="robots" content="noindex,nofollow">
   <meta name="description" content="Connect a Weekly Thing Supporting Membership to the Thingy Discord.">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://fonts.googleapis.com __THINGY_CONNECT_SRC__">
+  <meta name="thingy-config" content="__THINGY_DISCORD_CONFIG__">
   <link rel="canonical" href="https://thingy.thingelstad.com/discord/">
   <link rel="icon" href="/img/thingy.png">
-  <script>window.ThingyConfig = __THINGY_DISCORD_CONFIG__;</script>
 </head>
 <body>
-  <main class="thingy-auth-page thingy-discord-page">
-    <section class="thingy-auth-card thingy-discord-card" aria-labelledby="thingy-discord-title">
-      <a class="thingy-auth-mark" href="/" aria-label="Thingy home">
-        <img src="/img/thingy.png" alt="" width="1022" height="1022">
-      </a>
-      <p class="thingy-auth-kicker">Thingy Discord</p>
-      <h1 id="thingy-discord-title">Connect Discord</h1>
-      <p id="thingy-discord-copy">Thingy is checking your account.</p>
-      <p class="thingy-discord-benefit">
-        This is an <strong>EXCLUSIVE benefit for Supporting Members</strong>.
-        <a href="https://weekly.thingelstad.com/members/">Become or manage your Supporting Membership</a>.
-      </p>
-      <div class="thingy-discord-signin" id="thingy-discord-signin" hidden>
-        <a id="thingy-discord-signin-link" href="/signin/">Sign In to Continue</a>
-      </div>
-      <div class="thingy-discord-code" id="thingy-discord-code" hidden>
-        <span>Verification code</span>
-        <strong id="thingy-discord-code-value"></strong>
-        <button type="button" id="thingy-discord-copy-code">Copy Code</button>
-      </div>
-      <p class="thingy-signin-message" id="thingy-discord-message" aria-live="polite"></p>
-      <div class="thingy-discord-actions">
-        <a class="thingy-discord-button secondary" href="/chat/">Back to Chat</a>
-        <a class="thingy-discord-button primary" href="https://discord.gg/MaCyhPv7Y4" target="_blank" rel="noopener">Open Discord</a>
-      </div>
-    </section>
-  </main>
+  <main id="main-content"></main>
   <script type="module" src="/src/pages/discord.ts"></script>
 </body>
 </html>

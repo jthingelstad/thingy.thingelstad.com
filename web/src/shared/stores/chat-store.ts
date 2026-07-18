@@ -23,6 +23,11 @@ const availableModes = signal<ThingyMode[]>([{ id: 'thingy', label: 'Thingy' }])
 // Existing conversations carry their own mode in the conversation summary.
 const activeMode = signal('thingy');
 
+// Render models for the active transcript. User messages carry plain text;
+// assistant messages carry a reactive AssistantMessageModel updated by the
+// streaming action layer.
+const chatMessages = signal<ThingyChatViewMessage[]>([]);
+
 // --- Auth gate --------------------------------------------------------------
 // (signedIn lives in ui-store — it's cross-surface identity state shared
 // with dispatch and AccountMenu.)
@@ -52,6 +57,9 @@ const authBusy = signal(false);
 // for the input.
 const questionText = signal('');
 
+// The native checkbox values selected in the declarative source picker.
+const selectedSources = signal<string[]>(['weekly_thing', 'blog', 'podcast']);
+
 // True when at least one source is selected in the source picker. The
 // source picker is still imperative; the controller mirrors its state.
 const hasSources = signal(true);
@@ -80,12 +88,14 @@ export {
   authEmailError,
   authMessage,
   availableModes,
+  chatMessages,
   conversationCreateInFlight,
   conversations,
   hasSources,
   interactionBusy,
   mapInFlight,
   questionText,
+  selectedSources,
   stoppable,
   welcomeInFlight
 };

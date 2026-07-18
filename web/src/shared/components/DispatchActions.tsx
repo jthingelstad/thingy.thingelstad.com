@@ -1,4 +1,3 @@
-import { render } from 'preact';
 import { dispatchActions } from '../stores/dispatch-store.ts';
 
 interface DispatchActionsProps {
@@ -29,10 +28,4 @@ function DispatchActions({ onAction }: DispatchActionsProps) {
   );
 }
 
-function mountDispatchActions(host: HTMLElement | null, props: DispatchActionsProps) {
-  if (!host) return () => {};
-  render(<DispatchActions {...props} />, host);
-  return () => render(null, host);
-}
-
-export { DispatchActions, mountDispatchActions };
+export { DispatchActions };

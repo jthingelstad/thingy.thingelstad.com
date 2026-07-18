@@ -11,7 +11,7 @@
 
 .rail-recents-label {
   margin: 6px 8px;
-  color: color-mix(in srgb, var(--muted) 82%, transparent);
+  color: var(--muted);
   font-family: var(--mono);
   font-size: 10px;
   font-weight: 700;

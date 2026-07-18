@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://fonts.googleapis.com __THINGY_CONNECT_SRC__">
+  <meta name="thingy-config" content="__THINGY_DISPATCH_CONFIG__">
   <title>Dispatch — Thingy</title>
   <meta name="description" content="Shape a Thingy-authored archive Dispatch and have it sent to your email.">
   <meta name="robots" content="index, follow, max-image-preview:large">
@@ -26,101 +29,15 @@
   <link rel="sitemap" type="application/xml" href="/sitemap.xml">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
-  <link rel="webmention" href="https://tinylytics.app/webmention/__THINGY_TINYLYTICS_ID__">
 
 
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400..600&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
 
-  <link rel="preconnect" href="https://tinylytics.app">
 
 </head>
 <body>
   <main id="main-content">
-
-<section class="thingy-page dispatch-shell-page">
-  <div class="thingy-app-shell dispatch-shell is-booting" id="dispatch-shell">
-    <aside class="rail" aria-label="Thingy Dispatch">
-      <div class="rail-top">
-        <a class="rail-brand" href="/" aria-label="Thingy home" data-tinylytics-event="network.home" data-tinylytics-event-value="thingy">
-          <img class="rail-mark" src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager">
-        </a>
-        <button class="rail-iconbtn rail-collapse" id="dispatch-rail-collapse" type="button" aria-label="Collapse sidebar" title="Collapse sidebar">
-          <span data-thingy-icon="panel-left" aria-hidden="true"></span>
-        </button>
-      </div>
-
-      <nav class="rail-surface-switch" aria-label="Thingy surfaces">
-        <a href="/chat/">
-          <span data-thingy-icon="message-square" aria-hidden="true"></span>
-          <span>Chat</span>
-        </a>
-        <a class="is-active" href="/dispatch/" aria-current="page">
-          <span data-thingy-icon="newspaper" aria-hidden="true"></span>
-          <span>Dispatch</span>
-        </a>
-      </nav>
-
-      <button class="rail-newchat dispatch-new" type="button" id="dispatch-new" data-tinylytics-event="dispatch.new" title="New Dispatch">
-        <span data-thingy-icon="plus" aria-hidden="true"></span>
-        <span class="label">New Dispatch</span>
-      </button>
-
-      <div class="rail-body">
-        <p class="rail-recents-label">Dispatches</p>
-        <div id="dispatch-recents-mount"></div>
-      </div>
-
-      <div class="rail-account" id="dispatch-rail-account-mount"></div>
-    </aside>
-    <div class="rail-scrim" id="dispatch-rail-scrim" hidden></div>
-
-    <section class="thingy-conversation dispatch-conversation" aria-label="Thingy Dispatch">
-      <div class="mobile-chatbar" id="dispatch-mobilebar" aria-label="Dispatch">
-        <button class="mobile-chatbar-circle" id="dispatch-mobile-toggle" type="button" aria-label="Show Dispatches" aria-expanded="false" title="Show Dispatches">
-          <span data-thingy-icon="chevron-left" aria-hidden="true"></span>
-        </button>
-        <div class="mobile-chatbar-title">
-          <span id="dispatch-mobile-title">Dispatch</span>
-        </div>
-        <div class="mobile-chatbar-actions">
-          <button class="mobile-chatbar-action" id="dispatch-mobile-new" type="button" aria-label="New Dispatch" title="New Dispatch">
-            <span data-thingy-icon="plus" aria-hidden="true"></span>
-          </button>
-        </div>
-      </div>
-
-      <div class="dispatch-chat" id="dispatch-app" hidden>
-        <div class="thingy-chat-scroll dispatch-scroll">
-          <div class="librarian-messages dispatch-messages" id="dispatch-messages-mount" aria-live="polite"></div>
-        </div>
-
-        <div class="thingy-composer-zone dispatch-composer-zone">
-          <div id="dispatch-actions-mount"></div>
-          <form class="librarian-form librarian-question-form thingy-input composer-box dispatch-composer" id="dispatch-form">
-            <label for="dispatch-input" class="sr-only">Message Thingy about this Dispatch</label>
-            <textarea id="dispatch-input" rows="1" maxlength="1200" required placeholder="Tell Thingy what this Dispatch should explore..."></textarea>
-            <div class="composer-toolbar">
-              <span id="dispatch-status-mount"></span>
-              <span class="composer-spacer"></span>
-              <span id="dispatch-count"></span>
-              <button type="submit" class="composer-send" aria-label="Send to Thingy" title="Send to Thingy" data-tinylytics-event="dispatch.message">
-                <span data-thingy-icon="arrow-up" aria-hidden="true"></span>
-              </button>
-            </div>
-          </form>
-          <p class="thingy-ai-note">Dispatches are written by Thingy from Jamie&rsquo;s public archive, then sent by email when you generate them.</p>
-        </div>
-      </div>
-    </section>
-  </div>
-</section>
-
-<script>
-  window.ThingyConfig = __THINGY_DISPATCH_CONFIG__;
-</script>
   <script type="module" src="/src/pages/dispatch.ts"></script>
   </main>
 

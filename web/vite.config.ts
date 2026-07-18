@@ -72,12 +72,17 @@ function htmlConfigPlugin(): Plugin {
         networkLinks: SITE.networkLinks,
         buildId: buildId()
       };
+      const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
+      const connectSrc = Array.from(
+        new Set([new URL(librarianApiUrl).origin, new URL(librarianStreamUrl).origin])
+      ).join(' ');
       return html
         .replaceAll('__THINGY_TINYLYTICS_ID__', tinylyticsId)
-        .replace('__THINGY_CHAT_CONFIG__', JSON.stringify(config))
-        .replace('__THINGY_DISPATCH_CONFIG__', JSON.stringify(config))
-        .replace('__THINGY_SIGNIN_CONFIG__', JSON.stringify({ librarianApiUrl }))
-        .replace('__THINGY_DISCORD_CONFIG__', JSON.stringify({ librarianApiUrl }));
+        .replaceAll('__THINGY_CONNECT_SRC__', connectSrc)
+        .replace('__THINGY_CHAT_CONFIG__', encode(config))
+        .replace('__THINGY_DISPATCH_CONFIG__', encode(config))
+        .replace('__THINGY_SIGNIN_CONFIG__', encode({ librarianApiUrl }))
+        .replace('__THINGY_DISCORD_CONFIG__', encode({ librarianApiUrl }));
     }
   };
 }

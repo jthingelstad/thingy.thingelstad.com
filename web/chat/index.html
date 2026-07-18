@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://fonts.googleapis.com __THINGY_CONNECT_SRC__">
+  <meta name="thingy-config" content="__THINGY_CHAT_CONFIG__">
   <title>Thingy</title>
   <meta name="description" content="Ask Thingy to find and synthesize writing from across Jamie Thingelstad&#39;s archive.">
   <meta name="robots" content="index, follow, max-image-preview:large">
@@ -26,171 +29,15 @@
   <link rel="sitemap" type="application/xml" href="/sitemap.xml">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
-  <link rel="webmention" href="https://tinylytics.app/webmention/__THINGY_TINYLYTICS_ID__">
 
 
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400..600&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
 
-  <link rel="preconnect" href="https://tinylytics.app">
 
 </head>
 <body>
   <main id="main-content">
-    <section class="thingy-page">
-  <div class="thingy-app-shell is-auth is-booting" id="thingy-app-shell">
-    <aside class="rail" aria-label="Thingy">
-      <div class="rail-top">
-        <a class="rail-brand" href="/" aria-label="Thingy home" data-tinylytics-event="network.home" data-tinylytics-event-value="thingy">
-          <img class="rail-mark" src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager">
-        </a>
-        <button class="rail-iconbtn rail-collapse" id="rail-collapse" type="button" aria-label="Collapse sidebar" title="Collapse sidebar">
-          <span data-thingy-icon="panel-left" aria-hidden="true"></span>
-        </button>
-      </div>
-
-      <nav class="rail-surface-switch" aria-label="Thingy surfaces">
-        <a class="is-active" href="/chat/" aria-current="page">
-          <span data-thingy-icon="message-square" aria-hidden="true"></span>
-          <span>Chat</span>
-        </a>
-        <a href="/dispatch/">
-          <span data-thingy-icon="newspaper" aria-hidden="true"></span>
-          <span>Dispatch</span>
-        </a>
-      </nav>
-
-      <div class="rail-newchat-combo">
-        <button class="rail-newchat" type="button" id="librarian-clear-chat" data-tinylytics-event="librarian.clear" title="New chat">
-          <span data-thingy-icon="plus" aria-hidden="true"></span>
-          <span class="label">New chat</span>
-          <span class="kbd">⌘K</span>
-        </button>
-        <div class="rail-newchat-mode" id="thingy-mode-control" hidden>
-          <button class="rail-newchat-mode-button" id="thingy-mode-select" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="thingy-mode-menu" aria-label="New chat mode">
-            <span class="rail-newchat-mode-icon" id="thingy-mode-icon" aria-hidden="true"></span>
-            <span class="rail-newchat-mode-label" id="thingy-mode-label">Thingy</span>
-            <span class="rail-newchat-mode-caret" data-thingy-icon="chevron-down" aria-hidden="true"></span>
-          </button>
-          <div class="rail-newchat-mode-menu" id="thingy-mode-menu" hidden role="listbox" aria-label="New chat mode"></div>
-        </div>
-      </div>
-      <button class="rail-newchat rail-map" type="button" id="thingy-curiosity-map" data-tinylytics-event="librarian.curiosity_map" title="Curiosity map">
-        <span data-thingy-icon="network" aria-hidden="true"></span>
-        <span class="label">Curiosity map</span>
-      </button>
-
-      <div class="rail-body">
-        <p class="rail-recents-label">Recents</p>
-        <div id="rail-recents-mount"></div>
-      </div>
-
-      <div class="rail-account" id="rail-account-mount"></div>
-    </aside>
-    <div class="rail-scrim" id="rail-scrim" hidden></div>
-
-    <section class="thingy-conversation" aria-label="Thingy chat">
-      <div class="mobile-chatbar" id="mobile-chatbar" aria-label="Conversation">
-        <button class="mobile-chatbar-circle" id="mobile-conversations-toggle" type="button" aria-label="Show conversations" aria-expanded="false" title="Show conversations">
-          <span data-thingy-icon="chevron-left" aria-hidden="true"></span>
-        </button>
-        <div class="mobile-chatbar-title">
-          <span id="mobile-conversation-title">New chat</span>
-        </div>
-        <div class="mobile-chatbar-actions">
-          <button class="mobile-chatbar-action" id="mobile-new-chat" type="button" aria-label="New chat" title="New chat">
-            <span data-thingy-icon="pencil" aria-hidden="true"></span>
-          </button>
-          <button class="mobile-chatbar-menu-button" id="mobile-conversation-menu-button" type="button" aria-label="Conversation actions" aria-expanded="false" aria-controls="mobile-conversation-menu" title="Conversation actions" disabled>
-            <span data-thingy-icon="more-horizontal" aria-hidden="true"></span>
-          </button>
-          <div class="mobile-conversation-menu" id="mobile-conversation-menu" hidden role="menu">
-            <button type="button" id="mobile-rename-conversation" role="menuitem">Rename</button>
-            <button type="button" id="mobile-delete-conversation" role="menuitem" class="danger">Delete</button>
-          </div>
-        </div>
-      </div>
-      <a class="return-chip" id="return-chip" href="#" hidden data-tinylytics-event="network.return">
-        <span data-thingy-icon="arrow-left" aria-hidden="true"></span>
-        <span>Return to <strong id="return-chip-label">site</strong></span>
-      </a>
-
-      <div class="librarian-auth thingy-auth" id="librarian-auth"></div>
-
-      <div class="librarian-chat thingy-chat" id="librarian-chat" hidden>
-        <div class="thingy-chat-scroll">
-          <div class="thingy-mode-banner" id="thingy-mode-banner" hidden aria-live="polite"></div>
-          <div class="librarian-messages" id="librarian-messages" aria-live="polite"></div>
-        </div>
-
-        <div class="thingy-composer-zone">
-          <div class="librarian-prompts" id="librarian-prompts" aria-label="Suggested questions" hidden></div>
-          <form class="librarian-form librarian-question-form thingy-input composer-box" id="librarian-question-form">
-            <label for="librarian-question" class="sr-only">Ask Thingy</label>
-            <textarea id="librarian-question" name="message" rows="1" required maxlength="1200" placeholder="Ask Thingy, or seed a map&hellip;" aria-describedby="librarian-question-count librarian-source-error thingy-ai-note"></textarea>
-            <div class="composer-toolbar">
-              <button class="composer-voice" id="composer-voice" type="button" aria-label="Dictate prompt" title="Dictate prompt">
-                <span data-thingy-icon="mic" aria-hidden="true"></span>
-              </button>
-              <button class="composer-map" id="composer-map" type="button" aria-label="Map current prompt" title="Map current prompt">
-                <span data-thingy-icon="network" aria-hidden="true"></span>
-                <span>Map</span>
-              </button>
-              <span class="composer-voice-status" id="composer-voice-status" aria-live="polite"></span>
-              <div class="srcpick" id="srcpick">
-                <button class="srcpick-btn" id="srcpick-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="srcpick-pop">
-                  <span data-thingy-icon="layers" data-thingy-icon-class="layers" aria-hidden="true"></span>
-                  <span class="srcpick-label" id="srcpick-label">All sources</span>
-                  <span class="srcpick-dots" id="srcpick-dots" aria-hidden="true"><i class="dot-wt"></i><i class="dot-blog"></i><i class="dot-podcast"></i></span>
-                  <span data-thingy-icon="chevron-down" data-thingy-icon-class="chev" aria-hidden="true"></span>
-                </button>
-                <div class="srcpick-pop" id="srcpick-pop" hidden role="dialog" aria-label="Active sources">
-                  <div class="srcpick-pop-head">
-                    <span class="srcpick-pop-title">Active sources</span>
-                  </div>
-                  <label class="srcpick-row">
-                    <input type="checkbox" name="scope" value="weekly_thing" checked>
-                    <span class="rdot dot-wt" aria-hidden="true"></span>
-                    <span class="meta"><strong>Weekly Thing</strong><small>Issues, links, FAQ</small></span>
-                    <span class="tick" aria-hidden="true" data-thingy-icon="check"></span>
-                  </label>
-                  <label class="srcpick-row">
-                    <input type="checkbox" name="scope" value="blog" checked>
-                    <span class="rdot dot-blog" aria-hidden="true"></span>
-                    <span class="meta"><strong>Blog</strong><small>thingelstad.com</small></span>
-                    <span class="tick" aria-hidden="true" data-thingy-icon="check"></span>
-                  </label>
-                  <label class="srcpick-row">
-                    <input type="checkbox" name="scope" value="podcast" checked>
-                    <span class="rdot dot-podcast" aria-hidden="true"></span>
-                    <span class="meta"><strong>Another Thing</strong><small>Podcast transcripts</small></span>
-                    <span class="tick" aria-hidden="true" data-thingy-icon="check"></span>
-                  </label>
-                  <p class="srcpick-pop-note" id="srcpick-note">Thingy can draw from all three sources.</p>
-                </div>
-              </div>
-              <span class="composer-spacer"></span>
-              <span id="librarian-question-count"></span>
-              <button type="submit" class="composer-send" aria-label="Ask Thingy" title="Ask Thingy" data-tinylytics-event="librarian.question_submit">
-                <span class="composer-send-ask" data-thingy-icon="arrow-up" aria-hidden="true"></span>
-                <span class="composer-send-stop" data-thingy-icon="square" aria-hidden="true"></span>
-              </button>
-            </div>
-            <span class="sr-only" id="librarian-source-error" aria-live="polite"></span>
-          </form>
-          <p class="thingy-ai-note" id="thingy-ai-note">Thingy is AI and can make mistakes. Please double-check responses.</p>
-        </div>
-      </div>
-    </section>
-  </div>
-
-</section>
-
-<script>
-  window.ThingyConfig = __THINGY_CHAT_CONFIG__;
-</script>
   <script type="module" src="/src/pages/chat.ts"></script>
   </main>
 

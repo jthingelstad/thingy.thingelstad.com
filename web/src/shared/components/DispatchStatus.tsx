@@ -1,4 +1,3 @@
-import { render } from 'preact';
 import { dispatchStatusKind, dispatchStatusMessage } from '../stores/dispatch-store.ts';
 
 function DispatchStatus() {
@@ -11,10 +10,4 @@ function DispatchStatus() {
   );
 }
 
-function mountDispatchStatus(host: HTMLElement | null) {
-  if (!host) return () => {};
-  render(<DispatchStatus />, host);
-  return () => render(null, host);
-}
-
-export { DispatchStatus, mountDispatchStatus };
+export { DispatchStatus };

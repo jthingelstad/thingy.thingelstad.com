@@ -159,6 +159,12 @@ Enabled Tinylytics features:
 - Beacon delivery for outbound links with `beacon`.
 - Tinylytics Webmention endpoint in the document head.
 
+The executable Tinylytics embed only loads on the public homepage. Chat,
+Dispatch, sign-in, and Discord verification deliberately do not execute
+third-party JavaScript because those routes handle browser-held bearer
+credentials or one-time verification values. Existing event hooks remain
+safe no-ops when the embed is absent.
+
 Public hit counters, country flags, and kudos are intentionally not shown in
 the current chat-client UI.
 

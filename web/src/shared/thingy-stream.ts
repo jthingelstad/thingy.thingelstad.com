@@ -1,5 +1,6 @@
 // @ts-check
 import { DEFAULT_API_TIMEOUT_MS } from './thingy-timeouts.ts';
+import { looseApiError, validateStreamData } from './thingy-contracts.ts';
 
 function parseBlock(block: unknown): { eventName: string; data: ThingyStreamData } | null {
   let eventName = 'message';
@@ -15,7 +16,7 @@ function parseBlock(block: unknown): { eventName: string; data: ThingyStreamData
   if (!dataLines.length) return null;
   const raw = dataLines.join('\n');
   try {
-    return { eventName, data: JSON.parse(raw) as ThingyStreamData };
+    return { eventName, data: validateStreamData(eventName, JSON.parse(raw)) };
   } catch (error) {
     const streamError = new Error('Thingy sent a malformed stream event. Please try again.');
     streamError.cause = error;
@@ -76,7 +77,7 @@ async function postJsonStream(options: ThingyRequestOptions = {}): Promise<Respo
     });
   if (!response.ok || !response.body) {
     const requestId = response.headers.get('x-request-id') || '';
-    const data = (await response.json().catch(() => ({}))) as ThingyApiResponse;
+    const data = looseApiError(await response.json().catch(() => ({})));
     const message = data.error || 'Thingy is unavailable.';
     const error = new Error(requestId ? `${message} Reference: ${requestId}` : message);
     error.requestId = requestId;
@@ -84,7 +85,7 @@ async function postJsonStream(options: ThingyRequestOptions = {}): Promise<Respo
     throw error;
   }
   if (/application\/json/i.test(response.headers.get('content-type') || '')) {
-    const data = (await response.json().catch(() => ({}))) as ThingyApiResponse;
+    const data = looseApiError(await response.json().catch(() => ({})));
     const message = data.errorMessage || data.error || data.message || 'Thingy returned an unexpected stream response.';
     const error = new Error(message);
     error.data = data;

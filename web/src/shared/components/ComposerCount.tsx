@@ -1,4 +1,3 @@
-import { render } from 'preact';
 import type { Signal } from '@preact/signals';
 import { questionText } from '../stores/chat-store.ts';
 
@@ -21,10 +20,4 @@ function ComposerCount({ maxChars, text = questionText }: ComposerCountProps) {
   );
 }
 
-function mountComposerCount(host: HTMLElement | null, props: ComposerCountProps) {
-  if (!host) return () => {};
-  render(<ComposerCount {...props} />, host);
-  return () => render(null, host);
-}
-
-export { ComposerCount, mountComposerCount };
+export { ComposerCount };

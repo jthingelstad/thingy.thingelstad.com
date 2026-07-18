@@ -1,4 +1,4 @@
-import { render, type JSX } from 'preact';
+import { type JSX } from 'preact';
 import { iconSvg } from '../thingy-icons.ts';
 import { hasSources, interactionBusy, questionText, stoppable } from '../stores/chat-store.ts';
 
@@ -41,10 +41,4 @@ function ComposerSubmit({ maxChars, onStop }: ComposerSubmitProps) {
   );
 }
 
-function mountComposerSubmit(host: HTMLElement | null, props: ComposerSubmitProps) {
-  if (!host) return () => {};
-  render(<ComposerSubmit {...props} />, host);
-  return () => render(null, host);
-}
-
-export { ComposerSubmit, mountComposerSubmit };
+export { ComposerSubmit };

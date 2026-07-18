@@ -1,4 +1,3 @@
-import { render } from 'preact';
 import { iconSvg } from '../thingy-icons.ts';
 import { modeClass, modeIcon } from '../thingy-modes.ts';
 import { activeConversationId, availableModes, conversations } from '../stores/chat-store.ts';
@@ -85,9 +84,4 @@ function RailRecents({ maxRecents = DEFAULT_MAX_RECENTS, onOpen, onDelete }: Rai
   );
 }
 
-function mountRailRecents(host: HTMLElement | null, props: RailRecentsProps) {
-  if (!host) return;
-  render(<RailRecents {...props} />, host);
-}
-
-export { mountRailRecents, RailRecents };
+export { RailRecents };

@@ -428,7 +428,7 @@ function createDispatchActions(options: DispatchActionsOptions = {}) {
 
   function setBusy(value: boolean, text = '') {
     dispatchBusySignal.value = Boolean(value);
-    setStatus(text || '');
+    if (text) setStatus(text);
     onRender();
   }
 
@@ -656,17 +656,18 @@ function createDispatchActions(options: DispatchActionsOptions = {}) {
       await saveDraftToServer(activeDraft(), { status: ready ? 'ready' : 'needs_clarification' });
       setStatus('');
     } catch (error) {
+      const failureMessage = errorMessage(error, 'I could not plan that Dispatch right now.');
       updateDraft(previous);
       progress('planning', 'Planning stopped before Thingy could finish this pass.', activeDraft(), {
         status: 'failed'
       });
       if (!answerHasContent) {
-        addMessage('assistant', errorMessage(error, 'I could not plan that Dispatch right now.'));
+        addMessage('assistant', failureMessage);
       }
       saveDraftToServer(activeDraft(), {
         status: activeDraft().stage === 'empty' ? 'draft' : activeDraft().stage
       }).catch(() => {});
-      setStatus('Thingy could not plan that right now.', 'error');
+      setStatus(failureMessage, 'error');
     } finally {
       setBusy(false);
       render();

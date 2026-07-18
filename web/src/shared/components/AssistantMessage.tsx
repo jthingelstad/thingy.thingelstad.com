@@ -1,7 +1,6 @@
-import { render } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { useComputed } from '@preact/signals';
-import { renderAssistantResponse, renderCuriosityMap } from '../thingy-chat-rendering.ts';
+import { renderAssistantResponse } from '../thingy-chat-rendering.ts';
 import { escapeHtml } from '../thingy-markdown.ts';
 import { formatElapsedTime } from '../models/assistant-message.ts';
 
@@ -9,12 +8,20 @@ function StreamNote({ text }: { text: string }) {
   return <p class="librarian-stream-note">{text}</p>;
 }
 
-function StreamError({ message, retryPrompt }: { message: string; retryPrompt: string }) {
+function StreamError({
+  message,
+  retryPrompt,
+  onRetry
+}: {
+  message: string;
+  retryPrompt: string;
+  onRetry?: (prompt: string) => void;
+}) {
   return (
     <div class="librarian-stream-error">
       <p>{message}</p>
       {retryPrompt ? (
-        <button type="button" class="librarian-retry" data-retry-prompt={retryPrompt}>
+        <button type="button" class="librarian-retry" onClick={() => onRetry?.(retryPrompt)}>
           Try again
         </button>
       ) : null}
@@ -45,7 +52,7 @@ function AssistantBody({ model }: { model: AssistantMessageModel }) {
   return <div dangerouslySetInnerHTML={{ __html: html.value }} />;
 }
 
-function AssistantMessage({ model }: { model: AssistantMessageModel }) {
+function AssistantMessage({ model, onRetry }: { model: AssistantMessageModel; onRetry?: (prompt: string) => void }) {
   const status = model.status.value;
   useEffect(() => {
     if (status !== 'pending' && status !== 'streaming') return undefined;
@@ -69,16 +76,11 @@ function AssistantMessage({ model }: { model: AssistantMessageModel }) {
         <StreamError
           message={hasPartial.value ? `Thingy lost the thread mid-answer. ${errorMessage}` : errorMessage}
           retryPrompt={retryPrompt}
+          onRetry={onRetry}
         />
       ) : null}
     </>
   );
 }
 
-function mountAssistantMessage(host: HTMLElement | null, model: AssistantMessageModel) {
-  if (!host) return () => {};
-  render(<AssistantMessage model={model} />, host);
-  return () => render(null, host);
-}
-
-export { AssistantMessage, mountAssistantMessage, renderCuriosityMap };
+export { AssistantMessage };

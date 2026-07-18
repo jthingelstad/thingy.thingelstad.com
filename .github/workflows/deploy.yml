@@ -38,7 +38,7 @@ jobs:
 
       - run: npm audit --audit-level=high
 
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
 
       - run: npm run format:check
 
@@ -50,7 +50,7 @@ jobs:
 
       - run: npm run knip
 
-      - run: npm test
+      - run: npm run test:coverage
 
       - run: npm run build
         env:

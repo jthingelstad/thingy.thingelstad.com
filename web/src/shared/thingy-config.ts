@@ -1,5 +1,21 @@
+let cachedConfig: ThingyPublicConfig | null = null;
+
+function decodeConfig(value: string) {
+  if (!value) return {};
+  try {
+    const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+    return JSON.parse(window.atob(padded)) as ThingyPublicConfig;
+  } catch (error) {
+    return {};
+  }
+}
+
 function publicConfig() {
-  return window.ThingyConfig || {};
+  if (cachedConfig) return cachedConfig;
+  const encoded = document.querySelector<HTMLMetaElement>('meta[name="thingy-config"]')?.content || '';
+  cachedConfig = Object.freeze({ ...decodeConfig(encoded), ...(window.ThingyConfig || {}) });
+  return cachedConfig;
 }
 
 function librarianApiUrl() {
@@ -27,4 +43,4 @@ function buildId() {
   return String(publicConfig().buildId || 'dev');
 }
 
-export { buildId, librarianApiUrl, librarianStreamUrl, networkLinks, publicConfig, tinylyticsId };
+export { buildId, librarianApiUrl, librarianStreamUrl, networkLinks, tinylyticsId };

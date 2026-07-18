@@ -29,14 +29,14 @@ test('dispatch reads URL params before Tinylytics strips them', async () => {
 });
 
 test('chat keeps signed-in invite links out of the sign-in redirect loop', async () => {
-  const sourceText = await source('../src/shared/thingy-chat.ts');
+  const sourceText = await source('../src/shared/components/ChatApp.tsx');
   const tokenBranch = sourceText.indexOf('} else if (actions.token()) {');
-  const emailBranch = sourceText.indexOf('} else if (initialEmailFromUrl) {');
+  const redirectBranch = sourceText.indexOf("track(initial.email ? 'librarian.auth_auto_start'");
 
   assert.ok(tokenBranch > -1);
-  assert.ok(emailBranch > -1);
+  assert.ok(redirectBranch > -1);
   assert.ok(
-    tokenBranch < emailBranch,
+    tokenBranch < redirectBranch,
     'a valid stored session must take precedence over email= so signed-in prompt/from links do not bounce through /signin/'
   );
 });

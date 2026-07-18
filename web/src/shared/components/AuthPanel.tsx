@@ -1,4 +1,4 @@
-import { render, type JSX } from 'preact';
+import { type JSX } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import { authAction, authBusy, authEmail, authEmailError, authMessage } from '../stores/chat-store.ts';
 
@@ -108,14 +108,8 @@ function AuthPanel({ onSubmit, onAddSubscriber, onResendConfirmation, onEmailInp
   );
 }
 
-function mountAuthPanel(host: HTMLElement | null, props: AuthPanelProps) {
-  if (!host) return () => {};
-  render(<AuthPanel {...props} />, host);
-  return () => render(null, host);
-}
-
 function focusAuthEmail() {
   authInput?.focus();
 }
 
-export { AuthPanel, focusAuthEmail, mountAuthPanel };
+export { AuthPanel, focusAuthEmail };

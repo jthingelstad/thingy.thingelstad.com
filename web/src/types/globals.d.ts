@@ -194,6 +194,14 @@ interface ThingyDispatchMessage {
   completedAt?: number | string;
 }
 
+interface ThingyChatViewMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  prompt?: string;
+  scope?: string;
+  model?: AssistantMessageModel;
+}
+
 interface ThingyDispatchDraftSummary {
   id: string;
   title: string;

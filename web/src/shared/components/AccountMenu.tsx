@@ -1,4 +1,4 @@
-import { Fragment, render, type JSX } from 'preact';
+import { Fragment, type JSX } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { useComputed, type Signal } from '@preact/signals';
 import { iconSvg } from '../thingy-icons.ts';
@@ -482,10 +482,4 @@ function AccountMenu({
   );
 }
 
-function mountAccountMenu(host: HTMLElement | null, props: AccountMenuProps) {
-  if (!host) return () => {};
-  render(<AccountMenu {...props} />, host);
-  return () => render(null, host);
-}
-
-export { AccountMenu, mountAccountMenu };
+export { AccountMenu };

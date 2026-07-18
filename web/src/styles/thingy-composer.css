@@ -133,17 +133,11 @@
   color: var(--muted);
   letter-spacing: 0.03em;
   white-space: nowrap;
-  opacity: 0;
-  transition: opacity 0.14s ease;
+  opacity: 1;
 }
 
 .composer-count.warning {
-  opacity: 1;
   color: color-mix(in srgb, #b23a2a 70%, var(--muted));
-}
-
-.composer-box.thingy-input:focus-within .composer-count {
-  opacity: 0.7;
 }
 
 :is(.composer-send, .librarian-form button.composer-send) {

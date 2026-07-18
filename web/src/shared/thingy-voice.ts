@@ -3,22 +3,22 @@ function speechInputCtor() {
 }
 
 interface DictationOptions {
-  input?: HTMLTextAreaElement | null;
-  button?: HTMLButtonElement | null;
-  status?: HTMLElement | null;
   maxChars?: number;
   isBusy?: () => boolean;
-  onInput?: () => void;
+  getText?: () => string;
+  onText?: (value: string) => void;
+  onStatus?: (value: string) => void;
+  onListeningChange?: (value: boolean) => void;
   onTrack?: (name: string, value?: string) => void;
 }
 
 function createDictationController(options: DictationOptions = {}) {
-  const input = options.input || null;
-  const button = options.button || null;
-  const status = options.status || null;
-  const maxChars = Number(options.maxChars || input?.getAttribute('maxlength') || 1200);
+  const maxChars = Number(options.maxChars || 1200);
   const isBusy = typeof options.isBusy === 'function' ? options.isBusy : () => false;
-  const onInput = typeof options.onInput === 'function' ? options.onInput : () => {};
+  const getText = typeof options.getText === 'function' ? options.getText : () => '';
+  const onText = typeof options.onText === 'function' ? options.onText : () => {};
+  const onStatus = typeof options.onStatus === 'function' ? options.onStatus : () => {};
+  const onListeningChange = typeof options.onListeningChange === 'function' ? options.onListeningChange : () => {};
   const onTrack = typeof options.onTrack === 'function' ? options.onTrack : () => {};
   let recognition: ThingySpeechRecognition | null = null;
   let listening = false;
@@ -30,33 +30,17 @@ function createDictationController(options: DictationOptions = {}) {
   }
 
   function setStatus(message: string) {
-    if (status) status.textContent = message || '';
+    onStatus(message || '');
   }
 
-  function updateButtonState() {
-    if (!button) return;
-    const canUse = supported();
-    const busy = isBusy();
-    button.disabled = !canUse || (busy && !listening);
-    button.classList.toggle('is-listening', listening);
-    button.setAttribute('aria-pressed', listening ? 'true' : 'false');
-    if (!canUse) {
-      button.title = 'Speech input not supported in this browser';
-      button.setAttribute('aria-label', 'Speech input not supported');
-    } else if (listening) {
-      button.title = 'Stop dictation';
-      button.setAttribute('aria-label', 'Stop dictation');
-    } else {
-      button.title = 'Dictate prompt';
-      button.setAttribute('aria-label', 'Dictate prompt');
-    }
+  function setListening(value: boolean) {
+    listening = value;
+    onListeningChange(value);
   }
 
   function render(interim = '') {
-    if (!input) return;
     const parts = [baseText, finalText, interim].map((part) => String(part || '').trim()).filter(Boolean);
-    input.value = parts.join(' ').slice(0, maxChars);
-    onInput();
+    onText(parts.join(' ').slice(0, maxChars));
   }
 
   function stop() {
@@ -70,11 +54,9 @@ function createDictationController(options: DictationOptions = {}) {
   }
 
   function start() {
-    if (!input) return;
     const Recognition = speechInputCtor();
     if (!Recognition) {
       setStatus('Speech input is not supported in this browser.');
-      updateButtonState();
       return;
     }
     if (listening) {
@@ -82,15 +64,13 @@ function createDictationController(options: DictationOptions = {}) {
       return;
     }
     if (isBusy()) {
-      updateButtonState();
       return;
     }
     recognition = new Recognition();
-    baseText = input.value.trim();
+    baseText = getText().trim();
     finalText = '';
-    listening = true;
+    setListening(true);
     setStatus('Listening...');
-    updateButtonState();
     recognition.lang = navigator.language || 'en-US';
     recognition.continuous = true;
     recognition.interimResults = true;
@@ -119,31 +99,30 @@ function createDictationController(options: DictationOptions = {}) {
       }
     };
     recognition.onend = () => {
-      listening = false;
+      setListening(false);
       recognition = null;
-      if (status && status.textContent === 'Listening...') setStatus('');
-      updateButtonState();
+      setStatus('');
     };
     try {
       recognition.start();
       onTrack('librarian.voice_input_start');
     } catch (error) {
-      listening = false;
+      setListening(false);
       recognition = null;
       setStatus('Could not start dictation.');
-      updateButtonState();
       onTrack('librarian.voice_input_error', 'start');
     }
   }
 
-  if (button) button.addEventListener('click', start);
-
   return {
+    dispose: () => {
+      stop();
+      setListening(false);
+    },
     isListening: () => listening,
     start,
     stop,
-    supported,
-    updateButtonState
+    supported
   };
 }
 
