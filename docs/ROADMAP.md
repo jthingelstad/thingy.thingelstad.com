@@ -252,6 +252,17 @@ Discord is probably not the core interaction surface, but broadcast-style moment
 
 Each broadcast should deep-link into authenticated web Thingy with a seeded prompt and a new conversation.
 
+### Agentic Interface (WebMCP)
+
+Thingy has a human interface in HTML and its sources have feed interfaces in RSS and JSON Feed. The
+missing one is an agentic interface: a way for someone else's AI agent to use the archive as a
+capability rather than as a page to scrape.
+
+WebMCP is the cheap path to that, because tools registered by the page run inside the reader's browser
+and therefore inherit the magic-link session already in place. No OAuth server, no API keys, no second
+identity system. A full proposal — phasing, tool surface, backend implications, and risks — is in
+[`docs/WEBMCP.md`](WEBMCP.md). It is a proposal only; nothing is built.
+
 ## Open Decisions
 
 1. Should `Research Guide` be supporting-member-only, or available to all readers with usage limits?
