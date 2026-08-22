@@ -7,10 +7,10 @@ Thingy's member channel and vice versa.
 
 ## `admin.sh`
 
-Service control for the launchd agent (`com.weeklything.thingy-bridge`).
+Service control for the launchd agent (`com.thingelstad.thingy-bridge`).
 
 ```bash
-apps/thingy_bridge/scripts/admin.sh install   # write ~/Library/LaunchAgents/com.weeklything.thingy-bridge.plist
+apps/thingy_bridge/scripts/admin.sh install   # write ~/Library/LaunchAgents/com.thingelstad.thingy-bridge.plist
 apps/thingy_bridge/scripts/admin.sh start     # launchctl bootstrap
 apps/thingy_bridge/scripts/admin.sh stop      # launchctl bootout
 apps/thingy_bridge/scripts/admin.sh restart
@@ -22,6 +22,8 @@ apps/thingy_bridge/scripts/admin.sh tail      # tail -F logs/bridge.{log,err}
 
 The plist runs `.venv/bin/python -m apps.thingy_bridge.bot`
 with the repo root as working directory.
+It starts automatically when the user launchd domain loads after login, and
+launchd keeps it running if the process exits.
 
 **Environment** — `admin.sh` uses the root `.venv` created from `uv.lock`.
 

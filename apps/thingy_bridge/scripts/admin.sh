@@ -19,11 +19,26 @@ require_environment() {
 }
 
 status() {
-    if launchctl list | grep -q "$LABEL"; then
-        echo "thingy-bridge is running."
-    else
+    local details state pid last_exit
+    if ! details="$(launchctl print "gui/$(id -u)/$LABEL" 2>/dev/null)"; then
         echo "thingy-bridge is stopped."
+        return
     fi
+    state="$(printf '%s\n' "$details" | awk '$1 == "state" { print $3; exit }')"
+    pid="$(printf '%s\n' "$details" | awk '$1 == "pid" { print $3; exit }')"
+    if [ "$state" = "running" ] && [ -n "$pid" ]; then
+        echo "thingy-bridge is running (pid $pid)."
+        return
+    fi
+    last_exit="$(printf '%s\n' "$details" | awk -F'= ' '/last exit code/ { print $2; exit }')"
+    echo "thingy-bridge is loaded but not running (state: ${state:-unknown}, last exit: ${last_exit:-unknown})."
+}
+
+require_running() {
+    local details
+    details="$(launchctl print "gui/$(id -u)/$LABEL" 2>/dev/null)" || return 1
+    printf '%s\n' "$details" | grep -q 'state = running' &&
+        printf '%s\n' "$details" | grep -q 'pid = '
 }
 
 stop_bot() {
@@ -43,6 +58,11 @@ start_bot() {
     launchctl bootstrap "gui/$(id -u)" "$PLIST"
     sleep 3
     status
+    if ! require_running; then
+        echo "Error: Thingy Bridge failed to reach running state." >&2
+        tail -n 40 "$LOG_DIR/bridge.err" >&2 || true
+        exit 1
+    fi
 }
 
 restart_bot() {
@@ -82,7 +102,7 @@ install_bot() {
         <string>1</string>
     </dict>
     <key>RunAtLoad</key>
-    <false/>
+    <true/>
     <key>KeepAlive</key>
     <true/>
     <key>ThrottleInterval</key>
