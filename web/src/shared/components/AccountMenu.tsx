@@ -2,7 +2,7 @@ import { type JSX } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { useComputed, type Signal } from '@preact/signals';
 import { buildId } from '../thingy-config.ts';
-import { discordConnection, discordConnectionName, hasSupportingAccess, savePreferredName } from '../thingy-account.ts';
+import { hasSupportingAccess, savePreferredName } from '../thingy-account.ts';
 import { errorMessage } from '../thingy-errors.ts';
 import {
   accountMenuOpen,
@@ -132,9 +132,6 @@ function AccountMenu({
     window.location.href = session.signInUrl(returnTo);
   }
 
-  const connection = discordConnection(profile);
-  const connectedName = discordConnectionName(profile);
-
   return (
     <>
       <button
@@ -176,21 +173,6 @@ function AccountMenu({
           </div>
           <p aria-live="polite">{nameStatus}</p>
         </form>
-        {supporting ? (
-          <div class="rail-account-setting rail-account-discord">
-            <span>Discord</span>
-            <p>
-              {connection
-                ? connectedName
-                  ? `Connected as ${connectedName}`
-                  : 'Connected to Discord.'
-                : 'Supporting Members can connect Discord.'}
-            </p>
-            <a class="rail-menu-link" href="/discord/">
-              {connection ? 'Refresh Discord Connection' : 'Link to Discord'}
-            </a>
-          </div>
-        ) : null}
         <ProfileTrigger
           onOpen={(event) => {
             event.stopPropagation();
@@ -215,7 +197,6 @@ function AccountMenu({
         profile={profile}
         email={email}
         preferredName={preferredName}
-        connectedName={connectedName}
         supporting={supporting}
       />
     </>

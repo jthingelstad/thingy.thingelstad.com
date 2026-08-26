@@ -159,20 +159,6 @@ async function checkSignInRedirect(browser) {
   await context.close();
 }
 
-async function checkDiscordSignedOut(browser) {
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  const failures = collectUiFailures(page);
-  await page.goto(`${baseUrl}/discord/?state=smoke-state`);
-  await page.waitForSelector('.thingy-discord-signin:not([hidden])');
-  const signInUrl = new URL(await page.locator('.thingy-discord-signin a').getAttribute('href'), baseUrl);
-  assert.equal(signInUrl.pathname, '/signin/');
-  assert.equal(signInUrl.searchParams.get('return'), '/discord/?state=smoke-state');
-  await assertAccessible(page, 'Discord connection');
-  assertNoUiFailures(failures, 'Discord connection');
-  await context.close();
-}
-
 async function checkChat(browser) {
   const context = await browser.newContext();
   await seedSession(context);
@@ -379,7 +365,6 @@ async function main() {
     const browser = await browserType.launch();
     try {
       await checkSignInRedirect(browser);
-      await checkDiscordSignedOut(browser);
       await checkChat(browser);
       await checkDispatch(browser);
       await checkMobileChat(browser);

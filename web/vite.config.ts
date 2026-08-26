@@ -81,8 +81,7 @@ function htmlConfigPlugin(): Plugin {
         .replaceAll('__THINGY_CONNECT_SRC__', connectSrc)
         .replace('__THINGY_CHAT_CONFIG__', encode(config))
         .replace('__THINGY_DISPATCH_CONFIG__', encode(config))
-        .replace('__THINGY_SIGNIN_CONFIG__', encode({ librarianApiUrl }))
-        .replace('__THINGY_DISCORD_CONFIG__', encode({ librarianApiUrl }));
+        .replace('__THINGY_SIGNIN_CONFIG__', encode({ librarianApiUrl }));
     }
   };
 }
@@ -101,7 +100,6 @@ export default defineConfig({
         home: resolve(__dirname, 'index.html'),
         chat: resolve(__dirname, 'chat/index.html'),
         dispatch: resolve(__dirname, 'dispatch/index.html'),
-        discord: resolve(__dirname, 'discord/index.html'),
         signin: resolve(__dirname, 'signin/index.html')
       }
     }

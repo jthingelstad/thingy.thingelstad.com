@@ -1,3 +1,5 @@
+# The retired bridge's local runtime artifacts remain temporarily for
+# recovery and backup verification. No executable bridge code lives here.
 data/
 logs/
 *.log

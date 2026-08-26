@@ -54,86 +54,20 @@ test('returnPath rejects external and protocol-relative return targets', async (
   assert.equal(session.returnPath('/dispatch/'), '/dispatch/');
 });
 
-test('mergeProfile preserves top-level Discord connection from auth responses', async () => {
+test('mergeProfile drops retired Discord identity fields', async () => {
   installWindow();
   const session = await import('../src/shared/thingy-session.ts');
 
   const profile = session.mergeProfile({
     email: 'reader@example.com',
-    status: 'premium',
-    entitlements: ['supporting_member'],
-    profile: { preferred_name: 'Reader' },
-    discord_connection: {
-      connected: true,
-      username: 'reader',
-      display_name: 'Reader Discord'
-    }
+    profile: {
+      preferred_name: 'Reader',
+      discord_connection: { connected: true, display_name: 'Retired Link' }
+    },
+    discord_user: { connected: true, display_name: 'Retired Link' }
   });
 
-  assert.equal(profile.discord_connection.display_name, 'Reader Discord');
-  assert.equal(session.storedProfile().discord_connection.username, 'reader');
-});
-
-test('mergeProfile preserves alternate top-level Discord connection shapes from auth responses', async () => {
-  installWindow();
-  const session = await import('../src/shared/thingy-session.ts');
-
-  const profile = session.mergeProfile({
-    email: 'reader@example.com',
-    profile: { preferred_name: 'Reader' },
-    discord_user: {
-      connected: true,
-      username: 'reader',
-      global_name: 'Reader Global',
-      display_name: 'Reader Discord'
-    }
-  });
-
-  assert.equal(profile.discord_connection.display_name, 'Reader Discord');
-  assert.equal(session.storedProfile().discord_connection.global_name, 'Reader Global');
-});
-
-test('mergeProfile treats server Discord null as authoritative', async () => {
-  installWindow();
-  const session = await import('../src/shared/thingy-session.ts');
-
-  session.mergeProfile({
-    email: 'reader@example.com',
-    discord_connection: {
-      connected: true,
-      username: 'reader',
-      display_name: 'Reader Discord'
-    }
-  });
-
-  const profile = session.mergeProfile({
-    email: 'reader@example.com',
-    profile: { discord_connection: null }
-  });
-
-  assert.equal(profile.discord_connection, null);
-  assert.equal(session.storedProfile().discord_connection, null);
-});
-
-test('mergeProfile treats top-level Discord null as authoritative', async () => {
-  installWindow();
-  const session = await import('../src/shared/thingy-session.ts');
-
-  session.mergeProfile({
-    email: 'reader@example.com',
-    discordConnection: {
-      connected: true,
-      username: 'reader',
-      display_name: 'Reader Discord'
-    }
-  });
-
-  const profile = session.mergeProfile({
-    email: 'reader@example.com',
-    discord_connection: null,
-    profile: { preferred_name: 'Reader' }
-  });
-
-  assert.equal(profile.discord_connection, null);
-  assert.equal(session.storedProfile().discord_connection, null);
+  assert.equal(Object.hasOwn(profile, 'discord_connection'), false);
+  assert.equal(Object.hasOwn(profile, 'discord_user'), false);
+  assert.equal(session.storedProfile().preferred_name, 'Reader');
 });

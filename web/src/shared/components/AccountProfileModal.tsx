@@ -1,6 +1,5 @@
 import { Fragment, type JSX } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { discordConnectionName } from '../thingy-account.ts';
 import { errorMessage } from '../thingy-errors.ts';
 import { displayPreferredName, displayProfile } from '../stores/ui-store.ts';
 import { ThingyIcon } from './ThingyIcon.tsx';
@@ -15,7 +14,6 @@ interface AccountProfileModalProps {
   profile: LibrarianProfile;
   email: string;
   preferredName: string;
-  connectedName: string;
   supporting: boolean;
 }
 
@@ -76,7 +74,6 @@ function AccountProfileModal({
   profile,
   email,
   preferredName,
-  connectedName,
   supporting
 }: AccountProfileModalProps) {
   const [viewProfile, setViewProfile] = useState<LibrarianProfile>(profile || {});
@@ -85,7 +82,6 @@ function AccountProfileModal({
   const [profileError, setProfileError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const onCloseRef = useRef(onClose);
-  const viewConnectedName = discordConnectionName(viewProfile) || connectedName;
   const viewPreferredName = String(preferredName || viewProfile.preferred_name || '').trim();
   const firstSeen = accountOverview.first_seen_at || viewProfile.first_seen_at;
   const lastActivity = accountOverview.last_seen_at || viewProfile.last_seen_at;
@@ -94,7 +90,6 @@ function AccountProfileModal({
       viewPreferredName ? ['Name', viewPreferredName] : ['Name', 'Not set'],
       email ? ['Email', email] : null,
       ['Access', supporting ? 'Supporting Member' : 'Weekly Thing reader'],
-      viewConnectedName ? ['Discord', viewConnectedName] : ['Discord', 'Not connected in Thingy profile'],
       ['First seen', formatProfileDate(firstSeen) || 'Not recorded'],
       ['Last activity', formatProfileDate(lastActivity) || 'Not recorded'],
       ['Active span', formatActiveSpan(firstSeen, lastActivity)],
@@ -198,8 +193,8 @@ function AccountProfileModal({
           <section class="thingy-memory-danger-zone" aria-label="Delete Thingy Profile">
             <h3>Delete Thingy Profile</h3>
             <p>
-              This deletes your Thingy profile, conversations, Dispatch history, and Discord link. It does not
-              unsubscribe you from Weekly Thing.
+              This deletes your Thingy profile, conversations, and Dispatch history. It does not unsubscribe you from
+              Weekly Thing.
             </p>
             {confirmDelete ? (
               <div class="thingy-memory-danger-actions">

@@ -3,8 +3,8 @@
 > **Status: COMPLETE (June 2026).** All six steps below shipped, plus the
 > follow-ups: shell/account components, signal-backed chat state (the
 > `state` Proxy in `bootChat`), and the extracted dispatch action layer
-> (`thingy-dispatch-actions.ts`). Remaining intentionally-unmigrated surfaces:
-> the signin and discord pages (small, self-contained vanilla modules)
+> (`thingy-dispatch-actions.ts`). The retired Discord surface was removed in
+> August 2026. Remaining intentionally-unmigrated surfaces are the signin page
 > and the source picker / mode select / mobile title inside chat.
 > This document is retained as the design brief and architecture map.
 
@@ -29,7 +29,7 @@ mutation→render orchestration that makes the app brittle, not to rewrite it.
 ## What does NOT change
 
 - **Hosting**: static `vite build` → `_site/` → GitHub Pages. No server, no SSR.
-- **Multi-page structure**: `/`, `/chat/`, `/dispatch/`, `/signin/`, `/discord/`
+- **Multi-page structure**: `/`, `/chat/`, `/dispatch/`, and `/signin/`
   remain separate Vite entry points.
 - **The module layer**: `thingy-markdown.ts`, `thingy-stream.ts` (SSE parser),
   `thingy-modes.ts`, `thingy-scope.ts`, `thingy-icons.ts`, `thingy-http.ts`,
@@ -88,7 +88,7 @@ Multi-tab sync, session refresh, and storage persistence attach to the store
 Shared (used by both apps):
 - `<AppShell>` — rail collapse/scrim/mobile state (replaces `thingy-shell.js`)
 - `<Rail>` / `<RailRecents>` — recents list, active highlight, delete
-- `<AccountMenu>` — identity, preferred name, Discord row, logout
+- `<AccountMenu>` — identity, preferred name, profile controls, logout
 - `<Composer>` — textarea autosize, count, voice, send/stop morphing button
 - `<Notice>` — toast surface (replaces the Phase 0 `showNotice` helper)
 - `<ConfirmDialog>` / inline rename — retires `window.prompt`/`confirm`

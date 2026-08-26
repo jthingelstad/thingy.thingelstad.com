@@ -3,7 +3,7 @@
 Thingy is the standalone web home for Jamie Thingelstad's archive agent:
 `https://thingy.thingelstad.com/`.
 
-For product-surface alignment across the web app, Discord, and Studio, see
+For product-surface alignment across the web app and Librarian API, see
 [`docs/THINGY_SURFACES.md`](docs/THINGY_SURFACES.md).
 
 ## URL Parameters
@@ -86,13 +86,6 @@ Example:
 One-time magic-link token created by the Librarian API. When present, Thingy
 redeems it with `/auth` and removes it from the browser URL after the attempt.
 These links are sent by email from `thingy@thingelstad.com`.
-
-### `state` / `code`
-
-Hidden Discord verification parameters. `state` is used on `/discord/` after a
-Supporting Member starts `/thingy verify` in Discord. `code` is reserved for
-one-time verification flows. These should not be used in public links and are
-stripped before analytics loads.
 
 ### `dispatch_test`
 
@@ -182,10 +175,9 @@ Enabled Tinylytics features:
 - Tinylytics Webmention endpoint in the document head.
 
 The executable Tinylytics embed only loads on the public homepage. Chat,
-Dispatch, sign-in, and Discord verification deliberately do not execute
-third-party JavaScript because those routes handle browser-held bearer
-credentials or one-time verification values. Existing event hooks remain
-safe no-ops when the embed is absent.
+Dispatch, and sign-in deliberately do not execute third-party JavaScript
+because those routes handle browser-held bearer credentials or one-time login
+values. Existing event hooks remain safe no-ops when the embed is absent.
 
 Public hit counters, country flags, and kudos are intentionally not shown in
 the current chat-client UI.
@@ -202,8 +194,6 @@ browser URL after the app has read them:
 - `test`
 - `login_token`
 - `magic_token`
-- `state`
-- `code`
 
 This keeps Tinylytics page URLs clean and avoids recording typed emails or
 prompts in analytics.

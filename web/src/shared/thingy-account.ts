@@ -1,7 +1,6 @@
 // @ts-check
-// Pure account-identity helpers reused by the AccountMenu component, the
-// chat bootstrap (for preferred-name inference from messages), and the
-// Discord verification page. The previous createAccountPanel /
+// Pure account-identity helpers reused by the AccountMenu component and the
+// chat bootstrap (for preferred-name inference from messages). The previous createAccountPanel /
 // createAccountMenu / renderAccountIdentity factories were deleted when
 // AccountMenu.jsx took over the imperative rendering.
 
@@ -15,28 +14,6 @@ function hasSupportingAccess(profile: LibrarianProfile = {}): boolean {
 function hasOwnerAccess(profile: LibrarianProfile = {}): boolean {
   const entitlements = Array.isArray(profile.entitlements) ? profile.entitlements : [];
   return entitlements.includes('owner');
-}
-
-function discordConnection(profile: LibrarianProfile = {}): LibrarianDiscordConnection | null {
-  const candidates = [profile.discord_connection, profile.discordConnection, profile.discord_user, profile.discordUser];
-  const connection = candidates.find((value) => value && typeof value === 'object') || null;
-  if (!connection || connection.connected === false) return null;
-  const username = String(connection.username || connection.user_name || '').trim();
-  const globalName = String(connection.global_name || connection.globalName || '').trim();
-  const displayName = String(connection.display_name || connection.displayName || globalName || username).trim();
-  const connectedAt = String(connection.connected_at || connection.connectedAt || '').trim();
-  if (!displayName && !username && !globalName && connection.connected !== true && !connectedAt) return null;
-  return {
-    ...connection,
-    username,
-    global_name: globalName,
-    display_name: displayName || username || globalName,
-    connected_at: connectedAt
-  };
-}
-
-function discordConnectionName(profile: LibrarianProfile = {}): string {
-  return String(discordConnection(profile)?.display_name || '').trim();
 }
 
 function normalizePreferredName(value: unknown): string {
@@ -80,8 +57,6 @@ async function savePreferredName(
 }
 
 export {
-  discordConnection,
-  discordConnectionName,
   extractPreferredNameFromMessage,
   hasOwnerAccess,
   hasSupportingAccess,

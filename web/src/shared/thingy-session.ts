@@ -16,9 +16,7 @@ const privateReturnParams = [
   'dispatch_test',
   'test',
   'login_token',
-  'magic_token',
-  'state',
-  'code'
+  'magic_token'
 ];
 
 function apiUrl() {
@@ -106,27 +104,11 @@ function normalizeModes(modes: unknown): ThingyMode[] {
     : [];
 }
 
-function firstPresentObjectValue(source: Record<string, unknown> = {}, keys: string[] = []) {
-  if (!source || typeof source !== 'object') return undefined;
-  for (const key of keys) {
-    if (Object.prototype.hasOwnProperty.call(source, key)) return source[key];
-  }
-  return undefined;
-}
-
-function incomingDiscordConnection(data: ThingyAuthData = {}, profile: LibrarianProfile = {}) {
-  const keys = ['discord_connection', 'discordConnection', 'discord_user', 'discordUser'];
-  const topLevelValue = firstPresentObjectValue(data as Record<string, unknown>, keys);
-  if (topLevelValue !== undefined) return topLevelValue;
-  return firstPresentObjectValue(profile as Record<string, unknown>, keys);
-}
-
 function mergeProfile(data: ThingyAuthData = {}, email = ''): LibrarianProfile {
   const emailValue = normalizeEmail(data.email || email);
   if (emailValue) window.localStorage.setItem(userEmailKey, emailValue);
   const existingProfile = storedProfile();
   const incomingProfile = data.profile && typeof data.profile === 'object' ? data.profile : {};
-  const nextDiscordConnection = incomingDiscordConnection(data, incomingProfile);
   const hasIncomingEntitlements = Array.isArray(data.entitlements) || Array.isArray(incomingProfile.entitlements);
   const incomingEntitlements = Array.isArray(data.entitlements) ? data.entitlements : incomingProfile.entitlements;
   const entitlements = Array.isArray(incomingEntitlements) ? incomingEntitlements : existingProfile.entitlements;
@@ -143,10 +125,12 @@ function mergeProfile(data: ThingyAuthData = {}, email = ''): LibrarianProfile {
         )
       : Boolean(incomingProfile.supporting_member || existingProfile.supporting_member),
     entitlements,
-    discord_connection:
-      nextDiscordConnection === undefined ? existingProfile.discord_connection : nextDiscordConnection,
     modes: normalizeModes(data.modes || incomingProfile.modes || existingProfile.modes)
   };
+  const profileRecord = profile as Record<string, unknown>;
+  for (const key of ['discord_connection', 'discordConnection', 'discord_user', 'discordUser']) {
+    delete profileRecord[key];
+  }
   window.localStorage.setItem(userProfileKey, JSON.stringify(profile));
   return profile;
 }

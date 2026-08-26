@@ -1,8 +1,6 @@
 name: Build and Deploy (web)
 
 # Standalone Thingy site (web/) → GitHub Pages.
-# The Discord bridge (apps/thingy_bridge) is a separate process and is NOT
-# built or deployed here.
 on:
   push:
     branches: [main]

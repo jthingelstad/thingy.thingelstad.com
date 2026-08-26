@@ -16,14 +16,14 @@ product direction.
   conversations to users, and grant modes by entitlement.
 - **Modes are not alter egos.** A mode is a conversation-level contract: permission, tone, tool policy,
   logging, and user expectation. A conversation should not silently change modes midstream.
-- **The web app is the primary experience.** Discord is useful for operator notifications and follow-up
-  commands, but it is not the right home for nuanced, multi-conversation user experience.
+- **The web app is the experience.** Thingy is a focused, authenticated web client for nuanced,
+  multi-conversation archive work.
 - **The backend stays authoritative.** Auth, entitlements, conversation history, evaluation, tools, and
-  corpus intelligence live in Studio/Librarian. This repo is the thin web surface and bridge client.
+  corpus intelligence live in Librarian. This repo is the thin web surface.
 - **Durable source metadata over prompt cleverness.** Retrieval quality comes from the corpus and its
   link graph, not from ever-longer prompts.
 - **Server-side conversations are the canonical record.** The client never owns history.
-- **Operator review is asynchronous.** Discord is for notifications; it is never in the user request path.
+- **Operator review is asynchronous.** Reports and logs stay outside the user request path.
 
 ## Shipped
 
@@ -63,8 +63,6 @@ product direction.
 ### Operator Loop
 
 - Conversation activity and evaluator results are visible outside the user flow.
-- Discord webhooks provide event-driven notices without making user requests depend on the Discord bot.
-- The bot remains useful for follow-up actions such as inspecting conversations.
 - A local operator report provides a more grounded view of recent conversations, evaluations, feedback,
   and system behavior.
 
@@ -74,7 +72,7 @@ product direction.
   greeting renders immediately, so personalization never blocks the composer or delays the first question.
 - Thingy can remember the user's name. The earlier AI-synthesized reader memory was deliberately
   removed: server-side conversations cover continuity, and the profile is now basic account metadata
-  (name, Discord link, activity counts).
+  (name and activity counts).
 - Curiosity map creates visual trails through the archive and can seed new conversations.
 - Archive work/tool activity is visible in the chat, then collapses after completion.
 - Archive Sparks can surface adjacent ideas, though emission needs continued tuning.
@@ -135,7 +133,7 @@ Conversation modes need first-class observability.
 - Store `mode` on every turn/evaluation event so mode-specific failures are easy to audit.
 - Keep evaluator checks mode-aware: default Thingy should not overbuild, Research Guide should reason carefully across timelines, Thought Partner should challenge without inventing private context, and Trusted Circle should be warm without becoming ungrounded.
 - Show mode filters in the operator report.
-- Include mode in Discord webhook summaries without making the webhook verbose again.
+- Include mode in operator reports without making them verbose.
 
 ### No Hidden Owner Corpus for Now
 
@@ -154,8 +152,8 @@ of Thought Partner.
 
 - **Mode rollout and permissions**: finish the operational path for granting Trusted Circle access
   through Buttondown tags and make the operator report clearly surface mode usage.
-- **Better operator dashboard**: keep Discord webhooks as notifications, but move deeper review to a
-  local/web operator interface grounded in server-side conversations.
+- **Better operator dashboard**: keep review in a local/web operator interface grounded in server-side
+  conversations.
 - **Corpus freshness observability**: make it obvious when the API corpus was last built from each
   source and whether new blog/podcast content has landed.
 - **Citation discipline**: keep improving evaluator checks for citation-footer mismatches,
@@ -241,16 +239,6 @@ Supporting members could get a deeper mode that feels special without becoming p
 - Saved curiosity maps.
 - "Build me a reading path" prompts.
 - Early access to experimental archive features.
-
-### Archive Broadcasts
-
-Discord is probably not the core interaction surface, but broadcast-style moments may still be valuable:
-
-- "On this week in 2019..."
-- "A thread resurfaced across blog/newsletter/podcast..."
-- "New curiosity trail available..."
-
-Each broadcast should deep-link into authenticated web Thingy with a seeded prompt and a new conversation.
 
 ## Open Decisions
 

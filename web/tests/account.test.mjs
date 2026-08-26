@@ -2,8 +2,6 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
-  discordConnection,
-  discordConnectionName,
   extractPreferredNameFromMessage,
   hasOwnerAccess,
   normalizePreferredName,
@@ -54,56 +52,6 @@ test('savePreferredName rejects names the API does not confirm', async () => {
   };
 
   await assert.rejects(savePreferredName(fakeSession, 'Jamie', normalizePreferredName), /could not confirm/i);
-});
-
-test('discordConnectionName accepts canonical Discord connection profile shape', () => {
-  assert.equal(
-    discordConnectionName({
-      discord_connection: {
-        connected: true,
-        username: 'thingyuser',
-        global_name: 'Thingy User',
-        display_name: 'Thingy Display'
-      }
-    }),
-    'Thingy Display'
-  );
-});
-
-test('discordConnectionName accepts camelCase fallback profile shape', () => {
-  assert.equal(
-    discordConnectionName({
-      discordConnection: {
-        connected: true,
-        username: 'thingyuser',
-        globalName: 'Thingy User'
-      }
-    }),
-    'Thingy User'
-  );
-});
-
-test('discordConnection accepts linked records without a Discord display name', () => {
-  assert.deepEqual(
-    discordConnection({
-      discord_connection: {
-        connected: true,
-        connected_at: '2026-06-10T19:30:00Z'
-      }
-    }),
-    {
-      connected: true,
-      connected_at: '2026-06-10T19:30:00Z',
-      username: '',
-      global_name: '',
-      display_name: ''
-    }
-  );
-});
-
-test('discordConnection ignores disconnected or empty Discord connection values', () => {
-  assert.equal(discordConnection({ discord_connection: { connected: false, display_name: 'Nope' } }), null);
-  assert.equal(discordConnection({ discord_connection: {} }), null);
 });
 
 test('hasSupportingAccess recognises supporting members and owners', () => {

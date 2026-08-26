@@ -1,6 +1,7 @@
 # Thingy Tasks
 
-Concrete follow-ups for the web surface and bridge. Backend/API tasks live in the Studio repo's `docs/librarian-tasks.md`.
+Concrete follow-ups for the web surface. Backend/API tasks live with the
+Librarian implementation in the Studio repository.
 
 ## Access And Modes
 
@@ -22,7 +23,7 @@ Concrete follow-ups for the web surface and bridge. Backend/API tasks live in th
 ## Operator Experience
 
 - [ ] Decide whether the static operator report is enough or whether a real authenticated dashboard should be built after owner/admin auth is stronger.
-- [ ] Make sure operator report and Discord webhook summaries show mode clearly without becoming noisy.
+- [ ] Make sure operator reports show mode clearly without becoming noisy.
 - [ ] Turn repeated evaluator findings and downvote comments into a concise improvement queue.
 
 ## Docs

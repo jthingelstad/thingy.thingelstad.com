@@ -23,7 +23,7 @@ const signedIn = signal(false);
 // account display string and as the avatar's initial source.
 const displayEmail = signal('');
 
-// Stored profile object (status, entitlements, discord_connection, etc.).
+// Stored profile object (status, entitlements, activity, etc.).
 const displayProfile = signal<LibrarianProfile>({});
 
 // Preferred name the user has set; defaults to ''. Mirrored from the stored
