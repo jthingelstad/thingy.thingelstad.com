@@ -14,14 +14,15 @@ web app at `thingy.thingelstad.com`.
 
 The brain is not here. Retrieval, embeddings, corpus intelligence, auth
 backend, feedback persistence, and the Librarian API currently live in
-`studio-thing`. The Librarian API is a critical independent service even as
-the Studio application is retired separately.
+`librarian-thing` (renamed from `studio-thing` on 2026-08-28, when the Studio
+application was retired and the repo was streamlined to the Librarian API and
+corpus).
 
 ## Architecture Context
 
 This repo is one of four that work together. The short version:
 
-- **Librarian (currently in `studio-thing`)** is the brain: auth, retrieval,
+- **Librarian (`librarian-thing`)** is the brain: auth, retrieval,
   conversations, evaluation, Dispatch, and the corpus.
 - **Weekly (`weekly.thingelstad.com`)** renders the newsletter site from inputs
   Studio commits in.
@@ -119,7 +120,7 @@ Key files:
 
 The web app is a Vite-built static app served by GitHub Pages from `web/_site`.
 Do not add secrets, server-only logic, or a second backend here. Anything
-requiring privileged logic belongs in the Librarian Lambda in `studio-thing`.
+requiring privileged logic belongs in the Librarian Lambda in `librarian-thing`.
 
 ## Design Direction
 
@@ -209,7 +210,7 @@ Stop and confirm before changing anything that affects:
 - subscriber/auth semantics
 - public/private corpus visibility
 
-Backend changes belong in `studio-thing`, not here.
+Backend changes belong in `librarian-thing`, not here.
 
 Hard constraints:
 
@@ -225,7 +226,7 @@ When you do need to deploy Studio's Librarian Lambdas, use Studio's locked uv
 environment:
 
 ```sh
-cd ../studio-thing
+cd ../librarian-thing
 make librarian-deploy ARGS="--skip-corpus-upload"
 # or directly:
 uv run --locked python pipeline/deploy/aws.py --skip-corpus-upload
@@ -280,7 +281,7 @@ Ask before:
 - changing URL parameter semantics
 
 When in doubt, start at `docs/ROADMAP.md` for direction and
-`../studio-thing/ALIGNMENT.md` for the cross-repo map. If a task would alter the
+`../librarian-thing/ALIGNMENT.md` for the cross-repo map. If a task would alter the
 Librarian API contract, add a new conversation mode, or change entitlement
 behavior, make sure the backend remains authoritative and the API-side reports
 can see what happened.

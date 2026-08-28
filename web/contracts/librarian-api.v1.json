@@ -24,45 +24,6 @@
       ],
       "additionalProperties": true
     },
-    "discordConnection": {
-      "type": "object",
-      "properties": {
-        "connected": {
-          "type": "boolean"
-        },
-        "username": {
-          "type": "string"
-        },
-        "global_name": {
-          "type": "string"
-        },
-        "display_name": {
-          "type": "string"
-        },
-        "guild_id": {
-          "type": "string"
-        },
-        "connected_at": {
-          "type": "string"
-        },
-        "last_verified_at": {
-          "type": "string"
-        },
-        "user_name": {
-          "type": "string"
-        },
-        "globalName": {
-          "type": "string"
-        },
-        "displayName": {
-          "type": "string"
-        },
-        "connectedAt": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": true
-    },
     "profile": {
       "type": "object",
       "properties": {
@@ -101,46 +62,6 @@
         },
         "supporting_member": {
           "type": "boolean"
-        },
-        "discord_connection": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/discordConnection"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "discordConnection": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/discordConnection"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "discord_user": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/discordConnection"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "discordUser": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/discordConnection"
-            },
-            {
-              "type": "null"
-            }
-          ]
         },
         "current_session_questions": {
           "type": "array"

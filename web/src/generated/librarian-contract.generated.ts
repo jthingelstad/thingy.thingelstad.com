@@ -30,21 +30,6 @@ export interface LibrarianMode {
   [key: string]: unknown;
 }
 
-export interface LibrarianDiscordConnection {
-  connected?: boolean;
-  username?: string;
-  global_name?: string;
-  display_name?: string;
-  guild_id?: string;
-  connected_at?: string;
-  last_verified_at?: string;
-  user_name?: string;
-  globalName?: string;
-  displayName?: string;
-  connectedAt?: string;
-  [key: string]: unknown;
-}
-
 export interface LibrarianProfile {
   email?: string;
   status?: string;
@@ -56,10 +41,6 @@ export interface LibrarianProfile {
   entitlements?: Array<string>;
   modes?: Array<LibrarianMode>;
   supporting_member?: boolean;
-  discord_connection?: LibrarianDiscordConnection | null;
-  discordConnection?: LibrarianDiscordConnection | null;
-  discord_user?: LibrarianDiscordConnection | null;
-  discordUser?: LibrarianDiscordConnection | null;
   current_session_questions?: Array<unknown>;
   recent_prompts?: Array<unknown>;
   prior_session_summaries?: Array<unknown>;
@@ -290,7 +271,7 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = '4ba1616660a3f0fc077904576b274aec824e257dbca46036f6947e9e44b5f77e';
+export const LIBRARIAN_CONTRACT_SHA256 = '0d574057c8ef9c87f2ede4037228abb7fa7db57af628a0bb829d34550229dd76';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.v1.json',
@@ -312,45 +293,6 @@ export const LIBRARIAN_CONTRACT = {
         }
       },
       required: ['id', 'label'],
-      additionalProperties: true
-    },
-    discordConnection: {
-      type: 'object',
-      properties: {
-        connected: {
-          type: 'boolean'
-        },
-        username: {
-          type: 'string'
-        },
-        global_name: {
-          type: 'string'
-        },
-        display_name: {
-          type: 'string'
-        },
-        guild_id: {
-          type: 'string'
-        },
-        connected_at: {
-          type: 'string'
-        },
-        last_verified_at: {
-          type: 'string'
-        },
-        user_name: {
-          type: 'string'
-        },
-        globalName: {
-          type: 'string'
-        },
-        displayName: {
-          type: 'string'
-        },
-        connectedAt: {
-          type: 'string'
-        }
-      },
       additionalProperties: true
     },
     profile: {
@@ -391,46 +333,6 @@ export const LIBRARIAN_CONTRACT = {
         },
         supporting_member: {
           type: 'boolean'
-        },
-        discord_connection: {
-          anyOf: [
-            {
-              $ref: '#/$defs/discordConnection'
-            },
-            {
-              type: 'null'
-            }
-          ]
-        },
-        discordConnection: {
-          anyOf: [
-            {
-              $ref: '#/$defs/discordConnection'
-            },
-            {
-              type: 'null'
-            }
-          ]
-        },
-        discord_user: {
-          anyOf: [
-            {
-              $ref: '#/$defs/discordConnection'
-            },
-            {
-              type: 'null'
-            }
-          ]
-        },
-        discordUser: {
-          anyOf: [
-            {
-              $ref: '#/$defs/discordConnection'
-            },
-            {
-              type: 'null'
-            }
-          ]
         },
         current_session_questions: {
           type: 'array'

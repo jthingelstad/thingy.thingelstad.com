@@ -1,5 +1,5 @@
 // Shapes of the Librarian API contract this app consumes. The backend is
-// the source of truth (studio-thing: apps/librarian); these types document
+// the source of truth (librarian-thing: apps/librarian); these types document
 // the runtime contract for editors and `npm run typecheck`. Update them
 // together with any versioned API change.
 

@@ -7,7 +7,7 @@ import { generateContractClient } from './generate-contract-client.mjs';
 const webRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const targetPath = resolve(webRoot, 'contracts/librarian-api.v1.json');
 const defaultSource =
-  'https://raw.githubusercontent.com/jthingelstad/studio-thing/main/apps/librarian/contracts/librarian-api.v1.json';
+  'https://raw.githubusercontent.com/jthingelstad/librarian-thing/main/apps/librarian/contracts/librarian-api.v1.json';
 
 async function readSource(source) {
   if (/^https?:\/\//.test(source)) {

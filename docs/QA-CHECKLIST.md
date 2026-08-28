@@ -87,7 +87,7 @@ At `390x844`:
 
 ## Studio Backend
 
-From `studio-thing`:
+From `librarian-thing`:
 
 ```sh
 npm --prefix apps/librarian/lambda test

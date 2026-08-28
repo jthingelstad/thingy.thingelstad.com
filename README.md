@@ -149,7 +149,7 @@ repository; Thingy generates CSP-safe runtime validators and TypeScript contract
 the same JSON. Requests carry `x-librarian-contract-version`; the backend also returns it so
 an incompatible deployment fails clearly instead of being accepted through TypeScript casts.
 
-After changing the authoritative contract in `studio-thing`:
+After changing the authoritative contract in `librarian-thing`:
 
 ```sh
 cd web
