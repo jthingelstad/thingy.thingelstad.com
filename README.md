@@ -128,7 +128,7 @@ LIBRARIAN_API_URL="$LIBRARIAN_API_URL" LIBRARIAN_STREAM_URL="$LIBRARIAN_STREAM_U
 
 `LIBRARIAN_API_URL` and `LIBRARIAN_STREAM_URL` are required at build time.
 Production gets them from GitHub repository variables; local shells can export
-the same values from the Studio Librarian stack outputs.
+the same values from the Librarian stack outputs (`librarian-thing`).
 
 Key web files:
 
@@ -142,10 +142,10 @@ Key web files:
 
 ### Librarian contract
 
-Studio owns the versioned Librarian request, response, and SSE contract. Thingy vendors
-`web/contracts/librarian-api.v1.json` and validates successful responses directly against
-that generated artifact. Studio publishes the artifact and its SHA-256 checksum in its
-repository; Thingy generates CSP-safe runtime validators and TypeScript contract types from
+`librarian-thing` owns the versioned Librarian request, response, and SSE contract. Thingy
+vendors `web/contracts/librarian-api.v1.json` and validates successful responses directly
+against that generated artifact. The Librarian repo publishes the artifact and its SHA-256
+checksum; Thingy generates CSP-safe runtime validators and TypeScript contract types from
 the same JSON. Requests carry `x-librarian-contract-version`; the backend also returns it so
 an incompatible deployment fails clearly instead of being accepted through TypeScript casts.
 
@@ -156,11 +156,11 @@ cd web
 npm run contract:sync
 ```
 
-`contract:sync` fetches Studio's published `main` artifact by default, so it works in a clean
-checkout without a sibling repository. Set `LIBRARIAN_CONTRACT_SOURCE` to a local JSON path
+`contract:sync` fetches the Librarian repo's published `main` artifact by default, so it
+works in a clean checkout without a sibling repository. Set `LIBRARIAN_CONTRACT_SOURCE` to a local JSON path
 when developing both repositories together. `npm run contract:check` verifies the checksum,
 the vendored artifact, and the generated client; the Pages workflow runs that check before
-building. Studio's contract test also verifies its generated checksum.
+building. The Librarian's contract test also verifies its generated checksum.
 
 ## Tinylytics
 

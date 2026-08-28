@@ -20,14 +20,16 @@ corpus).
 
 ## Architecture Context
 
-This repo is one of four that work together. The short version:
+This repo is one of five that work together. The short version:
 
 - **Librarian (`librarian-thing`)** is the brain: auth, retrieval,
   conversations, evaluation, Dispatch, and the corpus.
-- **Weekly (`weekly.thingelstad.com`)** renders the newsletter site from inputs
-  Studio commits in.
-- **Another (`another.thingelstad.com`)** publishes the podcast; Studio imports
-  its episode transcripts for the podcast corpus.
+- **WT Builder (`wt-builder`)** authors and publishes each newsletter issue,
+  and commits the canonical issue text into the Librarian's `data/issues/`.
+- **Weekly (`weekly.thingelstad.com`)** renders the newsletter site from
+  inputs WT Builder commits in.
+- **Another (`another.thingelstad.com`)** publishes the podcast; the Librarian
+  imports its episode transcripts for the podcast corpus.
 - **Thingy (this repo)** is the web query surface that talks to the Librarian
   Lambda at runtime.
 
@@ -216,14 +218,14 @@ Hard constraints:
 
 - `web/` is a static site. No server-side runtime, no secrets in the client.
   Anything that needs a secret goes through the Lambda, not the page.
-- CORS is configured in Studio, not here. The
+- CORS is configured in the Librarian repo, not here. The
   `apps/librarian/infra/cloudformation.yaml` `AllowedOrigin` parameter must
   include `https://thingy.thingelstad.com`.
 - Do not grow a second backend here. If a feature needs server logic, add it to
-  the Librarian Lambda in Studio. This repo stays front-ends only.
+  the Librarian Lambda in `librarian-thing`. This repo stays front-ends only.
 
-When you do need to deploy Studio's Librarian Lambdas, use Studio's locked uv
-environment:
+When you do need to deploy the Librarian Lambdas, use `librarian-thing`'s
+locked uv environment:
 
 ```sh
 cd ../librarian-thing
@@ -232,8 +234,9 @@ make librarian-deploy ARGS="--skip-corpus-upload"
 uv run --locked python pipeline/deploy/aws.py --skip-corpus-upload
 ```
 
-Do not use plain `python`/`python3` for that deploy; run it through Studio's
-locked uv environment so dependencies such as `boto3` are guaranteed present.
+Do not use plain `python`/`python3` for that deploy; run it through the
+Librarian's locked uv environment so dependencies such as `boto3` are
+guaranteed present.
 
 ## Deployment
 
