@@ -157,3 +157,15 @@
     font-size: 34px;
   }
 }
+
+/* The sign-in code entry that appears after the email is sent. The wide
+   letter-spacing makes the six digits easy to compare against the email. */
+.thingy-signin-code {
+  margin-top: 14px;
+}
+
+.thingy-signin-code input {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0.3em;
+  text-align: center;
+}

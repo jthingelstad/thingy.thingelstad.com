@@ -14,6 +14,8 @@ function SignInApp() {
   const [messageKind, setMessageKind] = useState('');
   const [secondary, setSecondary] = useState<SecondaryAction>('');
   const [busy, setBusy] = useState(false);
+  const [codeEntry, setCodeEntry] = useState(false);
+  const [code, setCode] = useState('');
 
   function destinationPath() {
     if (!returnTo || returnTo === '/signin/' || returnTo.startsWith('/signin/?')) return '/chat/';
@@ -92,8 +94,10 @@ function SignInApp() {
         return;
       }
       if (data.status === 'magic_link_sent') {
-        setMessage('Check your email for a private sign-in link from Thingy.');
+        setMessage('Check your email - enter the sign-in code below, or use the link.');
         setMessageKind('success');
+        setCodeEntry(true);
+        setCode('');
         window.localStorage.setItem(session.userEmailKey, address);
       } else if (data.status === 'not_found') {
         setMessage('That email is not subscribed yet. Thingy can help add you to The Weekly Thing.');
@@ -121,6 +125,34 @@ function SignInApp() {
   function handleSubmit(event: JSX.TargetedSubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     void requestMagicLink('check');
+  }
+
+  async function submitCode(event: JSX.TargetedSubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const digits = code.replace(/[^0-9]/g, '');
+    if (digits.length !== 6) {
+      setMessage('The sign-in code is six digits.');
+      setMessageKind('error');
+      return;
+    }
+    setBusy(true);
+    setMessage('Checking your code...');
+    setMessageKind('pending');
+    try {
+      const data = await session.postJson(
+        '/auth',
+        { action: 'verify_code', email: session.normalizeEmail(email), code: digits, source: 'thingy' },
+        {}
+      );
+      if (!data.token) throw new Error(data.message || 'That code did not return a session.');
+      finish(data, data.email || email);
+    } catch (error) {
+      setMessage(errorMessage(error, 'That code did not work. Check the newest email or request a fresh link.'));
+      setMessageKind('error');
+      setCode('');
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -158,6 +190,28 @@ function SignInApp() {
           <p class="thingy-signin-message" data-kind={messageKind} aria-live="polite">
             {message}
           </p>
+          {codeEntry ? (
+            <form class="thingy-signin-form thingy-signin-code" onSubmit={submitCode}>
+              <label for="thingy-signin-code">Sign-in code</label>
+              <div class="thingy-signin-row">
+                <input
+                  id="thingy-signin-code"
+                  name="one-time-code"
+                  type="text"
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  placeholder="123456"
+                  value={code}
+                  onInput={(event) => setCode(event.currentTarget.value)}
+                />
+                <button type="submit" disabled={busy || code.replace(/[^0-9]/g, '').length !== 6}>
+                  Sign In
+                </button>
+              </div>
+            </form>
+          ) : null}
           <div class="thingy-signin-secondary" hidden={!secondary}>
             {secondary === 'subscribe' ? (
               <button type="button" disabled={busy} onClick={() => void requestMagicLink('subscribe')}>
