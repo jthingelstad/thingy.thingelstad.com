@@ -1,9 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://thingy.thingelstad.com/contracts/librarian-api.v1.json",
+  "$id": "https://thingy.thingelstad.com/contracts/librarian-api.json",
   "title": "Thingy Librarian API Contract",
-  "version": "1.0.0",
-  "compatibility": "additive",
+  "version": "2.0.0",
+  "compatibility": "breaking",
   "$defs": {
     "mode": {
       "type": "object",
@@ -158,190 +158,6 @@
         },
         "citations": {
           "type": "array"
-        }
-      },
-      "additionalProperties": true
-    },
-    "dispatchBriefSource": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "label": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        },
-        "source_kind": {
-          "type": "string"
-        },
-        "publish_date": {
-          "type": "string"
-        },
-        "why": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": true
-    },
-    "dispatchBrief": {
-      "type": "object",
-      "properties": {
-        "user_goal": {
-          "type": "string"
-        },
-        "working_angle": {
-          "type": "string"
-        },
-        "coverage_status": {
-          "enum": [
-            "thin",
-            "focused",
-            "broad",
-            "ambiguous"
-          ]
-        },
-        "selected_sources": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchBriefSource"
-          }
-        },
-        "excluded_scope": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "generation_instructions": {
-          "type": "string"
-        },
-        "preheader_basis": {
-          "type": "string"
-        },
-        "status": {
-          "enum": [
-            "draft",
-            "ready"
-          ]
-        }
-      },
-      "additionalProperties": true
-    },
-    "dispatchMessage": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "baseId": {
-          "type": "string"
-        },
-        "scope": {
-          "type": "string"
-        },
-        "role": {
-          "enum": [
-            "user",
-            "assistant",
-            "system"
-          ]
-        },
-        "text": {
-          "type": "string"
-        },
-        "time": {
-          "type": "string"
-        },
-        "kind": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
-        },
-        "startedAt": {
-          "type": "number"
-        },
-        "completedAt": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
-      },
-      "additionalProperties": true
-    },
-    "dispatchRow": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "dispatch_id": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
-        },
-        "topic": {
-          "type": "string"
-        },
-        "prompt": {
-          "type": "string"
-        },
-        "direction": {
-          "type": "string"
-        },
-        "conversation_id": {
-          "type": "string"
-        },
-        "clarification_question": {
-          "type": "string"
-        },
-        "clarification_answer": {
-          "type": "string"
-        },
-        "brief": {
-          "$ref": "#/$defs/dispatchBrief"
-        },
-        "subject": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "preview": {
-          "type": "string"
-        },
-        "error": {
-          "type": "string"
-        },
-        "messages": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchMessage"
-          }
-        },
-        "created_at": {
-          "type": "string"
-        },
-        "updated_at": {
-          "type": "string"
-        },
-        "template_test": {
-          "type": "boolean"
-        },
-        "source_count": {
-          "type": "number"
         }
       },
       "additionalProperties": true
@@ -540,23 +356,8 @@
             "$ref": "#/$defs/conversationMessage"
           }
         },
-        "dispatches": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
-        },
-        "dispatch": {
-          "$ref": "#/$defs/dispatchRow"
-        },
         "supporting_member": {
           "type": "boolean"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
         },
         "data": {},
         "code": {
@@ -667,23 +468,8 @@
             "$ref": "#/$defs/conversationMessage"
           }
         },
-        "dispatches": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
-        },
-        "dispatch": {
-          "$ref": "#/$defs/dispatchRow"
-        },
         "supporting_member": {
           "type": "boolean"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
         },
         "data": {},
         "code": {
@@ -754,9 +540,6 @@
         },
         "toolName": {
           "type": "string"
-        },
-        "brief": {
-          "$ref": "#/$defs/dispatchBrief"
         }
       },
       "additionalProperties": true
@@ -834,52 +617,6 @@
         }
       }
     },
-    "/dispatch": {
-      "schema": {
-        "$ref": "#/$defs/apiResponse"
-      },
-      "actions": {
-        "list": {
-          "type": "object",
-          "properties": {
-            "dispatches": {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/dispatchRow"
-              }
-            }
-          },
-          "required": [
-            "dispatches"
-          ],
-          "additionalProperties": true
-        },
-        "save_draft": {
-          "type": "object",
-          "properties": {
-            "dispatch": {
-              "$ref": "#/$defs/dispatchRow"
-            }
-          },
-          "required": [
-            "dispatch"
-          ],
-          "additionalProperties": true
-        },
-        "status": {
-          "type": "object",
-          "properties": {
-            "dispatch": {
-              "$ref": "#/$defs/dispatchRow"
-            }
-          },
-          "required": [
-            "dispatch"
-          ],
-          "additionalProperties": true
-        }
-      }
-    },
     "/feedback": {
       "schema": {
         "$ref": "#/$defs/apiResponse"
@@ -897,6 +634,101 @@
         "$ref": "#/$defs/apiResponse"
       },
       "actions": {}
+    },
+    "/chat": {
+      "actions": {},
+      "request": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string"
+          },
+          "conversation_id": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "client_context": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "additionalProperties": true
+      },
+      "schema": {
+        "$ref": "#/$defs/streamBase"
+      }
+    },
+    "/retrieve": {
+      "actions": {},
+      "request": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "k": {
+            "type": "number"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "filters": {
+            "type": "object",
+            "properties": {
+              "yearRange": {
+                "type": "array"
+              },
+              "section": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "retrieve_secret": {
+            "type": "string"
+          },
+          "bridge_secret": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": true
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "passages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/archiveItem"
+            }
+          },
+          "embedding_model": {
+            "type": "string"
+          },
+          "rerank_model": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "passages"
+        ],
+        "additionalProperties": true
+      }
     }
   },
   "stream_events": {
@@ -957,23 +789,8 @@
             "$ref": "#/$defs/conversationMessage"
           }
         },
-        "dispatches": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
-        },
-        "dispatch": {
-          "$ref": "#/$defs/dispatchRow"
-        },
         "supporting_member": {
           "type": "boolean"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
         },
         "data": {},
         "code": {
@@ -1044,9 +861,6 @@
         },
         "toolName": {
           "type": "string"
-        },
-        "brief": {
-          "$ref": "#/$defs/dispatchBrief"
         }
       },
       "additionalProperties": true
@@ -1108,23 +922,8 @@
             "$ref": "#/$defs/conversationMessage"
           }
         },
-        "dispatches": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
-        },
-        "dispatch": {
-          "$ref": "#/$defs/dispatchRow"
-        },
         "supporting_member": {
           "type": "boolean"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
         },
         "data": {},
         "code": {
@@ -1195,9 +994,6 @@
         },
         "toolName": {
           "type": "string"
-        },
-        "brief": {
-          "$ref": "#/$defs/dispatchBrief"
         }
       },
       "additionalProperties": true
@@ -1259,23 +1055,8 @@
             "$ref": "#/$defs/conversationMessage"
           }
         },
-        "dispatches": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
-        },
-        "dispatch": {
-          "$ref": "#/$defs/dispatchRow"
-        },
         "supporting_member": {
           "type": "boolean"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
         },
         "data": {},
         "code": {
@@ -1346,9 +1127,6 @@
         },
         "toolName": {
           "type": "string"
-        },
-        "brief": {
-          "$ref": "#/$defs/dispatchBrief"
         }
       },
       "additionalProperties": true
@@ -1410,23 +1188,8 @@
             "$ref": "#/$defs/conversationMessage"
           }
         },
-        "dispatches": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
-        },
-        "dispatch": {
-          "$ref": "#/$defs/dispatchRow"
-        },
         "supporting_member": {
           "type": "boolean"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
         },
         "data": {},
         "code": {
@@ -1497,9 +1260,6 @@
         },
         "toolName": {
           "type": "string"
-        },
-        "brief": {
-          "$ref": "#/$defs/dispatchBrief"
         }
       },
       "required": [
@@ -1564,23 +1324,8 @@
             "$ref": "#/$defs/conversationMessage"
           }
         },
-        "dispatches": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
-        },
-        "dispatch": {
-          "$ref": "#/$defs/dispatchRow"
-        },
         "supporting_member": {
           "type": "boolean"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
         },
         "data": {},
         "code": {
@@ -1651,9 +1396,6 @@
         },
         "toolName": {
           "type": "string"
-        },
-        "brief": {
-          "$ref": "#/$defs/dispatchBrief"
         }
       },
       "required": [
@@ -1718,23 +1460,8 @@
             "$ref": "#/$defs/conversationMessage"
           }
         },
-        "dispatches": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
-        },
-        "dispatch": {
-          "$ref": "#/$defs/dispatchRow"
-        },
         "supporting_member": {
           "type": "boolean"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
         },
         "data": {},
         "code": {
@@ -1805,9 +1532,6 @@
         },
         "toolName": {
           "type": "string"
-        },
-        "brief": {
-          "$ref": "#/$defs/dispatchBrief"
         }
       },
       "required": [
@@ -1872,23 +1596,8 @@
             "$ref": "#/$defs/conversationMessage"
           }
         },
-        "dispatches": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
-        },
-        "dispatch": {
-          "$ref": "#/$defs/dispatchRow"
-        },
         "supporting_member": {
           "type": "boolean"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
         },
         "data": {},
         "code": {
@@ -1959,167 +1668,10 @@
         },
         "toolName": {
           "type": "string"
-        },
-        "brief": {
-          "$ref": "#/$defs/dispatchBrief"
         }
       },
       "required": [
         "experience"
-      ],
-      "additionalProperties": true
-    },
-    "dispatch_brief": {
-      "type": "object",
-      "properties": {
-        "token": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        },
-        "error": {
-          "type": "string"
-        },
-        "errorMessage": {
-          "type": "string"
-        },
-        "profile": {
-          "$ref": "#/$defs/profile"
-        },
-        "entitlements": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "modes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/mode"
-          }
-        },
-        "request_id": {
-          "type": "string"
-        },
-        "requestId": {
-          "type": "string"
-        },
-        "conversations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/conversation"
-          }
-        },
-        "conversation": {
-          "$ref": "#/$defs/conversation"
-        },
-        "messages": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/conversationMessage"
-          }
-        },
-        "dispatches": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
-        },
-        "dispatch": {
-          "$ref": "#/$defs/dispatchRow"
-        },
-        "supporting_member": {
-          "type": "boolean"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
-        },
-        "data": {},
-        "code": {
-          "type": "string"
-        },
-        "nodes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/curiosityNode"
-          }
-        },
-        "sources": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/archiveItem"
-          }
-        },
-        "account": {
-          "$ref": "#/$defs/accountOverview"
-        },
-        "reaction": {
-          "type": "string"
-        },
-        "ok": {
-          "type": "boolean"
-        },
-        "has_comment": {
-          "type": "boolean"
-        },
-        "contract_version": {
-          "type": "string"
-        },
-        "mode": {
-          "type": "string"
-        },
-        "conversation_id": {
-          "type": "string"
-        },
-        "delta": {
-          "type": "string"
-        },
-        "answer": {
-          "type": "string"
-        },
-        "citations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/citation"
-          }
-        },
-        "experience": {
-          "$ref": "#/$defs/experience"
-        },
-        "commentary": {
-          "type": "string"
-        },
-        "detail": {
-          "type": "string"
-        },
-        "note": {
-          "type": "string"
-        },
-        "kind": {
-          "type": "string"
-        },
-        "tool_name": {
-          "type": "string"
-        },
-        "toolName": {
-          "type": "string"
-        },
-        "brief": {
-          "$ref": "#/$defs/dispatchBrief"
-        }
-      },
-      "required": [
-        "brief"
       ],
       "additionalProperties": true
     },
@@ -2180,23 +1732,8 @@
             "$ref": "#/$defs/conversationMessage"
           }
         },
-        "dispatches": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
-        },
-        "dispatch": {
-          "$ref": "#/$defs/dispatchRow"
-        },
         "supporting_member": {
           "type": "boolean"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
         },
         "data": {},
         "code": {
@@ -2267,9 +1804,6 @@
         },
         "toolName": {
           "type": "string"
-        },
-        "brief": {
-          "$ref": "#/$defs/dispatchBrief"
         }
       },
       "additionalProperties": true
@@ -2331,23 +1865,8 @@
             "$ref": "#/$defs/conversationMessage"
           }
         },
-        "dispatches": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
-        },
-        "dispatch": {
-          "$ref": "#/$defs/dispatchRow"
-        },
         "supporting_member": {
           "type": "boolean"
-        },
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/dispatchRow"
-          }
         },
         "data": {},
         "code": {
@@ -2418,9 +1937,6 @@
         },
         "toolName": {
           "type": "string"
-        },
-        "brief": {
-          "$ref": "#/$defs/dispatchBrief"
         }
       },
       "required": [

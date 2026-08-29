@@ -1,13 +1,13 @@
 import { createHash } from 'node:crypto';
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateContractClient } from './generate-contract-client.mjs';
 
 const webRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const targetPath = resolve(webRoot, 'contracts/librarian-api.v1.json');
+const targetPath = resolve(webRoot, 'contracts/librarian-api.json');
 const defaultSource =
-  'https://raw.githubusercontent.com/jthingelstad/librarian-thing/main/apps/librarian/contracts/librarian-api.v1.json';
+  'https://raw.githubusercontent.com/jthingelstad/librarian-thing/main/apps/librarian/contracts/librarian-api.json';
 
 async function readSource(source) {
   if (/^https?:\/\//.test(source)) {
@@ -35,10 +35,13 @@ async function syncContract({ check = false } = {}) {
     const current = await readFile(targetPath, 'utf8').catch(() => '');
     if (current !== normalized) throw new Error('Vendored Librarian contract is stale. Run npm run contract:sync.');
     await generateContractClient({ check: true });
-    process.stdout.write(`Contract ${JSON.parse(normalized).version} matches Studio and generated client.\n`);
+    process.stdout.write(
+      `Contract ${JSON.parse(normalized).version} matches the Librarian artifact and generated client.\n`
+    );
     return;
   }
 
+  await mkdir(dirname(targetPath), { recursive: true });
   await writeFile(targetPath, normalized);
   await generateContractClient();
   process.stdout.write(`Synced Librarian contract ${JSON.parse(normalized).version} from ${source}.\n`);

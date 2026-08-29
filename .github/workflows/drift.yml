@@ -1,0 +1,34 @@
+# Scheduled drift checks - external-state comparisons that should alert but
+# never block a deploy: the vendored Librarian contract vs upstream main, and
+# npm advisories. Failures show up as a red scheduled run (and can be wired to
+# notifications later) instead of turning an unrelated push red.
+name: Drift checks
+
+on:
+  schedule:
+    - cron: "17 11 * * *"
+  workflow_dispatch:
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: "web/.node-version"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+
+      - name: Vendored contract matches librarian-thing main
+        run: npm run contract:check
+
+      - name: npm advisories
+        run: npm audit --audit-level=high

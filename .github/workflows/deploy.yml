@@ -34,10 +34,11 @@ jobs:
 
       - run: npm ci
 
-      - run: npm audit --audit-level=high
-
-      - name: Verify Librarian contract artifact
-        run: npm run contract:check
+      # npm audit and the upstream-contract fetch moved to drift.yml: both
+      # depend on external state (advisory feed, librarian-thing main) and
+      # were turning unrelated pushes red / blocking deploys on outages.
+      # The deploy gate still runs contract:generate:check inside verify,
+      # which proves the vendored artifact and generated client agree.
 
       - run: npx playwright install --with-deps chromium webkit
 

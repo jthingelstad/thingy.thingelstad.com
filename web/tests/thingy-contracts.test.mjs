@@ -17,12 +17,12 @@ test('runtime validators and requests use the generated Librarian contract versi
     validateStreamData('meta', { contract_version: LIBRARIAN_CONTRACT_VERSION }).contract_version,
     LIBRARIAN_CONTRACT_VERSION
   );
-  assert.equal(validateStreamData('meta', { contract_version: '1.9.0' }).contract_version, '1.9.0');
+  assert.equal(validateStreamData('meta', { contract_version: '2.9.0' }).contract_version, '2.9.0');
   assert.throws(() => validateStreamData('meta', { contract_version: '99.0.0' }), /this client expects/);
 });
 
 test('generated client is tied to the vendored contract checksum', async () => {
-  const artifact = await readFile(new URL('../contracts/librarian-api.v1.json', import.meta.url));
+  const artifact = await readFile(new URL('../contracts/librarian-api.json', import.meta.url));
   assert.equal(createHash('sha256').update(artifact).digest('hex'), LIBRARIAN_CONTRACT_SHA256);
 });
 
@@ -41,16 +41,12 @@ test('endpoint contracts accept additive Librarian fields while preserving typed
 });
 
 test('endpoint contracts reject malformed successful JSON', () => {
-  // The Dispatch surface was removed in 2026-08, but the vendored v1 contract
-  // still describes /dispatch until the server publishes 2.0.0; these cases
-  // exercise the validator against that schema.
-  assert.throws(
-    () => validateApiResponse({ dispatches: [{ id: 42, status: [] }] }, '/dispatch'),
-    /invalid \/dispatch response/
-  );
   assert.throws(() => validateApiResponse({ profile: { modes: 'thingy' } }, '/auth'), /invalid \/auth response/);
   assert.throws(() => validateApiResponse({ ok: true }, '/conversations', 'list'), /required property/);
-  assert.throws(() => validateApiResponse({ dispatches: {} }, '/dispatch', 'list'), /must be array/);
+  assert.throws(
+    () => validateApiResponse({ conversations: {} }, '/conversations', 'list'),
+    /must be array|invalid \/conversations response/
+  );
 });
 
 test('stream contracts validate event-specific payloads', () => {

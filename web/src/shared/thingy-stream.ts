@@ -50,8 +50,11 @@ async function read(response: Response, onEvent: (eventName: string, data: Thing
     let idleTimer = 0;
     const idle = new Promise<never>((_, reject) => {
       idleTimer = window.setTimeout(() => {
-        reader.cancel().catch(() => {});
+        // Reject BEFORE cancelling: cancel() resolves the pending read()
+        // with done:true, and if that settles first the race ends cleanly
+        // instead of surfacing the timeout.
         reject(new Error('Thingy stopped responding mid-answer. Please try again.'));
+        reader.cancel().catch(() => {});
       }, STREAM_IDLE_TIMEOUT_MS);
     });
     try {

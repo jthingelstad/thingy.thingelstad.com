@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import prettier from 'prettier';
 
 const webRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const artifactPath = resolve(webRoot, 'contracts/librarian-api.v1.json');
+const artifactPath = resolve(webRoot, 'contracts/librarian-api.json');
 const outputPath = resolve(webRoot, 'src/generated/librarian-contract.generated.ts');
 
 function pascalCase(value) {
@@ -74,7 +74,7 @@ export interface LibrarianContractIssue {
 interface LibrarianContractArtifact {
   version: string;
   $defs: Record<string, LibrarianContractSchema>;
-  endpoints: Record<string, { schema: LibrarianContractSchema; actions: Record<string, LibrarianContractSchema> }>;
+  endpoints: Record<string, { schema: LibrarianContractSchema; actions: Record<string, LibrarianContractSchema>; request?: LibrarianContractSchema }>;
   stream_events: Record<string, LibrarianContractSchema>;
 }
 
