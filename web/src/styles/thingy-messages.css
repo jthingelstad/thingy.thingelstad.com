@@ -360,3 +360,27 @@
     max-width: 100%;
   }
 }
+
+/* Inline media in answers: clickable thumbnails that open the source page
+   (or full image) in a new tab. Several in one paragraph flow side by side. */
+.librarian-message a.thingy-answer-media {
+  display: inline-block;
+  margin: 6px 8px 6px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  line-height: 0;
+  border: 1px solid var(--thingy-border, rgb(0 0 0 / 12%));
+}
+
+.librarian-message a.thingy-answer-media img {
+  display: block;
+  max-height: 220px;
+  max-width: min(100%, 340px);
+  width: auto;
+  height: auto;
+  object-fit: cover;
+}
+
+.librarian-message a.thingy-answer-media:hover {
+  filter: brightness(1.04);
+}

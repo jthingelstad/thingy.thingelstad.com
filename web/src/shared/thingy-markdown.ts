@@ -62,6 +62,28 @@ function renderInlineMarkdown(text: unknown, citationsByIssue = new Map<string, 
     code.push(`<code>${value}</code>`);
     return token;
   });
+  // Images render as clickable thumbnails. A linked image [![alt](img)](href)
+  // opens its source page; a bare image ![alt](img) opens the image itself.
+  // Only http(s) image URLs render; anything else stays visible as text.
+  // Tokens keep the link rule below from re-parsing the emitted markup.
+  const media: string[] = [];
+  function imageToken(alt: string, imageUrl: string, href: string) {
+    if (!/^https?:\/\//i.test(imageUrl)) return '';
+    const token = `@@MEDIA${media.length}@@`;
+    media.push(
+      `<a class="thingy-answer-media" href="${safeMarkdownUrl(href)}" target="_blank" rel="noopener">` +
+        `<img src="${safeMarkdownUrl(imageUrl)}" alt="${alt}" loading="lazy"></a>`
+    );
+    return token;
+  }
+  html = html.replace(
+    /\[!\[([^\]]*)\]\(([^)\s]+)\)\]\(([^)\s]+)\)/g,
+    (match: string, alt: string, imageUrl: string, href: string) => imageToken(alt, imageUrl, href) || match
+  );
+  html = html.replace(
+    /!\[([^\]]*)\]\(([^)\s]+)\)/g,
+    (match: string, alt: string, imageUrl: string) => imageToken(alt, imageUrl, imageUrl) || match
+  );
   html = html.replace(
     /\[([^\]]+)\]\(([^)\s]+)\)/g,
     (_match: string, label: string, url: string) => `<a href="${safeMarkdownUrl(url)}">${label}</a>`
@@ -73,6 +95,9 @@ function renderInlineMarkdown(text: unknown, citationsByIssue = new Map<string, 
   html = linkIssueReferences(html, citationsByIssue);
   code.forEach((value, index) => {
     html = html.replace(`@@CODE${index}@@`, value);
+  });
+  media.forEach((value, index) => {
+    html = html.replace(`@@MEDIA${index}@@`, value);
   });
   return html;
 }
