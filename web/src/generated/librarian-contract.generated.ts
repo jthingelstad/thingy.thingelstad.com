@@ -110,6 +110,8 @@ export interface LibrarianQuotaOverview {
   unlimited?: boolean;
   chat_used?: number;
   chat_max?: number | null;
+  mcp_used?: number;
+  mcp_max?: number | null;
   [key: string]: unknown;
 }
 
@@ -196,12 +198,12 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = 'ccb3444364bf73ed2221901d023227ce5133045befcc368954cd5f278c89cae2';
+export const LIBRARIAN_CONTRACT_SHA256 = '299082981049f55672c1cd4d4dfb0606c061c00508255ecdbf5d543e50dbea6c';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '3.0.0',
+  version: '3.1.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
@@ -429,6 +431,19 @@ export const LIBRARIAN_CONTRACT = {
           type: 'number'
         },
         chat_max: {
+          anyOf: [
+            {
+              type: 'number'
+            },
+            {
+              type: 'null'
+            }
+          ]
+        },
+        mcp_used: {
+          type: 'number'
+        },
+        mcp_max: {
           anyOf: [
             {
               type: 'number'

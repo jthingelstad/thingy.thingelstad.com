@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { createChatMessageActions } from '../thingy-message-actions.ts';
 import { iconSvg } from '../thingy-icons.ts';
 
-type MessageActionKind = 'copy' | 'play' | 'pause' | 'retry' | 'share' | 'up' | 'down';
+type MessageActionKind = 'copy' | 'play' | 'pause' | 'retry' | 'share' | 'mail' | 'up' | 'down';
 
 interface FeedbackInput {
   requestId: string;
@@ -21,6 +21,7 @@ interface MessageActionsProps {
   feedback?: boolean;
   retryPrompt?: string;
   onRetry?: (prompt: string) => void;
+  emailAnswer?: (input: { requestId: string }) => Promise<unknown>;
   submitFeedback?: (input: FeedbackInput) => Promise<FeedbackResult>;
   track?: (name: string, value?: string) => void;
 }
@@ -32,6 +33,7 @@ function ActionIcon({ name }: { name: MessageActionKind }) {
     pause: 'pause',
     retry: 'rotate-ccw',
     share: 'share',
+    mail: 'mail',
     up: 'thumbs-up',
     down: 'thumbs-down'
   }[name];
@@ -45,6 +47,7 @@ function MessageActions({
   feedback = true,
   retryPrompt = '',
   onRetry,
+  emailAnswer,
   submitFeedback,
   track = (_name: string, _value?: string) => {}
 }: MessageActionsProps) {
@@ -124,6 +127,22 @@ function MessageActions({
     setSpeaking(nextSpeaking);
     if (!nextSpeaking && message !== 'Stopped') flash(message);
     track('librarian.answer_speak', nextSpeaking ? 'start' : message === 'Stopped' ? 'stop' : 'error');
+  }
+
+  async function handleEmailAnswer() {
+    if (!emailAnswer || !requestId || saving) return;
+    setSaving(true);
+    setStatus('Sending...');
+    try {
+      await emailAnswer({ requestId });
+      flash('Emailed to you');
+      track('librarian.answer_email', 'sent');
+    } catch (error) {
+      flash(error instanceof Error && error.message ? error.message : 'Could not send');
+      track('librarian.answer_email', 'error');
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleReaction(nextReaction: 'up' | 'down') {
@@ -228,6 +247,17 @@ function MessageActions({
       >
         <ActionIcon name="share" />
       </button>
+      {emailAnswer && requestId ? (
+        <button
+          type="button"
+          disabled={saving}
+          aria-label="Email me this answer"
+          title="Email me this answer"
+          onClick={() => void handleEmailAnswer()}
+        >
+          <ActionIcon name="mail" />
+        </button>
+      ) : null}
       {retryPrompt ? (
         <button type="button" aria-label="Retry answer" title="Retry answer" onClick={() => onRetry?.(retryPrompt)}>
           <ActionIcon name="retry" />

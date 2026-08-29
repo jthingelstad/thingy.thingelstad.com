@@ -7,6 +7,7 @@ import chevronLeft from 'lucide-static/icons/chevron-left.svg?raw';
 import copy from 'lucide-static/icons/copy.svg?raw';
 import library from 'lucide-static/icons/library.svg?raw';
 import logOut from 'lucide-static/icons/log-out.svg?raw';
+import mail from 'lucide-static/icons/mail.svg?raw';
 import messagesSquare from 'lucide-static/icons/messages-square.svg?raw';
 import mic from 'lucide-static/icons/mic.svg?raw';
 import moreHorizontal from 'lucide-static/icons/more-horizontal.svg?raw';
@@ -46,6 +47,7 @@ const icons = {
   plus,
   'rotate-ccw': rotateCcw,
   search,
+  mail,
   share: share2,
   'share-2': share2,
   'shield-check': shieldCheck,

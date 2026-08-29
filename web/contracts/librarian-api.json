@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://thingy.thingelstad.com/contracts/librarian-api.json",
   "title": "Thingy Librarian API Contract",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "compatibility": "breaking",
   "$defs": {
     "mode": {
@@ -233,6 +233,19 @@
           "type": "number"
         },
         "chat_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mcp_used": {
+          "type": "number"
+        },
+        "mcp_max": {
           "anyOf": [
             {
               "type": "number"

@@ -73,7 +73,13 @@ function formatDailyQuota(accountOverview: LibrarianAccountOverview = {}) {
   const used = Number(quota.chat_used || 0);
   const max = Number(quota.chat_max || 0);
   if (!max) return '';
-  return `${used} of ${max} chat turns used today. Resets at midnight UTC.`;
+  const parts = [`${used} of ${max} chat turns`];
+  // The MCP pool only matters once a reader has connected an MCP client;
+  // showing zeros to everyone else is noise.
+  const mcpUsed = Number(quota.mcp_used || 0);
+  const mcpMax = Number(quota.mcp_max || 0);
+  if (mcpUsed > 0 && mcpMax > 0) parts.push(`${mcpUsed} of ${mcpMax} MCP tool calls`);
+  return `${parts.join(' and ')} used today. Resets at midnight UTC.`;
 }
 
 function AccountProfileModal({

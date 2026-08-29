@@ -37,6 +37,7 @@ interface ChatConversationViewProps {
   onScroll: () => void;
   onRetry: (messageId: string, prompt: string) => void;
   submitFeedback: (input: { requestId: string; reaction: string; comment: string }) => Promise<ThingyApiResponse>;
+  emailAnswer?: (input: { requestId: string }) => Promise<unknown>;
   track: (name: string, value?: string) => void;
   onSubmit: (event: JSX.TargetedSubmitEvent<HTMLFormElement>) => void;
   onQuestionInput: (value: string) => void;
@@ -111,6 +112,7 @@ function ChatConversationView(props: ChatConversationViewProps) {
               scrollContainer={() => props.scrollRef.current}
               onRetry={props.onRetry}
               submitFeedback={props.submitFeedback}
+              emailAnswer={props.emailAnswer}
               track={props.track}
             />
           </div>

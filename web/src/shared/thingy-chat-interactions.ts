@@ -83,6 +83,22 @@ function createChatInteractions(options: ChatInteractionsOptions) {
     window.setTimeout(() => void submitQuestion(), 0);
   }
 
+  async function emailAnswer(input: { requestId: string }) {
+    const conversationId = actions.savedActiveConversation();
+    if (!conversationId || actions.isLocalConversationId(conversationId)) {
+      throw new Error('This answer has not been saved to a conversation yet.');
+    }
+    const email = actions.storedEmail();
+    if (!email) throw new Error('Sign in again to email answers.');
+    if (!(await actions.ensureFreshToken())) throw new Error('Sign in again to email answers.');
+    return actions.conversationAction({
+      action: 'email_answer',
+      conversation_id: conversationId,
+      request_id: input.requestId,
+      email
+    });
+  }
+
   async function submitFeedback(input: { requestId: string; reaction: string; comment: string }) {
     return actions.postStreamJson(
       '/feedback',
@@ -91,7 +107,7 @@ function createChatInteractions(options: ChatInteractionsOptions) {
     );
   }
 
-  return { retryAnswer, submitFeedback, submitQuestion };
+  return { emailAnswer, retryAnswer, submitFeedback, submitQuestion };
 }
 
 export { createChatInteractions };

@@ -501,6 +501,7 @@ function ChatApp() {
             onScroll={() => (autoFollowRef.current = nearBottom())}
             onRetry={interactions.retryAnswer}
             submitFeedback={interactions.submitFeedback}
+            emailAnswer={interactions.emailAnswer}
             track={track}
             onSubmit={handleSubmit}
             onQuestionInput={setQuestion}
