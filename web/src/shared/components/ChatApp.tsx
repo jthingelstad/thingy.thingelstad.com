@@ -16,8 +16,6 @@ import { DEFAULT_WELCOME, createChatWelcomeController } from '../thingy-chat-wel
 import {
   activeConversationId,
   activeMode,
-  authAction,
-  authEmail,
   availableModes,
   chatMessages,
   hasSources,
@@ -35,7 +33,6 @@ import {
   signedIn
 } from '../stores/ui-store.ts';
 import { AccountMenu } from './AccountMenu.tsx';
-import { focusAuthEmail } from './AuthPanel.tsx';
 import { ChatConversationView } from './ChatConversationView.tsx';
 import { ChatRail } from './ChatNavigation.tsx';
 import { Notice } from './Notice.tsx';
@@ -68,7 +65,6 @@ function ChatApp() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dictationListening, setDictationListening] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState('');
-  const [, setViewVersion] = useState(0);
   const initialRef = useRef<{
     email: string;
     loginToken: string;
@@ -94,7 +90,6 @@ function ChatApp() {
     };
     selectedSources.value = sourcesForScope(scope);
     hasSources.value = selectedSources.value.length > 0;
-    if (initialRef.current.email) authEmail.value = initialRef.current.email;
   }
   const initial = initialRef.current;
   const analytics = useMemo(() => createTinylyticsTracker({ enabled: Boolean(tinylyticsId()) }), []);
@@ -158,26 +153,7 @@ function ChatApp() {
       ui: {
         currentScope,
         scheduleChatScroll,
-        track,
-        onModesChanged: () => setViewVersion((value) => value + 1),
-        onActiveConversationChanged: () => setViewVersion((value) => value + 1),
-        onQuestionStateChanged: () => setViewVersion((value) => value + 1),
-        onAuthenticated: () => {
-          resetMessages();
-          actionsRef.current?.refreshConversations().then(() => {
-            if (initial.hasPrompt) {
-              actionsRef.current?.setActiveConversation('');
-              void maybeSubmitInitialPrompt();
-              return;
-            }
-            if (!state.activeConversationId) void startAgentWelcome();
-          });
-          inputRef.current?.focus();
-        },
-        onAuthCleared: () => {
-          welcomeControllerRef.current?.reset();
-          focusAuthEmail();
-        }
+        track
       }
     });
   }
@@ -323,9 +299,11 @@ function ChatApp() {
       if (event.key !== null && event.key !== session.storageKey) return;
       const hasToken = Boolean(actions.token());
       if (!hasToken && signedIn.value) {
+        // Signed out in another tab: leave the chat surface entirely, the
+        // same way an expired token does.
         actions.stopActiveAnswer();
-        actions.clearAuthState({ message: 'You signed out of Thingy in another tab.' });
         track('librarian.session_synced_signout');
+        actions.redirectToSignIn();
       } else if (hasToken && !signedIn.value) {
         window.location.reload();
       }
@@ -514,10 +492,10 @@ function ChatApp() {
               <AccountMenu
                 session={session}
                 normalizeName={normalizePreferredName}
-                onSignedOutClick={focusAuthEmail}
                 onLogout={() => {
-                  actions.clearAuthState({ scrubAuthParams: true });
+                  actions.stopActiveAnswer();
                   track('librarian.logout');
+                  actions.redirectToSignIn();
                 }}
                 onSaved={(name) => {
                   actions.rememberPreferredName(name);
@@ -562,13 +540,6 @@ function ChatApp() {
             onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
             onRename={() => void renameActiveConversation()}
             onDelete={() => void deleteActiveConversation()}
-            onAuthSubmit={() => void actions.submitAuthCheck()}
-            onAddSubscriber={() => void actions.submitAuthAction('subscribe')}
-            onResendConfirmation={() => void actions.submitAuthAction('resend_confirmation')}
-            onAuthEmailInput={() => {
-              actions.validateEmail();
-              authAction.value = 'none';
-            }}
             onScroll={() => (autoFollowRef.current = nearBottom())}
             onRetry={interactions.retryAnswer}
             onEmbeddedPrompt={interactions.embeddedPrompt}

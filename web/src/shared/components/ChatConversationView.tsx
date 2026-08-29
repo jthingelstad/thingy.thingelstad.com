@@ -1,7 +1,8 @@
 import { type JSX, type RefObject } from 'preact';
-import { type Signal } from '@preact/signals';
+import { useRef, useState } from 'preact/hooks';
+import { useSignalEffect, type Signal } from '@preact/signals';
+import { answerInFlight } from '../stores/chat-store.ts';
 import { modeClass, modeIcon } from '../thingy-modes.ts';
-import { AuthPanel } from './AuthPanel.tsx';
 import { ChatMessages } from './ChatMessages.tsx';
 import { ComposerCount } from './ComposerCount.tsx';
 import { ComposerSubmit } from './ComposerSubmit.tsx';
@@ -37,10 +38,6 @@ interface ChatConversationViewProps {
   onToggleMobileMenu: () => void;
   onRename: () => void;
   onDelete: () => void;
-  onAuthSubmit: () => void;
-  onAddSubscriber: () => void;
-  onResendConfirmation: () => void;
-  onAuthEmailInput: () => void;
   onScroll: () => void;
   onRetry: (messageId: string, prompt: string) => void;
   onEmbeddedPrompt: (prompt: string, kind: 'map' | 'experience') => void;
@@ -52,6 +49,26 @@ interface ChatConversationViewProps {
   onMapSeed: (seed: string) => void;
   onScopeChange: (scope: string) => void;
   onStopAnswer: () => void;
+}
+
+// Screen-reader status line for the streaming answer. The message list
+// itself is not a live region (announcing every streamed token re-reads the
+// whole growing answer); instead this hidden element announces only the
+// state transitions.
+function AnswerLiveStatus() {
+  const [status, setStatus] = useState('');
+  const wasInFlight = useRef(false);
+  useSignalEffect(() => {
+    const inFlight = answerInFlight.value;
+    if (inFlight === wasInFlight.current) return;
+    wasInFlight.current = inFlight;
+    setStatus(inFlight ? 'Thingy is answering…' : 'Answer ready');
+  });
+  return (
+    <p class="sr-only" role="status" aria-live="polite">
+      {status}
+    </p>
+  );
 }
 
 function ChatConversationView(props: ChatConversationViewProps) {
@@ -80,15 +97,6 @@ function ChatConversationView(props: ChatConversationViewProps) {
         </a>
       ) : null}
 
-      <div class="librarian-auth thingy-auth" hidden={props.signedIn}>
-        <AuthPanel
-          onSubmit={props.onAuthSubmit}
-          onAddSubscriber={props.onAddSubscriber}
-          onResendConfirmation={props.onResendConfirmation}
-          onEmailInput={props.onAuthEmailInput}
-        />
-      </div>
-
       <div ref={props.chatPanelRef} class="librarian-chat thingy-chat" hidden={!props.signedIn}>
         <div ref={props.scrollRef} class="thingy-chat-scroll" onScroll={props.onScroll}>
           {props.showModeBanner ? (
@@ -104,7 +112,8 @@ function ChatConversationView(props: ChatConversationViewProps) {
               <span>{props.modeLabel(props.currentMode)}</span>
             </div>
           ) : null}
-          <div class="librarian-messages" aria-live="polite">
+          <AnswerLiveStatus />
+          <div class="librarian-messages">
             <ChatMessages
               scrollContainer={() => props.scrollRef.current}
               onRetry={props.onRetry}

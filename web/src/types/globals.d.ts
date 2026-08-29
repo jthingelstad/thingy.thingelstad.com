@@ -70,20 +70,6 @@ interface Error {
   raw?: string;
 }
 
-interface ThingyMode {
-  id: string;
-  label: string;
-  description?: string;
-}
-
-interface ThingyConversationSummary extends LibrarianConversationSummary {
-  id: string;
-  conversation_id?: string;
-  preview?: string;
-  local?: boolean;
-  draft?: boolean;
-}
-
 interface ThingyChatState {
   conversations: ThingyConversationSummary[];
   activeConversationId: string | null;
@@ -96,41 +82,6 @@ interface ThingyActivityStep {
   label: string;
   note?: string;
   kind?: string;
-}
-
-interface ThingyArchiveItem {
-  url?: string;
-  title?: string;
-  subject?: string;
-  label?: string;
-  publish_date?: string;
-  reason?: string;
-  source_kind?: string;
-}
-
-interface ThingyExperience {
-  kind?: string;
-  title?: string;
-  intro?: string;
-  prompt?: string;
-  items?: ThingyArchiveItem[];
-}
-
-interface ThingyCitation {
-  issue_number?: string | number;
-  url?: string;
-  subject?: string;
-  publish_date?: string;
-  section?: string;
-}
-
-interface ThingyCuriosityNode {
-  id: string;
-  label: string;
-  kind?: string;
-  prompt?: string;
-  why?: string;
-  weight?: number;
 }
 
 interface ThingyCuriosityEdge {

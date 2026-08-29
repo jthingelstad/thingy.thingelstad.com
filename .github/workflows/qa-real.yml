@@ -1,0 +1,40 @@
+name: Nightly QA (real API)
+
+# Runs scripts/qa-real-api.mjs against the production site and the real
+# Librarian API. Inert until the repo variable QA_REAL_ENABLED is set to
+# 'true' and the THINGY_SESSION_TOKEN / LIBRARIAN_API_URL secrets exist.
+on:
+  schedule:
+    - cron: "43 12 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa-real:
+    if: ${{ vars.QA_REAL_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: "web/.node-version"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+
+      - run: npx playwright install --with-deps chromium
+
+      - name: QA against production
+        env:
+          THINGY_QA_URL: https://thingy.thingelstad.com
+          THINGY_SESSION_TOKEN: ${{ secrets.THINGY_SESSION_TOKEN }}
+          LIBRARIAN_API_URL: ${{ secrets.LIBRARIAN_API_URL }}
+        run: node scripts/qa-real-api.mjs

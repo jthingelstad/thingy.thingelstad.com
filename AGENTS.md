@@ -23,7 +23,7 @@ corpus).
 This repo is one of five that work together. The short version:
 
 - **Librarian (`librarian-thing`)** is the brain: auth, retrieval,
-  conversations, evaluation, Dispatch, and the corpus.
+  conversations, evaluation, and the corpus.
 - **WT Builder (`wt-builder`)** authors and publishes each newsletter issue,
   and commits the canonical issue text into the Librarian's `data/issues/`.
 - **Weekly (`weekly.thingelstad.com`)** renders the newsletter site from
@@ -34,16 +34,19 @@ This repo is one of five that work together. The short version:
   Lambda at runtime.
 
 The repo boundary matters: because Thingy is a live client across a repo
-boundary, the Librarian API `/auth`, `/chat`, `/retrieve`, `/feedback`,
-`/conversations`, and `/dispatch` are versioned runtime contracts, not internal
-functions. Casual schema changes break this repo. Version before changing.
+boundary, the Librarian API `/auth`, `/chat`, `/retrieve`, `/feedback`, and
+`/conversations` are versioned runtime contracts, not internal functions.
+(`/retrieve` is served for `wt-builder`; the Thingy web client never calls
+it.) Casual schema changes break this repo. Version before changing.
 
 ## Surface Responsibilities
 
-`web/` is a Vite-built static app served by GitHub Pages. It handles auth UI,
-streams `/chat` SSE from the Librarian Lambda, shapes Dispatch drafts, renders
-citations, collects feedback, and runs browser-only UX. It has no server beyond
-GitHub Pages.
+`web/` is a Vite-built static app served by GitHub Pages. Its surfaces are
+chat, the curiosity map, sign-in, and account. It handles auth UI, streams
+`/chat` SSE from the Librarian Lambda, renders citations and curiosity maps,
+collects feedback, and runs browser-only UX. It has no server beyond GitHub
+Pages. (The Dispatch surface was removed in 2026-08; `/dispatch/` is now a
+redirect stub to `/chat/`.)
 
 Conversation modes are backend-enforced and conversation-scoped. Current modes
 are default Thingy, Research Guide, Thought Partner, and Trusted Circle. Start
@@ -68,7 +71,6 @@ sed -n '1,220p' AGENTS.md
 sed -n '1,220p' docs/ROADMAP.md
 sed -n '1,220p' web/vite.config.ts
 sed -n '1,220p' web/src/pages/chat.ts
-sed -n '1,220p' web/src/pages/dispatch.ts
 ```
 
 ## Common Commands
@@ -110,8 +112,9 @@ THINGY_SMOKE_URL=http://localhost:8080 npm run smoke
 
 Key files:
 
-- `web/index.html`, `web/chat/index.html`, `web/dispatch/index.html`,
-  `web/signin/index.html`: static route shells.
+- `web/index.html`, `web/chat/index.html`, `web/signin/index.html`: static
+  route shells. (`web/dispatch/index.html` is a redirect stub kept for old
+  links; the Dispatch surface was removed in 2026-08.)
 - `web/src/pages/`: Vite page entrypoints.
 - `web/src/shared/`: browser-side app modules.
 - `web/src/styles/thingy.css`: stylesheet manifest imported by page entries.
@@ -154,13 +157,10 @@ Document behavior changes in `README.md` when touching these.
   is cross-corpus search with `all`.
 - `prompt`: Seeds the question and submits after auth/beta notice.
 - `email`: Prefills the auth field and starts subscriber auth.
-- `dispatch_test`: Hidden owner-only Dispatch testing mode. Use
-  `dispatch_test=template` on `/dispatch/` to exercise queue/status/email
-  template flow without invoking the expensive Dispatch writer.
 
 Privacy requirement: after the app reads these params, the Tinylytics loader
-strips `email`, `prompt`, `from`, `scope`, `corpus`, `dispatch_test`, and
-`test` from the browser URL before analytics loads. Preserve this.
+strips `email`, `prompt`, `from`, `scope`, `corpus`, `login_token`, and
+`magic_token` from the browser URL before analytics loads. Preserve this.
 
 ## Tinylytics
 

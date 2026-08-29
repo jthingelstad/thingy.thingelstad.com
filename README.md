@@ -123,7 +123,8 @@ Key web files:
 ### Librarian contract
 
 `librarian-thing` owns the versioned Librarian request, response, and SSE contract. Thingy
-vendors `web/contracts/librarian-api.v1.json` and validates successful responses directly
+vendors `web/contracts/librarian-api.json` (synced from `librarian-thing`'s
+`apps/librarian/contracts/librarian-api.json`) and validates successful responses directly
 against that generated artifact. The Librarian repo publishes the artifact and its SHA-256
 checksum; Thingy generates CSP-safe runtime validators and TypeScript contract types from
 the same JSON. Requests carry `x-librarian-contract-version`; the backend also returns it so
@@ -139,8 +140,10 @@ npm run contract:sync
 `contract:sync` fetches the Librarian repo's published `main` artifact by default, so it
 works in a clean checkout without a sibling repository. Set `LIBRARIAN_CONTRACT_SOURCE` to a local JSON path
 when developing both repositories together. `npm run contract:check` verifies the checksum,
-the vendored artifact, and the generated client; the Pages workflow runs that check before
-building. The Librarian's contract test also verifies its generated checksum.
+the vendored artifact, and the generated client; the scheduled drift workflow
+(`.github/workflows/drift.yml`) runs it daily against upstream `main`, and the Pages deploy
+gate runs `contract:generate:check` inside `npm run verify` before building. The Librarian's
+contract test also verifies its generated checksum.
 
 ## Tinylytics
 

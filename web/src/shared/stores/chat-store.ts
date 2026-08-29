@@ -28,27 +28,6 @@ const activeMode = signal('thingy');
 // streaming action layer.
 const chatMessages = signal<ThingyChatViewMessage[]>([]);
 
-// --- Auth gate --------------------------------------------------------------
-// (signedIn lives in ui-store — it's identity state shared with
-// AccountMenu.)
-
-// Email currently shown in the sign-in input.
-const authEmail = signal('');
-
-// Inline validation error under the email input ('' when valid).
-const authEmailError = signal('');
-
-// Status text under the sign-in form.
-const authMessage = signal('');
-
-// Which secondary action button is offered: 'none', 'subscribe', or
-// 'resend_confirmation'. Set by the auth response handler.
-const authAction = signal<'none' | 'subscribe' | 'resend_confirmation'>('none');
-
-// True while a sign-in / subscribe / resend POST is in flight; disables
-// both the primary and secondary buttons.
-const authBusy = signal(false);
-
 // --- Composer ---------------------------------------------------------------
 
 // Current draft text in the chat composer textarea. The chat controller
@@ -80,11 +59,6 @@ export {
   activeConversationId,
   activeMode,
   answerInFlight,
-  authAction,
-  authBusy,
-  authEmail,
-  authEmailError,
-  authMessage,
   availableModes,
   chatMessages,
   conversationCreateInFlight,

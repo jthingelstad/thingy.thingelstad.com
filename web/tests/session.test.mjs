@@ -53,21 +53,3 @@ test('returnPath rejects external and protocol-relative return targets', async (
   installWindow('http://localhost:8080/signin/?return=%2F%2Fevil.example%2F');
   assert.equal(session.returnPath('/chat/'), '/chat/');
 });
-
-test('mergeProfile drops retired Discord identity fields', async () => {
-  installWindow();
-  const session = await import('../src/shared/thingy-session.ts');
-
-  const profile = session.mergeProfile({
-    email: 'reader@example.com',
-    profile: {
-      preferred_name: 'Reader',
-      discord_connection: { connected: true, display_name: 'Retired Link' }
-    },
-    discord_user: { connected: true, display_name: 'Retired Link' }
-  });
-
-  assert.equal(Object.hasOwn(profile, 'discord_connection'), false);
-  assert.equal(Object.hasOwn(profile, 'discord_user'), false);
-  assert.equal(session.storedProfile().preferred_name, 'Reader');
-});

@@ -1,7 +1,7 @@
-/* Thingy stylesheet manifest. Keep imports in cascade order. */
+/* Chat-surface stylesheet manifest. Keep imports in cascade order.
+   Home and sign-in have their own minimal entries
+   (thingy-home-entry.css / thingy-signin-entry.css). */
 @import url("./thingy-base.css");
-@import url("./thingy-home.css");
-@import url("./thingy-auth.css");
 @import url("./thingy-forms.css");
 @import url("./thingy-messages.css");
 @import url("./thingy-artifacts.css");
@@ -11,7 +11,6 @@
 @import url("./thingy-rail-recents.css");
 @import url("./thingy-rail-account.css");
 @import url("./thingy-return-chip.css");
-@import url("./thingy-chat-auth.css");
 @import url("./thingy-mode-banner.css");
 @import url("./thingy-chat-surface.css");
 @import url("./thingy-composer.css");

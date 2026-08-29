@@ -3,11 +3,6 @@ import test from 'node:test';
 import {
   activeConversationId,
   answerInFlight,
-  authAction,
-  authBusy,
-  authEmail,
-  authEmailError,
-  authMessage,
   availableModes,
   conversationCreateInFlight,
   conversations,
@@ -34,11 +29,6 @@ test('chat-store ships sensible initial values', () => {
   assert.equal(activeConversationId.value, null);
   assert.deepEqual(availableModes.value, [{ id: 'thingy', label: 'Thingy' }]);
   assert.equal(signedIn.value, false);
-  assert.equal(authEmail.value, '');
-  assert.equal(authEmailError.value, '');
-  assert.equal(authMessage.value, '');
-  assert.equal(authAction.value, 'none');
-  assert.equal(authBusy.value, false);
   assert.equal(questionText.value, '');
   assert.equal(hasSources.value, true);
   assert.equal(interactionBusy.value, false);

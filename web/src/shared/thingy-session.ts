@@ -117,10 +117,6 @@ function mergeProfile(data: ThingyAuthData = {}, email = ''): LibrarianProfile {
     entitlements,
     modes: normalizeModes(data.modes || incomingProfile.modes || existingProfile.modes)
   };
-  const profileRecord = profile as Record<string, unknown>;
-  for (const key of ['discord_connection', 'discordConnection', 'discord_user', 'discordUser']) {
-    delete profileRecord[key];
-  }
   window.localStorage.setItem(userProfileKey, JSON.stringify(profile));
   return profile;
 }

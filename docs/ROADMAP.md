@@ -4,8 +4,8 @@ Thingy is evolving from an archive search surface into an authenticated archive 
 interface to Jamie's published work that can remember context, reason across corpora, and eventually offer
 different conversation modes based on who is signed in.
 
-This document is the living roadmap for the public Thingy web surface and its relationship to the Studio
-Librarian API. Historical build briefs belong under `docs/history/`; this file should reflect the current
+This document is the living roadmap for the public Thingy web surface and its relationship to the
+Librarian API (`librarian-thing`). Historical build briefs belong under `docs/history/`; this file should reflect the current
 product direction.
 
 ## Product Principles
@@ -79,9 +79,10 @@ product direction.
 
 ### Runtime Contract
 
-- Studio owns one generated, versioned contract for successful Librarian JSON responses and SSE events.
+- Librarian (`librarian-thing`) owns one generated, versioned contract for successful Librarian JSON responses and SSE events.
 - Thingy validates live payloads against that artifact and negotiates the supported major contract version
-  on every request. Additive changes remain compatible within v1; breaking changes require a new major.
+  on every request. Additive changes remain compatible within a major; breaking changes require a new
+  major. The contract is currently 2.0.0.
 
 ## Current Mode Model
 
@@ -167,7 +168,7 @@ of Thought Partner.
 - **Deeper feedback loop** (idea): let downvote comments and eval notes become a structured
   improvement queue, not just passive metadata.
 
-Backend/API follow-ups implementing these live in the Studio repo's `docs/librarian-tasks.md`.
+Backend/API follow-ups implementing these live in the Librarian repo's (`librarian-thing`) `docs/librarian-tasks.md`.
 
 ## Intelligence Roadmap
 

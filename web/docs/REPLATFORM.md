@@ -6,14 +6,18 @@
 > (`thingy-dispatch-actions.ts`). The retired Discord surface was removed in
 > August 2026, and the Dispatch surface was removed entirely later that
 > month (its `/dispatch/` route is now a redirect stub to `/chat/`).
-> Remaining intentionally-unmigrated surfaces are the signin page
-> and the source picker / mode select / mobile title inside chat.
+> The surfaces that were at first intentionally unmigrated have since been
+> ported too: the signin page (`SignInApp.tsx`) and the source picker / mode
+> select / mobile title inside chat (`SourcePicker.tsx`, `ChatNavigation.tsx`).
+> Not shipped: `<ConfirmDialog>` / inline rename — chat still uses
+> `window.confirm`/`window.prompt` for delete, rename, and downvote comments.
 > This document is retained as the design brief and architecture map;
 > Dispatch references below are historical.
 
-A build brief for moving the Thingy web app's two controller blobs
-(`thingy-chat.ts`, ~1,700 lines; `thingy-dispatch.ts`, ~730 lines) onto
-Preact + `@preact/signals`. The goal is to delete the hand-rolled
+A build brief for moving the Thingy web app's two controller blobs — at the
+time, `thingy-chat.ts` (~1,700 lines; now a 7-line boot shim over
+`ChatApp.tsx`) and `thingy-dispatch.ts` (~730 lines; since deleted with the
+Dispatch surface) — onto Preact + `@preact/signals`. The goal is to delete the hand-rolled
 mutation→render orchestration that makes the app brittle, not to rewrite it.
 
 ## Why
@@ -94,7 +98,8 @@ Shared (used by both apps):
 - `<AccountMenu>` — identity, preferred name, profile controls, logout
 - `<Composer>` — textarea autosize, count, voice, send/stop morphing button
 - `<Notice>` — toast surface (replaces the Phase 0 `showNotice` helper)
-- `<ConfirmDialog>` / inline rename — retires `window.prompt`/`confirm`
+- `<ConfirmDialog>` / inline rename — retires `window.prompt`/`confirm` (not
+  shipped: chat still uses them)
 
 Chat page:
 - `<ChatApp>` — auth gate + bootstrap (URL params, magic link, saved conversation)

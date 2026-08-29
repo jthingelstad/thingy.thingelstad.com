@@ -137,14 +137,3 @@ test('upsertPendingConversation replaces the active local shell with the server 
   assert.equal(entry.title, 'What about RSS?');
   assert.equal(entry.draft, false);
 });
-
-test('validateEmail writes the inline error signal', async () => {
-  const actions = freshActions();
-  const { authEmail, authEmailError } = await import('../src/shared/stores/chat-store.ts');
-  authEmail.value = 'not-an-email';
-  assert.equal(actions.validateEmail(), false);
-  assert.match(authEmailError.value, /valid email/);
-  authEmail.value = 'reader@example.com';
-  assert.equal(actions.validateEmail(), true);
-  assert.equal(authEmailError.value, '');
-});

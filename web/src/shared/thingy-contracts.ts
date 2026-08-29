@@ -20,8 +20,13 @@ function contractMajor(version: string) {
   return /^([0-9]+)\./.exec(version)?.[1] || '';
 }
 
+// Majors this client can read. 1.x stays accepted through the 2.0.0
+// rollout so the site keeps working while the server deploy is in flight;
+// drop '1' once the Librarian stack is on 2.x everywhere.
+const ACCEPTED_CONTRACT_MAJORS = ['1', contractMajor(LIBRARIAN_CONTRACT_VERSION)];
+
 function compatibleContractVersion(version: string) {
-  return Boolean(version) && contractMajor(version) === contractMajor(LIBRARIAN_CONTRACT_VERSION);
+  return Boolean(version) && ACCEPTED_CONTRACT_MAJORS.includes(contractMajor(version));
 }
 
 function validateApiResponse(value: unknown, context = 'API', action = ''): ThingyApiResponse & LibrarianApiResponse {

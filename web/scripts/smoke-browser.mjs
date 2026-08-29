@@ -145,7 +145,7 @@ async function checkChat(browser) {
 
   // The route-level root owns the entire authenticated shell.
   await page.waitForSelector('.librarian-chat:not([hidden])');
-  assert.equal(await page.locator('.librarian-auth').isHidden(), true, 'auth panel hidden when signed in');
+  assert.equal(await page.locator('.librarian-auth').count(), 0, 'no in-chat auth panel; signed-out /chat/ redirects');
 
   await page.waitForSelector('.rail-body .rail-empty');
   const emptyText = (await page.locator('.rail-body .rail-empty').textContent()).trim();
@@ -252,7 +252,11 @@ async function checkMobileChat(browser) {
   await page.locator('.mobile-chatbar-circle').click();
   await page.waitForSelector('.thingy-app-shell.is-mobile-rail-open');
   assert.equal(await page.locator('.rail-scrim').count(), 1, 'open mobile rail renders one close scrim');
-  assert.equal((await page.locator('.rail-surface-switch a.is-active').textContent()).trim(), 'Chat');
+  assert.equal(
+    await page.locator('.rail-newchat').first().isVisible(),
+    true,
+    'open mobile rail shows the new-chat action'
+  );
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
   await page.locator('.rail-scrim').click({ position: { x: 380, y: 400 } });
   await page.waitForSelector('.thingy-app-shell:not(.is-mobile-rail-open)');

@@ -8,7 +8,7 @@ import * as defaultSession from './thingy-session.ts';
 import { postJsonRequest } from './thingy-http.ts';
 import { createChatStreamActions } from './thingy-chat-stream-actions.ts';
 import { createChatConversationActions } from './thingy-chat-conversation-actions.ts';
-import { createChatAuthActions, type AuthFlowOptions, type ClearAuthOptions } from './thingy-chat-auth-actions.ts';
+import { createChatAuthActions } from './thingy-chat-auth-actions.ts';
 import {
   activeConversationId as activeConversationIdSignal,
   activeMode as activeModeSignal,
@@ -27,8 +27,6 @@ interface ChatUiHooks {
   onModesChanged?: () => void;
   onActiveConversationChanged?: () => void;
   onQuestionStateChanged?: () => void;
-  onAuthenticated?: (data: ThingyAuthData, options: AuthFlowOptions) => void;
-  onAuthCleared?: (options: ClearAuthOptions) => void;
 }
 
 interface ChatActionsOptions {
@@ -93,21 +91,13 @@ function createChatActions(options: ChatActionsOptions = {}) {
   const onActiveConversationChanged =
     typeof ui.onActiveConversationChanged === 'function' ? ui.onActiveConversationChanged : () => {};
   const onQuestionStateChanged = typeof ui.onQuestionStateChanged === 'function' ? ui.onQuestionStateChanged : () => {};
-  const onAuthenticated = typeof ui.onAuthenticated === 'function' ? ui.onAuthenticated : () => {};
-  const onAuthCleared = typeof ui.onAuthCleared === 'function' ? ui.onAuthCleared : () => {};
 
   const state = chatState;
-  let clearActiveConversation = () => {
-    state.activeConversationId = null;
-  };
   const authActions = createChatAuthActions({
     session,
     state,
     track,
-    onModesChanged,
-    onAuthenticated,
-    onAuthCleared,
-    clearActiveConversation: () => clearActiveConversation()
+    onModesChanged
   });
 
   // --- Conversations -----------------------------------------------------------
@@ -137,8 +127,6 @@ function createChatActions(options: ChatActionsOptions = {}) {
     onQuestionStateChanged,
     setCreateInFlight: (value) => (conversationCreateInFlightSignal.value = value)
   });
-  clearActiveConversation = () => conversationActions.setActiveConversation('');
-
   // --- Streaming ----------------------------------------------------------------
 
   async function postStreamJson(path: string, payload: unknown, headers: Record<string, string> = {}) {
@@ -176,7 +164,6 @@ function createChatActions(options: ChatActionsOptions = {}) {
     activeConversation: conversationActions.activeConversation,
     authHeaders,
     clearAnswerAbortState: streamActions.clearAnswerAbortState,
-    clearAuthState: authActions.clearAuthState,
     conversationAction,
     createConversationShellForMode: conversationActions.createConversationShellForMode,
     createLocalConversationShell: conversationActions.createLocalConversationShell,
@@ -208,14 +195,11 @@ function createChatActions(options: ChatActionsOptions = {}) {
     setUserProfile: authActions.setUserProfile,
     stopActiveAnswer: streamActions.stopActiveAnswer,
     storedEmail: authActions.storedEmail,
-    submitAuthAction: authActions.submitAuthAction,
-    submitAuthCheck: authActions.submitAuthCheck,
     token: authActions.token,
     tokenExpired: authActions.tokenExpired,
     upsertConversationSummary: conversationActions.upsertConversationSummary,
     upsertPendingConversation: conversationActions.upsertPendingConversation,
-    userProfile: authActions.userProfile,
-    validateEmail: authActions.validateEmail
+    userProfile: authActions.userProfile
   };
 }
 

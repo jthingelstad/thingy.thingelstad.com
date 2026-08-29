@@ -1,0 +1,4 @@
+/* Style entry for the static home page: base tokens/typography plus the
+   home layout. The chat surface loads the full manifest (thingy.css). */
+@import url("./thingy-base.css");
+@import url("./thingy-home.css");
