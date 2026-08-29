@@ -1,7 +1,7 @@
 // @ts-check
 // Signal store for the Thingy chat surface (/chat/). Components read these
-// signals; bootChat() writes to them. Dispatch's state lives in
-// dispatch-store.js, and the cross-surface notice lives in ui-store.js.
+// signals; bootChat() writes to them. The notice, rail, and account-identity
+// state lives in ui-store.js.
 
 import { computed, signal } from '@preact/signals';
 
@@ -29,8 +29,8 @@ const activeMode = signal('thingy');
 const chatMessages = signal<ThingyChatViewMessage[]>([]);
 
 // --- Auth gate --------------------------------------------------------------
-// (signedIn lives in ui-store — it's cross-surface identity state shared
-// with dispatch and AccountMenu.)
+// (signedIn lives in ui-store — it's identity state shared with
+// AccountMenu.)
 
 // Email currently shown in the sign-in input.
 const authEmail = signal('');

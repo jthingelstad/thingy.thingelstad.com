@@ -17,17 +17,6 @@ test('chat reads URL params before Tinylytics strips them', async () => {
   );
 });
 
-test('dispatch reads URL params before Tinylytics strips them', async () => {
-  const entry = await source('../src/pages/dispatch.ts');
-
-  assert.ok(entry.indexOf('bootDispatch();') > -1);
-  assert.ok(entry.indexOf('loadTinylytics();') > -1);
-  assert.ok(
-    entry.indexOf('bootDispatch();') < entry.indexOf('loadTinylytics();'),
-    'bootDispatch must run before loadTinylytics so dispatch_test params are read before analytics scrubbing'
-  );
-});
-
 test('chat keeps signed-in invite links out of the sign-in redirect loop', async () => {
   const sourceText = await source('../src/shared/components/ChatApp.tsx');
   const tokenBranch = sourceText.indexOf('} else if (actions.token()) {');

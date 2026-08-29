@@ -181,55 +181,12 @@ interface AssistantMessageOptions {
   elapsedSeconds?: number;
 }
 
-interface ThingyDispatchMessage {
-  id?: string;
-  baseId?: string;
-  scope?: string;
-  role?: 'user' | 'assistant' | 'system';
-  text?: string;
-  time?: string;
-  kind?: string;
-  status?: string;
-  startedAt?: number;
-  completedAt?: number | string;
-}
-
 interface ThingyChatViewMessage {
   id: string;
   role: 'user' | 'assistant';
   prompt?: string;
   scope?: string;
   model?: AssistantMessageModel;
-}
-
-interface ThingyDispatchDraftSummary {
-  id: string;
-  title: string;
-  stage: string;
-}
-
-interface ThingyDispatchAction {
-  id: string;
-  label: string;
-  kind: string;
-  href?: string;
-}
-
-interface ThingyDispatchDraft {
-  id: string;
-  stage: string;
-  prompt: string;
-  direction: string;
-  conversationId: string;
-  currentQuestion: string;
-  clarificationAnswer: string;
-  brief: DispatchBrief;
-  dispatchId: string;
-  title: string;
-  statusText: string;
-  updatedAt: string;
-  messages: ThingyDispatchMessage[];
-  generationProgressScope?: string;
 }
 
 interface ThingyTokenPayload {

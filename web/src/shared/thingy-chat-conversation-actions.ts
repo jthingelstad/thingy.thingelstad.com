@@ -242,6 +242,9 @@ function createChatConversationActions(options: ChatConversationActionsOptions) 
       const serverConversations = (data.conversations || [])
         .map((entry) => ({ ...entry, id: String(entry.id || entry.conversation_id || ''), local: false }))
         .filter((entry) => entry.id)
+        // The Dispatch surface was removed in 2026-08, but the server still
+        // holds historical dispatch-mode conversation rows; keep them out of
+        // the chat rail.
         .filter((entry) => String(entry.mode || '') !== 'dispatch');
       const serverIds = new Set(serverConversations.map((entry) => entry.id));
       const keptClientShells = clientActiveShells.filter(

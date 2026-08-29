@@ -1,7 +1,7 @@
 // @ts-check
-// Cross-surface UI signals: the notice (toast) surface, the rail state
-// (collapsed / mobile open), and the account-menu identity that both /chat/
-// and /dispatch/ render in the same way.
+// UI signals for the notice (toast) surface, the rail state
+// (collapsed / mobile open), and the account-menu identity. Kept separate
+// from chat-store as the account/rail state predates the chat surface split.
 
 import { signal } from '@preact/signals';
 
@@ -15,8 +15,8 @@ const mobileRailOpen = signal(false);
 // --- Account identity (cross-surface) ---------------------------------------
 
 // True when a Thingy session token is held in this browser. Written by the
-// chat and dispatch bootstraps when they persist or clear the token, and by
-// the chat storage listener that catches cross-tab sign-outs.
+// chat bootstrap when it persists or clears the token, and by the chat
+// storage listener that catches cross-tab sign-outs.
 const signedIn = signal(false);
 
 // Email currently associated with this browser's session. Used as the rail

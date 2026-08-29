@@ -51,7 +51,7 @@ test('returnPath rejects external and protocol-relative return targets', async (
   assert.equal(session.returnPath('/chat/'), '/chat/');
 
   installWindow('http://localhost:8080/signin/?return=%2F%2Fevil.example%2F');
-  assert.equal(session.returnPath('/dispatch/'), '/dispatch/');
+  assert.equal(session.returnPath('/chat/'), '/chat/');
 });
 
 test('mergeProfile drops retired Discord identity fields', async () => {

@@ -47,17 +47,6 @@ function ChatRail(props: ChatRailProps) {
         </button>
       </div>
 
-      <nav class="rail-surface-switch" aria-label="Thingy surfaces">
-        <a class="is-active" href="/chat/" aria-current="page">
-          <ThingyIcon name="message-square" />
-          <span>Chat</span>
-        </a>
-        <a href="/dispatch/">
-          <ThingyIcon name="newspaper" />
-          <span>Dispatch</span>
-        </a>
-      </nav>
-
       <div class="rail-newchat-combo">
         <button
           class="rail-newchat"

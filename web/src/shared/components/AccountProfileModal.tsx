@@ -192,10 +192,7 @@ function AccountProfileModal({
           </dl>
           <section class="thingy-memory-danger-zone" aria-label="Delete Thingy Profile">
             <h3>Delete Thingy Profile</h3>
-            <p>
-              This deletes your Thingy profile, conversations, and Dispatch history. It does not unsubscribe you from
-              Weekly Thing.
-            </p>
+            <p>This deletes your Thingy profile and conversations. It does not unsubscribe you from Weekly Thing.</p>
             {confirmDelete ? (
               <div class="thingy-memory-danger-actions">
                 <p class="thingy-memory-confirm-copy">Are you sure? This cannot be undone from Thingy.</p>

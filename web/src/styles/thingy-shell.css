@@ -56,8 +56,7 @@
 }
 
 .thingy-app-shell.is-booting .librarian-auth,
-.thingy-app-shell.is-booting .librarian-chat,
-.thingy-app-shell.is-booting .dispatch-chat {
+.thingy-app-shell.is-booting .librarian-chat {
   visibility: hidden;
 }
 
@@ -277,14 +276,6 @@
   color: var(--muted);
   letter-spacing: 0.02em;
   white-space: nowrap;
-}
-
-.dispatch-new {
-  margin-top: 6px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--surface);
-  box-shadow: var(--shadow-subtle);
 }
 
 .rail-map {

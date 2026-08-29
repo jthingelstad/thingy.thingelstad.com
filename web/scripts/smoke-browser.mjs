@@ -71,30 +71,6 @@ async function routeMockApi(page, { holdWelcome = false } = {}) {
     });
   });
 
-  await page.route(`${apiHost}/dispatch`, async (route) => {
-    const body = route.request().postDataJSON?.() || {};
-    if (body.action === 'list') {
-      await route.fulfill({
-        contentType: 'application/json',
-        body: JSON.stringify({
-          supporting_member: true,
-          entitlements: ['supporting_member'],
-          dispatches: [
-            {
-              id: 'smoke-sent',
-              status: 'sent',
-              title: 'Smoke Sent Dispatch',
-              prompt: 'Smoke prompt',
-              updated_at: new Date().toISOString()
-            }
-          ]
-        })
-      });
-      return;
-    }
-    await route.fulfill({ contentType: 'application/json', body: '{}' });
-  });
-
   await page.route(`${apiHost}/conversations`, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
@@ -243,43 +219,6 @@ async function checkChat(browser) {
   await context.close();
 }
 
-async function checkDispatch(browser) {
-  const context = await browser.newContext();
-  await seedSession(context);
-  const page = await context.newPage();
-  const failures = collectUiFailures(page);
-  await routeMockApi(page);
-  await page.goto(`${baseUrl}/dispatch/`);
-
-  await page.waitForSelector('.dispatch-rail-item');
-  const row = page.locator('.dispatch-rail-item').first();
-  assert.match((await row.locator('.rail-recent-title').textContent()).trim(), /Smoke Sent Dispatch/);
-
-  await page.waitForSelector('.dispatch-status', { state: 'attached' });
-  assert.equal(await page.locator('.dispatch-status').getAttribute('aria-live'), 'polite');
-
-  // The sent draft is non-editable; the input should be disabled with the
-  // dispatched placeholder copy.
-  await page.waitForSelector('#dispatch-input:disabled');
-  assert.equal(
-    await page.locator('#dispatch-input').getAttribute('placeholder'),
-    'Start a new Dispatch to shape another request...'
-  );
-
-  assert.equal(await page.locator('script[src*="tinylytics"]').count(), 0);
-  await assertAccessible(page, 'dispatch');
-
-  assertNoUiFailures(failures, 'dispatch');
-
-  // Dispatch uses AccountMenu's built-in logout path rather than injecting
-  // the Chat route's custom store cleanup callback.
-  await page.locator('.rail-account-btn').click();
-  await page.getByRole('menuitem', { name: 'Logout' }).click();
-  await page.waitForURL(/\/signin\/\?return=%2Fdispatch%2F/);
-
-  await context.close();
-}
-
 async function checkMobileChat(browser) {
   const context = await browser.newContext();
   await seedSession(context);
@@ -329,34 +268,6 @@ async function checkMobileChat(browser) {
   await context.close();
 }
 
-async function checkMobileDispatch(browser) {
-  const context = await browser.newContext();
-  await seedSession(context);
-  const page = await context.newPage();
-  const failures = collectUiFailures(page);
-  await routeMockApi(page);
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`${baseUrl}/dispatch/`);
-  await page.waitForSelector('.dispatch-chat:not([hidden])');
-  assert.equal(
-    await page.locator('.rail-scrim').count(),
-    0,
-    'closed mobile Dispatch rail has no hidden focusable scrim'
-  );
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
-  await page.locator('.mobile-chatbar-circle').click();
-  await page.waitForSelector('.thingy-app-shell.is-mobile-rail-open');
-  assert.equal(await page.locator('.rail-scrim').count(), 1, 'open mobile Dispatch rail renders one close scrim');
-  assert.equal((await page.locator('.rail-surface-switch a.is-active').textContent()).trim(), 'Dispatch');
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
-  await page.locator('.rail-scrim').click({ position: { x: 380, y: 400 } });
-  await page.waitForSelector('.thingy-app-shell:not(.is-mobile-rail-open)');
-  assert.equal(await page.locator('.rail-scrim').count(), 0, 'closing mobile Dispatch rail removes the scrim');
-  await assertAccessible(page, 'mobile Dispatch');
-  assertNoUiFailures(failures, 'mobile Dispatch');
-  await context.close();
-}
-
 async function main() {
   for (const [name, browserType] of [
     ['Chromium', chromium],
@@ -366,9 +277,7 @@ async function main() {
     try {
       await checkSignInRedirect(browser);
       await checkChat(browser);
-      await checkDispatch(browser);
       await checkMobileChat(browser);
-      await checkMobileDispatch(browser);
     } finally {
       await browser.close();
     }

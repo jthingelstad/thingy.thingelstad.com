@@ -24,8 +24,6 @@ interface MessageActionsProps {
   onRetry?: (prompt: string) => void;
   submitFeedback?: (input: FeedbackInput) => Promise<FeedbackResult>;
   track?: (name: string, value?: string) => void;
-  promptShareTitle?: string;
-  promptShareUrl?: (prompt: string, scope: string) => string;
 }
 
 function ActionIcon({ name }: { name: MessageActionKind }) {
@@ -50,9 +48,7 @@ function MessageActions({
   retryPrompt = '',
   onRetry,
   submitFeedback,
-  track = (_name: string, _value?: string) => {},
-  promptShareTitle,
-  promptShareUrl
+  track = (_name: string, _value?: string) => {}
 }: MessageActionsProps) {
   const controlsRef = useRef<HTMLDivElement>(null);
   const serviceRef = useRef<ReturnType<typeof createChatMessageActions> | null>(null);
@@ -66,8 +62,6 @@ function MessageActions({
     serviceRef.current = createChatMessageActions({
       submitFeedback,
       track,
-      promptShareTitle,
-      promptShareUrl,
       onSpeechStateChange: setSpeaking
     });
   }

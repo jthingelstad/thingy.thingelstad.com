@@ -52,17 +52,16 @@ interface ThingyAuthData {
   modes?: ThingyMode[];
 }
 
-interface ThingyApiResponse extends ThingyAuthData, DispatchRow {
+interface ThingyApiResponse extends ThingyAuthData {
   contract_version?: string;
   request_id?: string;
   requestId?: string;
   errorMessage?: string;
   conversations?: ThingyConversationSummary[];
   conversation?: ThingyConversationSummary;
-  dispatches?: DispatchRow[];
-  dispatch?: DispatchRow;
+  conversation_id?: string;
+  messages?: unknown[];
   supporting_member?: boolean;
-  items?: DispatchRow[];
   data?: unknown;
   code?: string;
   nodes?: ThingyCuriosityNode[];
@@ -83,7 +82,6 @@ interface ThingyStreamData extends ThingyApiResponse {
   kind?: string;
   tool_name?: string;
   toolName?: string;
-  brief?: DispatchBrief;
 }
 
 // Account overview returned by /memory `get`.
@@ -95,52 +93,6 @@ interface LibrarianAccountOverview {
   conversation_turn_count?: number;
   oldest_conversation_at?: string;
   newest_conversation_at?: string;
-}
-
-interface DispatchBriefSource {
-  id?: string;
-  label?: string;
-  title?: string;
-  url?: string;
-  source_kind?: string;
-  publish_date?: string;
-  why?: string;
-}
-
-// Brief published by the dispatch planner conversation (update_dispatch_brief
-// tool → `dispatch_brief` SSE event) and passed back on /dispatch `create`.
-interface DispatchBrief {
-  user_goal?: string;
-  working_angle?: string;
-  coverage_status?: 'thin' | 'focused' | 'broad' | 'ambiguous';
-  selected_sources?: DispatchBriefSource[];
-  excluded_scope?: string[];
-  generation_instructions?: string;
-  preheader_basis?: string;
-  status?: 'draft' | 'ready';
-}
-
-// Dispatch row from /dispatch list/status/save_draft/create responses.
-interface DispatchRow {
-  id?: string;
-  dispatch_id?: string;
-  status?: string;
-  topic?: string;
-  prompt?: string;
-  direction?: string;
-  conversation_id?: string;
-  clarification_question?: string;
-  clarification_answer?: string;
-  brief?: DispatchBrief;
-  subject?: string;
-  title?: string;
-  preview?: string;
-  error?: string;
-  messages?: ThingyDispatchMessage[];
-  created_at?: string;
-  updated_at?: string;
-  template_test?: boolean;
-  source_count?: number;
 }
 
 // Conversation summary from /conversations `list`.
@@ -165,7 +117,6 @@ interface ChatSseEventMap {
   answer: { answer?: string };
   citations: { citations?: unknown[] };
   experience: { experience?: unknown };
-  dispatch_brief: { brief?: DispatchBrief; status?: string; request_id?: string; conversation_id?: string };
   done: { request_id?: string; conversation_id?: string; conversation?: unknown; mode?: string };
   error: { error?: string; request_id?: string };
 }

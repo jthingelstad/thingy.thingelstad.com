@@ -513,8 +513,6 @@ function ChatApp() {
             accountMenu={
               <AccountMenu
                 session={session}
-                signedIn={signedIn}
-                returnTo="/chat/"
                 normalizeName={normalizePreferredName}
                 onSignedOutClick={focusAuthEmail}
                 onLogout={() => {

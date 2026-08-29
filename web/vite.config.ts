@@ -80,7 +80,6 @@ function htmlConfigPlugin(): Plugin {
         .replaceAll('__THINGY_TINYLYTICS_ID__', tinylyticsId)
         .replaceAll('__THINGY_CONNECT_SRC__', connectSrc)
         .replace('__THINGY_CHAT_CONFIG__', encode(config))
-        .replace('__THINGY_DISPATCH_CONFIG__', encode(config))
         .replace('__THINGY_SIGNIN_CONFIG__', encode({ librarianApiUrl }));
     }
   };
@@ -99,6 +98,8 @@ export default defineConfig({
       input: {
         home: resolve(__dirname, 'index.html'),
         chat: resolve(__dirname, 'chat/index.html'),
+        // The Dispatch surface was removed in 2026-08; /dispatch/ is a static
+        // redirect stub (no JS entry) kept so old links land on /chat/.
         dispatch: resolve(__dirname, 'dispatch/index.html'),
         signin: resolve(__dirname, 'signin/index.html')
       }

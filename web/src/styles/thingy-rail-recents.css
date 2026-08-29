@@ -1,4 +1,4 @@
-/* Rail recents/history lists shared by chat and Dispatch. */
+/* Rail recents/history lists for the chat surface. */
 .rail-body {
   flex: 1 1 auto;
   min-height: 0;
@@ -95,8 +95,7 @@
   cursor: pointer;
 }
 
-.rail-recent.has-mode .rail-recent-open,
-.dispatch-rail-item .rail-recent-open {
+.rail-recent.has-mode .rail-recent-open {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
@@ -148,62 +147,18 @@
   color: var(--ink-soft);
 }
 
-.dispatch-state-glyph {
-  width: 22px;
-  height: 22px;
-  display: grid;
-  place-items: center;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 900;
-  line-height: 1;
-}
 
-.rail-recent-mode .thingy-icon,
-.dispatch-state-glyph .thingy-icon {
+.rail-recent-mode .thingy-icon {
   width: 17px;
   height: 17px;
   stroke-width: 2.05;
 }
 
-.dispatch-state-glyph .lucide-loader-circle {
-  animation: thingy-spin 1.1s linear infinite;
-  transform-origin: center;
-}
 
-@keyframes thingy-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
 
-.dispatch-rail-item.is-ready .dispatch-state-glyph,
-.dispatch-rail-item.is-upgrade .dispatch-state-glyph {
-  color: var(--accent-deep);
-}
 
-.dispatch-rail-item.is-generating .dispatch-state-glyph,
-.dispatch-rail-item.is-queued .dispatch-state-glyph,
-.dispatch-rail-item.is-ready_to_send .dispatch-state-glyph,
-.dispatch-rail-item.is-sending .dispatch-state-glyph {
-  color: #2f5f8a;
-}
 
-.dispatch-rail-item.is-sent .dispatch-state-glyph {
-  color: #2f8066;
-}
 
-.dispatch-rail-item.is-failed .dispatch-state-glyph {
-  color: #9a341f;
-}
-
-.dispatch-rail-item.is-active .dispatch-state-glyph {
-  background: transparent;
-}
 
 .rail-recent-del {
   width: 26px;

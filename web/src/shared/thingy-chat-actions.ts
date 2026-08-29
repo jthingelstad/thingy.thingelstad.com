@@ -1,6 +1,6 @@
 // The chat flow layer: session/auth flows, conversation summary + server
 // flows, and the streaming POSTs. Extracted from bootChat so the logic has
-// explicit dependencies and mirrors thingy-dispatch-actions.js. The factory
+// explicit dependencies. The factory
 // writes chat-store / ui-store signals directly; DOM-facing concerns arrive
 // as `ui` hooks so this module never builds or queries page structure.
 

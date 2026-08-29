@@ -4,9 +4,12 @@
 > follow-ups: shell/account components, signal-backed chat state (the
 > `state` Proxy in `bootChat`), and the extracted dispatch action layer
 > (`thingy-dispatch-actions.ts`). The retired Discord surface was removed in
-> August 2026. Remaining intentionally-unmigrated surfaces are the signin page
+> August 2026, and the Dispatch surface was removed entirely later that
+> month (its `/dispatch/` route is now a redirect stub to `/chat/`).
+> Remaining intentionally-unmigrated surfaces are the signin page
 > and the source picker / mode select / mobile title inside chat.
-> This document is retained as the design brief and architecture map.
+> This document is retained as the design brief and architecture map;
+> Dispatch references below are historical.
 
 A build brief for moving the Thingy web app's two controller blobs
 (`thingy-chat.ts`, ~1,700 lines; `thingy-dispatch.ts`, ~730 lines) onto

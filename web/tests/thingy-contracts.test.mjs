@@ -41,6 +41,9 @@ test('endpoint contracts accept additive Librarian fields while preserving typed
 });
 
 test('endpoint contracts reject malformed successful JSON', () => {
+  // The Dispatch surface was removed in 2026-08, but the vendored v1 contract
+  // still describes /dispatch until the server publishes 2.0.0; these cases
+  // exercise the validator against that schema.
   assert.throws(
     () => validateApiResponse({ dispatches: [{ id: 42, status: [] }] }, '/dispatch'),
     /invalid \/dispatch response/

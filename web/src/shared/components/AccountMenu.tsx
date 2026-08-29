@@ -1,6 +1,6 @@
 import { type JSX } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { useComputed, type Signal } from '@preact/signals';
+import { useComputed } from '@preact/signals';
 import { buildId } from '../thingy-config.ts';
 import { hasSupportingAccess, savePreferredName } from '../thingy-account.ts';
 import { errorMessage } from '../thingy-errors.ts';
@@ -19,8 +19,6 @@ type SessionApi = typeof import('../thingy-session.ts');
 
 interface AccountMenuProps {
   session: SessionApi;
-  signedIn?: Signal<boolean>;
-  returnTo?: string;
   signedOutEmailLabel?: string;
   signedOutSubLabel?: string;
   normalizeName?: (value: unknown) => string;
@@ -46,8 +44,6 @@ function ProfileTrigger({ onOpen }: { onOpen: JSX.MouseEventHandler<HTMLButtonEl
 
 function AccountMenu({
   session,
-  signedIn = sharedSignedIn,
-  returnTo = '/chat/',
   signedOutEmailLabel = 'Sign in',
   signedOutSubLabel = 'Weekly Thing readers',
   normalizeName = (value: unknown) => String(value || '').trim(),
@@ -56,7 +52,7 @@ function AccountMenu({
   onLogout,
   onSaved = (_savedName: string, _data: ThingyApiResponse) => {}
 }: AccountMenuProps) {
-  const isSignedIn = signedIn.value;
+  const isSignedIn = sharedSignedIn.value;
   const open = accountMenuOpen.value;
   const email = displayEmail.value.trim();
   const profile = displayProfile.value;
@@ -129,7 +125,7 @@ function AccountMenu({
       return;
     }
     session.clearAuth();
-    window.location.href = session.signInUrl(returnTo);
+    window.location.href = session.signInUrl('/chat/');
   }
 
   return (

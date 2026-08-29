@@ -6,7 +6,7 @@ import {
   DEFAULT_API_TIMEOUT_MS
 } from '../src/shared/thingy-timeouts.ts';
 
-test('shared timeout constants keep chat and dispatch in sync', () => {
+test('shared timeout constants stay pinned', () => {
   assert.equal(DEFAULT_API_TIMEOUT_MS, 60000);
   assert.equal(AGENT_SETUP_TIMEOUT_MS, 45000);
   assert.equal(AGENT_RESPONSE_TIMEOUT_MS, 190000);

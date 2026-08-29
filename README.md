@@ -87,27 +87,6 @@ One-time magic-link token created by the Librarian API. When present, Thingy
 redeems it with `/auth` and removes it from the browser URL after the attempt.
 These links are sent by email from `thingy@thingelstad.com`.
 
-### `dispatch_test`
-
-Hidden owner-only Dispatch testing mode. Use this on `/dispatch/` when shaping
-a Dispatch email template and you want to exercise the queue, status, delivery,
-storage, and operator-report flow without invoking the expensive Dispatch
-writing model.
-
-Supported values:
-
-- `template`
-- `template_test`
-
-Example:
-
-- `https://thingy.thingelstad.com/dispatch/?dispatch_test=template`
-
-When enabled, the final action button reads `Send Template Test` and sends
-`template_test: true` to the Librarian API. The backend only honors this for
-Jamie/owner sessions. The resulting email uses placeholder Dispatch copy with
-real source metadata and the normal HTML/text email template.
-
 ## Local Development
 
 The web app is a Vite-built static app. GitHub Pages serves the generated
@@ -132,8 +111,9 @@ the same values from the Librarian stack outputs (`librarian-thing`).
 
 Key web files:
 
-- `web/index.html`, `web/chat/index.html`, `web/dispatch/index.html`,
-  `web/signin/index.html`: static route shells.
+- `web/index.html`, `web/chat/index.html`, `web/signin/index.html`: static
+  route shells. (`web/dispatch/index.html` is a redirect stub to `/chat/`
+  kept for old links; the Dispatch surface was removed in 2026-08.)
 - `web/src/pages/`: Vite entrypoints for each route.
 - `web/src/shared/`: browser-side app modules.
 - `web/src/styles/`: shared styles imported by the page entrypoints.
@@ -174,8 +154,8 @@ Enabled Tinylytics features:
 - Beacon delivery for outbound links with `beacon`.
 - Tinylytics Webmention endpoint in the document head.
 
-The executable Tinylytics embed only loads on the public homepage. Chat,
-Dispatch, and sign-in deliberately do not execute third-party JavaScript
+The executable Tinylytics embed only loads on the public homepage. Chat
+and sign-in deliberately do not execute third-party JavaScript
 because those routes handle browser-held bearer credentials or one-time login
 values. Existing event hooks remain safe no-ops when the embed is absent.
 
@@ -190,8 +170,6 @@ browser URL after the app has read them:
 - `from`
 - `scope`
 - `corpus`
-- `dispatch_test`
-- `test`
 - `login_token`
 - `magic_token`
 

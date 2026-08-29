@@ -9,8 +9,6 @@ const jmapToken =
   process.env.FASTMAIL_JMAP_TOKEN || process.env.THINGY_FASTMAIL_JMAP_TOKEN || process.env.THINGY_JMAP_TOKEN;
 const suppliedSessionToken = process.env.THINGY_SESSION_TOKEN || '';
 const cleanupOnly = args.has('--cleanup-only');
-const dispatchOnly = args.has('--dispatch-only');
-const chatOnly = args.has('--chat-only');
 const qaPrefix = process.env.THINGY_QA_PREFIX || 'QA real-api';
 
 if (!apiUrl) fail('LIBRARIAN_API_URL is required.');
@@ -110,57 +108,6 @@ async function latestMagicLinkSince(since) {
   return null;
 }
 
-async function latestDispatchEmailSince(since) {
-  if (!jmapToken) return null;
-  const jmapSession = await jmapFetch('https://api.fastmail.com/jmap/session');
-  const mail = 'urn:ietf:params:jmap:mail';
-  const core = 'urn:ietf:params:jmap:core';
-  const accountId = jmapSession.primaryAccounts?.[mail];
-  const response = await jmapFetch(jmapSession.apiUrl, {
-    method: 'POST',
-    body: JSON.stringify({
-      using: [core, mail],
-      methodCalls: [
-        [
-          'Email/query',
-          {
-            accountId,
-            filter: { after: since.toISOString() },
-            sort: [{ property: 'receivedAt', isAscending: false }],
-            limit: 10
-          },
-          'q'
-        ],
-        [
-          'Email/get',
-          {
-            accountId,
-            '#ids': { resultOf: 'q', name: 'Email/query', path: '/ids' },
-            properties: ['subject', 'receivedAt', 'bodyValues'],
-            fetchTextBodyValues: true,
-            fetchHTMLBodyValues: true,
-            maxBodyValueBytes: 200000
-          },
-          'g'
-        ]
-      ]
-    })
-  });
-  const emails = response.methodResponses?.find((item) => item[2] === 'g')?.[1]?.list || [];
-  return (
-    emails.find((item) => {
-      if (new Date(item.receivedAt || 0) < since) return false;
-      const content = [item.subject, ...Object.values(item.bodyValues || {}).map((value) => value?.value || '')].join(
-        '\n'
-      );
-      return (
-        !/(sign in|private sign-in link)/i.test(content) &&
-        (content.includes(qaPrefix) || /(dispatch|prepared by thingy|template test)/i.test(content))
-      );
-    }) || null
-  );
-}
-
 async function authData() {
   if (suppliedSessionToken) {
     const refreshed = await apiPost('/auth', { action: 'refresh_session' }, suppliedSessionToken);
@@ -253,33 +200,16 @@ async function cleanupConversations(token) {
   return matches.length;
 }
 
-async function cleanupDispatches(token) {
-  const listed = await apiPost('/dispatch', { action: 'list', limit: 50 }, token);
-  const matches = (listed.dispatches || []).filter((item) => {
-    const title = String(item.topic || item.title || item.prompt || '').trim();
-    return title.startsWith(qaPrefix);
-  });
-  for (const item of matches) {
-    const dispatchId = item.id || item.dispatch_id;
-    if (dispatchId) await apiPost('/dispatch', { action: 'delete', dispatch_id: dispatchId }, token);
-  }
-  return matches.length;
-}
-
 async function currentIds(token, path, key) {
   const listed = await apiPost(path, { action: 'list', limit: 50 }, token);
-  return new Set(
-    (listed[key] || []).map((item) => item.id || item.conversation_id || item.dispatch_id).filter(Boolean)
-  );
+  return new Set((listed[key] || []).map((item) => item.id || item.conversation_id).filter(Boolean));
 }
 
 async function cleanupIdsCreatedAfter(token, path, key, baseline) {
   const current = await currentIds(token, path, key);
   const created = [...current].filter((id) => !baseline.has(id));
   for (const id of created) {
-    const payload =
-      path === '/conversations' ? { action: 'delete', conversation_id: id } : { action: 'delete', dispatch_id: id };
-    await apiPost(path, payload, token);
+    await apiPost(path, { action: 'delete', conversation_id: id }, token);
   }
   return created.length;
 }
@@ -319,89 +249,6 @@ async function checkDesktopChat(browser, data, result) {
   await context.close();
 }
 
-async function checkDesktopDispatch(browser, data, result) {
-  const entitlements = new Set([...(data.entitlements || []), ...(data.profile?.entitlements || [])].map(String));
-  const owner = entitlements.has('owner');
-  const canSend = owner || data.status === 'premium' || entitlements.has('supporting_member');
-  const context = await browser.newContext({ viewport: { width: 1280, height: 820 } });
-  await seedSession(context, data);
-  const page = await context.newPage();
-  const failures = collectFailures(page);
-  await page.goto(`${baseUrl.replace(/\/$/, '')}/dispatch/${owner ? '?dispatch_test=template' : ''}`);
-  await page.waitForSelector('.dispatch-chat:not([hidden])', { timeout: 20000 });
-  await page.waitForSelector(`text=${data.email || email}`, { timeout: 20000 });
-  assert((await page.locator('.rail-body').count()) === 1, 'dispatch recents region missing');
-  assert(
-    await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth),
-    'desktop dispatch has horizontal overflow'
-  );
-
-  await page.locator('.rail-newchat.dispatch-new').click();
-  const prompt = `${qaPrefix}: Create a concise Dispatch about RSS and open-web themes in Jamie's archive, using two or three sources and a practical synthesis. No clarification is needed; this direction is approved. ${Date.now()}`;
-  await page.locator('#dispatch-input').fill(prompt);
-  await page.getByRole('button', { name: 'Send to Thingy' }).click();
-  await page.waitForFunction(() => document.querySelector('#dispatch-input')?.disabled, null, { timeout: 10000 });
-  await page.waitForFunction(() => !document.querySelector('#dispatch-input')?.disabled, null, { timeout: 190000 });
-  const sendLabel = owner ? 'Send Template Test' : 'Generate Dispatch';
-  const sendButton = page.getByRole('button', { name: sendLabel });
-  for (let turn = 0; turn < 2 && (await sendButton.count()) === 0; turn += 1) {
-    if ((await page.locator('.dispatch-status[data-kind="error"]').count()) > 0) break;
-    await page
-      .locator('#dispatch-input')
-      .fill(
-        'Proceed with that approved direction. Use your strongest archive sources and make the final editorial choices.'
-      );
-    await page.getByRole('button', { name: 'Send to Thingy' }).click();
-    await page.waitForFunction(() => document.querySelector('#dispatch-input')?.disabled, null, { timeout: 10000 });
-    await page.waitForFunction(() => !document.querySelector('#dispatch-input')?.disabled, null, { timeout: 190000 });
-  }
-  if ((await sendButton.count()) !== 1) {
-    const transcript = (await page.locator('.dispatch-messages').innerText()).replace(/\s+/g, ' ').slice(-3000);
-    const status = (await page.locator('.dispatch-status').innerText()).replace(/\s+/g, ' ').trim();
-    throw new Error(
-      `dispatch planner did not reach ${sendLabel}. Status: ${status || 'none'}. Transcript: ${transcript}. Browser errors: ${failures.join(' | ') || 'none'}`
-    );
-  }
-
-  if (!canSend) {
-    await sendButton.click();
-    await page.getByText('Ready to send after Supporting Membership.').waitFor({ timeout: 30000 });
-    result.access = 'supporting-member gate verified';
-    result.prompt = prompt;
-    result.failures = failures;
-    await context.close();
-    return;
-  }
-  const requestedAt = new Date(Date.now() - 5000);
-  await sendButton.click();
-  try {
-    // The worker Lambda has a 300-second generation window. Leave headroom for
-    // the next six-second status poll and email handoff after generation.
-    await page.getByText('Dispatch sent. Check your email.').waitFor({ timeout: 330000 });
-  } catch (error) {
-    const transcript = (await page.locator('.dispatch-messages').innerText()).replace(/\s+/g, ' ').slice(-3000);
-    const status = (await page.locator('.dispatch-status').innerText()).replace(/\s+/g, ' ').trim();
-    throw new Error(
-      `dispatch send did not complete. Status: ${status || 'none'}. Transcript: ${transcript}. Browser errors: ${failures.join(' | ') || 'none'}`,
-      { cause: error }
-    );
-  }
-  if (jmapToken) {
-    let delivered = null;
-    for (let attempt = 0; attempt < 12; attempt += 1) {
-      delivered = await latestDispatchEmailSince(requestedAt);
-      if (delivered) break;
-      await new Promise((resolve) => setTimeout(resolve, 2500));
-    }
-    assert(delivered, 'template Dispatch completed but no matching email arrived through JMAP');
-    result.email_received_at = delivered.receivedAt;
-    result.email_subject = delivered.subject;
-  }
-  result.prompt = prompt;
-  result.failures = failures;
-  await context.close();
-}
-
 async function checkMobile(browser, data, path, toggleSelector, resultName) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
   await seedSession(context, data);
@@ -425,12 +272,10 @@ async function checkMobile(browser, data, path, toggleSelector, resultName) {
 
 const data = await authData();
 const cleanupBefore = {
-  conversations: await cleanupConversations(data.token),
-  dispatches: await cleanupDispatches(data.token)
+  conversations: await cleanupConversations(data.token)
 };
 const baseline = {
-  conversations: await currentIds(data.token, '/conversations', 'conversations'),
-  dispatches: await currentIds(data.token, '/dispatch', 'dispatches')
+  conversations: await currentIds(data.token, '/conversations', 'conversations')
 };
 
 if (cleanupOnly) {
@@ -447,52 +292,18 @@ const results = {
 };
 
 try {
-  if (!dispatchOnly) {
-    const chatResult = {};
-    await checkDesktopChat(browser, data, chatResult);
-    results.checks.push({ name: 'desktop chat real stream', ok: true, failures: chatResult.failures });
-  }
+  const chatResult = {};
+  await checkDesktopChat(browser, data, chatResult);
+  results.checks.push({ name: 'desktop chat real stream', ok: true, failures: chatResult.failures });
 
-  if (!chatOnly) {
-    const dispatchResult = {};
-    await checkDesktopDispatch(browser, data, dispatchResult);
-    results.checks.push({
-      name: dispatchResult.access
-        ? 'desktop dispatch real planner and entitlement gate'
-        : 'desktop dispatch real email',
-      ok: true,
-      access: dispatchResult.access || '',
-      email_received_at: dispatchResult.email_received_at || '',
-      email_subject: dispatchResult.email_subject || '',
-      failures: dispatchResult.failures
-    });
-  }
-
-  if (!dispatchOnly) {
-    const mobileChatFailures = await checkMobile(browser, data, '/chat/', '.mobile-chatbar-circle', 'mobile chat');
-    results.checks.push({ name: 'mobile chat rail', ok: true, failures: mobileChatFailures });
-
-    const mobileDispatchFailures = await checkMobile(
-      browser,
-      data,
-      '/dispatch/',
-      '.mobile-chatbar-circle',
-      'mobile dispatch'
-    );
-    results.checks.push({ name: 'mobile dispatch rail', ok: true, failures: mobileDispatchFailures });
-  }
+  const mobileChatFailures = await checkMobile(browser, data, '/chat/', '.mobile-chatbar-circle', 'mobile chat');
+  results.checks.push({ name: 'mobile chat rail', ok: true, failures: mobileChatFailures });
 } finally {
   await browser.close();
   results.cleanup = {
     before: cleanupBefore,
     after: {
-      conversations: await cleanupIdsCreatedAfter(
-        data.token,
-        '/conversations',
-        'conversations',
-        baseline.conversations
-      ),
-      dispatches: await cleanupIdsCreatedAfter(data.token, '/dispatch', 'dispatches', baseline.dispatches)
+      conversations: await cleanupIdsCreatedAfter(data.token, '/conversations', 'conversations', baseline.conversations)
     }
   };
 }
