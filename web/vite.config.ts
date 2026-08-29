@@ -101,7 +101,9 @@ export default defineConfig({
         // The Dispatch surface was removed in 2026-08; /dispatch/ is a static
         // redirect stub (no JS entry) kept so old links land on /chat/.
         dispatch: resolve(__dirname, 'dispatch/index.html'),
-        signin: resolve(__dirname, 'signin/index.html')
+        signin: resolve(__dirname, 'signin/index.html'),
+        // Static MCP connection instructions; no JS entry.
+        connect: resolve(__dirname, 'connect/index.html')
       }
     }
   }

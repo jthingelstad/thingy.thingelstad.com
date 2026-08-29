@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Connect your AI to Thingy</title>
+  <meta name="description" content="Use Jamie Thingelstad's archive from Claude, Codex, or any MCP client.">
+  <link rel="canonical" href="https://thingy.thingelstad.com/connect/">
+  <link rel="icon" href="/img/thingy.png">
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      margin: 0; padding: 3rem 1.25rem 5rem;
+      background: #f3efe6; color: #1c2a26;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.55;
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background: #101c18; color: #e8e4d5; }
+      main a { color: #8fd9c4; }
+      code, pre { background: #1a2823; }
+      .card { background: #16241f; border-color: #24352f; }
+    }
+    main { max-width: 44rem; margin: 0 auto; }
+    img.mark { display: block; width: 110px; height: 110px; margin: 0 auto 12px; }
+    h1 { text-align: center; font-size: 2rem; margin: 0 0 0.4rem; }
+    .lede { text-align: center; opacity: 0.85; margin: 0 0 2.2rem; }
+    h2 { font-size: 1.2rem; margin: 2.2rem 0 0.6rem; }
+    code, pre {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 0.88em; background: #e9e3d4; border-radius: 5px;
+    }
+    code { padding: 0.1em 0.35em; overflow-wrap: anywhere; }
+    pre { padding: 0.8rem 1rem; overflow-x: auto; }
+    .card { background: #fbf8f1; border: 1px solid #ddd5c2; border-radius: 12px; padding: 1rem 1.2rem; margin: 0.8rem 0; }
+    ul { padding-left: 1.2rem; }
+    li { margin-bottom: 0.35rem; }
+    main a { color: #0e7a5f; }
+    footer { text-align: center; margin-top: 3rem; font-size: 0.9rem; opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <main>
+    <img class="mark" src="/img/thingy.png" alt="" width="1022" height="1022">
+    <h1>Connect your AI to Thingy</h1>
+    <p class="lede">Jamie Thingelstad&rsquo;s archive &mdash; The Weekly Thing, the blog, and Another Thing &mdash; is available to Claude, Codex, and any MCP client. Weekly Thing subscribers sign in with their email, no passwords.</p>
+
+    <h2>Claude (claude.ai or the apps)</h2>
+    <div class="card">
+      <p>Settings &rarr; Connectors &rarr; <strong>Add custom connector</strong>, then paste:</p>
+      <pre>https://librarian.thingelstad.com/mcp</pre>
+      <p>Claude walks you through sign-in: enter your Weekly Thing email, type the six-digit code from the email (your Mac or iPhone will offer it automatically), and approve access.</p>
+    </div>
+
+    <h2>Claude Code</h2>
+    <div class="card">
+      <pre>claude mcp add --transport http librarian https://librarian.thingelstad.com/mcp</pre>
+      <p>Then <code>/mcp</code> inside Claude Code to authenticate.</p>
+    </div>
+
+    <h2>Any other MCP client</h2>
+    <div class="card">
+      <p>The endpoint speaks MCP streamable HTTP with OAuth 2.1 discovery &mdash; point your client at the URL above and it finds the sign-in flow on its own.</p>
+    </div>
+
+    <h2>What your AI can do</h2>
+    <ul>
+      <li>Search the whole archive semantically and by exact phrase, and pull full sources.</li>
+      <li>Trace how a topic evolved across years with the archive lens, or follow a named person, product, or idea.</li>
+      <li>Explore link neighborhoods, surface forgotten gems, check freshness, and verify claims against the archive.</li>
+    </ul>
+
+    <h2>Fair use</h2>
+    <p>Every reader gets a daily pool of tool calls (double for <a href="https://weekly.thingelstad.com/members/">Supporting Members</a>), separate from the Thingy chat budget. The archive is Jamie&rsquo;s public writing; personal data stays out by construction.</p>
+
+    <footer>
+      <a href="/">Thingy home</a> &middot; <a href="/chat/">Open chat</a>
+    </footer>
+  </main>
+</body>
+</html>
