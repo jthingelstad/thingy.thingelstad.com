@@ -22,9 +22,16 @@ function ChatMessages({ scrollContainer, onRetry, onEmbeddedPrompt, submitFeedba
   const messages = chatMessages.value;
 
   useEffect(() => {
+    // Stick to the bottom only when the reader is already there. An
+    // unconditional scroll here yanked the transcript down on every parent
+    // render (the inline scrollContainer prop invalidated the deps), which
+    // defeated ChatApp's autoFollow logic while someone read older turns.
     const scroll = scrollContainer();
-    if (scroll) scroll.scrollTop = scroll.scrollHeight;
-  }, [messages, scrollContainer]);
+    if (!scroll) return;
+    const nearBottom = scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 64;
+    if (nearBottom) scroll.scrollTop = scroll.scrollHeight;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages]);
 
   function handleMessageClick(event: JSX.TargetedMouseEvent<HTMLElement>) {
     const target = event.target instanceof Element ? event.target : null;

@@ -134,6 +134,11 @@ function ChatConversationView(props: ChatConversationViewProps) {
               placeholder="Ask Thingy, or seed a map…"
               aria-describedby="librarian-question-count librarian-source-error thingy-ai-note"
               onInput={(event) => props.onQuestionInput(event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
+                event.preventDefault();
+                event.currentTarget.form?.requestSubmit();
+              }}
             />
             <div class="composer-toolbar">
               <button

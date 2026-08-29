@@ -1,5 +1,5 @@
 // @ts-check
-import { DEFAULT_API_TIMEOUT_MS } from './thingy-timeouts.ts';
+import { DEFAULT_API_TIMEOUT_MS, STREAM_IDLE_TIMEOUT_MS } from './thingy-timeouts.ts';
 import {
   assertContractResponseVersion,
   contractRequestHeaders,
@@ -42,8 +42,27 @@ async function read(response: Response, onEvent: (eventName: string, data: Thing
     await onEvent(parsed.eventName, parsed.data);
   }
 
+  // The request timeout only covers time-to-first-byte: it is cleared when
+  // headers arrive. Without a per-chunk deadline, a stream that goes silent
+  // mid-answer hangs reader.read() forever and locks the composer. Race
+  // each read against a rolling idle timer instead.
+  async function readWithIdleDeadline(): Promise<ReadableStreamReadResult<Uint8Array>> {
+    let idleTimer = 0;
+    const idle = new Promise<never>((_, reject) => {
+      idleTimer = window.setTimeout(() => {
+        reader.cancel().catch(() => {});
+        reject(new Error('Thingy stopped responding mid-answer. Please try again.'));
+      }, STREAM_IDLE_TIMEOUT_MS);
+    });
+    try {
+      return await Promise.race([reader.read(), idle]);
+    } finally {
+      window.clearTimeout(idleTimer);
+    }
+  }
+
   while (true) {
-    const { value, done } = await reader.read();
+    const { value, done } = await readWithIdleDeadline();
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
     const blocks = buffer.split(/\n\n/);
@@ -89,6 +108,9 @@ async function postJsonStream(options: ThingyRequestOptions = {}): Promise<Respo
     const error = new Error(requestId ? `${message} Reference: ${requestId}` : message);
     error.requestId = requestId;
     error.status = response.status;
+    // Without the body, isAuthError() can't see codes like session_expired
+    // on stream failures, so auth errors never redirected to sign-in.
+    error.data = data;
     throw error;
   }
   if (/application\/json/i.test(response.headers.get('content-type') || '')) {
