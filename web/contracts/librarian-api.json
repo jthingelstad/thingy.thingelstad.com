@@ -220,6 +220,31 @@
       },
       "additionalProperties": true
     },
+    "quotaOverview": {
+      "type": "object",
+      "properties": {
+        "day": {
+          "type": "string"
+        },
+        "unlimited": {
+          "type": "boolean"
+        },
+        "chat_used": {
+          "type": "number"
+        },
+        "chat_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
     "accountOverview": {
       "type": "object",
       "properties": {
@@ -243,6 +268,9 @@
         },
         "newest_conversation_at": {
           "type": "string"
+        },
+        "quota": {
+          "$ref": "#/$defs/quotaOverview"
         }
       },
       "additionalProperties": true

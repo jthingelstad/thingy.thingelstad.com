@@ -105,6 +105,14 @@ export interface LibrarianCitation {
   [key: string]: unknown;
 }
 
+export interface LibrarianQuotaOverview {
+  day?: string;
+  unlimited?: boolean;
+  chat_used?: number;
+  chat_max?: number | null;
+  [key: string]: unknown;
+}
+
 export interface LibrarianAccountOverview {
   first_seen_at?: string;
   last_seen_at?: string;
@@ -113,6 +121,7 @@ export interface LibrarianAccountOverview {
   conversation_turn_count?: number;
   oldest_conversation_at?: string;
   newest_conversation_at?: string;
+  quota?: LibrarianQuotaOverview;
   [key: string]: unknown;
 }
 
@@ -187,7 +196,7 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = '2bf9c4b03b48666130c33463a45a8ae00470fb3d21254158f56987564989e36e';
+export const LIBRARIAN_CONTRACT_SHA256 = '3cc17889f8dda325c52c320a592534028b5a507cdbfdf0b86596dcbae8b42bf9';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
@@ -407,6 +416,31 @@ export const LIBRARIAN_CONTRACT = {
       },
       additionalProperties: true
     },
+    quotaOverview: {
+      type: 'object',
+      properties: {
+        day: {
+          type: 'string'
+        },
+        unlimited: {
+          type: 'boolean'
+        },
+        chat_used: {
+          type: 'number'
+        },
+        chat_max: {
+          anyOf: [
+            {
+              type: 'number'
+            },
+            {
+              type: 'null'
+            }
+          ]
+        }
+      },
+      additionalProperties: true
+    },
     accountOverview: {
       type: 'object',
       properties: {
@@ -430,6 +464,9 @@ export const LIBRARIAN_CONTRACT = {
         },
         newest_conversation_at: {
           type: 'string'
+        },
+        quota: {
+          $ref: '#/$defs/quotaOverview'
         }
       },
       additionalProperties: true

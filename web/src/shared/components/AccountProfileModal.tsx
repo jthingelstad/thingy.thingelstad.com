@@ -66,6 +66,16 @@ function formatProfileActivity(accountOverview: LibrarianAccountOverview = {}, p
   return `${first} ${second}`;
 }
 
+function formatDailyQuota(accountOverview: LibrarianAccountOverview = {}) {
+  const quota = accountOverview.quota;
+  if (!quota) return '';
+  if (quota.unlimited) return 'Unlimited (owner account)';
+  const used = Number(quota.chat_used || 0);
+  const max = Number(quota.chat_max || 0);
+  if (!max) return '';
+  return `${used} of ${max} chat turns used today. Resets at midnight UTC.`;
+}
+
 function AccountProfileModal({
   open,
   onClose,
@@ -93,7 +103,8 @@ function AccountProfileModal({
       ['First seen', formatProfileDate(firstSeen) || 'Not recorded'],
       ['Last activity', formatProfileDate(lastActivity) || 'Not recorded'],
       ['Active span', formatActiveSpan(firstSeen, lastActivity)],
-      ['Thingy activity', formatProfileActivity(accountOverview, viewProfile)]
+      ['Thingy activity', formatProfileActivity(accountOverview, viewProfile)],
+      formatDailyQuota(accountOverview) ? ["Today's usage", formatDailyQuota(accountOverview)] : null
     ] as Array<[string, string] | null>
   ).filter((row): row is [string, string] => row !== null);
 
