@@ -14,8 +14,6 @@ test('createAssistantMessageModel starts at pending with empty content', () => {
   assert.deepEqual(model.citations.value, []);
   assert.deepEqual(model.activity.value, []);
   assert.deepEqual(model.commentary.value, []);
-  assert.equal(model.experience.value, null);
-  assert.equal(model.artifactHtml.value, '');
   assert.equal(model.status.value, 'pending');
   assert.equal(model.errorMessage.value, '');
   assert.equal(model.retryPrompt.value, '');

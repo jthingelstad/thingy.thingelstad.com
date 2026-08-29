@@ -1,13 +1,12 @@
 import { type JSX, type RefObject } from 'preact';
 import { useRef, useState } from 'preact/hooks';
-import { useSignalEffect, type Signal } from '@preact/signals';
+import { useSignalEffect } from '@preact/signals';
 import { answerInFlight } from '../stores/chat-store.ts';
 import { modeClass, modeIcon } from '../thingy-modes.ts';
 import { ChatMessages } from './ChatMessages.tsx';
 import { ComposerCount } from './ComposerCount.tsx';
 import { ComposerSubmit } from './ComposerSubmit.tsx';
 import { MobileChatBar } from './ChatNavigation.tsx';
-import { SourcePicker } from './SourcePicker.tsx';
 import { ThingyIcon } from './ThingyIcon.tsx';
 
 interface ChatConversationViewProps {
@@ -30,9 +29,6 @@ interface ChatConversationViewProps {
   dictationListening: boolean;
   speechSupported: boolean;
   voiceStatus: string;
-  canMapDraft: boolean;
-  sourcesAvailable: boolean;
-  selectedSources: Signal<string[]>;
   onToggleMobileRail: () => void;
   onNewConversation: () => void;
   onToggleMobileMenu: () => void;
@@ -40,14 +36,11 @@ interface ChatConversationViewProps {
   onDelete: () => void;
   onScroll: () => void;
   onRetry: (messageId: string, prompt: string) => void;
-  onEmbeddedPrompt: (prompt: string, kind: 'map' | 'experience') => void;
   submitFeedback: (input: { requestId: string; reaction: string; comment: string }) => Promise<ThingyApiResponse>;
   track: (name: string, value?: string) => void;
   onSubmit: (event: JSX.TargetedSubmitEvent<HTMLFormElement>) => void;
   onQuestionInput: (value: string) => void;
   onDictation: () => void;
-  onMapSeed: (seed: string) => void;
-  onScopeChange: (scope: string) => void;
   onStopAnswer: () => void;
 }
 
@@ -117,7 +110,6 @@ function ChatConversationView(props: ChatConversationViewProps) {
             <ChatMessages
               scrollContainer={() => props.scrollRef.current}
               onRetry={props.onRetry}
-              onEmbeddedPrompt={props.onEmbeddedPrompt}
               submitFeedback={props.submitFeedback}
               track={props.track}
             />
@@ -140,8 +132,8 @@ function ChatConversationView(props: ChatConversationViewProps) {
               required
               maxLength={props.maxQuestionChars}
               value={props.currentText}
-              placeholder="Ask Thingy, or seed a map…"
-              aria-describedby="librarian-question-count librarian-source-error thingy-ai-note"
+              placeholder="Ask Thingy…"
+              aria-describedby="librarian-question-count thingy-ai-note"
               onInput={(event) => props.onQuestionInput(event.currentTarget.value)}
               onKeyDown={(event) => {
                 if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
@@ -173,35 +165,15 @@ function ChatConversationView(props: ChatConversationViewProps) {
               >
                 <ThingyIcon name="mic" />
               </button>
-              <button
-                class="composer-map"
-                type="button"
-                disabled={props.busy || !props.canMapDraft}
-                aria-label={props.canMapDraft ? 'Seed curiosity map with this text' : 'Type a topic to seed a map'}
-                title={props.canMapDraft ? 'Seed curiosity map with this text' : 'Type a topic to seed a map'}
-                onClick={() => props.onMapSeed(props.currentText.trim())}
-              >
-                <ThingyIcon name="network" />
-                <span>Map</span>
-              </button>
               <span class="composer-voice-status" aria-live="polite">
                 {props.voiceStatus}
               </span>
-              <SourcePicker
-                selected={props.selectedSources}
-                disabled={props.busy}
-                scrollContainer={props.scrollRef.current}
-                onChange={props.onScopeChange}
-              />
               <span class="composer-spacer" />
               <span id="librarian-question-count">
                 <ComposerCount maxChars={props.maxQuestionChars} />
               </span>
               <ComposerSubmit maxChars={props.maxQuestionChars} onStop={props.onStopAnswer} />
             </div>
-            <span class="sr-only" id="librarian-source-error" aria-live="polite">
-              {props.sourcesAvailable ? '' : 'Switch on at least one source.'}
-            </span>
           </form>
           <p class="thingy-ai-note" id="thingy-ai-note">
             Thingy is AI and can make mistakes. Please double-check responses.

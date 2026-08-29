@@ -5,13 +5,11 @@ import check from 'lucide-static/icons/check.svg?raw';
 import chevronDown from 'lucide-static/icons/chevron-down.svg?raw';
 import chevronLeft from 'lucide-static/icons/chevron-left.svg?raw';
 import copy from 'lucide-static/icons/copy.svg?raw';
-import layers from 'lucide-static/icons/layers.svg?raw';
 import library from 'lucide-static/icons/library.svg?raw';
 import logOut from 'lucide-static/icons/log-out.svg?raw';
 import messagesSquare from 'lucide-static/icons/messages-square.svg?raw';
 import mic from 'lucide-static/icons/mic.svg?raw';
 import moreHorizontal from 'lucide-static/icons/more-horizontal.svg?raw';
-import network from 'lucide-static/icons/network.svg?raw';
 import panelLeft from 'lucide-static/icons/panel-left.svg?raw';
 import pause from 'lucide-static/icons/pause.svg?raw';
 import pencil from 'lucide-static/icons/pencil.svg?raw';
@@ -36,13 +34,11 @@ const icons = {
   'chevron-down': chevronDown,
   'chevron-left': chevronLeft,
   copy,
-  layers,
   library,
   'log-out': logOut,
   'messages-square': messagesSquare,
   mic,
   'more-horizontal': moreHorizontal,
-  network,
   'panel-left': panelLeft,
   pause,
   pencil,

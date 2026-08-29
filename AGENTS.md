@@ -42,9 +42,9 @@ it.) Casual schema changes break this repo. Version before changing.
 ## Surface Responsibilities
 
 `web/` is a Vite-built static app served by GitHub Pages. Its surfaces are
-chat, the curiosity map, sign-in, and account. It handles auth UI, streams
-`/chat` SSE from the Librarian Lambda, renders citations and curiosity maps,
-collects feedback, and runs browser-only UX. It has no server beyond GitHub
+chat, sign-in, and account. It handles auth UI, streams `/chat` SSE from the
+Librarian Lambda, renders citations, collects feedback, and runs
+browser-only UX. It has no server beyond GitHub
 Pages. (The Dispatch surface was removed in 2026-08; `/dispatch/` is now a
 redirect stub to `/chat/`.)
 
@@ -153,8 +153,6 @@ Document behavior changes in `README.md` when touching these.
 - `from`: Prefer an actual sending URL, URL-encoded. Thingy matches the host
   against known properties, highlights the matching nav item, labels it
   `Return`, and rewrites that link to the exact source URL.
-- `scope` / `corpus`: Hidden source narrowing for edge cases. Normal behavior
-  is cross-corpus search with `all`.
 - `prompt`: Seeds the question and submits after auth/beta notice.
 - `email`: Prefills the auth field and starts subscriber auth.
 

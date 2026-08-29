@@ -1,30 +1,18 @@
 import { extractPreferredNameFromMessage } from './thingy-account.ts';
 import { chatState as state, createChatActions } from './thingy-chat-actions.ts';
-import { renderCuriosityMap } from './thingy-chat-rendering.ts';
 import { errorMessage } from './thingy-errors.ts';
 import { isAuthError } from './thingy-url.ts';
-import {
-  answerInFlight,
-  chatMessages,
-  interactionBusy,
-  mapInFlight,
-  questionText,
-  stoppable
-} from './stores/chat-store.ts';
-import { mobileRailOpen } from './stores/ui-store.ts';
+import { answerInFlight, chatMessages, interactionBusy, questionText, stoppable } from './stores/chat-store.ts';
 
 interface ChatInteractionsOptions {
   actions: ReturnType<typeof createChatActions>;
   maxQuestionChars: number;
   currentScope: () => string;
   cancelWelcome: () => void;
-  markWelcomeShown: () => void;
-  resetMessages: () => void;
   setQuestion: (value: string) => void;
   addUserMessage: (prompt: string, scope: string) => void;
   addAssistantMessage: (options?: AssistantMessageOptions) => { id: string; model: AssistantMessageModel };
   stopDictation: () => void;
-  focusInput: () => void;
   track: (name: string, value?: string) => void;
 }
 
@@ -34,62 +22,12 @@ function createChatInteractions(options: ChatInteractionsOptions) {
     maxQuestionChars,
     currentScope,
     cancelWelcome,
-    markWelcomeShown,
-    resetMessages,
     setQuestion,
     addUserMessage,
     addAssistantMessage,
     stopDictation,
-    focusInput,
     track
   } = options;
-
-  async function showCuriosityMap(center = '', attachToCurrent = false) {
-    if (!actions.token() || interactionBusy.value || !(await actions.ensureFreshToken())) return;
-    const scope = currentScope();
-    if (!scope) return;
-    const attach = Boolean(
-      attachToCurrent && state.activeConversationId && !actions.isLocalConversationId(state.activeConversationId)
-    );
-    const conversationId = attach ? state.activeConversationId || '' : '';
-    if (!attach) {
-      markWelcomeShown();
-      actions.setActiveConversation('');
-      resetMessages();
-    }
-    setQuestion('');
-    mapInFlight.value = true;
-    mobileRailOpen.value = false;
-    const pending = addAssistantMessage({ statusFallback: 'Thingy is drawing connections...' });
-    try {
-      const response = await actions.postStreamJson(
-        '/curiosity-map',
-        {
-          scope,
-          mode: actions.currentConversationMode(),
-          center,
-          conversation_id: conversationId || undefined,
-          user_profile: actions.readerProfileContext()
-        },
-        actions.authHeaders()
-      );
-      if (response.conversation_id) actions.setActiveConversation(response.conversation_id);
-      if (response.conversation) actions.upsertConversationSummary(response.conversation);
-      const map = response as ThingyApiResponse & ThingyCuriosityMap;
-      pending.model.artifactHtml.value =
-        renderCuriosityMap(map) || '<p>Thingy could not find enough connected threads to draw a map yet.</p>';
-      pending.model.status.value = 'done';
-      await actions.refreshConversations();
-      track('librarian.curiosity_map_success', `${(map.nodes || []).length}.${(map.sources || []).length}`);
-    } catch (error) {
-      pending.model.errorMessage.value = errorMessage(error, 'Thingy could not draw that map.');
-      pending.model.status.value = 'error';
-      track('librarian.curiosity_map_error', error instanceof Error && error.requestId ? 'server' : 'client');
-      if (isAuthError(error)) actions.redirectToSignIn();
-    } finally {
-      mapInFlight.value = false;
-    }
-  }
 
   async function submitQuestion() {
     if (interactionBusy.value) return;
@@ -115,7 +53,7 @@ function createChatInteractions(options: ChatInteractionsOptions) {
     try {
       const data = await actions.postStreamingChat(message, pending.model, scope);
       if (data.stopped) {
-        track('librarian.answer_stopped', String(data.answer || '').trim() || data.experience ? 'partial' : 'empty');
+        track('librarian.answer_stopped', String(data.answer || '').trim() ? 'partial' : 'empty');
       }
       if (data.conversation_id) actions.setActiveConversation(data.conversation_id);
       if (data.conversation) actions.upsertConversationSummary(data.conversation);
@@ -145,18 +83,6 @@ function createChatInteractions(options: ChatInteractionsOptions) {
     window.setTimeout(() => void submitQuestion(), 0);
   }
 
-  function embeddedPrompt(prompt: string, kind: 'map' | 'experience') {
-    if (!prompt || interactionBusy.value) return;
-    setQuestion(prompt);
-    if (kind === 'map') {
-      track('librarian.curiosity_map_prompt', 'map');
-      window.setTimeout(() => void submitQuestion(), 0);
-      return;
-    }
-    focusInput();
-    track('librarian.experience_prompt', 'trail');
-  }
-
   async function submitFeedback(input: { requestId: string; reaction: string; comment: string }) {
     return actions.postStreamJson(
       '/feedback',
@@ -165,7 +91,7 @@ function createChatInteractions(options: ChatInteractionsOptions) {
     );
   }
 
-  return { embeddedPrompt, retryAnswer, showCuriosityMap, submitFeedback, submitQuestion };
+  return { retryAnswer, submitFeedback, submitQuestion };
 }
 
 export { createChatInteractions };

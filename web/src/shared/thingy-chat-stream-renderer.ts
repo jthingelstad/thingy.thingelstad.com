@@ -49,11 +49,6 @@ function createAssistantStreamRenderer(options: AssistantStreamRendererOptions) 
     scroll();
   }
 
-  function setExperience(experience: ThingyExperience | null | undefined) {
-    model.experience.value = experience || null;
-    scroll();
-  }
-
   function status(data: ThingyStreamData | string) {
     const next = appendActivityStep(model.activity.peek().slice(), data, fallback);
     model.activity.value = next;
@@ -74,8 +69,7 @@ function createAssistantStreamRenderer(options: AssistantStreamRendererOptions) 
     });
     return {
       answer: model.content.peek(),
-      citations: model.citations.peek(),
-      experience: model.experience.peek()
+      citations: model.citations.peek()
     };
   }
 
@@ -94,7 +88,6 @@ function createAssistantStreamRenderer(options: AssistantStreamRendererOptions) 
     finish,
     setAnswer,
     setCitations,
-    setExperience,
     status
   };
 }

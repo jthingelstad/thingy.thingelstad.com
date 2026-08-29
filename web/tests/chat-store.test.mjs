@@ -6,9 +6,7 @@ import {
   availableModes,
   conversationCreateInFlight,
   conversations,
-  hasSources,
   interactionBusy,
-  mapInFlight,
   questionText,
   stoppable,
   welcomeInFlight
@@ -18,7 +16,6 @@ import { signedIn } from '../src/shared/stores/ui-store.ts';
 function resetInFlight() {
   answerInFlight.value = false;
   welcomeInFlight.value = false;
-  mapInFlight.value = false;
   conversationCreateInFlight.value = false;
   stoppable.value = false;
 }
@@ -30,7 +27,6 @@ test('chat-store ships sensible initial values', () => {
   assert.deepEqual(availableModes.value, [{ id: 'thingy', label: 'Thingy' }]);
   assert.equal(signedIn.value, false);
   assert.equal(questionText.value, '');
-  assert.equal(hasSources.value, true);
   assert.equal(interactionBusy.value, false);
 });
 
@@ -50,14 +46,12 @@ test('interactionBusy leaves the composer available during the asynchronous welc
   welcomeInFlight.value = false;
 });
 
-test('interactionBusy reflects mapInFlight and conversationCreateInFlight', () => {
+test('interactionBusy reflects conversationCreateInFlight', () => {
   resetInFlight();
-  for (const sig of [mapInFlight, conversationCreateInFlight]) {
-    sig.value = true;
-    assert.equal(interactionBusy.value, true, `${sig} makes interactionBusy true`);
-    sig.value = false;
-    assert.equal(interactionBusy.value, false);
-  }
+  conversationCreateInFlight.value = true;
+  assert.equal(interactionBusy.value, true);
+  conversationCreateInFlight.value = false;
+  assert.equal(interactionBusy.value, false);
 });
 
 test('interactionBusy stays true when multiple flags overlap', () => {

@@ -1,6 +1,6 @@
 import { type JSX } from 'preact';
 import { iconSvg } from '../thingy-icons.ts';
-import { hasSources, interactionBusy, questionText, stoppable } from '../stores/chat-store.ts';
+import { interactionBusy, questionText, stoppable } from '../stores/chat-store.ts';
 
 const ASK_ICON = iconSvg('arrow-up');
 const STOP_ICON = iconSvg('square');
@@ -16,7 +16,7 @@ function ComposerSubmit({ maxChars, onStop }: ComposerSubmitProps) {
   const text = questionText.value;
   const hasText = Boolean(text.trim());
   const overLimit = text.length > maxChars;
-  const disabled = stop ? false : busy || !hasSources.value || !hasText || overLimit;
+  const disabled = stop ? false : busy || !hasText || overLimit;
   const label = stop ? 'Stop answer' : busy ? 'Thingy is answering' : 'Ask Thingy';
 
   function handleClick(event: JSX.TargetedMouseEvent<HTMLButtonElement>) {

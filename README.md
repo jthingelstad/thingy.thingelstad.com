@@ -33,33 +33,6 @@ When `from` matches one of the known properties, that navigation link is
 highlighted and labeled `Return`. If `from` is a URL, the matching link points
 back to that exact URL. Unknown values are ignored.
 
-### `scope` / `corpus`
-
-Corpus narrowing for edge cases and power use. Thingy searches across
-everything by default, but the chat UI also exposes a small source selector for
-direct Weekly Thing, blog, podcast, or multi-source testing.
-
-Use either `scope` or `corpus`; `scope` wins when both are valid.
-
-Supported values:
-
-- `all` or `everything`
-- `weekly_thing`, `wt`, `weeklything`, `newsletter`, `issues`, `archive`
-- `blog`, `thingelstad`, `thingelstad_com`
-- `podcast`, `podcasts`, `another_thing`, `anotherthing`, `another`
-- `both` for Weekly Thing plus blog
-- `weekly_thing_podcast` or `wt_podcast` for Weekly Thing plus Another Thing
-- `blog_podcast` or `podcast_blog` for the blog plus Another Thing
-
-`corpus` can also accept comma, plus, or pipe-separated values. These chat
-parameters belong on `/chat/`; the root URL is a static landing page. For
-example:
-
-- `https://thingy.thingelstad.com/chat/?corpus=blog`
-- `https://thingy.thingelstad.com/chat/?scope=podcast`
-- `https://thingy.thingelstad.com/chat/?corpus=weekly%20thing,blog`
-- `https://thingy.thingelstad.com/chat/?scope=blog_podcast`
-
 ### `prompt`
 
 Seeds the question box and auto-submits once the visitor is authenticated. When
@@ -69,9 +42,6 @@ prompt instead.
 Example:
 
 - `https://thingy.thingelstad.com/chat/?prompt=What%20has%20Jamie%20written%20about%20AI%3F`
-
-Shared prompt links generated inside Thingy include `scope` so the recipient
-gets the same corpus boundary used for that answer.
 
 ### `email`
 

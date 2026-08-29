@@ -20,10 +20,10 @@ function contractMajor(version: string) {
   return /^([0-9]+)\./.exec(version)?.[1] || '';
 }
 
-// Majors this client can read. 1.x stays accepted through the 2.0.0
-// rollout so the site keeps working while the server deploy is in flight;
-// drop '1' once the Librarian stack is on 2.x everywhere.
-const ACCEPTED_CONTRACT_MAJORS = ['1', contractMajor(LIBRARIAN_CONTRACT_VERSION)];
+// Majors this client can read. '3' is accepted ahead of the Librarian
+// server's move to 3.0.0 (this client ships first and keeps sending the
+// vendored 2.0.0, which both server versions accept); '1' is extinct.
+const ACCEPTED_CONTRACT_MAJORS = ['2', '3'];
 
 function compatibleContractVersion(version: string) {
   return Boolean(version) && ACCEPTED_CONTRACT_MAJORS.includes(contractMajor(version));

@@ -73,9 +73,9 @@ product direction.
 - Thingy can remember the user's name. The earlier AI-synthesized reader memory was deliberately
   removed: server-side conversations cover continuity, and the profile is now basic account metadata
   (name and activity counts).
-- Curiosity map creates visual trails through the archive and can seed new conversations.
+- Curiosity map created visual trails through the archive and could seed new conversations
+  (removed 2026-08 in the chat streamline, along with Archive Sparks).
 - Archive work/tool activity is visible in the chat, then collapses after completion.
-- Archive Sparks can surface adjacent ideas, though emission needs continued tuning.
 
 ### Runtime Contract
 
@@ -161,8 +161,8 @@ of Thought Partner.
   retrospective evidence mislabeled as contemporaneous, and title-only recommendations.
 - **Runtime resilience**: continue improving timeout handling, partial-answer handling, and evaluator
   interpretation of runtime exhaustion.
-- **Browser QA discipline**: keep mobile/tablet/desktop interaction tests for rail, mode selection,
-  conversations, curiosity maps, source picker, and input controls.
+- **Browser QA discipline**: keep mobile/tablet/desktop interaction tests for rail, conversations,
+  and input controls.
 - **Corpus coverage dashboard** (idea): show source counts, freshness, link graph health, missing
   transcript/post metadata, and source-specific search quality checks.
 - **Deeper feedback loop** (idea): let downvote comments and eval notes become a structured
@@ -183,7 +183,7 @@ Recommended shape:
 - The first version should read like something Jamie is comfortable putting on the public site, not like a
   private structured database.
 - Thingy should ingest those pages as part of the published blog corpus and use them as context for
-  answers, curiosity map seeds, and mode-specific reasoning.
+  answers and mode-specific reasoning.
 - Keep the shape loose at first: prose, headings, dates, and links are enough. Avoid schema until the
   product need is obvious.
 
@@ -204,7 +204,7 @@ theme and then into podcast discussion?"
 
 ### Durable Theme Clusters
 
-Curiosity map is a strong user-facing expression of this, but the backend should eventually maintain
+The retired curiosity map was a user-facing expression of this; the backend should eventually maintain
 durable clusters for recurring themes.
 
 Potential clusters:
@@ -216,12 +216,13 @@ Potential clusters:
 - Community, family, and rituals.
 - Reading, media, and culture.
 
-Durable clusters would help with conversation titles, related questions, Archive Sparks, operator
-reporting, and temporal reasoning.
+Durable clusters would help with conversation titles, related questions, operator reporting, and
+temporal reasoning.
 
 ### Source Selection
 
-The corpus selector is useful but should become less central over time. The long-term behavior should be:
+The corpus selector UI was removed in the 2026-08 chat streamline; every request now searches the
+whole archive. The long-term behavior should be:
 
 - Thingy chooses the right sources by default.
 - Explicit user constraints are honored: "only the blog", "in the newsletter", "on the podcast".
@@ -237,7 +238,6 @@ Supporting members could get a deeper mode that feels special without becoming p
 - Longer synthesis.
 - Better timelines.
 - More cross-source trails.
-- Saved curiosity maps.
 - "Build me a reading path" prompts.
 - Early access to experimental archive features.
 
@@ -256,4 +256,3 @@ Supporting members could get a deeper mode that feels special without becoming p
 2. Decide whether Research Guide should stay supporting-member-only.
 3. Add the Trusted Circle Buttondown tags to actual people when there is a concrete invite list.
 4. Prototype one publishable timeline page and verify that Thingy can use it without over-structuring it.
-5. Tune Archive Sparks and curiosity map generation against durable theme clusters.

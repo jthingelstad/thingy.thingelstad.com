@@ -17,7 +17,7 @@ test('activity notes preserve newline-separated status updates', () => {
     'Thingy is working...'
   );
 
-  const html = renderAssistantResponse('', [], null, steps, [], { active: true });
+  const html = renderAssistantResponse('', [], steps, [], { active: true });
 
   assert.match(html, /<div class="librarian-activity-note">/);
   assert.equal((html.match(/<p>/g) || []).length, 3);

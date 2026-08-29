@@ -83,7 +83,6 @@ function createChatStreamActions(options: ChatStreamActionsOptions) {
         return {
           answer: '',
           citations: [],
-          experience: null,
           stopped: true,
           request_id: '',
           conversation_id: conversationId,
@@ -119,8 +118,6 @@ function createChatStreamActions(options: ChatStreamActionsOptions) {
         renderer.setAnswer(data.answer);
       } else if (eventName === 'citations') {
         renderer.setCitations(data.citations);
-      } else if (eventName === 'experience') {
-        renderer.setExperience(data.experience);
       } else if (eventName === 'done') {
         requestId = data.request_id || requestId;
         if (data.mode) options.onMode(data.mode);
@@ -145,7 +142,7 @@ function createChatStreamActions(options: ChatStreamActionsOptions) {
     }
     const result = renderer.finish(stopped ? 'stopped' : 'done');
     if (model.requestId.peek() !== requestId) model.requestId.value = requestId;
-    if (!stopped && !String(result.answer || '').trim() && !result.experience) {
+    if (!stopped && !String(result.answer || '').trim()) {
       throw new Error('Thingy did not return an answer. Please try again.');
     }
     return { ...result, stopped, request_id: requestId, conversation_id: conversationId, conversation };
@@ -193,8 +190,6 @@ function createChatStreamActions(options: ChatStreamActionsOptions) {
       } else if (eventName === 'answer') {
         renderer.setAnswer(data.answer);
         receivedAnswer = true;
-      } else if (eventName === 'experience') {
-        renderer.setExperience(data.experience);
       } else if (eventName === 'done') {
         requestId = data.request_id || requestId;
         if (data.mode) options.onMode(data.mode);
@@ -206,8 +201,8 @@ function createChatStreamActions(options: ChatStreamActionsOptions) {
     }
 
     await readStream(response, applyEvent);
-    const { answer, experience } = renderer.finish('done');
-    return { answer, experience, request_id: requestId };
+    const { answer } = renderer.finish('done');
+    return { answer, request_id: requestId };
   }
 
   return { clearAnswerAbortState, isStoppable, postStreamingChat, postStreamingWelcome, stopActiveAnswer };

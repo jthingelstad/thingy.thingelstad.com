@@ -11,7 +11,7 @@ interface FeedbackResult {
 interface ChatMessageActionOptions {
   submitFeedback?: (input: FeedbackInput) => Promise<FeedbackResult>;
   track?: (name: string, value?: string) => void;
-  promptShareUrl?: (prompt: string, scope: string) => string;
+  promptShareUrl?: (prompt: string) => string;
   promptShareTitle?: string;
   onSpeechStateChange?: (playing: boolean) => void;
 }
@@ -26,10 +26,9 @@ async function copyToClipboard(value: string) {
   }
 }
 
-function buildSharePromptUrl(prompt: string, scope: string) {
+function buildSharePromptUrl(prompt: string) {
   const url = new URL('/chat/', window.location.origin);
   url.searchParams.set('prompt', prompt);
-  url.searchParams.set('scope', scope || 'all');
   return url.toString();
 }
 
@@ -200,8 +199,8 @@ function createChatMessageActions(options: ChatMessageActionOptions = {}) {
     return 'Could not share';
   }
 
-  async function sharePrompt(prompt: string, scope: string) {
-    const shareUrl = promptShareUrl(prompt, scope);
+  async function sharePrompt(prompt: string) {
+    const shareUrl = promptShareUrl(prompt);
     if (typeof navigator.share === 'function') {
       try {
         await navigator.share({ title: promptShareTitle, text: prompt, ...(shareUrl ? { url: shareUrl } : {}) });

@@ -8,20 +8,15 @@ import { conversationViewMessages } from '../thingy-chat-history.ts';
 import { createChatInteractions } from '../thingy-chat-interactions.ts';
 import { librarianStreamUrl, tinylyticsId } from '../thingy-config.ts';
 import { resolveFromValue } from '../thingy-from.ts';
-import { normalizeModeId, normalizeModes } from '../thingy-modes.ts';
+import { normalizeModes } from '../thingy-modes.ts';
 import { createAssistantMessageModel } from '../models/assistant-message.ts';
-import { normalizeScopeParam, scopeForSources, sourcesForScope } from '../thingy-scope.ts';
 import { createDictationController, speechInputSupported } from '../thingy-voice.ts';
 import { DEFAULT_WELCOME, createChatWelcomeController } from '../thingy-chat-welcome.ts';
 import {
   activeConversationId,
-  activeMode,
-  availableModes,
   chatMessages,
-  hasSources,
   interactionBusy,
   questionText,
-  selectedSources,
   welcomeInFlight
 } from '../stores/chat-store.ts';
 import {
@@ -61,7 +56,6 @@ function ChatApp() {
   const autoFollowRef = useRef(true);
   const scrollFrameRef = useRef(0);
   const [booted, setBooted] = useState(false);
-  const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dictationListening, setDictationListening] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState('');
@@ -70,7 +64,6 @@ function ChatApp() {
     loginToken: string;
     prompt: string;
     hasPrompt: boolean;
-    scope: string;
     from: ReturnType<typeof resolveFromValue>;
   } | null>(null);
 
@@ -79,17 +72,13 @@ function ChatApp() {
     const prompt = String(params.get('prompt') || '')
       .trim()
       .slice(0, MAX_QUESTION_CHARS);
-    const scope = normalizeScopeParam(params.get('scope')) || normalizeScopeParam(params.get('corpus')) || 'all';
     initialRef.current = {
       email: session.normalizeEmail(params.get('email')),
       loginToken: String(params.get('login_token') || params.get('magic_token') || '').trim(),
       prompt,
       hasPrompt: Boolean(prompt),
-      scope,
       from: resolveFromValue(params.get('from'))
     };
-    selectedSources.value = sourcesForScope(scope);
-    hasSources.value = selectedSources.value.length > 0;
   }
   const initial = initialRef.current;
   const analytics = useMemo(() => createTinylyticsTracker({ enabled: Boolean(tinylyticsId()) }), []);
@@ -98,8 +87,11 @@ function ChatApp() {
     analytics.track(name, value);
   }
 
+  // The source picker is retired: every request searches the whole archive.
+  // Legacy ?scope= / ?corpus= links still land here (and are scrubbed from
+  // the URL); the payloads keep sending the explicit 'all' scope.
   function currentScope() {
-    return scopeForSources(selectedSources.value);
+    return 'all';
   }
 
   function nearBottom() {
@@ -181,21 +173,14 @@ function ChatApp() {
   const isSignedIn = signedIn.value;
   const busy = interactionBusy.value;
   const currentText = questionText.value;
-  const sourceValues = selectedSources.value;
-  const sourcesAvailable = sourceValues.length > 0;
   const activeId = activeConversationId.value;
   const activeConversation = actions.activeConversation();
   const conversationTitle = actions.currentConversationTitle();
-  const modes = availableModes.value;
-  const selectedMode = modes.some((mode) => mode.id === activeMode.value) ? activeMode.value : 'thingy';
-  const selectedModeLabel = actions.modeLabel(selectedMode);
   const currentMode = actions.currentConversationMode();
-  const showModeUi = isSignedIn && modes.length > 1;
-  const showModeBanner = showModeUi && currentMode !== 'thingy';
+  // Old conversations keep their stored mode; the banner labels them.
+  const showModeBanner = isSignedIn && currentMode !== 'thingy';
   const mobileOpen = mobileRailOpen.value;
   const collapsed = railCollapsed.value;
-  const canMapDraft =
-    Boolean(currentText.trim()) && currentText.length <= MAX_QUESTION_CHARS && sourcesAvailable && isSignedIn;
   const shellClass = [
     'thingy-app-shell',
     !booted ? 'is-booting' : '',
@@ -215,7 +200,10 @@ function ChatApp() {
     state.preferredName = String(storedProfile.preferred_name || '').trim();
     state.availableModes = normalizeModes(storedProfile.modes || []);
     if (!state.availableModes.length) state.availableModes = [{ id: 'thingy', label: 'Thingy' }];
-    if (!state.availableModes.some((mode) => mode.id === state.activeMode)) state.activeMode = 'thingy';
+    // The mode picker is retired: every new conversation starts in 'thingy'.
+    // Reopening an old conversation may still move activeMode to its stored
+    // mode so replies stay in that conversation's mode.
+    state.activeMode = 'thingy';
     actions.refreshAccountIdentity();
     setBooted(true);
 
@@ -273,7 +261,6 @@ function ChatApp() {
   useEffect(() => {
     function closeMenus(event: MouseEvent) {
       const target = event.target instanceof Element ? event.target : null;
-      if (!target?.closest('.rail-newchat-mode')) setModeMenuOpen(false);
       if (!target?.closest('.mobile-chatbar-actions')) setMobileMenuOpen(false);
     }
     function onKeyDown(event: KeyboardEvent) {
@@ -283,7 +270,6 @@ function ChatApp() {
         return;
       }
       if (event.key !== 'Escape') return;
-      setModeMenuOpen(false);
       setMobileMenuOpen(false);
       accountMenuOpen.value = false;
       accountNameStatus.value = '';
@@ -338,9 +324,11 @@ function ChatApp() {
     resetMessages();
   }
 
-  function startNewConversation(mode = state.activeMode) {
-    state.activeMode = normalizeModeId(mode);
-    const shell = actions.createLocalConversationShell(state.activeMode);
+  function startNewConversation() {
+    // Every new conversation starts in 'thingy', even when the previously
+    // opened conversation carried another stored mode.
+    state.activeMode = 'thingy';
+    const shell = actions.createLocalConversationShell('thingy');
     setQuestion('');
     resetMessages();
     return shell;
@@ -350,27 +338,12 @@ function ChatApp() {
     if (interactionBusy.value) return;
     cancelWelcome();
     welcomeControllerRef.current?.markShown();
-    const shell = startNewConversation(state.activeMode);
-    await actions.createConversationShellForMode(state.activeMode, { replaceId: shell?.id });
+    const shell = startNewConversation();
+    await actions.createConversationShellForMode('thingy', { replaceId: shell?.id });
     setMobileMenuOpen(false);
     mobileRailOpen.value = false;
     inputRef.current?.focus();
     track('librarian.clear');
-  }
-
-  async function chooseMode(value: string) {
-    if (interactionBusy.value) return;
-    const nextMode = normalizeModeId(value);
-    if (!state.availableModes.some((mode) => mode.id === nextMode)) return;
-    if (nextMode === state.activeMode && !state.activeConversationId) return;
-    state.activeMode = nextMode;
-    welcomeControllerRef.current?.reset();
-    const shell = startNewConversation(nextMode);
-    setModeMenuOpen(false);
-    const conversation = await actions.createConversationShellForMode(nextMode, { replaceId: shell?.id });
-    mobileRailOpen.value = false;
-    if (nextMode === 'thingy' || conversation) void startAgentWelcome();
-    track('librarian.mode_change', nextMode);
   }
 
   async function loadConversation(id: string) {
@@ -437,15 +410,12 @@ function ChatApp() {
     maxQuestionChars: MAX_QUESTION_CHARS,
     currentScope,
     cancelWelcome,
-    markWelcomeShown: () => welcomeControllerRef.current?.markShown(),
-    resetMessages,
     setQuestion,
     addUserMessage,
     addAssistantMessage,
     stopDictation: () => {
       if (dictationRef.current?.isListening()) dictationRef.current.stop();
     },
-    focusInput: () => inputRef.current?.focus(),
     track
   });
 
@@ -472,17 +442,8 @@ function ChatApp() {
           <ChatRail
             collapsed={collapsed}
             busy={busy}
-            showModeUi={showModeUi}
-            modeMenuOpen={modeMenuOpen}
-            selectedMode={selectedMode}
-            selectedModeLabel={selectedModeLabel}
-            modes={modes}
-            sourcesAvailable={isSignedIn && sourcesAvailable}
             onToggleCollapsed={() => (railCollapsed.value = !collapsed)}
             onNewConversation={() => void newConversation()}
-            onToggleModeMenu={() => setModeMenuOpen(!modeMenuOpen)}
-            onChooseMode={(mode) => void chooseMode(mode)}
-            onCuriosityMap={() => void interactions.showCuriosityMap()}
             onOpenConversation={(id) => {
               void loadConversation(id);
               mobileRailOpen.value = false;
@@ -532,9 +493,6 @@ function ChatApp() {
             dictationListening={dictationListening}
             speechSupported={speechSupported}
             voiceStatus={voiceStatus}
-            canMapDraft={canMapDraft}
-            sourcesAvailable={sourcesAvailable}
-            selectedSources={selectedSources}
             onToggleMobileRail={() => (mobileRailOpen.value = !mobileOpen)}
             onNewConversation={() => void newConversation()}
             onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -542,21 +500,11 @@ function ChatApp() {
             onDelete={() => void deleteActiveConversation()}
             onScroll={() => (autoFollowRef.current = nearBottom())}
             onRetry={interactions.retryAnswer}
-            onEmbeddedPrompt={interactions.embeddedPrompt}
             submitFeedback={interactions.submitFeedback}
             track={track}
             onSubmit={handleSubmit}
             onQuestionInput={setQuestion}
             onDictation={() => dictationRef.current?.start()}
-            onMapSeed={(seed) => {
-              if (!seed) return;
-              void interactions.showCuriosityMap(seed, true);
-              track('librarian.curiosity_map_seed', seed.length < 20 ? 'short' : seed.length < 80 ? 'medium' : 'long');
-            }}
-            onScopeChange={(scope) => {
-              hasSources.value = Boolean(scope);
-              track('librarian.scope_change', scope || 'none');
-            }}
             onStopAnswer={() => {
               actions.stopActiveAnswer();
               track('librarian.answer_stop_click');

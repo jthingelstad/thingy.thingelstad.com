@@ -36,24 +36,16 @@ const chatMessages = signal<ThingyChatViewMessage[]>([]);
 // for the input.
 const questionText = signal('');
 
-// The native checkbox values selected in the declarative source picker.
-const selectedSources = signal<string[]>(['weekly_thing', 'blog', 'podcast']);
-
-// True when at least one source is selected in the source picker. The
-// source picker is still imperative; the controller mirrors its state.
-const hasSources = signal(true);
-
 // In-flight flags. Components read interactionBusy and stoppable; the chat
 // controller flips the underlying flags as each operation starts and ends.
 const answerInFlight = signal(false);
 const welcomeInFlight = signal(false);
-const mapInFlight = signal(false);
 const conversationCreateInFlight = signal(false);
 
 // True while an answer is streaming AND the user can abort it.
 const stoppable = signal(false);
 
-const interactionBusy = computed(() => answerInFlight.value || mapInFlight.value || conversationCreateInFlight.value);
+const interactionBusy = computed(() => answerInFlight.value || conversationCreateInFlight.value);
 
 export {
   activeConversationId,
@@ -63,11 +55,8 @@ export {
   chatMessages,
   conversationCreateInFlight,
   conversations,
-  hasSources,
   interactionBusy,
-  mapInFlight,
   questionText,
-  selectedSources,
   stoppable,
   welcomeInFlight
 };

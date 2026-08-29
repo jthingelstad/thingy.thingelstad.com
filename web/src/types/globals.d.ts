@@ -84,19 +84,6 @@ interface ThingyActivityStep {
   kind?: string;
 }
 
-interface ThingyCuriosityEdge {
-  from: string;
-  to: string;
-}
-
-interface ThingyCuriosityMap {
-  title?: string;
-  prompt?: string;
-  nodes?: ThingyCuriosityNode[];
-  edges?: ThingyCuriosityEdge[];
-  sources?: ThingyArchiveItem[];
-}
-
 type AssistantMessageStatus = 'pending' | 'streaming' | 'done' | 'stopped' | 'error' | 'static';
 
 interface AssistantMessageModel {
@@ -105,8 +92,6 @@ interface AssistantMessageModel {
   citations: import('@preact/signals').Signal<ThingyCitation[]>;
   activity: import('@preact/signals').Signal<ThingyActivityStep[]>;
   commentary: import('@preact/signals').Signal<string[]>;
-  experience: import('@preact/signals').Signal<ThingyExperience | null>;
-  artifactHtml: import('@preact/signals').Signal<string>;
   status: import('@preact/signals').Signal<AssistantMessageStatus>;
   statusFallback: import('@preact/signals').Signal<string>;
   label: import('@preact/signals').Signal<string>;
@@ -122,8 +107,6 @@ interface AssistantMessageOptions {
   citations?: ThingyCitation[];
   activity?: ThingyActivityStep[];
   commentary?: string[];
-  experience?: ThingyExperience | null;
-  artifactHtml?: unknown;
   status?: AssistantMessageStatus;
   statusFallback?: string;
   label?: string;

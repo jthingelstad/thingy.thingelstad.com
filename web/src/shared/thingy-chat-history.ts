@@ -1,11 +1,11 @@
 import { createAssistantMessageModel } from './models/assistant-message.ts';
-import { activityStepsFromToolNames, renderCuriosityMap } from './thingy-chat-rendering.ts';
+import { activityStepsFromToolNames } from './thingy-chat-rendering.ts';
 
 interface ConversationMessage {
   role?: string;
   content?: string;
   scope?: string;
-  artifact?: ThingyCuriosityMap & { kind?: string };
+  artifact?: unknown;
   tool_names?: string[];
   toolNames?: string[];
   request_id?: string;
@@ -38,12 +38,13 @@ function conversationViewMessages({
       continue;
     }
     if (message.role !== 'assistant') continue;
-    const artifact = message.artifact?.kind === 'curiosity_map' ? renderCuriosityMap(message.artifact) : '';
+    // Curiosity-map turns are a retired feature; their artifact-only rows
+    // carry no prose and are hidden when an old conversation is reopened.
+    if (!String(message.content || '').trim() && message.artifact) continue;
     const model = createAssistantMessageModel({
       content: message.content || '',
       citations: message.citations || [],
       activity: activityStepsFromToolNames(message.tool_names || message.toolNames || []),
-      artifactHtml: artifact,
       status: 'done',
       requestId: message.request_id || message.requestId || ''
     });

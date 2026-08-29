@@ -1,23 +1,13 @@
 import type { ComponentChildren } from 'preact';
-import { modeIcon } from '../thingy-modes.ts';
 import { RailRecents } from './RailRecents.tsx';
 import { ThingyIcon } from './ThingyIcon.tsx';
 
 interface ChatRailProps {
   collapsed: boolean;
   busy: boolean;
-  showModeUi: boolean;
-  modeMenuOpen: boolean;
-  selectedMode: string;
-  selectedModeLabel: string;
-  modes: ThingyMode[];
-  sourcesAvailable: boolean;
   accountMenu: ComponentChildren;
   onToggleCollapsed: () => void;
   onNewConversation: () => void;
-  onToggleModeMenu: () => void;
-  onChooseMode: (mode: string) => void;
-  onCuriosityMap: () => void;
   onOpenConversation: (id: string) => void;
   onDeleteConversation: (id: string) => void;
 }
@@ -59,64 +49,7 @@ function ChatRail(props: ChatRailProps) {
           <span class="label">New chat</span>
           <span class="kbd">⌘K</span>
         </button>
-        <div class="rail-newchat-mode" hidden={!props.showModeUi}>
-          <button
-            class="rail-newchat-mode-button"
-            type="button"
-            disabled={props.busy}
-            aria-haspopup="listbox"
-            aria-expanded={props.modeMenuOpen}
-            aria-controls="thingy-mode-menu"
-            aria-label={`New chat mode: ${props.selectedModeLabel}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              props.onToggleModeMenu();
-            }}
-          >
-            <span class="rail-newchat-mode-icon">
-              <ThingyIcon name={modeIcon(props.selectedMode)} />
-            </span>
-            <span class="rail-newchat-mode-label">{props.selectedModeLabel}</span>
-            <span class="rail-newchat-mode-caret">
-              <ThingyIcon name="chevron-down" />
-            </span>
-          </button>
-          <div
-            class="rail-newchat-mode-menu"
-            id="thingy-mode-menu"
-            hidden={!props.modeMenuOpen}
-            role="listbox"
-            aria-label="New chat mode"
-          >
-            {props.modes.map((mode) => (
-              <button
-                key={mode.id}
-                type="button"
-                role="option"
-                class="rail-newchat-mode-option"
-                aria-selected={mode.id === props.selectedMode}
-                onClick={() => props.onChooseMode(mode.id)}
-              >
-                <span class="rail-newchat-mode-option-icon">
-                  <ThingyIcon name={modeIcon(mode.id)} />
-                </span>
-                <span>{mode.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
-
-      <button
-        class="rail-newchat rail-map"
-        type="button"
-        disabled={props.busy || !props.sourcesAvailable}
-        title="Curiosity map"
-        onClick={props.onCuriosityMap}
-      >
-        <ThingyIcon name="network" />
-        <span class="label">Curiosity map</span>
-      </button>
 
       <div class="rail-body">
         <p class="rail-recents-label">Recents</p>

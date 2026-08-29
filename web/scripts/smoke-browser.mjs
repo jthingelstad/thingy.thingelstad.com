@@ -17,7 +17,7 @@ const apiHost = (process.env.LIBRARIAN_API_URL || 'https://k0yklt9vg3.execute-ap
   /\/$/,
   ''
 );
-const streamHost = (process.env.LIBRARIAN_STREAM_URL || 'https://stream.thingy.thingelstad.com').replace(/\/$/, '');
+const streamHost = (process.env.LIBRARIAN_STREAM_URL || 'https://librarian.thingelstad.com').replace(/\/$/, '');
 
 function fakeToken() {
   const payload = Buffer.from(
@@ -194,14 +194,6 @@ async function checkChat(browser) {
   await page.waitForSelector('.rail-menu-build');
   assert.match((await page.locator('.rail-menu-build').textContent()).trim(), /^Build .+/);
   await page.keyboard.press('Escape');
-
-  // The source picker uses one native checkbox focus target per source.
-  await page.locator('.srcpick-btn').click();
-  await page.waitForSelector('#srcpick-pop:not([hidden])');
-  assert.equal(await page.locator('.srcpick-row[tabindex]').count(), 0, 'source labels are not duplicate tab stops');
-  assert.equal(await page.locator('.srcpick-row input[type="checkbox"]').count(), 3);
-  await page.locator('.thingy-chat-scroll').click({ position: { x: 10, y: 10 } });
-  assert.equal(await page.locator('#srcpick-pop').isHidden(), true, 'outside click closes the source picker');
 
   // Authenticated routes must not execute Tinylytics or any other third-party script.
   assert.equal(await page.locator('script[src*="tinylytics"]').count(), 0);

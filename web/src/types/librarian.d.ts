@@ -8,9 +8,7 @@ type LibrarianProfile = import('../generated/librarian-contract.generated.ts').L
 type LibrarianAccountOverview = import('../generated/librarian-contract.generated.ts').LibrarianAccountOverview;
 type ThingyMode = import('../generated/librarian-contract.generated.ts').LibrarianMode;
 type ThingyArchiveItem = import('../generated/librarian-contract.generated.ts').LibrarianArchiveItem;
-type ThingyExperience = import('../generated/librarian-contract.generated.ts').LibrarianExperience;
 type ThingyCitation = import('../generated/librarian-contract.generated.ts').LibrarianCitation;
-type ThingyCuriosityNode = import('../generated/librarian-contract.generated.ts').LibrarianCuriosityNode;
 
 // Client-side conversation summary: the generated conversation shape with a
 // guaranteed id (local drafts always mint one; server rows always carry one).

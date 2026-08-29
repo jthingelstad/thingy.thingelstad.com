@@ -1,9 +1,9 @@
 // @ts-check
 // One assistant message's reactive state. Each running answer has its own
 // model; the stream renderer writes deltas into the model's signals, and the
-// AssistantMessage component subscribes to render. Activity, citations, and
-// the experience artifact are separate signals so changes to one don't force
-// a re-parse of the rendered markdown answer.
+// AssistantMessage component subscribes to render. Activity and citations are
+// separate signals so changes to one don't force a re-parse of the rendered
+// markdown answer.
 
 import { signal } from '@preact/signals';
 
@@ -25,8 +25,6 @@ function createAssistantMessageModel(options: AssistantMessageOptions = {}): Ass
     citations: signal(Array.isArray(options.citations) ? options.citations : []),
     activity: signal(Array.isArray(options.activity) ? options.activity : []),
     commentary: signal(Array.isArray(options.commentary) ? options.commentary : []),
-    experience: signal(options.experience || null),
-    artifactHtml: signal(String(options.artifactHtml || '')),
     // status mirrors the lifecycle:
     //   'pending'   — request in flight, no content yet (status line shown)
     //   'streaming' — content is arriving

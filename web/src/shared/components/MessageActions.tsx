@@ -17,7 +17,6 @@ interface FeedbackResult {
 interface MessageActionsProps {
   role: 'prompt' | 'response';
   prompt?: string;
-  scope?: string;
   requestId?: string;
   feedback?: boolean;
   retryPrompt?: string;
@@ -42,7 +41,6 @@ function ActionIcon({ name }: { name: MessageActionKind }) {
 function MessageActions({
   role,
   prompt = '',
-  scope = 'all',
   requestId = '',
   feedback = true,
   retryPrompt = '',
@@ -88,7 +86,7 @@ function MessageActions({
   async function handlePromptAction(action: 'copy' | 'share') {
     const service = serviceRef.current;
     if (!service) return;
-    flash(action === 'copy' ? await service.copyPrompt(prompt) : await service.sharePrompt(prompt, scope));
+    flash(action === 'copy' ? await service.copyPrompt(prompt) : await service.sharePrompt(prompt));
   }
 
   async function handleResponseAction(action: 'copy' | 'share' | 'speak') {

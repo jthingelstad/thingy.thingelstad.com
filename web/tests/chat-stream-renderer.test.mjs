@@ -59,16 +59,6 @@ test('setCitations coerces non-arrays to []', () => {
   assert.deepEqual(model.citations.value, []);
 });
 
-test('setExperience updates the signal immediately', () => {
-  const model = createAssistantMessageModel();
-  const renderer = createAssistantStreamRenderer({ model });
-  const experience = { kind: 'spark', title: 'Spark' };
-  renderer.setExperience(experience);
-  assert.equal(model.experience.value, experience);
-  renderer.setExperience(null);
-  assert.equal(model.experience.value, null);
-});
-
 test('finish(done) sets status to done and returns current content', () => {
   const model = createAssistantMessageModel();
   const renderer = createAssistantStreamRenderer({ model });

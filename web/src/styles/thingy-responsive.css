@@ -32,7 +32,6 @@
 
   .rail .rail-newchat .label,
   .rail .rail-newchat .kbd,
-  .rail .rail-newchat-mode,
   .rail .rail-body,
   .rail .rail-account-meta,
   .rail .rail-account-caret {
@@ -333,8 +332,6 @@
   .thingy-app-shell.is-collapsed .rail-newchat .label,
   .rail .rail-newchat .kbd,
   .thingy-app-shell.is-collapsed .rail-newchat .kbd,
-  .rail .rail-newchat-mode,
-  .thingy-app-shell.is-collapsed .rail-newchat-mode,
   .rail .rail-account-meta,
   .thingy-app-shell.is-collapsed .rail-account-meta,
   .rail .rail-account-caret,
@@ -346,21 +343,10 @@
     display: grid;
   }
 
-  .rail .rail-newchat-mode[hidden],
-  .thingy-app-shell.is-collapsed .rail-newchat-mode[hidden] {
-    display: none;
-  }
-
-  .rail .rail-newchat-mode:not([hidden]),
-  .thingy-app-shell.is-collapsed .rail-newchat-mode:not([hidden]) {
-    display: flex;
-  }
-
   .rail .rail-newchat-combo,
   .thingy-app-shell.is-collapsed .rail-newchat-combo {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto;
     width: 100%;
     min-height: 0;
   }
