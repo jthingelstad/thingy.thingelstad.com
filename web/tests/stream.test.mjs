@@ -70,7 +70,7 @@ test('read surfaces the idle-timeout error when a stream goes silent mid-answer'
     pull(controller) {
       pulls += 1;
       if (pulls === 1) {
-        controller.enqueue(encoder.encode('event: meta\ndata: {"contract_version":"2.0.0"}\n\n'));
+        controller.enqueue(encoder.encode('event: meta\ndata: {"contract_version":"3.0.0"}\n\n'));
         return undefined;
       }
       // Never resolves again - simulates a black-holed connection.
@@ -90,5 +90,5 @@ test('read surfaces the idle-timeout error when a stream goes silent mid-answer'
     read(new Response(silentBody), (eventName, data) => events.push([eventName, data])),
     /stopped responding mid-answer/
   );
-  assert.deepEqual(events, [['meta', { contract_version: '2.0.0' }]]);
+  assert.deepEqual(events, [['meta', { contract_version: '3.0.0' }]]);
 });

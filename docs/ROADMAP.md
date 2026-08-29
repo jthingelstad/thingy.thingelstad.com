@@ -57,7 +57,7 @@ product direction.
 - Corpus metadata is richer and more even across sources: dates, domains, source identity, internal links,
   external links, and podcast metadata.
 - The API includes tools for archive search, corpus summaries, linked domains, source exploration,
-  timeline-like summaries, and curiosity map generation.
+  and timeline-like summaries.
 - Markdown rendering supports richer answers, including tables and horizontal rules.
 
 ### Operator Loop

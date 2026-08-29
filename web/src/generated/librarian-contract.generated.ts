@@ -105,25 +105,6 @@ export interface LibrarianCitation {
   [key: string]: unknown;
 }
 
-export interface LibrarianExperience {
-  kind?: string;
-  title?: string;
-  intro?: string;
-  prompt?: string;
-  items?: Array<LibrarianArchiveItem>;
-  [key: string]: unknown;
-}
-
-export interface LibrarianCuriosityNode {
-  id: string;
-  label: string;
-  kind?: string;
-  prompt?: string;
-  why?: string;
-  weight?: number;
-  [key: string]: unknown;
-}
-
 export interface LibrarianAccountOverview {
   first_seen_at?: string;
   last_seen_at?: string;
@@ -153,8 +134,6 @@ export interface LibrarianApiResponse {
   supporting_member?: boolean;
   data?: unknown;
   code?: string;
-  nodes?: Array<LibrarianCuriosityNode>;
-  sources?: Array<LibrarianArchiveItem>;
   account?: LibrarianAccountOverview;
   reaction?: string;
   ok?: boolean;
@@ -189,8 +168,6 @@ export interface LibrarianStreamBase {
   supporting_member?: boolean;
   data?: unknown;
   code?: string;
-  nodes?: Array<LibrarianCuriosityNode>;
-  sources?: Array<LibrarianArchiveItem>;
   account?: LibrarianAccountOverview;
   reaction?: string;
   ok?: boolean;
@@ -201,7 +178,6 @@ export interface LibrarianStreamBase {
   delta?: string;
   answer?: string;
   citations?: Array<LibrarianCitation>;
-  experience?: LibrarianExperience;
   commentary?: string;
   detail?: string;
   note?: string;
@@ -211,12 +187,12 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = '13493f5c6b11cee03205a6282958c0ab36488d1f173fb1b71b40201ead7ed930';
+export const LIBRARIAN_CONTRACT_SHA256 = '2bf9c4b03b48666130c33463a45a8ae00470fb3d21254158f56987564989e36e';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '2.0.0',
+  version: '3.0.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
@@ -431,55 +407,6 @@ export const LIBRARIAN_CONTRACT = {
       },
       additionalProperties: true
     },
-    experience: {
-      type: 'object',
-      properties: {
-        kind: {
-          type: 'string'
-        },
-        title: {
-          type: 'string'
-        },
-        intro: {
-          type: 'string'
-        },
-        prompt: {
-          type: 'string'
-        },
-        items: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/archiveItem'
-          }
-        }
-      },
-      additionalProperties: true
-    },
-    curiosityNode: {
-      type: 'object',
-      properties: {
-        id: {
-          type: 'string'
-        },
-        label: {
-          type: 'string'
-        },
-        kind: {
-          type: 'string'
-        },
-        prompt: {
-          type: 'string'
-        },
-        why: {
-          type: 'string'
-        },
-        weight: {
-          type: 'number'
-        }
-      },
-      required: ['id', 'label'],
-      additionalProperties: true
-    },
     accountOverview: {
       type: 'object',
       properties: {
@@ -570,18 +497,6 @@ export const LIBRARIAN_CONTRACT = {
         data: {},
         code: {
           type: 'string'
-        },
-        nodes: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/curiosityNode'
-          }
-        },
-        sources: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/archiveItem'
-          }
         },
         account: {
           $ref: '#/$defs/accountOverview'
@@ -683,18 +598,6 @@ export const LIBRARIAN_CONTRACT = {
         code: {
           type: 'string'
         },
-        nodes: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/curiosityNode'
-          }
-        },
-        sources: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/archiveItem'
-          }
-        },
         account: {
           $ref: '#/$defs/accountOverview'
         },
@@ -727,9 +630,6 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             $ref: '#/$defs/citation'
           }
-        },
-        experience: {
-          $ref: '#/$defs/experience'
         },
         commentary: {
           type: 'string'
@@ -823,12 +723,6 @@ export const LIBRARIAN_CONTRACT = {
       actions: {}
     },
     '/memory': {
-      schema: {
-        $ref: '#/$defs/apiResponse'
-      },
-      actions: {}
-    },
-    '/curiosity-map': {
       schema: {
         $ref: '#/$defs/apiResponse'
       },
@@ -989,18 +883,6 @@ export const LIBRARIAN_CONTRACT = {
         code: {
           type: 'string'
         },
-        nodes: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/curiosityNode'
-          }
-        },
-        sources: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/archiveItem'
-          }
-        },
         account: {
           $ref: '#/$defs/accountOverview'
         },
@@ -1033,9 +915,6 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             $ref: '#/$defs/citation'
           }
-        },
-        experience: {
-          $ref: '#/$defs/experience'
         },
         commentary: {
           type: 'string'
@@ -1122,18 +1001,6 @@ export const LIBRARIAN_CONTRACT = {
         code: {
           type: 'string'
         },
-        nodes: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/curiosityNode'
-          }
-        },
-        sources: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/archiveItem'
-          }
-        },
         account: {
           $ref: '#/$defs/accountOverview'
         },
@@ -1166,9 +1033,6 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             $ref: '#/$defs/citation'
           }
-        },
-        experience: {
-          $ref: '#/$defs/experience'
         },
         commentary: {
           type: 'string'
@@ -1255,18 +1119,6 @@ export const LIBRARIAN_CONTRACT = {
         code: {
           type: 'string'
         },
-        nodes: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/curiosityNode'
-          }
-        },
-        sources: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/archiveItem'
-          }
-        },
         account: {
           $ref: '#/$defs/accountOverview'
         },
@@ -1299,9 +1151,6 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             $ref: '#/$defs/citation'
           }
-        },
-        experience: {
-          $ref: '#/$defs/experience'
         },
         commentary: {
           type: 'string'
@@ -1388,18 +1237,6 @@ export const LIBRARIAN_CONTRACT = {
         code: {
           type: 'string'
         },
-        nodes: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/curiosityNode'
-          }
-        },
-        sources: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/archiveItem'
-          }
-        },
         account: {
           $ref: '#/$defs/accountOverview'
         },
@@ -1432,9 +1269,6 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             $ref: '#/$defs/citation'
           }
-        },
-        experience: {
-          $ref: '#/$defs/experience'
         },
         commentary: {
           type: 'string'
@@ -1522,18 +1356,6 @@ export const LIBRARIAN_CONTRACT = {
         code: {
           type: 'string'
         },
-        nodes: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/curiosityNode'
-          }
-        },
-        sources: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/archiveItem'
-          }
-        },
         account: {
           $ref: '#/$defs/accountOverview'
         },
@@ -1566,9 +1388,6 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             $ref: '#/$defs/citation'
           }
-        },
-        experience: {
-          $ref: '#/$defs/experience'
         },
         commentary: {
           type: 'string'
@@ -1656,18 +1475,6 @@ export const LIBRARIAN_CONTRACT = {
         code: {
           type: 'string'
         },
-        nodes: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/curiosityNode'
-          }
-        },
-        sources: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/archiveItem'
-          }
-        },
         account: {
           $ref: '#/$defs/accountOverview'
         },
@@ -1700,9 +1507,6 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             $ref: '#/$defs/citation'
           }
-        },
-        experience: {
-          $ref: '#/$defs/experience'
         },
         commentary: {
           type: 'string'
@@ -1724,140 +1528,6 @@ export const LIBRARIAN_CONTRACT = {
         }
       },
       required: ['citations'],
-      additionalProperties: true
-    },
-    experience: {
-      type: 'object',
-      properties: {
-        token: {
-          type: 'string'
-        },
-        email: {
-          type: 'string'
-        },
-        status: {
-          type: 'string'
-        },
-        message: {
-          type: 'string'
-        },
-        error: {
-          type: 'string'
-        },
-        errorMessage: {
-          type: 'string'
-        },
-        profile: {
-          $ref: '#/$defs/profile'
-        },
-        entitlements: {
-          type: 'array',
-          items: {
-            type: 'string'
-          }
-        },
-        modes: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/mode'
-          }
-        },
-        request_id: {
-          type: 'string'
-        },
-        requestId: {
-          type: 'string'
-        },
-        conversations: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/conversation'
-          }
-        },
-        conversation: {
-          $ref: '#/$defs/conversation'
-        },
-        messages: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/conversationMessage'
-          }
-        },
-        supporting_member: {
-          type: 'boolean'
-        },
-        data: {},
-        code: {
-          type: 'string'
-        },
-        nodes: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/curiosityNode'
-          }
-        },
-        sources: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/archiveItem'
-          }
-        },
-        account: {
-          $ref: '#/$defs/accountOverview'
-        },
-        reaction: {
-          type: 'string'
-        },
-        ok: {
-          type: 'boolean'
-        },
-        has_comment: {
-          type: 'boolean'
-        },
-        contract_version: {
-          type: 'string'
-        },
-        mode: {
-          type: 'string'
-        },
-        conversation_id: {
-          type: 'string'
-        },
-        delta: {
-          type: 'string'
-        },
-        answer: {
-          type: 'string'
-        },
-        citations: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/citation'
-          }
-        },
-        experience: {
-          $ref: '#/$defs/experience'
-        },
-        commentary: {
-          type: 'string'
-        },
-        detail: {
-          type: 'string'
-        },
-        note: {
-          type: 'string'
-        },
-        kind: {
-          type: 'string'
-        },
-        tool_name: {
-          type: 'string'
-        },
-        toolName: {
-          type: 'string'
-        }
-      },
-      required: ['experience'],
       additionalProperties: true
     },
     done: {
@@ -1924,18 +1594,6 @@ export const LIBRARIAN_CONTRACT = {
         code: {
           type: 'string'
         },
-        nodes: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/curiosityNode'
-          }
-        },
-        sources: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/archiveItem'
-          }
-        },
         account: {
           $ref: '#/$defs/accountOverview'
         },
@@ -1968,9 +1626,6 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             $ref: '#/$defs/citation'
           }
-        },
-        experience: {
-          $ref: '#/$defs/experience'
         },
         commentary: {
           type: 'string'
@@ -2057,18 +1712,6 @@ export const LIBRARIAN_CONTRACT = {
         code: {
           type: 'string'
         },
-        nodes: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/curiosityNode'
-          }
-        },
-        sources: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/archiveItem'
-          }
-        },
         account: {
           $ref: '#/$defs/accountOverview'
         },
@@ -2101,9 +1744,6 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             $ref: '#/$defs/citation'
           }
-        },
-        experience: {
-          $ref: '#/$defs/experience'
         },
         commentary: {
           type: 'string'

@@ -15,9 +15,7 @@ Librarian implementation in the Studio repository.
 
 ## Web UX
 
-- [ ] Keep the mobile/tablet/desktop QA checklist current for rail, New Chat, mode selection, source picker, curiosity map, voice input, playback, feedback comments, expired sessions, and prompt links.
-- [ ] Recheck Archive Sparks frequency after more real use.
-- [ ] Tune curiosity-map seeding and conversation behavior as usage patterns emerge.
+- [ ] Keep the mobile/tablet/desktop QA checklist current for rail, New Chat, voice input, playback, feedback comments, expired sessions, and prompt links.
 - [ ] Consider a conversation export/share view that preserves markdown, citations, and artifacts.
 
 ## Operator Experience

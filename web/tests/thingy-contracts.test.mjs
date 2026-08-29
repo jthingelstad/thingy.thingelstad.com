@@ -17,11 +17,10 @@ test('runtime validators and requests use the generated Librarian contract versi
     validateStreamData('meta', { contract_version: LIBRARIAN_CONTRACT_VERSION }).contract_version,
     LIBRARIAN_CONTRACT_VERSION
   );
-  assert.equal(validateStreamData('meta', { contract_version: '2.9.0' }).contract_version, '2.9.0');
-  // 3.x is readable ahead of the Librarian server's 3.0.0 rollout.
-  assert.equal(validateStreamData('meta', { contract_version: '3.0.0' }).contract_version, '3.0.0');
-  // 1.x is extinct and no longer readable.
+  // The stack is fully on 3.x; only the current major is readable.
+  assert.equal(validateStreamData('meta', { contract_version: '3.9.0' }).contract_version, '3.9.0');
   assert.throws(() => validateStreamData('meta', { contract_version: '1.0.0' }), /this client expects/);
+  assert.throws(() => validateStreamData('meta', { contract_version: '2.0.0' }), /this client expects/);
   assert.throws(() => validateStreamData('meta', { contract_version: '99.0.0' }), /this client expects/);
 });
 

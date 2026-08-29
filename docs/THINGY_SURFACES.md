@@ -7,7 +7,7 @@ Thingy has one public surface: the web application at
 
 | Surface | Audience | Responsibility |
 | --- | --- | --- |
-| Thingy web | Readers and Jamie | Sign-in, chat, Research Guide, conversations, curiosity map, account, and feedback |
+| Thingy web | Readers and Jamie | Sign-in, chat, conversations, account, and feedback |
 | Librarian API | Thingy web and approved internal clients | Critical retrieval, conversation, and streaming services |
 | Source sites | Readers | Canonical published Weekly Thing and personal-site content |
 
@@ -18,7 +18,6 @@ The web application owns the complete reader experience:
 - Authenticated chat and Research Guide modes.
 - Source and scope selection.
 - Conversation history and account profile controls.
-- Curiosity map generation and review.
 - Feedback and diagnostics exposed to the reader.
 
 (The Dispatch surface was removed in 2026-08; `/dispatch/` is a redirect stub.)
