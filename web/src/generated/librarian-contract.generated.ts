@@ -196,7 +196,7 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = '3cc17889f8dda325c52c320a592534028b5a507cdbfdf0b86596dcbae8b42bf9';
+export const LIBRARIAN_CONTRACT_SHA256 = 'ccb3444364bf73ed2221901d023227ce5133045befcc368954cd5f278c89cae2';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
@@ -770,7 +770,7 @@ export const LIBRARIAN_CONTRACT = {
       request: {
         type: 'object',
         properties: {
-          question: {
+          message: {
             type: 'string'
           },
           conversation_id: {
@@ -788,7 +788,7 @@ export const LIBRARIAN_CONTRACT = {
             additionalProperties: true
           }
         },
-        required: ['question'],
+        required: ['message'],
         additionalProperties: true
       },
       schema: {

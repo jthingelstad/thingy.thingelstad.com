@@ -583,7 +583,7 @@
       "request": {
         "type": "object",
         "properties": {
-          "question": {
+          "message": {
             "type": "string"
           },
           "conversation_id": {
@@ -602,7 +602,7 @@
           }
         },
         "required": [
-          "question"
+          "message"
         ],
         "additionalProperties": true
       },
