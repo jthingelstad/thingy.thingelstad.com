@@ -72,7 +72,14 @@ async function postJson(
 async function refreshAuth() {
   if (!token() || tokenExpired()) return null;
   try {
-    const data = await postJson('/auth', { action: 'refresh_session' }, authHeaders());
+    // The email rides along (self-bound server-side: it must hash to the
+    // session subject) so a sliding refresh can re-verify entitlements
+    // instead of letting them silently decay.
+    const data = await postJson(
+      '/auth',
+      { action: 'refresh_session', email: storedEmail() || undefined },
+      authHeaders()
+    );
     if (!data || !data.token) return null;
     persistAuth(data, storedEmail());
     return data;
