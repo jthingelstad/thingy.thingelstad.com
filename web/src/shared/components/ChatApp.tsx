@@ -8,6 +8,7 @@ import { conversationViewMessages } from '../thingy-chat-history.ts';
 import { createChatInteractions } from '../thingy-chat-interactions.ts';
 import { librarianStreamUrl, tinylyticsId } from '../thingy-config.ts';
 import { resolveFromValue } from '../thingy-from.ts';
+import { composeExplorePrompt } from '../thingy-explore.ts';
 import { normalizeModes } from '../thingy-modes.ts';
 import { createAssistantMessageModel } from '../models/assistant-message.ts';
 import { createDictationController, speechInputSupported } from '../thingy-voice.ts';
@@ -69,15 +70,14 @@ function ChatApp() {
 
   if (!initialRef.current) {
     const params = new URLSearchParams(window.location.search);
-    const prompt = String(params.get('prompt') || '')
-      .trim()
-      .slice(0, MAX_QUESTION_CHARS);
+    const explore = composeExplorePrompt(params.get('explore'), params.get('issue'));
+    const prompt = (String(params.get('prompt') || '').trim() || explore.prompt).slice(0, MAX_QUESTION_CHARS);
     initialRef.current = {
       email: session.normalizeEmail(params.get('email')),
       loginToken: String(params.get('login_token') || params.get('magic_token') || '').trim(),
       prompt,
       hasPrompt: Boolean(prompt),
-      from: resolveFromValue(params.get('from'))
+      from: resolveFromValue(params.get('from') || explore.sourceUrl || null)
     };
   }
   const initial = initialRef.current;

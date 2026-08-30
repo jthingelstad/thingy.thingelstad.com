@@ -50,6 +50,30 @@ Example:
 
 - `https://thingy.thingelstad.com/chat/?prompt=What%20has%20Jamie%20written%20about%20AI%3F`
 
+### `explore`
+
+The preferred parameter for "Explore with Thingy" buttons on source pages.
+Takes the canonical `https:` URL of the page the visitor is exploring. Thingy
+composes the exploration question itself (so the question copy can improve
+without regenerating static pages), auto-submits it after auth, and uses the
+URL as the `Return` link. An explicit `prompt` overrides the composed
+question; `explore` still supplies the return link.
+
+Example:
+
+- `https://thingy.thingelstad.com/chat/?explore=https%3A%2F%2Fwww.thingelstad.com%2F2026%2F08%2F28%2Fsome-post.html`
+
+### `issue`
+
+Weekly Thing sugar: an issue number. Composes a guided-look question for that
+issue and defaults the return link to the issue's archive page. Wins over
+`explore` for the question; an explicit `explore` URL still sets the return
+link. Non-numeric or out-of-range values are ignored.
+
+Example:
+
+- `https://thingy.thingelstad.com/chat/?issue=348`
+
 ### `email`
 
 Prefills the subscriber email field and starts the auth check.
@@ -150,6 +174,8 @@ browser URL after the app has read them:
 - `email`
 - `prompt`
 - `from`
+- `explore`
+- `issue`
 - `scope`
 - `corpus`
 - `login_token`

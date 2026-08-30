@@ -166,10 +166,16 @@ Document behavior changes in `README.md` when touching these.
   `Return`, and rewrites that link to the exact source URL.
 - `prompt`: Seeds the question and submits after auth/beta notice.
 - `email`: Prefills the auth field and starts subscriber auth.
+- `explore`: Canonical https URL of a source page; Thingy composes the
+  exploration question itself (`src/shared/thingy-explore.ts`) and uses the
+  URL as the return link. Explicit `prompt` wins.
+- `issue`: Weekly Thing issue number; composes a guided-look question and
+  defaults the return link to the archive page.
 
 Privacy requirement: after the app reads these params, the Tinylytics loader
-strips `email`, `prompt`, `from`, `scope`, `corpus`, `login_token`, and
-`magic_token` from the browser URL before analytics loads. Preserve this.
+strips `email`, `prompt`, `from`, `explore`, `issue`, `scope`, `corpus`,
+`login_token`, and `magic_token` from the browser URL before analytics loads.
+Preserve this.
 
 ## Tinylytics
 

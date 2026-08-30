@@ -7,7 +7,17 @@ const userEmailKey = 'thingyUserEmail';
 const userProfileKey = 'thingyUserProfile';
 const pendingReturnParamsKey = 'thingyPendingReturnParams';
 const refreshWindowSeconds = 60 * 60 * 24 * 3;
-const privateReturnParams = ['email', 'prompt', 'from', 'scope', 'corpus', 'login_token', 'magic_token'];
+const privateReturnParams = [
+  'email',
+  'prompt',
+  'from',
+  'explore',
+  'issue',
+  'scope',
+  'corpus',
+  'login_token',
+  'magic_token'
+];
 
 function apiUrl() {
   return librarianApiUrl();
