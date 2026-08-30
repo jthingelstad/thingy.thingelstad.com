@@ -16,6 +16,7 @@
   --color-text-soft: #3f4f4a;
   --color-text-muted: #596a64;
   --color-accent: #14776f;
+  --color-error: #b23a2a;
   --color-accent-hover: #0b4f4a;
   --color-accent-soft: #dcf3ef;
   --color-audio-accent: #b86131;
@@ -86,6 +87,7 @@
     --color-text-soft: #bcc8c3;
     --color-text-muted: #899791;
     --color-accent: #65c8bc;
+    --color-error: #e0705c;
     --color-accent-hover: #8edbd2;
     --color-accent-soft: rgb(101 200 188 / 16%);
     --color-audio-accent: #d98a56;

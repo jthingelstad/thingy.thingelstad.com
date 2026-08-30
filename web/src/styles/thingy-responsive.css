@@ -204,7 +204,7 @@
   }
 
   .mobile-conversation-menu .danger {
-    color: #b23a2a;
+    color: var(--color-error);
   }
 
   .mobile-chatbar-title {

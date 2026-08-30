@@ -234,7 +234,7 @@
 
 .rail-menu .danger,
 .rail-menu .danger svg {
-  color: #b23a2a;
+  color: var(--color-error);
 }
 
 .rail-menu-sep {
@@ -393,7 +393,7 @@
 }
 
 .thingy-memory-status small {
-  color: #b23a2a;
+  color: var(--color-error);
   font-family: var(--sans);
   font-size: 12px;
   line-height: 1.35;
@@ -519,8 +519,8 @@
 }
 
 .thingy-memory-delete-confirm button:first-child {
-  border-color: #b23a2a;
-  color: #b23a2a;
+  border-color: var(--color-error);
+  color: var(--color-error);
 }
 
 .thingy-memory-tags {
@@ -568,7 +568,7 @@
 
 .thingy-memory-danger-zone .thingy-memory-danger {
   width: fit-content;
-  border-color: color-mix(in srgb, #b23a2a 46%, var(--line));
+  border-color: color-mix(in srgb, var(--color-error) 46%, var(--line));
   color: #a33325;
 }
 

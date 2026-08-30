@@ -92,3 +92,57 @@
   font-size: 0.9rem;
   color: var(--color-text-muted);
 }
+
+/* Stat tiles and owner cards for the About page. */
+.thingy-page .stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 0.7rem;
+  margin: 1rem 0 1.4rem;
+}
+
+.thingy-page .stat {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  text-align: center;
+}
+
+.thingy-page .stat b {
+  display: block;
+  font-size: 1.45rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent);
+}
+
+.thingy-page .stat span {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+.thingy-page .owner {
+  display: flex;
+  gap: 0.9rem;
+  align-items: baseline;
+}
+
+.thingy-page .owner b {
+  white-space: nowrap;
+}
+
+.thingy-page .owner .cadence {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.thingy-page .flow {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.82rem;
+  color: var(--color-text-soft);
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: 0.6rem 0;
+}

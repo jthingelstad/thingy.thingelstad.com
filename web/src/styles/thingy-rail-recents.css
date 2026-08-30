@@ -182,8 +182,8 @@
 }
 
 .rail-recent-del:hover {
-  background: color-mix(in srgb, #b23a2a 12%, transparent);
-  color: #b23a2a;
+  background: color-mix(in srgb, var(--color-error) 12%, transparent);
+  color: var(--color-error);
 }
 
 .rail-recent-del svg {

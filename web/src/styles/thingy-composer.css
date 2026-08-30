@@ -118,7 +118,7 @@
 }
 
 .composer-count.warning {
-  color: color-mix(in srgb, #b23a2a 70%, var(--muted));
+  color: color-mix(in srgb, var(--color-error) 70%, var(--muted));
 }
 
 :is(.composer-send, .librarian-form button.composer-send) {
