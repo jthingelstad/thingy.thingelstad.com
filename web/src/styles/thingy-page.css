@@ -146,3 +146,52 @@
   white-space: nowrap;
   padding: 0.6rem 0;
 }
+
+/* Top navigation for static content pages - the way back out. */
+.thingy-page-nav {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 0.9rem 1.25rem 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.thingy-page-nav .brand {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 700;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.thingy-page-nav .brand img {
+  width: 26px;
+  height: 26px;
+}
+
+.thingy-page-nav nav {
+  margin-left: auto;
+  display: flex;
+  gap: 1rem;
+}
+
+.thingy-page-nav nav a {
+  color: var(--color-text-soft);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.thingy-page-nav nav a:hover {
+  color: var(--color-accent);
+}
+
+.thingy-page-nav nav a[aria-current='page'] {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.thingy-page-nav ~ .thingy-page {
+  padding-top: 2rem;
+}
