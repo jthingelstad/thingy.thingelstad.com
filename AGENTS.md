@@ -37,16 +37,22 @@ The repo boundary matters: because Thingy is a live client across a repo
 boundary, the Librarian API `/auth`, `/chat`, `/retrieve`, `/feedback`, and
 `/conversations` are versioned runtime contracts, not internal functions.
 (`/retrieve` is served for `wt-builder`; the Thingy web client never calls
+it. The Librarian also serves `/mcp` with OAuth 2.1 for third-party MCP
+clients - the web app never calls that either; `/connect/` only documents
 it.) Casual schema changes break this repo. Version before changing.
 
 ## Surface Responsibilities
 
 `web/` is a Vite-built static app served by GitHub Pages. Its surfaces are
-chat, sign-in, and account. It handles auth UI, streams `/chat` SSE from the
-Librarian Lambda, renders citations, collects feedback, and runs
-browser-only UX. It has no server beyond GitHub
+chat, sign-in, and account, plus two static content pages: `/about/` (what
+Thingy is, the archive inventory, architecture, and the AGENT-TEAM) and
+`/connect/` (how to add the Librarian MCP server to Claude, ChatGPT, Claude
+Code, or any MCP client). The app handles auth UI, streams `/chat` SSE from
+the Librarian Lambda, renders citations and inline photo thumbnails,
+collects feedback, and runs browser-only UX. It has no server beyond GitHub
 Pages. (The Dispatch surface was removed in 2026-08; `/dispatch/` is now a
-redirect stub to `/chat/`.)
+redirect stub to `/chat/`. The answer text-to-speech button was removed in
+2026-08 - do not reintroduce browser speechSynthesis.)
 
 Conversation modes are backend-enforced and conversation-scoped. Current modes
 are default Thingy, Research Guide, Thought Partner, and Trusted Circle. Start
@@ -112,12 +118,17 @@ THINGY_SMOKE_URL=http://localhost:8080 npm run smoke
 
 Key files:
 
-- `web/index.html`, `web/chat/index.html`, `web/signin/index.html`: static
-  route shells. (`web/dispatch/index.html` is a redirect stub kept for old
-  links; the Dispatch surface was removed in 2026-08.)
-- `web/src/pages/`: Vite page entrypoints.
+- `web/index.html`, `web/chat/index.html`, `web/signin/index.html`,
+  `web/about/index.html`, `web/connect/index.html`: static route shells.
+  (`web/dispatch/index.html` is a redirect stub kept for old links; the
+  Dispatch surface was removed in 2026-08.)
+- `web/src/pages/`: Vite page entrypoints (`home`, `chat`, `signin`,
+  `about`, `connect`).
 - `web/src/shared/`: browser-side app modules.
-- `web/src/styles/thingy.css`: stylesheet manifest imported by page entries.
+- `web/src/styles/thingy.css`: stylesheet manifest imported by app page
+  entries. Static content pages (`/about/`, `/connect/`) use
+  `thingy-page-entry.css` -> `thingy-page.css` on the same design tokens
+  (`thingy-base.css`; includes `--color-error`).
 - `web/public/robots.txt`: `robots.txt`.
 - `web/public/sitemap.xml`: `sitemap.xml`.
 - `web/vite.config.ts`: multi-page build config and build-time public config
@@ -183,14 +194,17 @@ The Tinylytics script intentionally does not load on localhost.
 
 ## SEO / Crawlers
 
-The public app should be indexable at `/`.
+The public pages - `/`, `/about/`, `/connect/` - are indexable; the chat and
+sign-in app shells are `noindex, follow` (no crawlable content, and crawl
+equity should concentrate on the real pages).
 
 Current files:
 
 - `web/public/robots.txt` allows crawling and points to the sitemap.
-- `web/public/sitemap.xml` lists the canonical homepage.
+- `web/public/sitemap.xml` lists `/`, `/about/`, and `/connect/`.
 - The route HTML files set canonical, Open Graph, Twitter, robots, and sitemap
-  tags.
+  tags. Structured data: home carries WebSite/WebApplication/Person JSON-LD,
+  `/about/` an AboutPage, `/connect/` a TechArticle about the MCP server.
 
 Query-param app states should canonicalize to `/`, not become separate indexed
 pages.

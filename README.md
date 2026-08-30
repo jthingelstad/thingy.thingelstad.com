@@ -3,6 +3,13 @@
 Thingy is the standalone web home for Jamie Thingelstad's archive agent:
 `https://thingy.thingelstad.com/`.
 
+Surfaces: the chat app (`/chat/`), sign-in (`/signin/`), and two static
+content pages - `/about/` (what Thingy is, the archive inventory, and how it
+works) and `/connect/` (adding the Librarian MCP server at
+`librarian.thingelstad.com/mcp` to Claude, ChatGPT, Claude Code, or any MCP
+client). The backend - retrieval, auth, conversations, MCP - lives in the
+`librarian-thing` repo.
+
 For product-surface alignment across the web app and Librarian API, see
 [`docs/THINGY_SURFACES.md`](docs/THINGY_SURFACES.md).
 
@@ -81,9 +88,10 @@ the same values from the Librarian stack outputs (`librarian-thing`).
 
 Key web files:
 
-- `web/index.html`, `web/chat/index.html`, `web/signin/index.html`: static
-  route shells. (`web/dispatch/index.html` is a redirect stub to `/chat/`
-  kept for old links; the Dispatch surface was removed in 2026-08.)
+- `web/index.html`, `web/chat/index.html`, `web/signin/index.html`,
+  `web/about/index.html`, `web/connect/index.html`: static route shells.
+  (`web/dispatch/index.html` is a redirect stub to `/chat/` kept for old
+  links; the Dispatch surface was removed in 2026-08.)
 - `web/src/pages/`: Vite entrypoints for each route.
 - `web/src/shared/`: browser-side app modules.
 - `web/src/styles/`: shared styles imported by the page entrypoints.
@@ -127,8 +135,9 @@ Enabled Tinylytics features:
 - Beacon delivery for outbound links with `beacon`.
 - Tinylytics Webmention endpoint in the document head.
 
-The executable Tinylytics embed only loads on the public homepage. Chat
-and sign-in deliberately do not execute third-party JavaScript
+The executable Tinylytics embed only loads on the public homepage (the
+loader is called from every page for URL-parameter hygiene, but no-ops off
+`/`). Chat and sign-in deliberately do not execute third-party JavaScript
 because those routes handle browser-held bearer credentials or one-time login
 values. Existing event hooks remain safe no-ops when the embed is absent.
 

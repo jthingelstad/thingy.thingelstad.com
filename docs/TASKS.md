@@ -1,7 +1,8 @@
 # Thingy Tasks
 
 Concrete follow-ups for the web surface. Backend/API tasks live with the
-Librarian implementation in the Studio repository.
+Librarian implementation in `librarian-thing`
+(`docs/librarian-tasks.md`).
 
 ## Access And Modes
 
@@ -15,7 +16,7 @@ Librarian implementation in the Studio repository.
 
 ## Web UX
 
-- [ ] Keep the mobile/tablet/desktop QA checklist current for rail, New Chat, voice input, playback, feedback comments, expired sessions, and prompt links.
+- [ ] Keep the mobile/tablet/desktop QA checklist current for rail, New Chat, voice input, feedback comments, expired sessions, and prompt links.
 - [ ] Consider a conversation export/share view that preserves markdown, citations, and artifacts.
 
 ## Operator Experience
@@ -26,5 +27,5 @@ Librarian implementation in the Studio repository.
 
 ## Docs
 
-- [ ] Keep this repo's `docs/ROADMAP.md` (the single Thingy product roadmap) aligned with Studio's `docs/librarian-tasks.md` and `reference/librarian.md` when backend capabilities change.
+- [ ] Keep this repo's `docs/ROADMAP.md` (the single Thingy product roadmap) aligned with `librarian-thing`'s `docs/librarian-tasks.md` and `reference/librarian.md` when backend capabilities change.
 - [ ] Keep URL parameter docs aligned with `web/vite.config.ts` and the route HTML files in `web/`.

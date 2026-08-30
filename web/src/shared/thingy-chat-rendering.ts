@@ -12,8 +12,34 @@ function renderAnswer(answer: unknown, citations: ThingyCitation[] = []) {
   return renderMarkdown(answer, citations);
 }
 
+// Display titles, mirroring the server's prompts/tool-titles.json - the
+// activity summary should read "Checked Archive statistics", not a
+// prettified identifier. Unknown names fall back to de-snaked text.
+const TOOL_TITLES: Record<string, string> = {
+  search_archive: 'Search the archive',
+  get_source: 'Read a source',
+  archive_lens: 'Topic history',
+  entity_lens: 'Entity history',
+  latest_content: 'Latest content',
+  corpus_stats: 'Archive statistics',
+  search_faq: 'Thingy FAQ',
+  quote_search: 'Find a quote',
+  find_links: 'Find links',
+  list_content: 'Browse the archive',
+  source_neighborhood: 'Related sources',
+  archive_gems: 'Hidden gems',
+  claim_check: 'Check a claim',
+  media_search: 'Search photos',
+  currently_history: 'Reading, playing & watching',
+  top_references: 'Top references',
+  fetch_page: 'Fetch a web page',
+  web_search: 'Search the web'
+};
+
 function humanToolName(value: unknown) {
-  return String(value || '')
+  const key = String(value || '').trim();
+  if (TOOL_TITLES[key]) return TOOL_TITLES[key];
+  return key
     .replace(/_/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()

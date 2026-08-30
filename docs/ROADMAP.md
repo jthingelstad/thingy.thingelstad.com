@@ -33,14 +33,17 @@ product direction.
 - Reworked the UX from a publication-style page into a chat-client experience.
 - Added responsive mobile navigation, conversation rail, conversation actions, cache-busted assets, and a
   dedicated sign-in page.
-- Added richer message actions: copy, share, feedback, response audio playback, and prompt audio input.
+- Added richer message actions: copy, share, email-me-this-answer, feedback, and prompt audio input.
+  (The response audio playback button was removed in 2026-08; do not reintroduce browser TTS.)
 
 ### Real Authentication
 
 - Replaced the old "does this email belong to a subscriber?" gate with magic-link authentication.
 - Magic links are short-lived, single-use, and sent to the claimed email address.
 - Auth email is sent through Fastmail JMAP as `thingy@thingelstad.com`.
-- Browser sessions expire after 12 hours and return users to a dedicated sign-in flow.
+- Sessions last 9 days and slide: any visit re-mints the token and re-verifies entitlements, so an
+  active reader rarely signs in again. Lapsed subscriptions are caught at refresh.
+- Sign-in uses an emailed six-digit code (with OS autofill) alongside the magic link.
 - The sign-in page makes clear that Weekly Thing readers can sign in, and new addresses can start the
   subscriber path directly.
 
@@ -82,7 +85,27 @@ product direction.
 - Librarian (`librarian-thing`) owns one generated, versioned contract for successful Librarian JSON responses and SSE events.
 - Thingy validates live payloads against that artifact and negotiates the supported major contract version
   on every request. Additive changes remain compatible within a major; breaking changes require a new
-  major. The contract is currently 2.0.0.
+  major. The contract is currently 3.1.0.
+
+### Public MCP + Archive Intelligence (2026-08)
+
+- The Librarian tool registry is published as an MCP server at
+  `librarian.thingelstad.com/mcp` with OAuth 2.1 sign-in - Claude, ChatGPT
+  (Developer mode), Claude Code, and any MCP client get the same tools Thingy
+  uses. `/connect/` documents setup; `/about/` tells the product story.
+- Per-user daily budgets: separate chat and MCP pools, doubled for supporting
+  members, visible in the account panel.
+- Media answers: a photo index (~14,000 images) renders inline clickable
+  thumbnails in chat; Currently entries and reference aggregation became
+  first-class tools.
+- Live-web reach: `fetch_page` (any public page) and `web_search` (Brave,
+  key-gated) close the freshness gap.
+- Matching semantics live in one canonical matcher with a written spec
+  (`librarian-thing/apps/librarian/MATCHER.md`), hardened through eight
+  adversarial MCP review rounds; a three-layer eval (fixtures, response
+  invariants, known answers) runs on every deploy and blocks it on failure.
+- Ongoing upkeep is owned by the AGENT-TEAM objective owners in
+  `librarian-thing/AGENT-TEAM/` (run/archive/improve cadences).
 
 ## Current Mode Model
 

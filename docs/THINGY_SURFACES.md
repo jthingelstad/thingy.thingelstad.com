@@ -1,13 +1,16 @@
 # Thingy Surfaces
 
-Thingy has one public surface: the web application at
-`thingy.thingelstad.com`. It is a static client backed by the Librarian API.
+Thingy has two public surfaces: the web application at
+`thingy.thingelstad.com` (a static client backed by the Librarian API) and
+the Librarian MCP server at `librarian.thingelstad.com/mcp` (the same tool
+registry, served to third-party AI clients over OAuth 2.1).
 
 ## Surface Map
 
 | Surface | Audience | Responsibility |
 | --- | --- | --- |
-| Thingy web | Readers and Jamie | Sign-in, chat, conversations, account, and feedback |
+| Thingy web | Readers and Jamie | Sign-in, chat, conversations, account, feedback, and the About/Connect content pages |
+| Librarian MCP | Claude, ChatGPT, and other MCP clients | The archive tool registry over OAuth 2.1, with per-user quotas |
 | Librarian API | Thingy web and approved internal clients | Critical retrieval, conversation, and streaming services |
 | Source sites | Readers | Canonical published Weekly Thing and personal-site content |
 
@@ -34,11 +37,15 @@ the server-side contracts used by the Thingy web application, including:
 - `/chat`
 - `/feedback`
 - `/conversations`
+- `/memory`
 - `/retrieve` (served for `wt-builder`; the Thingy web client never calls it)
+- `/mcp` plus the OAuth 2.1 endpoints (`/register`, `/token`, `/authorize`,
+  `/.well-known/*`) - served to third-party MCP clients, never called by the
+  Thingy web client
 - streaming responses
 
 These are covered by the generated, versioned Librarian contract (currently
-2.0.0). Librarian now lives in `librarian-thing`; Studio was retired on
+3.1.0). Librarian now lives in `librarian-thing`; Studio was retired on
 2026-08-28, preserving these API contracts and the data and infrastructure
 behind them. (`/dispatch` was removed with the Dispatch surface in 2026-08.)
 

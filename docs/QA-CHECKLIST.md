@@ -1,7 +1,6 @@
 # Thingy QA Checklist
 
-Use this for a quick confidence pass after auth, chat, Dispatch, or shell UI
-changes.
+Use this for a quick confidence pass after auth, chat, or shell UI changes.
 
 ## Local Setup
 
@@ -37,10 +36,7 @@ cd web
 THINGY_QA_EMAIL=thingy@thingelstad.com npm run qa:real
 ```
 
-Focused reruns can use `--chat-only` (desktop Chat plus both mobile rails) or
-`--dispatch-only` (planner, generation, and email delivery).
-
-Cleanup only for QA-prefixed conversations and Dispatch drafts:
+Cleanup only for QA-prefixed conversations:
 
 ```sh
 cd web
@@ -51,11 +47,14 @@ npm run qa:real -- --cleanup-only
 
 - Visit `/chat/` signed out; it should redirect or show auth without leaking
   `email`, `prompt`, `from`, `scope`, or `corpus` in `/signin/?return=...`.
-- Request a magic link for `thingy@thingelstad.com`.
-- Use JMAP Inbox/Thingy to open the latest magic link.
+- Request a sign-in code for `thingy@thingelstad.com`.
+- Use JMAP Inbox/Thingy to read the latest code; enter it on `/signin/`
+  (the field offers macOS/iOS code autofill).
 - Confirm successful auth lands on `/chat/` and removes `login_token`.
-- Reuse the same magic link; it should fail and remove `login_token`.
-- Log out from Chat and Dispatch; both should clear privileged UI.
+- Reuse the same code; it should fail.
+- Sessions are 9 days, sliding: any page visit while signed in re-mints the
+  token. Confirm a visit to `/` while signed in does not sign you out.
+- Log out; privileged UI should clear.
 
 ## Chat
 
@@ -64,28 +63,30 @@ npm run qa:real -- --cleanup-only
   "getting oriented" message should remain.
 - Confirm the answer renders, activity collapses, and the conversation appears
   active in the rail.
+- Ask a photo question ("photos from bike rides"); inline thumbnails should
+  render and click through to the source page in a new tab.
+- Use the message actions: copy, share, email-me-this-answer (arrives at the
+  signed-in address), thumbs up/down. There is no audio playback button.
 - Fast-click New Chat; only one active local "New chat" shell should remain.
 - Expand/collapse the rail and switch conversations.
+- Account panel shows "Today's usage" (chat pool; MCP pool once used).
 
-## Dispatch
+## Static Pages
 
-- Open a sent Dispatch from the rail; the composer should be disabled.
-- Click New Dispatch; the composer should enable and Return should submit.
-- Answer one clarification; the draft should reach Generate Dispatch without
-  sending unless Generate is clicked.
-- Delete a draft/history row and confirm the rail selects the next sensible
-  item.
+- `/about/` and `/connect/` render in light and dark with the top nav; the
+  current page is highlighted; brand mark returns home.
+- `/connect/` instructions match the live MCP endpoint
+  (`https://librarian.thingelstad.com/mcp`).
 
 ## Mobile
 
 At `390x844`:
 
 - Chat rail drawer opens without horizontal overflow.
-- Dispatch rail drawer opens without horizontal overflow.
-- The Chat/Dispatch switcher aligns and shows the active surface.
 - Composer and mobile header do not overlap.
+- Static pages have no horizontal scroll.
 
-## Studio Backend
+## Librarian Backend
 
 From `librarian-thing`:
 
@@ -95,4 +96,6 @@ make librarian-deploy ARGS="--skip-corpus-upload"
 ```
 
 After deploy, make one direct or browser Chat request and confirm Stream Lambda
-returns SSE events: `meta`, `status`, `answer`, `citations`, `done`.
+returns SSE events: `meta`, `status`, `answer`, `citations`, `done`. The
+deploy workflow also runs the tool-surface eval (invariants + known answers)
+and blocks on failure.

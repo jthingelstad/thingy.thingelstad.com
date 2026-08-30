@@ -31,3 +31,9 @@ test('regular links still render and text links are untouched by media rule', ()
   assert.match(html, /<a href="https:\/\/www\.thingelstad\.com\/post\.html">the post<\/a>/);
   assert.ok(!html.includes('thingy-answer-media'));
 });
+
+test('ordered lists continue across blank lines instead of restarting at 1', () => {
+  const html = renderMarkdown('1. First thing\n\n2. Second thing\n\n3. Third thing');
+  assert.equal((html.match(/<ol>/g) || []).length, 1, 'one list, not three');
+  assert.equal((html.match(/<li>/g) || []).length, 3);
+});

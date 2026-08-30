@@ -168,7 +168,12 @@ function renderMarkdown(markdown: unknown, citations: ThingyCitation[] = []): st
     if (!trimmed) {
       flushParagraph();
       flushBlockquote();
-      flushList();
+      // A blank line inside a list is a formatting gap, not a new list:
+      // closing the <ol> here restarted numbering at 1 for every item.
+      const next = lines.slice(index + 1).find((candidate) => candidate.trim());
+      const continuesList =
+        listType && next && (listType === 'ol' ? /^\s*\d+\.\s+/.test(next) : /^\s*[-*]\s+/.test(next));
+      if (!continuesList) flushList();
       continue;
     }
 
