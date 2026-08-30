@@ -102,8 +102,8 @@ export default defineConfig({
         // redirect stub (no JS entry) kept so old links land on /chat/.
         dispatch: resolve(__dirname, 'dispatch/index.html'),
         signin: resolve(__dirname, 'signin/index.html'),
-        // Static MCP connection instructions; no JS entry.
-        connect: resolve(__dirname, 'connect/index.html')
+        connect: resolve(__dirname, 'connect/index.html'),
+        about: resolve(__dirname, 'about/index.html')
       }
     }
   }

@@ -13,7 +13,6 @@ interface ChatMessageActionOptions {
   track?: (name: string, value?: string) => void;
   promptShareUrl?: (prompt: string) => string;
   promptShareTitle?: string;
-  onSpeechStateChange?: (playing: boolean) => void;
 }
 
 async function copyToClipboard(value: string) {
@@ -57,10 +56,6 @@ function answerClipboardPayload(messageElement: HTMLElement) {
   const payload = { html: clone.innerHTML.trim(), text: (clone.innerText || clone.textContent || '').trim() };
   scratch.remove();
   return payload;
-}
-
-function speechOutputSupported() {
-  return 'speechSynthesis' in window && typeof window.SpeechSynthesisUtterance === 'function';
 }
 
 function legacyCopyRichHtml(html: string, text: string) {
@@ -129,15 +124,6 @@ function createChatMessageActions(options: ChatMessageActionOptions = {}) {
   const track = options.track || (() => {});
   const promptShareUrl = options.promptShareUrl || buildSharePromptUrl;
   const promptShareTitle = String(options.promptShareTitle || 'Ask Thingy');
-  const onSpeechStateChange = options.onSpeechStateChange || (() => {});
-  let speechUtterance: SpeechSynthesisUtterance | null = null;
-
-  function stopSpeaking() {
-    if (speechOutputSupported()) window.speechSynthesis.cancel();
-    speechUtterance = null;
-    onSpeechStateChange(false);
-  }
-
   async function saveFeedback(requestId: string, reaction: string, comment = '') {
     try {
       const data = await submitFeedback({ requestId, reaction, comment });
@@ -148,28 +134,6 @@ function createChatMessageActions(options: ChatMessageActionOptions = {}) {
       track('librarian.feedback_error', error instanceof Error && error.requestId ? 'server' : 'client');
       throw error;
     }
-  }
-
-  function toggleSpeakAnswer(messageElement: HTMLElement) {
-    if (!speechOutputSupported()) return 'Speech playback not supported';
-    if (speechUtterance) {
-      stopSpeaking();
-      return 'Stopped';
-    }
-    const payload = answerClipboardPayload(messageElement);
-    if (!payload.text) return 'Nothing to read';
-    const utterance = new window.SpeechSynthesisUtterance(payload.text);
-    utterance.lang = document.documentElement.lang || navigator.language || 'en-US';
-    utterance.onend = () => {
-      if (speechUtterance === utterance) stopSpeaking();
-    };
-    utterance.onerror = () => {
-      if (speechUtterance === utterance) stopSpeaking();
-    };
-    speechUtterance = utterance;
-    onSpeechStateChange(true);
-    window.speechSynthesis.speak(utterance);
-    return 'Reading';
   }
 
   async function copyAnswerRichText(messageElement: HTMLElement) {
@@ -232,9 +196,7 @@ function createChatMessageActions(options: ChatMessageActionOptions = {}) {
     copyPrompt,
     saveFeedback,
     shareAnswer,
-    sharePrompt,
-    stopSpeaking,
-    toggleSpeakAnswer
+    sharePrompt
   };
 }
 

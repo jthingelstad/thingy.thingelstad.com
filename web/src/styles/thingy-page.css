@@ -1,0 +1,94 @@
+/* Content-page layout on the site's design tokens (thingy-base.css). */
+.thingy-page {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 3rem 1.25rem 5rem;
+  line-height: 1.55;
+}
+
+.thingy-page img.mark {
+  display: block;
+  width: 110px;
+  height: 110px;
+  margin: 0 auto 12px;
+}
+
+.thingy-page h1 {
+  text-align: center;
+  font-size: 2rem;
+  margin: 0 0 0.4rem;
+}
+
+.thingy-page .lede {
+  text-align: center;
+  color: var(--color-text-soft);
+  margin: 0 0 2.2rem;
+}
+
+.thingy-page h2 {
+  font-size: 1.2rem;
+  margin: 2.2rem 0 0.6rem;
+}
+
+.thingy-page h3 {
+  font-size: 1.02rem;
+  margin: 1.4rem 0 0.4rem;
+}
+
+.thingy-page code,
+.thingy-page pre {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.88em;
+  background: var(--color-code-bg, rgb(0 0 0 / 6%));
+  border-radius: 5px;
+}
+
+.thingy-page code {
+  padding: 0.1em 0.35em;
+  overflow-wrap: anywhere;
+}
+
+.thingy-page pre {
+  padding: 0.8rem 1rem;
+  overflow-x: auto;
+}
+
+.thingy-page .card {
+  background: var(--color-surface, rgb(0 0 0 / 3%));
+  border: 1px solid var(--color-border, rgb(0 0 0 / 12%));
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  margin: 0.8rem 0;
+}
+
+.thingy-page ul {
+  padding-left: 1.2rem;
+}
+
+.thingy-page li {
+  margin-bottom: 0.35rem;
+}
+
+.thingy-page a {
+  color: var(--color-accent);
+}
+
+.thingy-page table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.thingy-page th,
+.thingy-page td {
+  text-align: left;
+  padding: 0.35rem 0.8rem 0.35rem 0;
+  border-bottom: 1px solid var(--color-border, rgb(0 0 0 / 12%));
+}
+
+.thingy-page footer {
+  text-align: center;
+  margin-top: 3rem;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}

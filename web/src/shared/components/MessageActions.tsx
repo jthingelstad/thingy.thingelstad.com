@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { createChatMessageActions } from '../thingy-message-actions.ts';
 import { iconSvg } from '../thingy-icons.ts';
 
-type MessageActionKind = 'copy' | 'play' | 'pause' | 'retry' | 'share' | 'mail' | 'up' | 'down';
+type MessageActionKind = 'copy' | 'retry' | 'share' | 'mail' | 'up' | 'down';
 
 interface FeedbackInput {
   requestId: string;
@@ -29,8 +29,6 @@ interface MessageActionsProps {
 function ActionIcon({ name }: { name: MessageActionKind }) {
   const iconName = {
     copy: 'copy',
-    play: 'play',
-    pause: 'pause',
     retry: 'rotate-ccw',
     share: 'share',
     mail: 'mail',
@@ -57,13 +55,11 @@ function MessageActions({
   const [status, setStatus] = useState('');
   const [reaction, setReaction] = useState('');
   const [saving, setSaving] = useState(false);
-  const [speaking, setSpeaking] = useState(false);
 
   if (!serviceRef.current) {
     serviceRef.current = createChatMessageActions({
       submitFeedback,
-      track,
-      onSpeechStateChange: setSpeaking
+      track
     });
   }
 
@@ -81,7 +77,6 @@ function MessageActions({
   useEffect(
     () => () => {
       window.clearTimeout(statusTimerRef.current);
-      serviceRef.current?.stopSpeaking();
     },
     []
   );
@@ -92,7 +87,7 @@ function MessageActions({
     flash(action === 'copy' ? await service.copyPrompt(prompt) : await service.sharePrompt(prompt));
   }
 
-  async function handleResponseAction(action: 'copy' | 'share' | 'speak') {
+  async function handleResponseAction(action: 'copy' | 'share') {
     const service = serviceRef.current;
     const element = messageElement();
     if (!service || !element) return;
@@ -122,11 +117,6 @@ function MessageActions({
       );
       return;
     }
-    const message = service.toggleSpeakAnswer(element);
-    const nextSpeaking = message === 'Reading';
-    setSpeaking(nextSpeaking);
-    if (!nextSpeaking && message !== 'Stopped') flash(message);
-    track('librarian.answer_speak', nextSpeaking ? 'start' : message === 'Stopped' ? 'stop' : 'error');
   }
 
   async function handleEmailAnswer() {
@@ -190,28 +180,11 @@ function MessageActions({
     );
   }
 
-  const speechSupported = 'speechSynthesis' in window && typeof window.SpeechSynthesisUtterance === 'function';
-  const speechLabel = speechSupported
-    ? speaking
-      ? 'Stop reading answer'
-      : 'Read answer aloud'
-    : 'Speech playback not supported';
   const includeFeedback = feedback && Boolean(requestId);
   return (
     <div ref={controlsRef} class="librarian-feedback">
       <button type="button" aria-label="Copy answer" title="Copy answer" onClick={() => handleResponseAction('copy')}>
         <ActionIcon name="copy" />
-      </button>
-      <button
-        type="button"
-        class={speaking ? 'selected' : undefined}
-        data-action="speak"
-        disabled={!speechSupported}
-        aria-label={speechLabel}
-        title={speechLabel}
-        onClick={() => handleResponseAction('speak')}
-      >
-        <ActionIcon name={speaking ? 'pause' : 'play'} />
       </button>
       {includeFeedback ? (
         <button

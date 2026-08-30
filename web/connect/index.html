@@ -38,40 +38,9 @@
   }
   </script>
   <link rel="icon" href="/img/thingy.png">
-  <style>
-    :root { color-scheme: light dark; }
-    body {
-      margin: 0; padding: 3rem 1.25rem 5rem;
-      background: #f3efe6; color: #1c2a26;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      line-height: 1.55;
-    }
-    @media (prefers-color-scheme: dark) {
-      body { background: #101c18; color: #e8e4d5; }
-      main a { color: #8fd9c4; }
-      code, pre { background: #1a2823; }
-      .card { background: #16241f; border-color: #24352f; }
-    }
-    main { max-width: 44rem; margin: 0 auto; }
-    img.mark { display: block; width: 110px; height: 110px; margin: 0 auto 12px; }
-    h1 { text-align: center; font-size: 2rem; margin: 0 0 0.4rem; }
-    .lede { text-align: center; opacity: 0.85; margin: 0 0 2.2rem; }
-    h2 { font-size: 1.2rem; margin: 2.2rem 0 0.6rem; }
-    code, pre {
-      font-family: ui-monospace, "SF Mono", Menlo, monospace;
-      font-size: 0.88em; background: #e9e3d4; border-radius: 5px;
-    }
-    code { padding: 0.1em 0.35em; overflow-wrap: anywhere; }
-    pre { padding: 0.8rem 1rem; overflow-x: auto; }
-    .card { background: #fbf8f1; border: 1px solid #ddd5c2; border-radius: 12px; padding: 1rem 1.2rem; margin: 0.8rem 0; }
-    ul { padding-left: 1.2rem; }
-    li { margin-bottom: 0.35rem; }
-    main a { color: #0e7a5f; }
-    footer { text-align: center; margin-top: 3rem; font-size: 0.9rem; opacity: 0.8; }
-  </style>
 </head>
 <body>
-  <main>
+  <main class="thingy-page">
     <img class="mark" src="/img/thingy.png" alt="" width="1022" height="1022">
     <h1>Connect your AI to Thingy</h1>
     <p class="lede">Jamie Thingelstad&rsquo;s archive &mdash; The Weekly Thing, the blog, and Another Thing &mdash; is available to Claude, Codex, and any MCP client. Weekly Thing subscribers sign in with their email, no passwords.</p>
@@ -108,5 +77,6 @@
       <a href="/">Thingy home</a> &middot; <a href="/chat/">Open chat</a>
     </footer>
   </main>
+  <script type="module" src="/src/pages/connect.ts"></script>
 </body>
 </html>
