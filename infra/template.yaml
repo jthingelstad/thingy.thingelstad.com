@@ -12,6 +12,11 @@ Parameters:
     Default: ""
     Description: Optional us-east-1 ACM certificate for thingy.thingelstad.com. Empty deploys the distribution on the default cloudfront.net certificate with no alias, which is how the stack runs until the DNS cutover.
     AllowedPattern: ^(arn:[^:]+:acm:us-east-1:[0-9]{12}:certificate/[0-9a-f-]+)?$
+  WebOriginToken:
+    Type: String
+    NoEcho: true
+    MinLength: 32
+    Description: Shared marker CloudFront injects as X-Thingy-Origin on API origin requests. Inert until the Librarian Lambdas start requiring it (the cookie-auth phase); set once at stack creation and preserved by the deploy scripts thereafter. Also recorded in librarian-thing/.env for the Lambda side.
 
 Conditions:
   HasCertificate: !Not [!Equals [!Ref WebCertificateArn, ""]]
@@ -76,12 +81,16 @@ Resources:
       Name: thingy-web-request-router
       AutoPublish: true
       FunctionConfig:
-        Comment: Resolve directory and extensionless URLs to index.html
+        Comment: Strip the /api prefix for the Librarian origins and resolve directory and extensionless URLs to index.html
         Runtime: cloudfront-js-2.0
       FunctionCode: |
         function handler(event) {
           var request = event.request;
           var uri = request.uri;
+          if (uri.indexOf('/api/') === 0) {
+            request.uri = uri.slice(4) || '/';
+            return request;
+          }
           if (uri === '/') {
             request.uri = '/index.html';
           } else if (uri.charAt(uri.length - 1) === '/') {
@@ -131,12 +140,90 @@ Resources:
           FunctionAssociations:
             - EventType: viewer-request
               FunctionARN: !GetAtt WebRequestFunction.FunctionMetadata.FunctionARN
+        # Same-origin API (Phase B): first-party traffic reaches the Librarian
+        # through this distribution as /api/*; the CloudFront function strips
+        # the prefix. librarian.thingelstad.com stays the third-party door
+        # (OAuth/MCP) and is deliberately not fronted here. Origin hostnames
+        # are the stable physical endpoints of the weekly-thing-librarian
+        # stack (HTTP API k0yklt9vg3 and the stream Lambda Function URL).
         Origins:
           - Id: web
             DomainName: !GetAtt WebBucket.RegionalDomainName
             OriginAccessControlId: !GetAtt WebOriginAccessControl.Id
             S3OriginConfig:
               OriginAccessIdentity: ""
+          - Id: api
+            DomainName: k0yklt9vg3.execute-api.us-east-1.amazonaws.com
+            CustomOriginConfig:
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols: [TLSv1.2]
+            OriginCustomHeaders:
+              - HeaderName: X-Thingy-Origin
+                HeaderValue: !Ref WebOriginToken
+          - Id: stream
+            DomainName: jcvud66qqpq53frvno5stoqntm0zqntw.lambda-url.us-east-1.on.aws
+            CustomOriginConfig:
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols: [TLSv1.2]
+              # SSE answers stream for minutes; the default 30s origin read
+              # timeout would sever a long chat turn mid-answer.
+              OriginReadTimeout: 120
+            OriginCustomHeaders:
+              - HeaderName: X-Thingy-Origin
+                HeaderValue: !Ref WebOriginToken
+        # Streaming endpoints pin to the Function URL origin; everything else
+        # under /api/* goes to the HTTP API. Managed policy IDs by literal,
+        # copied from Drop's working config: CachingDisabled
+        # (4135ea2d-6df8-44a3-9df3-4b5a84be39ad) and AllViewerExceptHostHeader
+        # (b689b0a8-53d0-40ab-baf2-68738e2966ac). Compress stays off on the
+        # stream paths so CloudFront never buffers SSE to compress it.
+        CacheBehaviors:
+          - PathPattern: /api/chat
+            TargetOriginId: stream
+            AllowedMethods: [DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT]
+            CachedMethods: [GET, HEAD]
+            Compress: false
+            ViewerProtocolPolicy: https-only
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+            FunctionAssociations:
+              - EventType: viewer-request
+                FunctionARN: !GetAtt WebRequestFunction.FunctionMetadata.FunctionARN
+          - PathPattern: /api/welcome
+            TargetOriginId: stream
+            AllowedMethods: [DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT]
+            CachedMethods: [GET, HEAD]
+            Compress: false
+            ViewerProtocolPolicy: https-only
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+            FunctionAssociations:
+              - EventType: viewer-request
+                FunctionARN: !GetAtt WebRequestFunction.FunctionMetadata.FunctionARN
+          - PathPattern: /api/feedback
+            TargetOriginId: stream
+            AllowedMethods: [DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT]
+            CachedMethods: [GET, HEAD]
+            Compress: false
+            ViewerProtocolPolicy: https-only
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+            FunctionAssociations:
+              - EventType: viewer-request
+                FunctionARN: !GetAtt WebRequestFunction.FunctionMetadata.FunctionARN
+          - PathPattern: /api/*
+            TargetOriginId: api
+            AllowedMethods: [DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT]
+            CachedMethods: [GET, HEAD]
+            Compress: true
+            ViewerProtocolPolicy: https-only
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+            FunctionAssociations:
+              - EventType: viewer-request
+                FunctionARN: !GetAtt WebRequestFunction.FunctionMetadata.FunctionARN
         ViewerCertificate: !If
           - HasCertificate
           - AcmCertificateArn: !Ref WebCertificateArn

@@ -37,7 +37,10 @@ test("every template parameter is sent on update", async () => {
 test("no undeclared parameter is ever sent", async () => {
   const declared = await templateParameterKeys();
   const sent = deploymentParameters({
-    environment: { THINGY_WEB_CERTIFICATE_ARN: "arn:aws:acm:us-east-1:1:certificate/x" },
+    environment: {
+      THINGY_WEB_CERTIFICATE_ARN: "arn:aws:acm:us-east-1:1:certificate/x",
+      THINGY_WEB_ORIGIN_TOKEN: "0123456789abcdef0123456789abcdef",
+    },
     stackExists: false,
   }).map(({ ParameterKey }) => ParameterKey);
   const unknown = sent.filter((key) => !declared.includes(key));
@@ -48,9 +51,12 @@ test("no undeclared parameter is ever sent", async () => {
   );
 });
 
-test("explicit value wins, previous value preserved, create omits", () => {
+test("explicit value wins, previous value preserved, create requires secrets", () => {
   const explicit = deploymentParameters({
-    environment: { THINGY_WEB_CERTIFICATE_ARN: "arn:aws:acm:us-east-1:1:certificate/x" },
+    environment: {
+      THINGY_WEB_CERTIFICATE_ARN: "arn:aws:acm:us-east-1:1:certificate/x",
+      THINGY_WEB_ORIGIN_TOKEN: "0123456789abcdef0123456789abcdef",
+    },
     stackExists: true,
   });
   assert.deepEqual(explicit, [
@@ -58,13 +64,30 @@ test("explicit value wins, previous value preserved, create omits", () => {
       ParameterKey: "WebCertificateArn",
       ParameterValue: "arn:aws:acm:us-east-1:1:certificate/x",
     },
+    {
+      ParameterKey: "WebOriginToken",
+      ParameterValue: "0123456789abcdef0123456789abcdef",
+    },
   ]);
 
   const preserved = deploymentParameters({ environment: {}, stackExists: true });
   assert.deepEqual(preserved, [
     { ParameterKey: "WebCertificateArn", UsePreviousValue: true },
+    { ParameterKey: "WebOriginToken", UsePreviousValue: true },
   ]);
 
-  const created = deploymentParameters({ environment: {}, stackExists: false });
-  assert.deepEqual(created, []);
+  assert.throws(
+    () => deploymentParameters({ environment: {}, stackExists: false }),
+    /THINGY_WEB_ORIGIN_TOKEN/,
+  );
+  const created = deploymentParameters({
+    environment: { THINGY_WEB_ORIGIN_TOKEN: "0123456789abcdef0123456789abcdef" },
+    stackExists: false,
+  });
+  assert.deepEqual(created, [
+    {
+      ParameterKey: "WebOriginToken",
+      ParameterValue: "0123456789abcdef0123456789abcdef",
+    },
+  ]);
 });

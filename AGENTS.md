@@ -267,6 +267,14 @@ web bucket with per-file cache headers, and invalidates CloudFront.
 `thingy.thingelstad.com` is a Namecheap CNAME to the distribution. (GitHub
 Pages was retired 2026-09-01; migration record in projects-sysadmin#37.)
 
+Production is same-origin: `LIBRARIAN_API_URL`/`LIBRARIAN_STREAM_URL` are
+`/api`, and the distribution routes `/api/chat|welcome|feedback` to the
+Librarian stream Lambda and every other `/api/*` path to its HTTP API,
+stripping the `/api` prefix at the edge and stamping the `X-Thingy-Origin`
+marker. CSP `connect-src` is `'self'` in production builds. Local dev
+against the live backend still uses absolute URLs (see Common Commands);
+the librarian CORS allow-list continues to cover `http://localhost:8080`.
+
 Before committing web changes:
 
 ```sh

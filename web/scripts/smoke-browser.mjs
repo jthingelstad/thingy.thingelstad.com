@@ -13,11 +13,15 @@ try {
 }
 
 const baseUrl = (process.env.THINGY_SMOKE_URL || 'http://localhost:8080').replace(/\/$/, '');
-const apiHost = (process.env.LIBRARIAN_API_URL || 'https://k0yklt9vg3.execute-api.us-east-1.amazonaws.com').replace(
-  /\/$/,
-  ''
+// Same-origin '/api' builds resolve against the page under test so the
+// route mocks still match.
+const withBase = (value) => (value.startsWith('http') ? value : `${baseUrl}${value}`);
+const apiHost = withBase(
+  (process.env.LIBRARIAN_API_URL || 'https://k0yklt9vg3.execute-api.us-east-1.amazonaws.com').replace(/\/$/, '')
 );
-const streamHost = (process.env.LIBRARIAN_STREAM_URL || 'https://librarian.thingelstad.com').replace(/\/$/, '');
+const streamHost = withBase(
+  (process.env.LIBRARIAN_STREAM_URL || 'https://librarian.thingelstad.com').replace(/\/$/, '')
+);
 
 function fakeToken() {
   const payload = Buffer.from(

@@ -11,10 +11,24 @@ const PRESERVED_PARAMETERS = [
   ["WebCertificateArn", "THINGY_WEB_CERTIFICATE_ARN"],
 ];
 
+// Secret-bearing parameters: required when the stack is created, preserved
+// on every update. CI never supplies them. The live value is recorded in
+// librarian-thing/.env (the Lambda side consumes it in the cookie-auth phase).
+const REQUIRED_PARAMETERS = [["WebOriginToken", "THINGY_WEB_ORIGIN_TOKEN"]];
+
 function preservedParameter(parameterKey, value, stackExists) {
   if (value) return { ParameterKey: parameterKey, ParameterValue: value };
   if (stackExists) return { ParameterKey: parameterKey, UsePreviousValue: true };
   return undefined;
+}
+
+function requiredParameter(parameterKey, environmentKey, environment, stackExists) {
+  const value = environment[environmentKey]?.trim();
+  if (value) return { ParameterKey: parameterKey, ParameterValue: value };
+  if (stackExists) return { ParameterKey: parameterKey, UsePreviousValue: true };
+  throw new Error(
+    `Missing ${environmentKey}; it is required when creating the stack`,
+  );
 }
 
 export function deploymentParameters({ environment, stackExists }) {
@@ -26,6 +40,11 @@ export function deploymentParameters({ environment, stackExists }) {
       stackExists,
     );
     if (parameter) parameters.push(parameter);
+  }
+  for (const [parameterKey, environmentKey] of REQUIRED_PARAMETERS) {
+    parameters.push(
+      requiredParameter(parameterKey, environmentKey, environment, stackExists),
+    );
   }
   return parameters;
 }

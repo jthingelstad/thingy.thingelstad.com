@@ -73,8 +73,15 @@ function htmlConfigPlugin(): Plugin {
         buildId: buildId()
       };
       const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
+      // Production uses same-origin '/api' paths, which need no connect-src
+      // entry beyond 'self'; absolute URLs (local dev against the live
+      // backend) still get their origins allow-listed.
       const connectSrc = Array.from(
-        new Set([new URL(librarianApiUrl).origin, new URL(librarianStreamUrl).origin])
+        new Set(
+          [librarianApiUrl, librarianStreamUrl]
+            .filter((value) => value.startsWith('http'))
+            .map((value) => new URL(value).origin)
+        )
       ).join(' ');
       return html
         .replaceAll('__THINGY_TINYLYTICS_ID__', tinylyticsId)
