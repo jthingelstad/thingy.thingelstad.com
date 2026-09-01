@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex">
+<title>Not found - Thingy</title>
+<style>
+:root { color-scheme: light dark;
+  --bg: #f6f8f5; --surface: #fff; --text: #17211f; --text-soft: #3f4f4a;
+  --accent: #14776f; --border: #dfe7e3; }
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #101716; --surface: #17211f; --text: #eaf0ed; --text-soft: #bcc8c3;
+  --accent: #65c8bc; --border: #2c3a36; } }
+body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+.card { width: min(92vw, 24rem); background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 2rem; box-sizing: border-box; text-align: center; }
+img { width: 72px; height: 72px; }
+h1 { font-size: 1.2rem; margin: 0.75rem 0 0.5rem; }
+p { font-size: 0.95rem; line-height: 1.45; margin: 0.5rem 0 1rem; color: var(--text-soft); }
+a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="card">
+  <img src="/img/thingy.png" alt="Thingy">
+  <h1>That page is not in the archive</h1>
+  <p>Thingy looked, but nothing lives at this address. Try the <a href="/">home page</a> or <a href="/chat/">ask Thingy</a> where it went.</p>
+</div>
+</body>
+</html>

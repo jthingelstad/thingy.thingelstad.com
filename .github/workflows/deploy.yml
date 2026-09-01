@@ -82,6 +82,12 @@ jobs:
         with:
           path: web/_site
 
+      - uses: actions/upload-artifact@v6
+        with:
+          name: web-site
+          path: web/_site
+          include-hidden-files: true
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -95,3 +101,45 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5
+
+  # AWS hosting (S3 + CloudFront), running alongside Pages until the DNS
+  # cutover retires the Pages deployment. Stack: thingy-web (infra/).
+  deploy-aws:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: "web/.node-version"
+          cache: "npm"
+          cache-dependency-path: infra/package-lock.json
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: web-site
+          path: web/_site
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ vars.THINGY_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - run: npm --prefix infra ci
+
+      - run: npm --prefix infra test
+
+      - name: Deploy stack
+        env:
+          THINGY_CFN_ROLE_ARN: ${{ vars.THINGY_CFN_ROLE_ARN }}
+          THINGY_WEB_CERTIFICATE_ARN: ${{ vars.THINGY_WEB_CERTIFICATE_ARN }}
+        run: node infra/scripts/deploy-stack.mjs
+
+      - name: Deploy web build
+        run: node infra/scripts/deploy-web.mjs

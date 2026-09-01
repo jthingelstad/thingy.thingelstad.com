@@ -1,0 +1,253 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Static web hosting for thingy.thingelstad.com - private S3 origin behind CloudFront
+
+# Ported from drop.poapkings.com's web-hosting resources (its infra/template.yaml,
+# migrated off GitHub Pages 2026-08-22). Deliberately omitted from that precedent:
+# the API origin + behaviors (arrive in Phase B of the migration), the origin
+# token, the share-asset bucket, and the CF-function page classifier.
+
+Parameters:
+  WebCertificateArn:
+    Type: String
+    Default: ""
+    Description: Optional us-east-1 ACM certificate for thingy.thingelstad.com. Empty deploys the distribution on the default cloudfront.net certificate with no alias, which is how the stack runs until the DNS cutover.
+    AllowedPattern: ^(arn:[^:]+:acm:us-east-1:[0-9]{12}:certificate/[0-9a-f-]+)?$
+
+Conditions:
+  HasCertificate: !Not [!Equals [!Ref WebCertificateArn, ""]]
+
+Resources:
+  WebBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      # Holds only the Vite build output from web/_site. The deploy script
+      # mirror-and-deletes: anything placed here outside a deploy will be
+      # removed by the next one. Do not park generated artifacts in this bucket.
+      BucketName: !Sub thingy-web-${AWS::AccountId}-${AWS::Region}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  WebOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: thingy-web
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  # URI-only cache key; the per-object Cache-Control headers written at upload
+  # time drive all TTL decisions.
+  WebCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: thingy-web-static
+        DefaultTTL: 3600
+        MinTTL: 0
+        MaxTTL: 31536000
+        ParametersInCacheKeyAndForwardedToOrigin:
+          CookiesConfig:
+            CookieBehavior: none
+          HeadersConfig:
+            HeaderBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: none
+          EnableAcceptEncodingBrotli: true
+          EnableAcceptEncodingGzip: true
+
+  # Multi-page Vite site: resolve directory-style URLs to their index.html.
+  # No page allowlist on purpose - new pages must not require a template edit.
+  WebRequestFunction:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: thingy-web-request-router
+      AutoPublish: true
+      FunctionConfig:
+        Comment: Resolve directory and extensionless URLs to index.html
+        Runtime: cloudfront-js-2.0
+      FunctionCode: |
+        function handler(event) {
+          var request = event.request;
+          var uri = request.uri;
+          if (uri === '/') {
+            request.uri = '/index.html';
+          } else if (uri.charAt(uri.length - 1) === '/') {
+            request.uri = uri + 'index.html';
+          } else if (uri.lastIndexOf('.') < uri.lastIndexOf('/')) {
+            request.uri = uri + '/index.html';
+          }
+          return request;
+        }
+
+  WebDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: thingy.thingelstad.com static site
+        Enabled: true
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        PriceClass: PriceClass_100
+        DefaultRootObject: index.html
+        Aliases: !If
+          - HasCertificate
+          - [thingy.thingelstad.com]
+          - !Ref AWS::NoValue
+        # With OAC the private origin answers a missing key with 403, not 404,
+        # so both map to the real 404 page.
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 404
+            ResponsePagePath: /404.html
+            ErrorCachingMinTTL: 60
+          - ErrorCode: 404
+            ResponseCode: 404
+            ResponsePagePath: /404.html
+            ErrorCachingMinTTL: 60
+        DefaultCacheBehavior:
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD]
+          Compress: true
+          TargetOriginId: web
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: !Ref WebCachePolicy
+          # Managed SecurityHeadersPolicy. Deliberately NOT the
+          # CORS-with-preflight variant Drop uses - nothing here is consumed
+          # cross-origin. Page CSP stays in each page's meta tag.
+          ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03
+          FunctionAssociations:
+            - EventType: viewer-request
+              FunctionARN: !GetAtt WebRequestFunction.FunctionMetadata.FunctionARN
+        Origins:
+          - Id: web
+            DomainName: !GetAtt WebBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt WebOriginAccessControl.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+        ViewerCertificate: !If
+          - HasCertificate
+          - AcmCertificateArn: !Ref WebCertificateArn
+            MinimumProtocolVersion: TLSv1.2_2021
+            SslSupportMethod: sni-only
+          - CloudFrontDefaultCertificate: true
+
+  WebBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowCloudFrontRead
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub ${WebBucket.Arn}/*
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${WebDistribution}
+
+  # CloudFront standard logging v2 into CloudWatch, privacy-minimized: no
+  # viewer IP, user agent, referrer, query string, raw URI, or request id.
+  WebAccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /thingy-web/web-access
+      LogGroupClass: STANDARD
+      RetentionInDays: 14
+      ResourcePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowCloudFrontVendedLogs
+            Effect: Allow
+            Principal:
+              Service: delivery.logs.amazonaws.com
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/thingy-web/web-access:log-stream:*
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnLike:
+                aws:SourceArn: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*
+
+  WebAccessLogDeliverySource:
+    Type: AWS::Logs::DeliverySource
+    Properties:
+      Name: thingy-web-access
+      LogType: ACCESS_LOGS
+      ResourceArn: !Sub arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${WebDistribution}
+
+  WebAccessLogDeliveryDestination:
+    Type: AWS::Logs::DeliveryDestination
+    Properties:
+      Name: thingy-web-access
+      DestinationResourceArn: !GetAtt WebAccessLogGroup.Arn
+      OutputFormat: json
+
+  WebAccessLogDelivery:
+    Type: AWS::Logs::Delivery
+    DependsOn: WebAccessLogDeliverySource
+    Properties:
+      DeliverySourceName: thingy-web-access
+      DeliveryDestinationArn: !GetAtt WebAccessLogDeliveryDestination.Arn
+      RecordFields:
+        - "timestamp(ms)"
+        - x-edge-location
+        - cs-method
+        - sc-status
+        - sc-bytes
+        - x-edge-result-type
+        - x-edge-response-result-type
+        - x-edge-detailed-result-type
+        - time-taken
+        - time-to-first-byte
+        - sc-content-type
+        - cache-behavior-path-pattern
+
+  # The thingy-web- name prefix is load-bearing: the sysadmin auditor policy
+  # grants DescribeAlarmHistory on alarm:thingy-web-* (projects-sysadmin#37).
+  WebDistributionErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: thingy-web-distribution-5xx
+      AlarmDescription: CloudFront returned more than 5% 5xx responses for thingy.thingelstad.com in two of three five-minute windows.
+      Namespace: AWS/CloudFront
+      MetricName: 5xxErrorRate
+      Dimensions:
+        - Name: DistributionId
+          Value: !Ref WebDistribution
+        - Name: Region
+          Value: Global
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 2
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Sub arn:${AWS::Partition}:sns:us-east-1:${AWS::AccountId}:weekly-thing-librarian-alarms
+
+Outputs:
+  WebBucketName:
+    Value: !Ref WebBucket
+  WebDistributionId:
+    Value: !Ref WebDistribution
+  WebDistributionDomainName:
+    Value: !GetAtt WebDistribution.DomainName

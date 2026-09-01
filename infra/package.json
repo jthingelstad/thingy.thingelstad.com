@@ -1,0 +1,19 @@
+{
+  "name": "@thingy/infra",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "deploy": "node scripts/deploy-stack.mjs",
+    "deploy:web": "node scripts/deploy-web.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cloudformation": "^3.1101.0",
+    "@aws-sdk/client-cloudfront": "^3.1101.0",
+    "@aws-sdk/client-s3": "^3.1101.0"
+  }
+}
