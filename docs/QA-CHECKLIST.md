@@ -58,6 +58,9 @@ npm run qa:real -- --cleanup-only
   the HttpOnly session cookie server-side. Confirm a visit to `/` while
   signed in does not sign you out.
 - Log out; privileged UI should clear.
+- WebMCP (beta): signed in on `/chat/`, the browser model context lists the
+  archive tools (visible via a WebMCP inspector/bridge extension); they
+  disappear on sign-out, and a tool call moves only the `web_tools` quota.
 
 ## Chat
 

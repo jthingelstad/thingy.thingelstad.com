@@ -11,6 +11,7 @@ registry, served to third-party AI clients over OAuth 2.1).
 | --- | --- | --- |
 | Thingy web | Readers and Jamie | Sign-in, chat, conversations, account, feedback, and the About/Connect content pages |
 | Librarian MCP | Claude, ChatGPT, and other MCP clients | The archive tool registry over OAuth 2.1, with per-user quotas |
+| WebMCP page tools | Agents in the reader's browser | The 16 archive-read tools, registered with the browser's model context while signed in; calls proxy same-origin to the Librarian `/tools` door on their own quota pool |
 | Librarian API | Thingy web and approved internal clients | Critical retrieval, conversation, and streaming services |
 | Source sites | Readers | Canonical published Weekly Thing and personal-site content |
 
@@ -25,8 +26,11 @@ The web application owns the complete reader experience:
 
 (The Dispatch surface was removed in 2026-08; `/dispatch/` is a redirect stub.)
 
-The web application is statically built and hosted. It does not own private
-corpus ingestion, retrieval infrastructure, or server-side conversation state.
+The web application is statically built and served from a private S3 bucket
+behind CloudFront; the same distribution fronts the Librarian same-origin as
+`/api/*`, and the session is an HttpOnly cookie the page cannot read. It does
+not own private corpus ingestion, retrieval infrastructure, or server-side
+conversation state.
 
 ## Librarian Boundary
 
@@ -39,6 +43,9 @@ the server-side contracts used by the Thingy web application, including:
 - `/conversations`
 - `/memory`
 - `/retrieve` (served for `wt-builder`; the Thingy web client never calls it)
+- `/tools` - the WebMCP page-tool door (session-authenticated; reached by
+  the web app as `/api/tools` through its own distribution, deliberately not
+  routed on librarian.thingelstad.com)
 - `/mcp` plus the OAuth 2.1 endpoints (`/register`, `/token`, `/authorize`,
   `/.well-known/*`) - served to third-party MCP clients, never called by the
   Thingy web client

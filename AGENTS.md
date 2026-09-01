@@ -49,8 +49,10 @@ Thingy is, the archive inventory, architecture, and the AGENT-TEAM) and
 `/connect/` (how to add the Librarian MCP server to Claude, ChatGPT, Claude
 Code, or any MCP client). The app handles auth UI, streams `/chat` SSE from
 the Librarian Lambda, renders citations and inline photo thumbnails,
-collects feedback, and runs browser-only UX. It has no server of its own -
-static hosting only. (The Dispatch surface was removed in 2026-08; `/dispatch/` is now a
+collects feedback, and runs browser-only UX. While signed in, the chat page
+also registers the archive tools with the browser's model context (WebMCP,
+`web/src/shared/thingy-webmcp.ts`, proxying to `/api/tools`). It has no
+server of its own - static hosting only. (The Dispatch surface was removed in 2026-08; `/dispatch/` is now a
 redirect stub to `/chat/`. The answer text-to-speech button was removed in
 2026-08 - do not reintroduce browser speechSynthesis.)
 
@@ -128,7 +130,8 @@ Key files:
   Dispatch surface was removed in 2026-08.)
 - `web/src/pages/`: Vite page entrypoints (`home`, `chat`, `signin`,
   `about`, `connect`).
-- `web/src/shared/`: browser-side app modules.
+- `web/src/shared/`: browser-side app modules (`thingy-webmcp.ts` is the
+  WebMCP registration module; kill switch `window.ThingyConfig.webmcp`).
 - `web/src/styles/thingy.css`: stylesheet manifest imported by app page
   entries. Static content pages (`/about/`, `/connect/`) use
   `thingy-page-entry.css` -> `thingy-page.css` on the same design tokens

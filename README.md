@@ -7,8 +7,9 @@ Surfaces: the chat app (`/chat/`), sign-in (`/signin/`), and two static
 content pages - `/about/` (what Thingy is, the archive inventory, and how it
 works) and `/connect/` (adding the Librarian MCP server at
 `librarian.thingelstad.com/mcp` to Claude, ChatGPT, Claude Code, or any MCP
-client). The backend - retrieval, auth, conversations, MCP - lives in the
-`librarian-thing` repo.
+client). While signed in, the chat page also registers the archive tools
+with the browser's model context (WebMCP, beta). The backend - retrieval,
+auth, conversations, MCP - lives in the `librarian-thing` repo.
 
 For product-surface alignment across the web app and Librarian API, see
 [`docs/THINGY_SURFACES.md`](docs/THINGY_SURFACES.md).
@@ -98,8 +99,11 @@ in production.
 ```sh
 cd web
 npm install
-LIBRARIAN_API_URL="$LIBRARIAN_API_URL" LIBRARIAN_STREAM_URL="$LIBRARIAN_STREAM_URL" npm run serve -- --port=8080
+LIBRARIAN_API_URL=/api LIBRARIAN_STREAM_URL=/api npm run serve -- --port=8080
 ```
+
+The dev server proxies `/api` to the live Librarian (see `librarianProxy` in
+`web/vite.config.ts`), keeping cookie sign-in same-origin on localhost.
 
 Build:
 

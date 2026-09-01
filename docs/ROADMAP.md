@@ -108,6 +108,24 @@ product direction.
 - Ongoing upkeep is owned by the AGENT-TEAM objective owners in
   `librarian-thing/AGENT-TEAM/` (run/archive/improve cadences).
 
+### AWS Hosting, Same-Origin API, Cookie Sessions, and WebMCP (2026-09)
+
+- The site moved off GitHub Pages to a private S3 bucket behind CloudFront
+  (the `thingy-web` CloudFormation stack in `infra/`), deployed by CI through
+  a least-privilege OIDC role.
+- The Librarian became same-origin: the distribution routes `/api/*` to the
+  Librarian's API Gateway and streaming Lambda, stripping the prefix at the
+  edge. Production CSP `connect-src` tightened to `'self'`.
+- The session moved from a localStorage token to the `__Host-thingy_session`
+  HttpOnly cookie: the page holds no credential, sliding happens server-side,
+  and CSRF is covered by SameSite=Lax plus the contract header plus the
+  distribution's origin marker. Bearer remains the non-browser path.
+- WebMCP (beta): while signed in, the chat page registers the 16 archive-read
+  tools with the browser's model context (native `document.modelContext` or
+  the bundled polyfill), proxying calls to the Librarian's `/tools` door with
+  its own quota pool. Kill switch: `window.ThingyConfig.webmcp='off'`.
+  Chrome-native consumption awaits the origin-trial token.
+
 ## Current Mode Model
 
 ### Conversation Modes
