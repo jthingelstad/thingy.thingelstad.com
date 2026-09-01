@@ -100,6 +100,14 @@ function htmlConfigPlugin(): Plugin {
 // X-Thingy-Origin marker: export THINGY_WEB_ORIGIN_TOKEN (librarian .env) and
 // the proxy stamps it; without it, sign-in still works but cookie calls 401.
 const librarianProxy = {
+  // /tools lives only on the stream Lambda; the librarian custom domain does
+  // not route it (in production the thingy distribution does, as /api/tools).
+  '/api/tools': {
+    target: env('THINGY_DEV_STREAM_ORIGIN', 'https://jcvud66qqpq53frvno5stoqntm0zqntw.lambda-url.us-east-1.on.aws'),
+    changeOrigin: true,
+    rewrite: (path: string) => path.replace(/^\/api/, ''),
+    headers: env('THINGY_WEB_ORIGIN_TOKEN') ? { 'X-Thingy-Origin': env('THINGY_WEB_ORIGIN_TOKEN') } : undefined
+  },
   '/api': {
     target: env('THINGY_DEV_API_ORIGIN', 'https://librarian.thingelstad.com'),
     changeOrigin: true,

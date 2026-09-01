@@ -75,6 +75,16 @@ async function routeMockApi(page, { holdWelcome = false } = {}) {
     });
   });
 
+  // WebMCP registration probe: answer with an empty tool list so the smoke
+  // stays hermetic (registration paths are unit-tested in
+  // tests/thingy-webmcp.test.mjs).
+  await page.route(`${apiHost}/tools`, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ tools: [], server_version: 'smoke' })
+    });
+  });
+
   await page.route(`${apiHost}/conversations`, async (route) => {
     await route.fulfill({
       contentType: 'application/json',

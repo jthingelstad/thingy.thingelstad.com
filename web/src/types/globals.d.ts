@@ -16,6 +16,32 @@ interface ThingyPublicConfig {
   tinylyticsId?: string;
   buildId?: string;
   networkLinks?: ThingyNetworkLink[];
+  // WebMCP kill switch: set to 'off' via a window.ThingyConfig override to
+  // stop registering archive tools with the browser's model context.
+  webmcp?: 'off' | 'on';
+}
+
+// Minimal WebMCP surface (W3C WebML CG draft): what thingy-webmcp.ts needs
+// from document.modelContext / the deprecated navigator alias / the polyfill.
+interface ModelContextLike {
+  registerTool(
+    tool: {
+      name: string;
+      title?: string;
+      description: string;
+      inputSchema: Record<string, unknown>;
+      execute: (args: Record<string, unknown>) => Promise<unknown> | unknown;
+    },
+    options?: { signal?: AbortSignal }
+  ): Promise<unknown> | unknown;
+}
+
+interface Document {
+  modelContext?: ModelContextLike;
+}
+
+interface Navigator {
+  modelContext?: ModelContextLike;
 }
 
 interface ThingyNetworkLink {
