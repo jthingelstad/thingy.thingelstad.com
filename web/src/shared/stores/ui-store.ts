@@ -14,8 +14,9 @@ const mobileRailOpen = signal(false);
 
 // --- Account identity (cross-surface) ---------------------------------------
 
-// True when a Thingy session token is held in this browser. Written by the
-// chat bootstrap when it persists or clears the token, and by the chat
+// True when this browser believes it has a Thingy session (the credential
+// itself is an HttpOnly cookie the page cannot read). Written by the chat
+// bootstrap from the signed-in hint, and by the chat
 // storage listener that catches cross-tab sign-outs.
 const signedIn = signal(false);
 

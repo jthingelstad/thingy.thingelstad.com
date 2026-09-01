@@ -115,17 +115,13 @@ Resources:
           - HasCertificate
           - [thingy.thingelstad.com]
           - !Ref AWS::NoValue
-        # With OAC the private origin answers a missing key with 403, not 404,
-        # so both map to the real 404 page.
-        CustomErrorResponses:
-          - ErrorCode: 403
-            ResponseCode: 404
-            ResponsePagePath: /404.html
-            ErrorCachingMinTTL: 60
-          - ErrorCode: 404
-            ResponseCode: 404
-            ResponsePagePath: /404.html
-            ErrorCachingMinTTL: 60
+        # No CustomErrorResponses, deliberately: they are distribution-wide
+        # and CloudFront substitutes the page for ALL methods and origins -
+        # verified live 2026-09-01, a POST /api/conversations 404 (JSON
+        # "Conversation not found") came back as the HTML 404 page. Keeping
+        # the API's JSON errors intact outranks a pretty page for mistyped
+        # static URLs (those get S3's XML AccessDenied). /404.html still
+        # ships in the build and serves directly if ever needed.
         DefaultCacheBehavior:
           AllowedMethods: [GET, HEAD, OPTIONS]
           CachedMethods: [GET, HEAD]
@@ -174,7 +170,9 @@ Resources:
               - HeaderName: X-Thingy-Origin
                 HeaderValue: !Ref WebOriginToken
         # Streaming endpoints pin to the Function URL origin; everything else
-        # under /api/* goes to the HTTP API. Managed policy IDs by literal,
+        # under /api/* goes to the HTTP API. Any FUTURE streaming endpoint
+        # (an SSE /api/tools, say) needs its own pinned behavior here or it
+        # silently routes to the buffered HTTP API. Managed policy IDs by literal,
         # copied from Drop's working config: CachingDisabled
         # (4135ea2d-6df8-44a3-9df3-4b5a84be39ad) and AllViewerExceptHostHeader
         # (b689b0a8-53d0-40ab-baf2-68738e2966ac). Compress stays off on the

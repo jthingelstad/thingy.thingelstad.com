@@ -100,12 +100,16 @@ Web local server:
 
 ```sh
 cd web
-LIBRARIAN_API_URL="$LIBRARIAN_API_URL" LIBRARIAN_STREAM_URL="$LIBRARIAN_STREAM_URL" npm run serve -- --port=8080
+LIBRARIAN_API_URL=/api LIBRARIAN_STREAM_URL=/api npm run serve -- --port=8080
 ```
 
-Use port `8080` when testing auth or chat against the live backend. The
-Librarian CORS configuration is known to allow `http://localhost:8080`.
-Other local ports may render the page but fail API calls with `Failed to fetch`.
+The dev server proxies `/api` to the live Librarian (see `librarianProxy` in
+`vite.config.ts`), which keeps cookie sign-in same-origin on localhost.
+Export `THINGY_WEB_ORIGIN_TOKEN` (from the librarian repo `.env`) so the
+proxy stamps the origin marker cookie-authenticated calls require. The
+legacy absolute-URL flow (`LIBRARIAN_API_URL="https://librarian..."`) still
+works Bearer-only until the 2026-09-15 legacy-token sweep; port `8080` is
+the CORS-approved port for it.
 
 Web browser smoke test, with the local server already running on port `8080`:
 
@@ -238,9 +242,11 @@ Hard constraints:
 
 - `web/` is a static site. No server-side runtime, no secrets in the client.
   Anything that needs a secret goes through the Lambda, not the page.
-- CORS is configured in the Librarian repo, not here. The
-  `apps/librarian/infra/cloudformation.yaml` `AllowedOrigin` parameter must
-  include `https://thingy.thingelstad.com`.
+- CORS is configured in the Librarian repo, not here. Production is
+  same-origin (`/api` through the thingy distribution) and needs no CORS;
+  the `AllowedOrigin` allow-list in
+  `apps/librarian/infra/cloudformation.yaml` remains load-bearing for
+  `http://localhost:8080` dev flows that call the Librarian directly.
 - Do not grow a second backend here. If a feature needs server logic, add it to
   the Librarian Lambda in `librarian-thing`. This repo stays front-ends only.
 

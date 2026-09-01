@@ -34,7 +34,7 @@ function createChatInteractions(options: ChatInteractionsOptions) {
     cancelWelcome();
     const message = questionText.value.trim();
     if (!message || message.length > maxQuestionChars || !currentScope()) return;
-    if (!(await actions.ensureFreshToken())) return;
+    if (!(await actions.ensureSession())) return;
     stopDictation();
     answerInFlight.value = true;
     const wordCount = message.split(/\s+/).filter(Boolean).length;
@@ -90,7 +90,7 @@ function createChatInteractions(options: ChatInteractionsOptions) {
     }
     const email = actions.storedEmail();
     if (!email) throw new Error('Sign in again to email answers.');
-    if (!(await actions.ensureFreshToken())) throw new Error('Sign in again to email answers.');
+    if (!(await actions.ensureSession())) throw new Error('Sign in again to email answers.');
     return actions.conversationAction({
       action: 'email_answer',
       conversation_id: conversationId,

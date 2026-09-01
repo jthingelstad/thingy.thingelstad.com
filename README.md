@@ -145,7 +145,7 @@ npm run contract:sync
 works in a clean checkout without a sibling repository. Set `LIBRARIAN_CONTRACT_SOURCE` to a local JSON path
 when developing both repositories together. `npm run contract:check` verifies the checksum,
 the vendored artifact, and the generated client; the scheduled drift workflow
-(`.github/workflows/drift.yml`) runs it daily against upstream `main`, and the Pages deploy
+(`.github/workflows/drift.yml`) runs it daily against upstream `main`, and the AWS deploy
 gate runs `contract:generate:check` inside `npm run verify` before building. The Librarian's
 contract test also verifies its generated checksum.
 
@@ -164,8 +164,9 @@ Enabled Tinylytics features:
 The executable Tinylytics embed only loads on the public homepage (the
 loader is called from every page for URL-parameter hygiene, but no-ops off
 `/`). Chat and sign-in deliberately do not execute third-party JavaScript
-because those routes handle browser-held bearer credentials or one-time login
-values. Existing event hooks remain safe no-ops when the embed is absent.
+because those routes handle one-time login values (magic tokens, codes) and
+session state; the session credential itself is an HttpOnly cookie no script
+can read, and keeping third-party code out preserves that guarantee. Existing event hooks remain safe no-ops when the embed is absent.
 
 Public hit counters, country flags, and kudos are intentionally not shown in
 the current chat-client UI.

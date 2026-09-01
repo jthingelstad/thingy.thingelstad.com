@@ -20,7 +20,7 @@ test('welcome renders deterministic content immediately while personalization co
   };
   const controller = createChatWelcomeController({
     canStart: () => true,
-    ensureFreshToken: async () => true,
+    ensureSession: async () => true,
     prepareProfile: () => {},
     createMessage: () => ({ id: 'welcome-1', model }),
     removeMessage: () => {},
@@ -44,7 +44,7 @@ test('cancelling a welcome aborts personalization and removes only the pending m
   let removed = '';
   const controller = createChatWelcomeController({
     canStart: () => true,
-    ensureFreshToken: async () => true,
+    ensureSession: async () => true,
     prepareProfile: () => {},
     createMessage: () => ({
       id: 'welcome-2',

@@ -4,11 +4,13 @@ Use this for a quick confidence pass after auth, chat, or shell UI changes.
 
 ## Local Setup
 
-Run the web app on the CORS-approved local port:
+Run the web app with the same-origin `/api` config; the dev server proxies
+`/api` to the live Librarian (export `THINGY_WEB_ORIGIN_TOKEN` from the
+librarian `.env` so cookie-authenticated calls carry the origin marker):
 
 ```sh
 cd web
-LIBRARIAN_API_URL="$LIBRARIAN_API_URL" LIBRARIAN_STREAM_URL="$LIBRARIAN_STREAM_URL" npm run serve -- --port=8080
+LIBRARIAN_API_URL=/api LIBRARIAN_STREAM_URL=/api npm run serve -- --port=8080
 ```
 
 Build and tests:
@@ -52,8 +54,9 @@ npm run qa:real -- --cleanup-only
   (the field offers macOS/iOS code autofill).
 - Confirm successful auth lands on `/chat/` and removes `login_token`.
 - Reuse the same code; it should fail.
-- Sessions are 9 days, sliding: any page visit while signed in re-mints the
-  token. Confirm a visit to `/` while signed in does not sign you out.
+- Sessions are 9 days, sliding: any page visit while signed in re-confirms
+  the HttpOnly session cookie server-side. Confirm a visit to `/` while
+  signed in does not sign you out.
 - Log out; privileged UI should clear.
 
 ## Chat

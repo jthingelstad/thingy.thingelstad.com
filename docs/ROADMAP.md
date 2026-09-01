@@ -41,8 +41,9 @@ product direction.
 - Replaced the old "does this email belong to a subscriber?" gate with magic-link authentication.
 - Magic links are short-lived, single-use, and sent to the claimed email address.
 - Auth email is sent through Fastmail JMAP as `thingy@thingelstad.com`.
-- Sessions last 9 days and slide: any visit re-mints the token and re-verifies entitlements, so an
-  active reader rarely signs in again. Lapsed subscriptions are caught at refresh.
+- Sessions last 9 days and slide: any visit re-confirms the HttpOnly session cookie server-side
+  and re-verifies entitlements, so an active reader rarely signs in again. Lapsed subscriptions
+  are caught at refresh. (Cookie sessions since 2026-09-01; the page holds no credential.)
 - Sign-in uses an emailed six-digit code (with OS autofill) alongside the magic link.
 - The sign-in page makes clear that Weekly Thing readers can sign in, and new addresses can start the
   subscriber path directly.

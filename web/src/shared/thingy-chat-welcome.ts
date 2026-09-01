@@ -2,7 +2,7 @@ const DEFAULT_WELCOME = "Hi. I'm Thingy. Ask me what you're curious about and I'
 
 interface WelcomeControllerOptions {
   canStart: () => boolean;
-  ensureFreshToken: () => Promise<boolean>;
+  ensureSession: () => Promise<boolean>;
   prepareProfile: () => void;
   createMessage: () => { id: string; model: AssistantMessageModel };
   removeMessage: (id: string) => void;
@@ -34,7 +34,7 @@ function createChatWelcomeController(options: WelcomeControllerOptions) {
 
   async function start() {
     if (shown || !options.canStart()) return;
-    if (!(await options.ensureFreshToken()) || shown || !options.canStart()) return;
+    if (!(await options.ensureSession()) || shown || !options.canStart()) return;
     options.prepareProfile();
     shown = true;
     options.setInFlight(true);

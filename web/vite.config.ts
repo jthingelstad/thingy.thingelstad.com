@@ -92,8 +92,26 @@ function htmlConfigPlugin(): Plugin {
   };
 }
 
+// Local dev against the live Librarian with same-origin '/api' URLs: the dev
+// and preview servers proxy /api to the API, stripping the prefix the way
+// CloudFront does in production. Cookie sign-in works because the proxy makes
+// everything same-origin on localhost (a trustworthy context, so the Secure
+// cookie is accepted). Cookie-authenticated calls additionally need the
+// X-Thingy-Origin marker: export THINGY_WEB_ORIGIN_TOKEN (librarian .env) and
+// the proxy stamps it; without it, sign-in still works but cookie calls 401.
+const librarianProxy = {
+  '/api': {
+    target: env('THINGY_DEV_API_ORIGIN', 'https://librarian.thingelstad.com'),
+    changeOrigin: true,
+    rewrite: (path: string) => path.replace(/^\/api/, ''),
+    headers: env('THINGY_WEB_ORIGIN_TOKEN') ? { 'X-Thingy-Origin': env('THINGY_WEB_ORIGIN_TOKEN') } : undefined
+  }
+};
+
 export default defineConfig({
   publicDir: 'public',
+  server: { proxy: librarianProxy },
+  preview: { proxy: librarianProxy },
   define: {
     __THINGY_TINYLYTICS_ID__: JSON.stringify(SITE.tinylyticsId)
   },

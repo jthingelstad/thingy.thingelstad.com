@@ -21,9 +21,9 @@ function fakeSession(overrides = {}) {
       String(value || '')
         .trim()
         .toLowerCase(),
-    token: () => 'tok',
-    tokenExpired: () => false,
-    tokenNeedsRefresh: () => false,
+    token: () => '',
+    sessionActive: () => true,
+    ensureSession: async () => true,
     storedEmail: () => 'reader@example.com',
     storedProfile: () => ({}),
     updateStoredProfile: () => ({}),

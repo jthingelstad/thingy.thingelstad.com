@@ -33,10 +33,6 @@ function createChatAuthActions(options: ChatAuthActionsOptions) {
     return session.sessionActive();
   }
 
-  function tokenExpired() {
-    return session.tokenExpired();
-  }
-
   function storedEmail() {
     return normalizeEmail(session.storedEmail());
   }
@@ -120,12 +116,9 @@ function createChatAuthActions(options: ChatAuthActionsOptions) {
     return accountProfileRefreshPromise;
   }
 
-  // The session cookie hides expiry from the page, so this delegates to the
-  // module's server-confirmation cache: a recent confirmation is free, and a
-  // stale one triggers the session probe (which also slides the cookie).
-  async function ensureFreshToken() {
+  async function ensureSession() {
     if (!hasSession()) return false;
-    if (await session.ensureFreshToken()) {
+    if (await session.ensureSession()) {
       return true;
     }
     redirectToSignIn();
@@ -134,7 +127,7 @@ function createChatAuthActions(options: ChatAuthActionsOptions) {
   }
 
   return {
-    ensureFreshToken,
+    ensureSession,
     hasSession,
     isAwaitingName,
     normalizeEmail,
@@ -148,7 +141,6 @@ function createChatAuthActions(options: ChatAuthActionsOptions) {
     setAwaitingName,
     setUserProfile,
     storedEmail,
-    tokenExpired,
     userProfile
   };
 }

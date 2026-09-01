@@ -154,7 +154,7 @@ function ChatApp() {
     welcomeControllerRef.current = createChatWelcomeController({
       canStart: () =>
         Boolean(actions.hasSession() && !interactionBusy.value && !welcomeInFlight.value && !initial.hasPrompt),
-      ensureFreshToken: () => actions.ensureFreshToken(),
+      ensureSession: () => actions.ensureSession(),
       prepareProfile: () => actions.setAwaitingName(!state.preferredName),
       createMessage: () =>
         addAssistantMessage({
@@ -211,24 +211,21 @@ function ChatApp() {
       window.location.href = session.signInUrl();
       track('librarian.auth_magic_link_start');
     } else if (actions.hasSession()) {
-      {
-        signedIn.value = true;
-        // Confirms (and slides) the HttpOnly session cookie server-side; a
-        // legacy localStorage token migrates to the cookie here too.
-        void actions.refreshAccountProfile({ force: true });
-        const savedActiveId = actions.savedActiveConversation();
-        actions.refreshConversations().then((list) => {
-          if (initial.hasPrompt) {
-            startBlankConversation();
-            void maybeSubmitInitialPrompt();
-            return;
-          }
-          const saved = savedActiveId && list.some((entry) => entry.id === savedActiveId) ? savedActiveId : '';
-          if (saved) void loadConversation(saved);
-          else void startAgentWelcome();
-        });
-        track('librarian.session_resume');
-      }
+      // Confirms (and slides) the HttpOnly session cookie server-side; a
+      // legacy localStorage token migrates to the cookie here too.
+      void actions.refreshAccountProfile({ force: true });
+      const savedActiveId = actions.savedActiveConversation();
+      actions.refreshConversations().then((list) => {
+        if (initial.hasPrompt) {
+          startBlankConversation();
+          void maybeSubmitInitialPrompt();
+          return;
+        }
+        const saved = savedActiveId && list.some((entry) => entry.id === savedActiveId) ? savedActiveId : '';
+        if (saved) void loadConversation(saved);
+        else void startAgentWelcome();
+      });
+      track('librarian.session_resume');
     } else {
       window.location.href = session.signInUrl();
       track(initial.email ? 'librarian.auth_auto_start' : 'librarian.auth_redirect');
@@ -282,14 +279,14 @@ function ChatApp() {
     }
     function onStorage(event: StorageEvent) {
       if (event.key !== null && event.key !== session.signedInHintKey && event.key !== session.storageKey) return;
-      const hasToken = actions.hasSession();
-      if (!hasToken && signedIn.value) {
+      const hasActiveSession = actions.hasSession();
+      if (!hasActiveSession && signedIn.value) {
         // Signed out in another tab: leave the chat surface entirely, the
-        // same way an expired token does.
+        // same way an expired session does.
         actions.stopActiveAnswer();
         track('librarian.session_synced_signout');
         actions.redirectToSignIn();
-      } else if (hasToken && !signedIn.value) {
+      } else if (hasActiveSession && !signedIn.value) {
         window.location.reload();
       }
     }

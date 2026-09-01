@@ -1,5 +1,6 @@
 // @ts-check
 import { librarianApiUrl } from './thingy-config.ts';
+import { contractRequestHeaders } from './thingy-contracts.ts';
 import { postJsonRequest } from './thingy-http.ts';
 
 const storageKey = 'weeklyThingLibrarianToken';
@@ -62,12 +63,6 @@ function legacyTokenExpired(value?: string, skewSeconds = 60): boolean {
   return !expiresAt || expiresAt <= Math.floor(Date.now() / 1000) + skewSeconds;
 }
 
-// The HttpOnly cookie hides exp from the page, so "expired" now means "no
-// session": the server slides the cookie itself on session/refresh calls.
-function tokenExpired(): boolean {
-  return !sessionActive();
-}
-
 // Legacy Bearer attach: only meaningful while an un-migrated localStorage
 // token exists. Cookie sessions send no auth header - the cookie rides along
 // on every same-origin request.
@@ -100,8 +95,23 @@ async function postJson(
 // instead of silently decaying. Returns the parsed payload or null.
 let sessionConfirmedAt = 0;
 const sessionConfidenceMs = 10 * 60 * 1000;
+let inFlightRefresh: Promise<ThingyApiResponse | null> | null = null;
+let lastRefreshUnreachable = false;
 
+// Deduped: chat bootstrap fires the profile refresh and the conversation
+// gate concurrently, and two racing refresh_session exchanges could sign
+// out the session they just migrated.
 async function refreshAuth() {
+  if (!inFlightRefresh) {
+    inFlightRefresh = performRefresh().finally(() => {
+      inFlightRefresh = null;
+    });
+  }
+  return inFlightRefresh;
+}
+
+async function performRefresh(): Promise<ThingyApiResponse | null> {
+  lastRefreshUnreachable = false;
   const legacy = token();
   try {
     if (legacy && !legacyTokenExpired(legacy)) {
@@ -125,16 +135,36 @@ async function refreshAuth() {
     persistAuth(data, storedEmail());
     return data;
   } catch (error) {
+    const status = Number((error as { status?: number })?.status || 0);
+    if (status === 401 || status === 403) {
+      // Definitive rejection: the credential is dead.
+      window.localStorage.removeItem(storageKey);
+      window.localStorage.removeItem(signedInHintKey);
+      sessionConfirmedAt = 0;
+      return null;
+    }
+    // Unreachable or server trouble: keep the current belief. Signing out
+    // over a network blip would destroy a valid server-side session (and
+    // the composer text with it); the next real API call surfaces its own
+    // error if the problem persists.
+    lastRefreshUnreachable = true;
     return null;
   }
 }
 
 // Cheap gate used before every send: trust a recent server confirmation,
-// otherwise probe (which also slides the cookie server-side).
-async function ensureFreshToken() {
+// otherwise probe (which also slides the cookie server-side). Fails open
+// briefly when the probe cannot reach the server at all.
+async function ensureSession() {
   if (!sessionActive()) return false;
   if (Date.now() - sessionConfirmedAt < sessionConfidenceMs) return true;
-  return Boolean(await refreshAuth());
+  if (await refreshAuth()) return true;
+  if (lastRefreshUnreachable && sessionActive()) {
+    // Retry the probe roughly a minute from now instead of every gate.
+    sessionConfirmedAt = Date.now() - sessionConfidenceMs + 60 * 1000;
+    return true;
+  }
+  return false;
 }
 
 function normalizeModes(modes: unknown): ThingyMode[] {
@@ -188,7 +218,10 @@ function persistAuth(data: ThingyAuthData, email: string): LibrarianProfile | nu
 }
 
 function clearAuth() {
-  const headers: Record<string, string> = { 'content-type': 'application/json' };
+  const headers: Record<string, string> = {
+    'content-type': 'application/json',
+    ...contractRequestHeaders()
+  };
   try {
     // Best-effort server-side cookie clear that survives the sign-out
     // navigation. Failure is harmless: the 9-day TTL bounds the cookie.
@@ -217,11 +250,6 @@ function storedProfile(): LibrarianProfile {
   } catch (error) {
     return {};
   }
-}
-
-function hasEntitlement(name: string): boolean {
-  const entitlements = storedProfile().entitlements || [];
-  return Array.isArray(entitlements) && entitlements.includes(name);
 }
 
 function relativeUrl(value: unknown, defaultPath = '/'): URL {
@@ -295,25 +323,21 @@ export {
   storageKey,
   signedInHintKey,
   userEmailKey,
-  userProfileKey,
   pendingReturnParamsKey,
   apiUrl,
   normalizeEmail,
   token,
   sessionActive,
-  tokenPayload,
-  tokenExpired,
   authHeaders,
   postJson,
   refreshAuth,
-  ensureFreshToken,
+  ensureSession,
   mergeProfile,
   updateStoredProfile,
   persistAuth,
   clearAuth,
   storedEmail,
   storedProfile,
-  hasEntitlement,
   returnPath,
   restorePendingReturnParams,
   signInUrl

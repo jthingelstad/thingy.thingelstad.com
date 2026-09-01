@@ -18,7 +18,7 @@ interface ChatConversationActionsOptions {
   activeConvKey: string;
   currentScope: () => string;
   hasSession: () => boolean;
-  ensureFreshToken: () => Promise<boolean>;
+  ensureSession: () => Promise<boolean>;
   setUserProfile: (data: ThingyApiResponse) => unknown;
   refreshStoredAuth: () => Promise<boolean>;
   redirectToSignIn: () => void;
@@ -196,7 +196,7 @@ function createChatConversationActions(options: ChatConversationActionsOptions) 
     const normalized = normalizeModeId(mode);
     if (!options.hasSession() || normalized === 'thingy') return activeConversation();
     if (!state.availableModes.some((entry) => entry.id === normalized)) return null;
-    if (!(await options.ensureFreshToken())) return null;
+    if (!(await options.ensureSession())) return null;
     const replaceId = String(config.replaceId || state.activeConversationId || '').trim();
     options.setCreateInFlight(true);
     options.onQuestionStateChanged();
@@ -232,7 +232,7 @@ function createChatConversationActions(options: ChatConversationActionsOptions) 
       options.onActiveConversationChanged();
       return [];
     }
-    if (!(await options.ensureFreshToken())) return [];
+    if (!(await options.ensureSession())) return [];
     try {
       const data = await options.post({ action: 'list', limit: options.maxRecents });
       if (data.modes || data.entitlements) options.setUserProfile(data);
