@@ -21,8 +21,9 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, "..", "..");
 
-// GitHub Pages residue: CNAME and .nojekyll ship in web/public until Pages is
-// retired at cutover, but they must never reach the bucket.
+// GitHub Pages was retired 2026-09-01 and these files are deleted from
+// web/public; the skip stays as a guard so a stray reintroduction never
+// reaches the bucket (Drop keeps the same defense).
 const SKIPPED_KEYS = new Set(["CNAME", ".nojekyll"]);
 
 const CONTENT_TYPES = new Map([

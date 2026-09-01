@@ -1,11 +1,13 @@
 name: Build and Deploy (web)
 
-# Standalone Thingy site (web/) → GitHub Pages.
+# Standalone Thingy site (web/) → S3 + CloudFront (thingy-web stack).
+# GitHub Pages retired 2026-09-01.
 on:
   push:
     branches: [main]
     paths:
       - "web/**"
+      - "infra/**"
       - ".github/workflows/deploy.yml"
   workflow_dispatch:
 
@@ -13,7 +15,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: "pages"
+  group: "thingy-web-production"
   cancel-in-progress: false
 
 jobs:
@@ -78,32 +80,13 @@ jobs:
           curl -fsS http://localhost:8080/chat/ > /dev/null
           THINGY_SMOKE_URL=http://localhost:8080 npm run smoke
 
-      - uses: actions/upload-pages-artifact@v5
-        with:
-          path: web/_site
-
       - uses: actions/upload-artifact@v6
         with:
           name: web-site
           path: web/_site
           include-hidden-files: true
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v5
-
-  # AWS hosting (S3 + CloudFront), running alongside Pages until the DNS
-  # cutover retires the Pages deployment. Stack: thingy-web (infra/).
+  # AWS hosting (S3 + CloudFront). Stack: thingy-web (infra/).
   deploy-aws:
     needs: build
     runs-on: ubuntu-latest

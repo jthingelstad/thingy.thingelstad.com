@@ -43,14 +43,14 @@ it.) Casual schema changes break this repo. Version before changing.
 
 ## Surface Responsibilities
 
-`web/` is a Vite-built static app served by GitHub Pages. Its surfaces are
+`web/` is a Vite-built static app served from S3 + CloudFront. Its surfaces are
 chat, sign-in, and account, plus two static content pages: `/about/` (what
 Thingy is, the archive inventory, architecture, and the AGENT-TEAM) and
 `/connect/` (how to add the Librarian MCP server to Claude, ChatGPT, Claude
 Code, or any MCP client). The app handles auth UI, streams `/chat` SSE from
 the Librarian Lambda, renders citations and inline photo thumbnails,
-collects feedback, and runs browser-only UX. It has no server beyond GitHub
-Pages. (The Dispatch surface was removed in 2026-08; `/dispatch/` is now a
+collects feedback, and runs browser-only UX. It has no server of its own -
+static hosting only. (The Dispatch surface was removed in 2026-08; `/dispatch/` is now a
 redirect stub to `/chat/`. The answer text-to-speech button was removed in
 2026-08 - do not reintroduce browser speechSynthesis.)
 
@@ -134,9 +134,11 @@ Key files:
 - `web/vite.config.ts`: multi-page build config and build-time public config
   injection for Librarian API URLs, network links, and Tinylytics ID.
 
-The web app is a Vite-built static app served by GitHub Pages from `web/_site`.
-Do not add secrets, server-only logic, or a second backend here. Anything
-requiring privileged logic belongs in the Librarian Lambda in `librarian-thing`.
+The web app is a Vite-built static app served from `web/_site` via the
+`thingy-web` CloudFormation stack (`infra/`): private S3 bucket + CloudFront,
+deployed by CI through the `ThingyWebDeployOidc` role. Do not add secrets,
+server-only logic, or a second backend here. Anything requiring privileged
+logic belongs in the Librarian Lambda in `librarian-thing`.
 
 ## Design Direction
 
@@ -258,8 +260,12 @@ guaranteed present.
 
 ## Deployment
 
-`main` is pushed to GitHub. GitHub Pages deploys the static site from the web
-build. `web/public/CNAME` contains `thingy.thingelstad.com`.
+`main` is pushed to GitHub. CI builds the site and deploys it to AWS: the
+`deploy-aws` workflow job assumes `ThingyWebDeployOidc`, syncs the `thingy-web`
+CloudFormation stack (`infra/template.yaml`), uploads `web/_site` to the private
+web bucket with per-file cache headers, and invalidates CloudFront.
+`thingy.thingelstad.com` is a Namecheap CNAME to the distribution. (GitHub
+Pages was retired 2026-09-01; migration record in projects-sysadmin#37.)
 
 Before committing web changes:
 

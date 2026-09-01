@@ -90,8 +90,10 @@ These links are sent by email from `thingy@thingelstad.com`.
 
 ## Local Development
 
-The web app is a Vite-built static app. GitHub Pages serves the generated
-`web/_site` directory; there is no Node server in production.
+The web app is a Vite-built static app. In production the generated
+`web/_site` directory is served from a private S3 bucket behind CloudFront
+(the `thingy-web` CloudFormation stack in `infra/`); there is no Node server
+in production.
 
 ```sh
 cd web
