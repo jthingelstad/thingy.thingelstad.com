@@ -3,7 +3,7 @@ const tinylyticsSiteId = typeof __THINGY_TINYLYTICS_ID__ === 'string' ? __THINGY
 export function loadTinylytics() {
   try {
     const url = new URL(window.location.href);
-    ['email', 'prompt', 'from', 'scope', 'corpus', 'login_token', 'magic_token'].forEach((name) => {
+    ['email', 'prompt', 'from', 'explore', 'issue', 'scope', 'corpus', 'login_token', 'magic_token'].forEach((name) => {
       url.searchParams.delete(name);
     });
     if (url.href !== window.location.href) {
@@ -14,7 +14,6 @@ export function loadTinylytics() {
   }
 
   if (!tinylyticsSiteId) return;
-  if (window.location.pathname !== '/') return;
   if (['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)) return;
 
   const script = document.createElement('script');

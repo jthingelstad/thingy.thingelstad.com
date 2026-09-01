@@ -16,6 +16,14 @@ interface ChatInteractionsOptions {
   track: (name: string, value?: string) => void;
 }
 
+// Dotted event values keep failure classes separable in Tinylytics:
+// server.401 (rejected), server.500 (failed), server (SSE error frame or a
+// stream that died mid-answer with a request id), client (never reached).
+function answerErrorClass(error: unknown) {
+  if (!(error instanceof Error) || !error.requestId) return 'client';
+  return error.status ? `server.${error.status}` : 'server';
+}
+
 function createChatInteractions(options: ChatInteractionsOptions) {
   const {
     actions,
@@ -63,7 +71,7 @@ function createChatInteractions(options: ChatInteractionsOptions) {
       pending.model.errorMessage.value = errorMessage(error, 'Thingy could not answer that question.');
       if (!isAuthError(error)) pending.model.retryPrompt.value = message;
       pending.model.status.value = 'error';
-      track('librarian.answer_error', error instanceof Error && error.requestId ? 'server' : 'client');
+      track('librarian.answer_error', answerErrorClass(error));
       if (isAuthError(error)) actions.redirectToSignIn();
     } finally {
       answerInFlight.value = false;

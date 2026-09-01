@@ -4,6 +4,7 @@
 // session. The tools proxy to POST /api/tools; the HttpOnly session cookie
 // rides the same-origin fetch, so this module never touches a credential.
 // Design: the "Thingy WebMCP" spec, revision 2 (2026-09-01).
+import { trackEvent } from './thingy-analytics.ts';
 import { librarianApiUrl } from './thingy-config.ts';
 import { contractRequestHeaders } from './thingy-contracts.ts';
 import { sessionActive, signedInHintKey } from './thingy-session.ts';
@@ -50,6 +51,10 @@ export function createWebMcpRuntime(options: WebMcpRuntimeOptions) {
     try {
       const { ok, status, data } = await postTools({ action: 'call', tool: name, arguments: args });
       if (!ok) {
+        // Stays silent toward the agent's reader, but not toward us: the
+        // Lambda only logs calls that reach it, so HTTP-level failures are
+        // invisible without this counter.
+        trackEvent('librarian.webmcp_error', `status.${status}`);
         const message =
           status === 401
             ? 'The Thingy session ended. Ask the reader to sign in again at thingy.thingelstad.com.'
@@ -60,6 +65,7 @@ export function createWebMcpRuntime(options: WebMcpRuntimeOptions) {
       if (!content) return textResult('The archive returned an unexpected response.', true);
       return { content, isError: Boolean(data.is_error) };
     } catch (error) {
+      trackEvent('librarian.webmcp_error', 'unreachable');
       return textResult('The archive could not be reached. Please try again.', true);
     }
   }
@@ -87,7 +93,9 @@ export function createWebMcpRuntime(options: WebMcpRuntimeOptions) {
         )
       );
       const settled = await Promise.allSettled(registrations);
-      return settled.filter((entry) => entry.status === 'fulfilled').length;
+      const registered = settled.filter((entry) => entry.status === 'fulfilled').length;
+      trackEvent('librarian.webmcp_register', `${registered}.of.${tools.length}`);
+      return registered;
     })().finally(() => {
       registering = null;
     });

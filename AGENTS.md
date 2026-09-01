@@ -193,7 +193,8 @@ Thingy has its own Tinylytics site ID in `web/vite.config.ts`, overridable with
 
 Current Tinylytics usage:
 
-- minified embed script
+- minified embed script, loaded on every page (2026-09-01; previously
+  homepage-only, which silenced all app events)
 - `events`
 - `beacon`
 - `hits`
@@ -202,10 +203,20 @@ Current Tinylytics usage:
 - Webmention endpoint
 - public footer hit/country display
 - homepage kudos button
-- event hooks for auth, prompts, answers, feedback, source links, and network
-  navigation
+- declarative `data-tinylytics-event` hooks for prompts, source links, and
+  network navigation
+- programmatic app events posted straight to the collector
+  (`src/shared/thingy-analytics.ts`): auth/session, answer
+  success/error/stop, feedback, shares, conversations, plus
+  `librarian.client_error` (global error/unhandledrejection handlers on
+  chat and sign-in) and `librarian.webmcp_*` (registration and
+  unreachable-tool counters)
 
-The Tinylytics script intentionally does not load on localhost.
+Event values never carry reader text - error events report only status
+classes and error constructor names.
+
+The Tinylytics script and the programmatic events intentionally do not run
+on localhost, and both honor the `tinylytics_ignore` opt-out.
 
 ## SEO / Crawlers
 
