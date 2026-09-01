@@ -39,7 +39,7 @@ function SignInApp() {
 
   useEffect(() => {
     async function bootstrap() {
-      if (session.token() && !session.tokenExpired() && !loginToken) {
+      if (session.sessionActive() && !loginToken) {
         setMessage('You are already signed in.');
         setMessageKind('success');
         window.location.replace(destinationPath());

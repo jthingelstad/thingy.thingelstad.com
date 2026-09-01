@@ -116,7 +116,7 @@ function createChatActions(options: ChatActionsOptions = {}) {
     localConversationPrefix,
     activeConvKey,
     currentScope,
-    token: authActions.token,
+    hasSession: authActions.hasSession,
     ensureFreshToken: authActions.ensureFreshToken,
     setUserProfile: authActions.setUserProfile,
     refreshStoredAuth: authActions.refreshStoredAuth,
@@ -143,7 +143,7 @@ function createChatActions(options: ChatActionsOptions = {}) {
 
   const streamActions = createChatStreamActions({
     streamBase,
-    token: authActions.token,
+    authHeaders,
     getActiveConversationId: () => state.activeConversationId,
     isLocalConversationId: conversationActions.isLocalConversationId,
     currentConversationMode: conversationActions.currentConversationMode,
@@ -195,7 +195,7 @@ function createChatActions(options: ChatActionsOptions = {}) {
     setUserProfile: authActions.setUserProfile,
     stopActiveAnswer: streamActions.stopActiveAnswer,
     storedEmail: authActions.storedEmail,
-    token: authActions.token,
+    hasSession: authActions.hasSession,
     tokenExpired: authActions.tokenExpired,
     upsertConversationSummary: conversationActions.upsertConversationSummary,
     upsertPendingConversation: conversationActions.upsertPendingConversation,

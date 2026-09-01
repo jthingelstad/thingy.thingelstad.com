@@ -29,16 +29,12 @@ function createChatAuthActions(options: ChatAuthActionsOptions) {
     return session.normalizeEmail(value);
   }
 
-  function token() {
-    return session.token();
+  function hasSession() {
+    return session.sessionActive();
   }
 
-  function tokenExpired(value = token(), skewSeconds = 60) {
-    return session.tokenExpired(value, skewSeconds);
-  }
-
-  function tokenNeedsRefresh(value = token()) {
-    return session.tokenNeedsRefresh(value);
+  function tokenExpired() {
+    return session.tokenExpired();
   }
 
   function storedEmail() {
@@ -93,7 +89,7 @@ function createChatAuthActions(options: ChatAuthActionsOptions) {
   }
 
   async function refreshStoredAuth(opts: AuthFlowOptions = {}) {
-    if (!token() || tokenExpired()) return false;
+    if (!hasSession()) return false;
     const shouldTrack = opts.track !== false;
     const data = await session.refreshAuth();
     if (!data) {
@@ -113,7 +109,7 @@ function createChatAuthActions(options: ChatAuthActionsOptions) {
   }
 
   async function refreshAccountProfile(opts: { force?: boolean } = {}) {
-    if (!token() || tokenExpired()) return false;
+    if (!hasSession()) return false;
     const now = Date.now();
     if (!opts.force && now - accountProfileRefreshAt < 30000) return false;
     if (accountProfileRefreshPromise) return accountProfileRefreshPromise;
@@ -124,18 +120,22 @@ function createChatAuthActions(options: ChatAuthActionsOptions) {
     return accountProfileRefreshPromise;
   }
 
+  // The session cookie hides expiry from the page, so this delegates to the
+  // module's server-confirmation cache: a recent confirmation is free, and a
+  // stale one triggers the session probe (which also slides the cookie).
   async function ensureFreshToken() {
-    if (!token()) return false;
-    if (!tokenExpired() && !tokenNeedsRefresh()) return true;
-    const refreshable = tokenNeedsRefresh();
-    if (refreshable && (await refreshStoredAuth())) return true;
+    if (!hasSession()) return false;
+    if (await session.ensureFreshToken()) {
+      return true;
+    }
     redirectToSignIn();
-    track(refreshable ? 'librarian.auth_refresh_error' : 'librarian.session_expired');
+    track('librarian.session_expired');
     return false;
   }
 
   return {
     ensureFreshToken,
+    hasSession,
     isAwaitingName,
     normalizeEmail,
     persistInferredPreferredName,
@@ -148,7 +148,6 @@ function createChatAuthActions(options: ChatAuthActionsOptions) {
     setAwaitingName,
     setUserProfile,
     storedEmail,
-    token,
     tokenExpired,
     userProfile
   };

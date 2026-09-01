@@ -103,7 +103,7 @@ function createChatInteractions(options: ChatInteractionsOptions) {
     return actions.postStreamJson(
       '/feedback',
       { request_id: input.requestId, reaction: input.reaction, comment: input.comment },
-      { authorization: `Bearer ${actions.token()}` }
+      actions.authHeaders()
     );
   }
 

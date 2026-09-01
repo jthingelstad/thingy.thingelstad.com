@@ -19,7 +19,7 @@ test('chat reads URL params before Tinylytics strips them', async () => {
 
 test('chat keeps signed-in invite links out of the sign-in redirect loop', async () => {
   const sourceText = await source('../src/shared/components/ChatApp.tsx');
-  const tokenBranch = sourceText.indexOf('} else if (actions.token()) {');
+  const tokenBranch = sourceText.indexOf('} else if (actions.hasSession()) {');
   const redirectBranch = sourceText.indexOf("track(initial.email ? 'librarian.auth_auto_start'");
 
   assert.ok(tokenBranch > -1);

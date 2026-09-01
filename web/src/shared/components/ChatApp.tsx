@@ -153,7 +153,7 @@ function ChatApp() {
   if (!welcomeControllerRef.current) {
     welcomeControllerRef.current = createChatWelcomeController({
       canStart: () =>
-        Boolean(actions.token() && !interactionBusy.value && !welcomeInFlight.value && !initial.hasPrompt),
+        Boolean(actions.hasSession() && !interactionBusy.value && !welcomeInFlight.value && !initial.hasPrompt),
       ensureFreshToken: () => actions.ensureFreshToken(),
       prepareProfile: () => actions.setAwaitingName(!state.preferredName),
       createMessage: () =>
@@ -195,7 +195,7 @@ function ChatApp() {
   useMeasuredComposer(inputRef, composerRef, chatPanelRef, currentText, isSignedIn);
 
   useEffect(() => {
-    signedIn.value = Boolean(actions.token()) && !actions.tokenExpired();
+    signedIn.value = actions.hasSession();
     const storedProfile = actions.userProfile();
     state.preferredName = String(storedProfile.preferred_name || '').trim();
     state.availableModes = normalizeModes(storedProfile.modes || []);
@@ -210,12 +210,11 @@ function ChatApp() {
     if (initial.loginToken) {
       window.location.href = session.signInUrl();
       track('librarian.auth_magic_link_start');
-    } else if (actions.token()) {
-      if (actions.tokenExpired()) {
-        actions.redirectToSignIn();
-        track('librarian.session_expired_startup');
-      } else {
+    } else if (actions.hasSession()) {
+      {
         signedIn.value = true;
+        // Confirms (and slides) the HttpOnly session cookie server-side; a
+        // legacy localStorage token migrates to the cookie here too.
         void actions.refreshAccountProfile({ force: true });
         const savedActiveId = actions.savedActiveConversation();
         actions.refreshConversations().then((list) => {
@@ -282,8 +281,8 @@ function ChatApp() {
       if (!document.hidden) refreshProfile();
     }
     function onStorage(event: StorageEvent) {
-      if (event.key !== null && event.key !== session.storageKey) return;
-      const hasToken = Boolean(actions.token());
+      if (event.key !== null && event.key !== session.signedInHintKey && event.key !== session.storageKey) return;
+      const hasToken = actions.hasSession();
       if (!hasToken && signedIn.value) {
         // Signed out in another tab: leave the chat surface entirely, the
         // same way an expired token does.
@@ -420,7 +419,7 @@ function ChatApp() {
   });
 
   async function maybeSubmitInitialPrompt() {
-    if (!initial.prompt || initialPromptSubmittedRef.current || interactionBusy.value || !actions.token()) return;
+    if (!initial.prompt || initialPromptSubmittedRef.current || interactionBusy.value || !actions.hasSession()) return;
     initialPromptSubmittedRef.current = true;
     setQuestion(initial.prompt);
     await Promise.resolve();

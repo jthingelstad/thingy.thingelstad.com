@@ -5,7 +5,7 @@ import { userLocalContext } from './thingy-local-context.ts';
 
 interface ChatStreamActionsOptions {
   streamBase: string;
-  token: () => string;
+  authHeaders: () => Record<string, string>;
   getActiveConversationId: () => string | null;
   isLocalConversationId: (id: unknown) => boolean;
   currentConversationMode: () => string;
@@ -67,7 +67,7 @@ function createChatStreamActions(options: ChatStreamActionsOptions) {
         controller: chatAbortController,
         timeoutMs: AGENT_RESPONSE_TIMEOUT_MS,
         abortMessage: 'Thingy spent too long in the archive. Please try again with a narrower angle.',
-        headers: { authorization: `Bearer ${options.token()}` },
+        headers: options.authHeaders(),
         payload: {
           message,
           scope,
@@ -158,7 +158,7 @@ function createChatStreamActions(options: ChatStreamActionsOptions) {
       controller: opts.controller,
       timeoutMs: AGENT_SETUP_TIMEOUT_MS,
       abortMessage: 'Thingy took too long to get oriented. Please try asking a question.',
-      headers: { authorization: `Bearer ${options.token()}` },
+      headers: options.authHeaders(),
       payload: {
         scope,
         mode: options.currentConversationMode(),

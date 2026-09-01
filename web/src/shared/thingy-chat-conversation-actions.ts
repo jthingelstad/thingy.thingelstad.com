@@ -17,7 +17,7 @@ interface ChatConversationActionsOptions {
   localConversationPrefix: string;
   activeConvKey: string;
   currentScope: () => string;
-  token: () => string;
+  hasSession: () => boolean;
   ensureFreshToken: () => Promise<boolean>;
   setUserProfile: (data: ThingyApiResponse) => unknown;
   refreshStoredAuth: () => Promise<boolean>;
@@ -194,7 +194,7 @@ function createChatConversationActions(options: ChatConversationActionsOptions) 
 
   async function createConversationShellForMode(mode: unknown, config: { replaceId?: string } = {}) {
     const normalized = normalizeModeId(mode);
-    if (!options.token() || normalized === 'thingy') return activeConversation();
+    if (!options.hasSession() || normalized === 'thingy') return activeConversation();
     if (!state.availableModes.some((entry) => entry.id === normalized)) return null;
     if (!(await options.ensureFreshToken())) return null;
     const replaceId = String(config.replaceId || state.activeConversationId || '').trim();
@@ -227,7 +227,7 @@ function createChatConversationActions(options: ChatConversationActionsOptions) 
   }
 
   async function refreshConversations(config: { retryAuth?: boolean } = {}): Promise<ThingyConversationSummary[]> {
-    if (!options.token()) {
+    if (!options.hasSession()) {
       state.conversations = [];
       options.onActiveConversationChanged();
       return [];

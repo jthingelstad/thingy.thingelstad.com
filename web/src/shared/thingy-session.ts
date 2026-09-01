@@ -3,10 +3,13 @@ import { librarianApiUrl } from './thingy-config.ts';
 import { postJsonRequest } from './thingy-http.ts';
 
 const storageKey = 'weeklyThingLibrarianToken';
+// Non-sensitive signed-in hint. The real session is an HttpOnly cookie the
+// page cannot read; this only lets the shell render optimistically and lets
+// tabs notice each other's sign-in state. Never treated as a credential.
+const signedInHintKey = 'thingySignedIn';
 const userEmailKey = 'thingyUserEmail';
 const userProfileKey = 'thingyUserProfile';
 const pendingReturnParamsKey = 'thingyPendingReturnParams';
-const refreshWindowSeconds = 60 * 60 * 24 * 3;
 const privateReturnParams = [
   'email',
   'prompt',
@@ -29,8 +32,16 @@ function normalizeEmail(value: unknown): string {
     .toLowerCase();
 }
 
+// Legacy localStorage token accessor. Kept only for the migration shim and
+// Bearer fallback while pre-cookie sessions roll through (remove after
+// 2026-09-15: by then every 9-day session has either migrated or expired).
 function token() {
   return window.localStorage.getItem(storageKey) || '';
+}
+
+function sessionActive(): boolean {
+  if (window.localStorage.getItem(signedInHintKey)) return true;
+  return Boolean(token()) && !legacyTokenExpired();
 }
 
 function tokenPayload(value?: string): ThingyTokenPayload | null {
@@ -45,20 +56,24 @@ function tokenPayload(value?: string): ThingyTokenPayload | null {
   }
 }
 
-function tokenExpired(value?: string, skewSeconds = 60): boolean {
+function legacyTokenExpired(value?: string, skewSeconds = 60): boolean {
   const payload = tokenPayload(value || token());
   const expiresAt = Number((payload && payload.exp) || 0);
   return !expiresAt || expiresAt <= Math.floor(Date.now() / 1000) + skewSeconds;
 }
 
-function tokenNeedsRefresh(value?: string): boolean {
-  const payload = tokenPayload(value || token());
-  const expiresAt = Number((payload && payload.exp) || 0);
-  return Boolean(expiresAt) && expiresAt <= Math.floor(Date.now() / 1000) + refreshWindowSeconds;
+// The HttpOnly cookie hides exp from the page, so "expired" now means "no
+// session": the server slides the cookie itself on session/refresh calls.
+function tokenExpired(): boolean {
+  return !sessionActive();
 }
 
+// Legacy Bearer attach: only meaningful while an un-migrated localStorage
+// token exists. Cookie sessions send no auth header - the cookie rides along
+// on every same-origin request.
 function authHeaders(): Record<string, string> {
-  return token() ? { authorization: `Bearer ${token()}` } : {};
+  const legacy = token();
+  return legacy ? { authorization: `Bearer ${legacy}` } : {};
 }
 
 async function postJson(
@@ -77,20 +92,36 @@ async function postJson(
   });
 }
 
-// Returns the parsed /auth payload on success (so callers can update UI
-// state from it), or null on any failure.
+// Confirm (and slide) the session with the server. Handles the one-time
+// legacy migration: a pre-cookie localStorage token is exchanged via
+// refresh_session, the server answers with the HttpOnly cookie, and the
+// stored token is deleted. Cookie sessions use the 'session' probe. The
+// email rides along (self-bound server-side) so entitlements re-verify
+// instead of silently decaying. Returns the parsed payload or null.
+let sessionConfirmedAt = 0;
+const sessionConfidenceMs = 10 * 60 * 1000;
+
 async function refreshAuth() {
-  if (!token() || tokenExpired()) return null;
+  const legacy = token();
   try {
-    // The email rides along (self-bound server-side: it must hash to the
-    // session subject) so a sliding refresh can re-verify entitlements
-    // instead of letting them silently decay.
-    const data = await postJson(
-      '/auth',
-      { action: 'refresh_session', email: storedEmail() || undefined },
-      authHeaders()
-    );
-    if (!data || !data.token) return null;
+    if (legacy && !legacyTokenExpired(legacy)) {
+      const data = await postJson(
+        '/auth',
+        { action: 'refresh_session', email: storedEmail() || undefined },
+        { authorization: `Bearer ${legacy}` }
+      );
+      if (!data || !data.token) return null;
+      window.localStorage.removeItem(storageKey);
+      persistAuth(data, storedEmail());
+      return data;
+    }
+    if (legacy) window.localStorage.removeItem(storageKey);
+    const data = await postJson('/auth', { action: 'session', email: storedEmail() || undefined }, {});
+    if (!data || data.authenticated !== true) {
+      window.localStorage.removeItem(signedInHintKey);
+      sessionConfirmedAt = 0;
+      return null;
+    }
     persistAuth(data, storedEmail());
     return data;
   } catch (error) {
@@ -98,10 +129,11 @@ async function refreshAuth() {
   }
 }
 
+// Cheap gate used before every send: trust a recent server confirmation,
+// otherwise probe (which also slides the cookie server-side).
 async function ensureFreshToken() {
-  if (!token()) return false;
-  if (tokenExpired()) return false;
-  if (!tokenNeedsRefresh()) return true;
+  if (!sessionActive()) return false;
+  if (Date.now() - sessionConfirmedAt < sessionConfidenceMs) return true;
   return Boolean(await refreshAuth());
 }
 
@@ -145,15 +177,34 @@ function updateStoredProfile(patch: Partial<LibrarianProfile> = {}): LibrarianPr
   return profile;
 }
 
+// The session credential is the HttpOnly cookie the server just set; the
+// page records only the non-sensitive hint and profile. The body token is
+// deliberately NOT stored (cookie-era clients never persist a credential).
 function persistAuth(data: ThingyAuthData, email: string): LibrarianProfile | null {
-  if (!data || !data.token) return null;
-  window.localStorage.setItem(storageKey, data.token);
+  if (!data) return null;
+  window.localStorage.setItem(signedInHintKey, '1');
+  sessionConfirmedAt = Date.now();
   return mergeProfile(data, email);
 }
 
 function clearAuth() {
+  const headers: Record<string, string> = { 'content-type': 'application/json' };
+  try {
+    // Best-effort server-side cookie clear that survives the sign-out
+    // navigation. Failure is harmless: the 9-day TTL bounds the cookie.
+    void window.fetch(`${apiUrl()}/auth`, {
+      method: 'POST',
+      keepalive: true,
+      headers,
+      body: JSON.stringify({ action: 'sign_out' })
+    });
+  } catch (error) {
+    /* ignored */
+  }
   window.localStorage.removeItem(storageKey);
+  window.localStorage.removeItem(signedInHintKey);
   window.localStorage.removeItem(userProfileKey);
+  sessionConfirmedAt = 0;
 }
 
 function storedEmail() {
@@ -242,15 +293,16 @@ function signInUrl(returnTo = ''): string {
 
 export {
   storageKey,
+  signedInHintKey,
   userEmailKey,
   userProfileKey,
   pendingReturnParamsKey,
   apiUrl,
   normalizeEmail,
   token,
+  sessionActive,
   tokenPayload,
   tokenExpired,
-  tokenNeedsRefresh,
   authHeaders,
   postJson,
   refreshAuth,
