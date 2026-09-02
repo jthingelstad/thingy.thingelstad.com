@@ -75,7 +75,19 @@ async function read(response: Response, onEvent: (eventName: string, data: Thing
     }
   }
   buffer += decoder.decode();
-  if (buffer.trim()) await consume(buffer);
+  // A leftover block missing its \n\n terminator is a truncated stream
+  // tail (connection cut mid-event - usually the large done payload). SSE
+  // never dispatches an unterminated event; the answer already streamed,
+  // so dropping the tail beats failing the whole turn over it.
+  if (buffer.trim()) {
+    let parsed: ReturnType<typeof parseBlock> = null;
+    try {
+      parsed = parseBlock(buffer);
+    } catch {
+      parsed = null;
+    }
+    if (parsed) await onEvent(parsed.eventName, parsed.data);
+  }
 }
 
 async function postJsonStream(options: ThingyRequestOptions = {}): Promise<Response> {

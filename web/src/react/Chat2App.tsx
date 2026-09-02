@@ -522,16 +522,21 @@ export function Chat2App({ initial }: { initial: Chat2Initial }) {
   const [signedIn] = useState(() => session.sessionActive());
   const guest = !signedIn;
   const [activeId, setActiveId] = useState('');
+  // The thread's mount identity. Only explicit navigation (rail click, New
+  // chat) may change it: when the FIRST turn of a new thread streams its
+  // conversation id back, remounting on that id would wipe the in-flight
+  // exchange, so onConversationId updates activeId (rail highlight) only.
+  const [mountedId, setMountedId] = useState('');
   const [threadEpoch, setThreadEpoch] = useState(0);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [guestRemaining, setGuestRemaining] = useState<number | null>(null);
   const [mobileRailOpen, setMobileRailOpen] = useState(false);
   const bindingRef = useRef<ThingyThreadBinding | null>(null);
 
-  const conversationKey = activeId || `new-${threadEpoch}`;
+  const conversationKey = mountedId || `new-${threadEpoch}`;
   const binding = useMemo<ThingyThreadBinding>(() => {
     const next: ThingyThreadBinding = {
-      conversationId: activeId,
+      conversationId: mountedId,
       guest,
       onConversationId: (id) => {
         setActiveId(id);
@@ -572,6 +577,7 @@ export function Chat2App({ initial }: { initial: Chat2Initial }) {
 
   function newConversation() {
     setActiveId('');
+    setMountedId('');
     setThreadEpoch((n) => n + 1);
     setMobileRailOpen(false);
   }
@@ -707,6 +713,7 @@ export function Chat2App({ initial }: { initial: Chat2Initial }) {
                       className="thingy-aui-recent"
                       onClick={() => {
                         setActiveId(entry.id);
+                        setMountedId(entry.id);
                         setMobileRailOpen(false);
                       }}
                     >

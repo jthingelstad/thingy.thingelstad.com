@@ -88,7 +88,10 @@ export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdap
             scope: 'all',
             mode: 'thingy',
             conversation_id: binding.conversationId || undefined,
-            parent_request_id: parentRequestId || undefined,
+            // Always present, even when '': an empty value tells the server
+            // this is a root turn (edit of the first message) with no prior
+            // context, distinct from a legacy client omitting the field.
+            parent_request_id: parentRequestId,
             client_context: userLocalContext(),
             user_profile: {},
             // Guests have no server-side history; the transcript rides along.
