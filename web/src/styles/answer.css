@@ -1,0 +1,228 @@
+/* Typography for rendered answers (.librarian-answer-content) - the one
+   place content styling should live, shared by the chat thread and the
+   public share page. Everything rides the base tokens. */
+
+.librarian-answer-content {
+  font-family: var(--sans);
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: var(--ink);
+  overflow-wrap: break-word;
+}
+
+.librarian-answer-content > :first-child {
+  margin-top: 0;
+}
+
+.librarian-answer-content > :last-child {
+  margin-bottom: 0;
+}
+
+.librarian-answer-content p {
+  margin: 0 0 0.75em;
+}
+
+.librarian-answer-content ul,
+.librarian-answer-content ol {
+  margin: 0 0 0.75em;
+  padding-left: 1.4em;
+  display: grid;
+  gap: 0.3em;
+}
+
+.librarian-answer-content ul {
+  list-style: disc;
+}
+
+.librarian-answer-content ol {
+  list-style: decimal;
+}
+
+.librarian-answer-content h2,
+.librarian-answer-content h3,
+.librarian-answer-content h4 {
+  margin: 1.1em 0 0.4em;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.librarian-answer-content h2 {
+  font-size: 1.2em;
+}
+
+.librarian-answer-content h3 {
+  font-size: 1.08em;
+}
+
+.librarian-answer-content h4 {
+  font-size: 1em;
+}
+
+.librarian-answer-content a {
+  color: var(--accent-deep);
+  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent-deep) 45%, transparent);
+  text-underline-offset: 2px;
+}
+
+.librarian-answer-content a:hover {
+  text-decoration-color: var(--accent-deep);
+}
+
+.librarian-answer-content blockquote {
+  margin: 0 0 0.75em;
+  padding: 0.1em 0 0.1em 0.9em;
+  border-left: 3px solid var(--line);
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+.librarian-answer-content code {
+  font-family: ui-monospace, 'SF Mono', menlo, monospace;
+  font-size: 0.88em;
+  background: var(--code-bg);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+
+.librarian-answer-content hr {
+  margin: 1em 0;
+  border: none;
+  border-top: 1px solid var(--line-soft);
+}
+
+.librarian-answer-content table {
+  margin: 0 0 0.75em;
+  border-collapse: collapse;
+  font-size: 0.92em;
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.librarian-answer-content th,
+.librarian-answer-content td {
+  border: 1px solid var(--line);
+  padding: 5px 10px;
+  text-align: left;
+}
+
+.librarian-answer-content th {
+  background: var(--surface-2);
+  font-weight: 700;
+}
+
+/* Fenced code blocks: header bar (language + copy) then the block. */
+.librarian-answer-content .thingy-aui-codeheader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: color-mix(in srgb, var(--surface-2) 82%, var(--surface));
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.librarian-answer-content .thingy-aui-codeheader button {
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: none;
+  padding: 2px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.librarian-answer-content .thingy-aui-codeheader button:hover {
+  color: var(--ink);
+}
+
+.librarian-answer-content .thingy-aui-codeheader button svg {
+  width: 14px;
+  height: 14px;
+}
+
+.librarian-answer-content .thingy-aui-codeheader + pre,
+.librarian-answer-content pre {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-2) 62%, var(--surface));
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.librarian-answer-content .thingy-aui-codeheader + pre {
+  border-radius: 0 0 8px 8px;
+  border-top: none;
+}
+
+.librarian-answer-content pre code {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* shiki dual-theme output: light palette default, dark follows the
+   data-theme attribute the theme boot always sets. */
+.thingy-shiki pre.shiki {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 0 0 8px 8px;
+  border-top: none;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  background: color-mix(in srgb, var(--surface-2) 62%, var(--surface)) !important;
+}
+
+.thingy-shiki pre.shiki code {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.thingy-shiki pre.shiki span {
+  color: var(--shiki-light);
+}
+
+:root[data-theme='dark'] .thingy-shiki pre.shiki span {
+  color: var(--shiki-dark);
+}
+
+/* Inline media in answers: clickable thumbnails that open the source page
+   (or full image) in a new tab. Several in one paragraph flow side by side. */
+.librarian-answer-content a.thingy-answer-media {
+  display: inline-block;
+  margin: 6px 8px 6px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  line-height: 0;
+  border: 1px solid var(--line);
+}
+
+.librarian-answer-content a.thingy-answer-media img {
+  display: block;
+  max-height: 220px;
+  max-width: min(100%, 340px);
+  width: auto;
+  height: auto;
+  object-fit: cover;
+}
+
+.librarian-answer-content a.thingy-answer-media:hover {
+  filter: brightness(1.04);
+}
+
+.librarian-answer-content img {
+  max-width: 100%;
+  border-radius: 8px;
+}

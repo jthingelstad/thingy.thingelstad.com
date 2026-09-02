@@ -7,11 +7,7 @@
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createRootRoute, createRoute, createRouter, Outlet, RouterProvider } from '@tanstack/react-router';
-import '../styles/tailwind.css';
-import '../styles/thingy.css';
-import '../styles/thingy-aui.css';
-import '../styles/thingy-auth.css';
-import '../styles/thingy-share-entry.css';
+import '../styles/app.css';
 import { initTheme } from '../shared/thingy-theme.ts';
 import { registerClientErrorTracking } from '../shared/thingy-analytics.ts';
 import { composeExplorePrompt } from '../shared/thingy-explore.ts';

@@ -9,7 +9,7 @@
   },
   "overrides": [
     {
-      "files": ["src/styles/tailwind.css"],
+      "files": ["src/styles/tailwind.css", "src/styles/app.css"],
       "rules": {
         "import-notation": null,
         "at-rule-no-unknown": [

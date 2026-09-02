@@ -181,43 +181,63 @@ function ProfileModal({
 
   return (
     <div
-      className="thingy-memory-modal-backdrop"
+      className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-5 backdrop-blur-[3px]"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <section className="thingy-memory-modal" role="dialog" aria-modal="true" aria-labelledby="thingy-memory-title">
-        <header className="thingy-memory-header">
-          <span className="thingy-memory-header-icon" aria-hidden="true">
+      <section
+        className="max-h-[min(640px,calc(100vh-40px))] w-[min(30rem,100%)] overflow-y-auto rounded-2xl border border-line bg-surface p-5 font-sans text-ink shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="thingy-memory-title"
+      >
+        <header className="mb-3 flex items-start gap-3">
+          <span
+            className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-deep [&_svg]:size-[18px]"
+            aria-hidden="true"
+          >
             <Icon name="users-round" />
           </span>
-          <div>
-            <h2 id="thingy-memory-title">Profile</h2>
-            <p>Account details and Thingy activity.</p>
+          <div className="min-w-0 flex-1">
+            <h2 id="thingy-memory-title" className="text-[17px] font-extrabold">
+              Profile
+            </h2>
+            <p className="text-[13px] text-muted">Account details and Thingy activity.</p>
           </div>
-          <button type="button" className="thingy-memory-close" aria-label="Close Profile" onClick={onClose}>
+          <button
+            type="button"
+            className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-ink [&_svg]:size-4"
+            aria-label="Close Profile"
+            onClick={onClose}
+          >
             <Icon name="x" />
           </button>
         </header>
-        <section className="thingy-memory-status" aria-live="polite">
+        <section className="min-h-5 text-[13px] text-muted" aria-live="polite">
           <span>{busyAction === 'load' ? 'Loading profile...' : ''}</span>
-          {profileError ? <small>{profileError}</small> : null}
+          {profileError ? <small className="text-error">{profileError}</small> : null}
         </section>
         <div className="thingy-memory-panel">
-          <dl className="thingy-memory-dl">
+          <dl className="thingy-memory-dl grid grid-cols-[auto_1fr] gap-x-5 gap-y-2 text-[14px]">
             {rows.map(([label, value]) => (
               <Fragment key={label}>
-                <dt>{label}</dt>
-                <dd>{value}</dd>
+                <dt className="font-bold text-muted">{label}</dt>
+                <dd className="min-w-0 break-words text-ink">{value}</dd>
               </Fragment>
             ))}
           </dl>
-          <section className="thingy-memory-danger-zone" aria-label="Delete Thingy Profile">
-            <h3>Delete Thingy Profile</h3>
-            <p>This deletes your Thingy profile and conversations. It does not unsubscribe you from Weekly Thing.</p>
+          <section
+            className="mt-5 rounded-xl border border-error/35 bg-error/6 p-3.5"
+            aria-label="Delete Thingy Profile"
+          >
+            <h3 className="text-[14px] font-extrabold text-error">Delete Thingy Profile</h3>
+            <p className="mt-0.5 text-[13px] text-ink-soft">
+              This deletes your Thingy profile and conversations. It does not unsubscribe you from Weekly Thing.
+            </p>
             <button
               type="button"
-              className="thingy-memory-danger"
+              className="mt-2.5 rounded-lg bg-error px-3.5 py-2 text-sm font-bold text-bg hover:brightness-110 disabled:opacity-50"
               disabled={Boolean(busyAction)}
               onClick={() => void handleDeleteProfile()}
             >
@@ -267,25 +287,40 @@ export function AccountPanel() {
     <div className="rail-account thingy-aui-account">
       <Popover.Root open={open} onOpenChange={setOpen}>
         <Popover.Trigger asChild>
-          <button className="rail-account-btn" type="button" title="Account">
-            <span className="rail-avatar" aria-hidden="true">
+          <button
+            className="rail-account-btn flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-surface-2"
+            type="button"
+            title="Account"
+          >
+            <span
+              className="grid size-8 shrink-0 place-items-center rounded-full bg-accent-deep font-sans text-sm font-extrabold text-bg"
+              aria-hidden="true"
+            >
               {initial}
             </span>
-            <span className="rail-account-meta">
-              <span className="rail-account-email">{display || 'Signed in'}</span>
-              <span className="rail-account-sub">{supporting ? 'Supporting Member' : 'Weekly Thing reader'}</span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-sans text-[13px] font-bold text-ink">{display || 'Signed in'}</span>
+              <span className="block truncate font-sans text-[11.5px] text-muted">
+                {supporting ? 'Supporting Member' : 'Weekly Thing reader'}
+              </span>
             </span>
-            <span className="rail-account-caret" aria-hidden="true">
+            <span className="text-muted [&_svg]:size-4" aria-hidden="true">
               <Icon name="chevron-down" />
             </span>
           </button>
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Content className="rail-menu rail-menu-popover" side="top" align="start" sideOffset={8}>
-            <form className="rail-account-setting" onSubmit={handleNameSubmit}>
-              <label>Name</label>
-              <div className="rail-account-setting-row">
+          <Popover.Content
+            className="z-50 grid w-[var(--radix-popover-trigger-width)] min-w-64 gap-1 rounded-xl border border-line bg-surface p-2 font-sans text-ink shadow-xl"
+            side="top"
+            align="start"
+            sideOffset={8}
+          >
+            <form className="px-1.5 pt-1" onSubmit={handleNameSubmit}>
+              <label className="text-[11px] font-bold tracking-wider text-muted uppercase">Name</label>
+              <div className="mt-1 flex gap-1.5">
                 <input
+                  className="w-full min-w-0 rounded-lg border border-line bg-bg px-2.5 py-1.5 text-[13px] text-ink outline-none placeholder:text-muted focus:border-accent"
                   name="preferred_name"
                   type="text"
                   maxLength={80}
@@ -293,37 +328,53 @@ export function AccountPanel() {
                   placeholder="What should Thingy call you?"
                   defaultValue={preferredName}
                 />
-                <button type="submit">Save</button>
+                <button
+                  type="submit"
+                  className="shrink-0 rounded-lg bg-accent-deep px-3 py-1.5 text-[13px] font-bold text-bg hover:brightness-110"
+                >
+                  Save
+                </button>
               </div>
-              <p aria-live="polite">{nameStatus}</p>
+              <p className="min-h-4 pt-0.5 text-[11.5px] text-muted" aria-live="polite">
+                {nameStatus}
+              </p>
             </form>
             <button
               type="button"
-              className="rail-memory-trigger"
+              className="flex items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-left hover:bg-surface-2"
               onClick={() => {
                 setProfileOpen(true);
                 setOpen(false);
               }}
             >
-              <span className="rail-memory-trigger-icon" aria-hidden="true">
+              <span
+                className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent-deep [&_svg]:size-4"
+                aria-hidden="true"
+              >
                 <Icon name="users-round" />
               </span>
-              <span className="rail-memory-trigger-copy">
-                <strong>Show Profile</strong>
-                <small>Account details and activity</small>
+              <span className="min-w-0">
+                <strong className="block text-[13px] font-bold text-ink">Show Profile</strong>
+                <small className="block text-[11.5px] text-muted">Account details and activity</small>
               </span>
             </button>
-            <div className="rail-menu-sep" role="separator" />
-            <div className="rail-account-setting rail-theme-setting">
-              <label id="thingy-theme-label">Theme</label>
-              <div className="rail-theme-options" role="radiogroup" aria-labelledby="thingy-theme-label">
+            <div className="mx-1 my-0.5 border-t border-line-soft" role="separator" />
+            <div className="px-1.5">
+              <label id="thingy-theme-label" className="text-[11px] font-bold tracking-wider text-muted uppercase">
+                Theme
+              </label>
+              <div className="mt-1 flex gap-1.5" role="radiogroup" aria-labelledby="thingy-theme-label">
                 {(['system', 'light', 'dark'] as ThingyTheme[]).map((option) => (
                   <button
                     key={option}
                     type="button"
                     role="radio"
                     aria-checked={theme === option}
-                    className={theme === option ? 'is-active' : ''}
+                    className={`flex-1 rounded-lg border px-0 py-1.5 text-[12px] font-bold transition-colors ${
+                      theme === option
+                        ? 'border-accent bg-accent-soft text-ink'
+                        : 'border-line bg-bg text-ink-soft hover:bg-surface-2'
+                    }`}
                     onClick={() => {
                       setTheme(option);
                       setThemeState(option);
@@ -334,12 +385,17 @@ export function AccountPanel() {
                 ))}
               </div>
             </div>
-            <div className="rail-menu-sep" role="separator" />
-            <button type="button" role="menuitem" className="danger" onClick={handleLogout}>
+            <div className="mx-1 my-0.5 border-t border-line-soft" role="separator" />
+            <button
+              type="button"
+              role="menuitem"
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] font-bold text-error hover:bg-error/8 [&_svg]:size-4"
+              onClick={handleLogout}
+            >
               <Icon name="log-out" />
               Logout
             </button>
-            <p className="rail-menu-build" title="Thingy build">
+            <p className="rail-menu-build px-2 pb-1 font-mono text-[11px] text-muted" title="Thingy build">
               Build {buildId()}
             </p>
           </Popover.Content>

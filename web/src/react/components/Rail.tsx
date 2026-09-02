@@ -40,6 +40,9 @@ function timeGroups(conversations: ConversationSummary[]) {
   return groups.filter((group) => group.entries.length);
 }
 
+const RAIL_ICON_BUTTON =
+  'grid size-8 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-ink [&_svg]:size-4';
+
 export function Rail({
   collapsed,
   onToggleCollapsed,
@@ -85,36 +88,47 @@ export function Rail({
     return new Map(searchMatches.map((match) => [match.conversation_id, match.snippet]));
   }, [searchMatches, filter]);
   const groups = useMemo(() => {
-    const needle = filter.trim().toLowerCase();
-    const visible = needle
-      ? conversations.filter((entry) => entry.title.toLowerCase().includes(needle) || contentMatches.has(entry.id))
+    const needleNow = filter.trim().toLowerCase();
+    const visible = needleNow
+      ? conversations.filter((entry) => entry.title.toLowerCase().includes(needleNow) || contentMatches.has(entry.id))
       : conversations;
     return timeGroups(visible);
   }, [conversations, filter, contentMatches]);
   return (
-    <nav className="rail thingy-aui-rail" aria-label="Conversations">
-      <div className="thingy-aui-rail-head">
+    <nav
+      className="rail thingy-aui-rail flex h-full min-h-0 w-[280px] flex-col border-r border-line-soft bg-surface"
+      aria-label="Conversations"
+    >
+      <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+        <img className="rail-mark size-9 rounded-xl" src="/img/thingy.png" alt="" width="1022" height="1022" />
+        <span className="flex-1 font-sans text-[15px] font-extrabold text-ink">Thingy</span>
         <Tip label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
           <button
             type="button"
-            className="thingy-aui-collapse"
+            className={RAIL_ICON_BUTTON}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             onClick={onToggleCollapsed}
           >
             <Icon name="panel-left" />
           </button>
         </Tip>
-        <img className="rail-mark" src="/img/thingy.png" alt="" width="1022" height="1022" />
-        <button type="button" className="rail-newchat thingy-aui-newchat" onClick={onNew}>
-          <Icon name="square-pen" /> {collapsed ? '' : 'New chat'}
+      </div>
+      <div className="px-3 pb-1.5">
+        <button
+          type="button"
+          className="thingy-aui-newchat flex w-full items-center gap-2 rounded-xl border border-line bg-bg px-3 py-2 font-sans text-sm font-bold text-ink transition-colors hover:border-accent hover:bg-accent-soft [&_svg]:size-4"
+          onClick={onNew}
+        >
+          <Icon name="square-pen" /> New chat
         </button>
       </div>
-      <div className="rail-body">
+      <div className="rail-body min-h-0 flex-1 overflow-y-auto px-2 pb-2">
         {conversations.length > 0 ? (
-          <div className="thingy-aui-rail-filter">
+          <div className="mx-1 mt-1 mb-2 flex items-center gap-1.5 rounded-lg border border-line-soft bg-bg px-2.5 py-1.5 text-muted focus-within:border-accent [&_svg]:size-3.5 [&_svg]:shrink-0">
             <Icon name="search" />
             <input
               ref={filterInputRef}
+              className="w-full min-w-0 bg-transparent font-sans text-[13px] text-ink outline-none placeholder:text-muted"
               type="search"
               placeholder="Filter chats"
               aria-label="Filter conversations"
@@ -123,28 +137,48 @@ export function Rail({
             />
           </div>
         ) : null}
-        {groups.length === 0 ? <p className="thingy-aui-rail-label">No matching chats</p> : null}
+        {groups.length === 0 ? (
+          <p className="px-2 pt-2 font-sans text-xs font-semibold tracking-wide text-muted uppercase">
+            No matching chats
+          </p>
+        ) : null}
         {groups.map((group) => (
           <div key={group.label}>
-            <p className="thingy-aui-rail-label">{group.label}</p>
-            <ul className="thingy-aui-recents">
+            <p className="px-2 pt-3 pb-1 font-sans text-[11px] font-bold tracking-wider text-muted uppercase">
+              {group.label}
+            </p>
+            <ul className="thingy-aui-recents grid gap-0.5">
               {group.entries.map((entry) => (
-                <li key={entry.id} className={entry.id === activeId ? 'is-active' : ''}>
-                  <button type="button" className="thingy-aui-recent" onClick={() => onSelect(entry.id)}>
-                    {entry.title}
-                    {entry.shared_at ? (
-                      <span className="thingy-aui-shared-dot" title="Shared" aria-label="Shared">
-                        <Icon name="share" />
+                <li
+                  key={entry.id}
+                  className={`group/row relative rounded-lg transition-colors ${
+                    entry.id === activeId ? 'bg-accent-soft' : 'hover:bg-surface-2'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    className="thingy-aui-recent block w-full truncate px-2.5 py-2 text-left font-sans text-[13.5px] text-ink"
+                    onClick={() => onSelect(entry.id)}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <span className="min-w-0 flex-1 truncate">{entry.title}</span>
+                      {entry.shared_at ? (
+                        <span className="text-accent-deep [&_svg]:size-3" title="Shared" aria-label="Shared">
+                          <Icon name="share" />
+                        </span>
+                      ) : null}
+                    </span>
+                    {filter.trim() && contentMatches.has(entry.id) ? (
+                      <span className="mt-0.5 block truncate text-[11.5px] text-muted">
+                        {contentMatches.get(entry.id)}
                       </span>
                     ) : null}
-                    {filter.trim() && contentMatches.has(entry.id) ? (
-                      <span className="thingy-aui-recent-snippet">{contentMatches.get(entry.id)}</span>
-                    ) : null}
                   </button>
-                  <span className="thingy-aui-recent-actions">
+                  <span className="absolute top-1/2 right-1 hidden -translate-y-1/2 items-center gap-0 rounded-md bg-inherit group-focus-within/row:flex group-hover/row:flex">
                     <Tip label={entry.shared_at ? 'Refresh share link' : 'Share'}>
                       <button
                         type="button"
+                        className="grid size-7 place-items-center rounded-md text-muted hover:bg-surface hover:text-ink [&_svg]:size-3.5"
                         aria-label="Share"
                         onClick={() => onShare(entry.id, Boolean(entry.shared_at))}
                       >
@@ -152,12 +186,22 @@ export function Rail({
                       </button>
                     </Tip>
                     <Tip label="Rename">
-                      <button type="button" aria-label="Rename" onClick={() => onRename(entry.id, entry.title)}>
+                      <button
+                        type="button"
+                        className="grid size-7 place-items-center rounded-md text-muted hover:bg-surface hover:text-ink [&_svg]:size-3.5"
+                        aria-label="Rename"
+                        onClick={() => onRename(entry.id, entry.title)}
+                      >
                         <Icon name="pencil" />
                       </button>
                     </Tip>
                     <Tip label="Delete">
-                      <button type="button" aria-label="Delete" onClick={() => onDelete(entry.id)}>
+                      <button
+                        type="button"
+                        className="grid size-7 place-items-center rounded-md text-muted hover:bg-surface hover:text-error [&_svg]:size-3.5"
+                        aria-label="Delete"
+                        onClick={() => onDelete(entry.id)}
+                      >
                         <Icon name="trash" />
                       </button>
                     </Tip>
@@ -168,7 +212,7 @@ export function Rail({
           </div>
         ))}
       </div>
-      <div className="thingy-aui-rail-foot">
+      <div className="border-t border-line-soft p-2">
         <AccountPanel />
       </div>
     </nav>

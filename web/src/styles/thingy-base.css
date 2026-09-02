@@ -9,21 +9,21 @@
 
 :root {
   /* Colors */
-  --color-bg: #f6f8f5;
-  --color-surface: #fff;
-  --color-surface-2: #eef4f1;
-  --color-text: #17211f;
-  --color-text-soft: #3f4f4a;
-  --color-text-muted: #596a64;
-  --color-accent: #14776f;
-  --color-error: #b23a2a;
-  --color-accent-hover: #0b4f4a;
-  --color-accent-soft: #dcf3ef;
-  --color-audio-accent: #b86131;
-  --color-border: #dfe7e3;
-  --color-border-light: #edf2ef;
-  --color-highlight: #d6f2ea;
-  --color-code-bg: #eaf1ee;
+  --thingy-bg: #f6f8f5;
+  --thingy-surface: #fff;
+  --thingy-surface-2: #eef4f1;
+  --thingy-text: #17211f;
+  --thingy-text-soft: #3f4f4a;
+  --thingy-text-muted: #596a64;
+  --thingy-accent: #14776f;
+  --thingy-error: #b23a2a;
+  --thingy-accent-hover: #0b4f4a;
+  --thingy-accent-soft: #dcf3ef;
+  --thingy-audio-accent: #b86131;
+  --thingy-border: #dfe7e3;
+  --thingy-border-light: #edf2ef;
+  --thingy-highlight: #d6f2ea;
+  --thingy-code-bg: #eaf1ee;
   --source-newsletter: #2f6fda;
   --source-blog: #b86131;
   --source-podcast: #3f7f63;
@@ -31,19 +31,19 @@
   --shadow-agent: 0 22px 70px -42px rgb(14 43 38 / 42%);
 
   /* Design-token aliases (preferred for new rules) */
-  --bg: var(--color-bg);
-  --surface: var(--color-surface);
-  --surface-2: var(--color-surface-2);
-  --ink: var(--color-text);
-  --ink-soft: var(--color-text-soft);
-  --muted: var(--color-text-muted);
-  --line: var(--color-border);
-  --line-soft: var(--color-border-light);
-  --accent: var(--color-accent);
-  --accent-deep: var(--color-accent-hover);
-  --accent-soft: var(--color-accent-soft);
-  --highlight: var(--color-highlight);
-  --code-bg: var(--color-code-bg);
+  --bg: var(--thingy-bg);
+  --surface: var(--thingy-surface);
+  --surface-2: var(--thingy-surface-2);
+  --ink: var(--thingy-text);
+  --ink-soft: var(--thingy-text-soft);
+  --muted: var(--thingy-text-muted);
+  --line: var(--thingy-border);
+  --line-soft: var(--thingy-border-light);
+  --accent: var(--thingy-accent);
+  --accent-deep: var(--thingy-accent-hover);
+  --accent-soft: var(--thingy-accent-soft);
+  --highlight: var(--thingy-highlight);
+  --code-bg: var(--thingy-code-bg);
 
   /* Typography */
   --serif: 'Source Serif 4', 'Charter', 'Sitka Text', cambria, georgia, serif;
@@ -80,21 +80,21 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --color-bg: #101716;
-    --color-surface: #17211f;
-    --color-surface-2: #202c29;
-    --color-text: #eaf0ed;
-    --color-text-soft: #bcc8c3;
-    --color-text-muted: #899791;
-    --color-accent: #65c8bc;
-    --color-error: #e0705c;
-    --color-accent-hover: #8edbd2;
-    --color-accent-soft: rgb(101 200 188 / 16%);
-    --color-audio-accent: #d98a56;
-    --color-border: #2c3a36;
-    --color-border-light: #22302d;
-    --color-highlight: rgb(101 200 188 / 22%);
-    --color-code-bg: #202c29;
+    --thingy-bg: #101716;
+    --thingy-surface: #17211f;
+    --thingy-surface-2: #202c29;
+    --thingy-text: #eaf0ed;
+    --thingy-text-soft: #bcc8c3;
+    --thingy-text-muted: #899791;
+    --thingy-accent: #65c8bc;
+    --thingy-error: #e0705c;
+    --thingy-accent-hover: #8edbd2;
+    --thingy-accent-soft: rgb(101 200 188 / 16%);
+    --thingy-audio-accent: #d98a56;
+    --thingy-border: #2c3a36;
+    --thingy-border-light: #22302d;
+    --thingy-highlight: rgb(101 200 188 / 22%);
+    --thingy-code-bg: #202c29;
     --source-newsletter: #73a7f3;
     --source-blog: #d98a56;
     --source-podcast: #6fcf9c;
@@ -106,21 +106,21 @@
 /* Explicit reader choice (data-theme on <html>) beats the OS setting in
    both directions; the tokens must match the media-query block above. */
 :root[data-theme='dark'] {
-  --color-bg: #101716;
-  --color-surface: #17211f;
-  --color-surface-2: #202c29;
-  --color-text: #eaf0ed;
-  --color-text-soft: #bcc8c3;
-  --color-text-muted: #899791;
-  --color-accent: #65c8bc;
-  --color-error: #e0705c;
-  --color-accent-hover: #8edbd2;
-  --color-accent-soft: rgb(101 200 188 / 16%);
-  --color-audio-accent: #d98a56;
-  --color-border: #2c3a36;
-  --color-border-light: #22302d;
-  --color-highlight: rgb(101 200 188 / 22%);
-  --color-code-bg: #202c29;
+  --thingy-bg: #101716;
+  --thingy-surface: #17211f;
+  --thingy-surface-2: #202c29;
+  --thingy-text: #eaf0ed;
+  --thingy-text-soft: #bcc8c3;
+  --thingy-text-muted: #899791;
+  --thingy-accent: #65c8bc;
+  --thingy-error: #e0705c;
+  --thingy-accent-hover: #8edbd2;
+  --thingy-accent-soft: rgb(101 200 188 / 16%);
+  --thingy-audio-accent: #d98a56;
+  --thingy-border: #2c3a36;
+  --thingy-border-light: #22302d;
+  --thingy-highlight: rgb(101 200 188 / 22%);
+  --thingy-code-bg: #202c29;
   --source-newsletter: #73a7f3;
   --source-blog: #d98a56;
   --source-podcast: #6fcf9c;
@@ -153,8 +153,8 @@ body {
   font-size: var(--size-base);
   line-height: 1.65;
   letter-spacing: 0;
-  color: var(--color-text);
-  background: var(--color-bg);
+  color: var(--thingy-text);
+  background: var(--thingy-bg);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -199,21 +199,21 @@ p {
 }
 
 a {
-  color: var(--color-accent);
+  color: var(--thingy-accent);
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
   transition: color 0.15s ease;
 }
 
 a:hover {
-  color: var(--color-accent-hover);
+  color: var(--thingy-accent-hover);
 }
 
 blockquote {
-  border-left: 3px solid var(--color-accent);
+  border-left: 3px solid var(--thingy-accent);
   padding-left: var(--space-lg);
   margin: var(--space-xl) 0;
-  color: var(--color-text-muted);
+  color: var(--thingy-text-muted);
   font-style: italic;
 }
 
@@ -225,13 +225,13 @@ blockquote ul {
 code {
   font-family: var(--font-mono);
   font-size: 0.9em;
-  background: var(--color-code-bg);
+  background: var(--thingy-code-bg);
   padding: 0.15em 0.35em;
   border-radius: 3px;
 }
 
 pre {
-  background: var(--color-code-bg);
+  background: var(--thingy-code-bg);
   padding: var(--space-lg);
   border-radius: 6px;
   overflow-x: auto;
@@ -251,7 +251,7 @@ img {
 
 hr {
   border: none;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--thingy-border);
   margin: var(--space-2xl) 0;
 }
 
@@ -265,7 +265,7 @@ table {
 th,
 td {
   padding: var(--space-sm) var(--space-md);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--thingy-border);
   text-align: left;
 }
 
@@ -296,7 +296,7 @@ th {
   position: absolute;
   top: -100%;
   left: var(--space-md);
-  background: var(--color-accent);
+  background: var(--thingy-accent);
   color: #fff;
   padding: var(--space-sm) var(--space-md);
   border-radius: 4px;

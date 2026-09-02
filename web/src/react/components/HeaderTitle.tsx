@@ -14,11 +14,11 @@ export function HeaderTitle({
   const [draft, setDraft] = useState('');
   if (!editing || !canRename) {
     return (
-      <div className="mobile-chatbar-title">
+      <div className="mobile-chatbar-title min-w-0 flex-1 text-center md:text-left">
         {canRename ? (
           <button
             type="button"
-            className="thingy-title-edit"
+            className="max-w-full cursor-text truncate rounded-md px-1.5 py-0.5 font-sans text-[15px] font-bold text-ink hover:bg-surface-2"
             title="Rename conversation"
             onClick={() => {
               setDraft(title);
@@ -28,7 +28,7 @@ export function HeaderTitle({
             {title}
           </button>
         ) : (
-          <span>{title}</span>
+          <span className="truncate font-sans text-[15px] font-bold text-ink">{title}</span>
         )}
       </div>
     );
@@ -39,9 +39,9 @@ export function HeaderTitle({
     if (next && next !== title) void onRename(next);
   };
   return (
-    <div className="mobile-chatbar-title">
+    <div className="mobile-chatbar-title min-w-0 flex-1">
       <input
-        className="thingy-title-input"
+        className="w-[min(420px,100%)] rounded-md border border-accent bg-surface px-1.5 py-0.5 font-sans text-[15px] font-bold text-ink outline-none"
         type="text"
         value={draft}
         maxLength={120}

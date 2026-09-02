@@ -21,7 +21,7 @@
 
 .thingy-page .lede {
   text-align: center;
-  color: var(--color-text-soft);
+  color: var(--thingy-text-soft);
   margin: 0 0 2.2rem;
 }
 
@@ -39,7 +39,7 @@
 .thingy-page pre {
   font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 0.88em;
-  background: var(--color-code-bg, rgb(0 0 0 / 6%));
+  background: var(--thingy-code-bg, rgb(0 0 0 / 6%));
   border-radius: 5px;
 }
 
@@ -54,8 +54,8 @@
 }
 
 .thingy-page .card {
-  background: var(--color-surface, rgb(0 0 0 / 3%));
-  border: 1px solid var(--color-border, rgb(0 0 0 / 12%));
+  background: var(--thingy-surface, rgb(0 0 0 / 3%));
+  border: 1px solid var(--thingy-border, rgb(0 0 0 / 12%));
   border-radius: 12px;
   padding: 1rem 1.2rem;
   margin: 0.8rem 0;
@@ -74,7 +74,7 @@
    the structural fix for the invisible share-button bug - a bare
    `.thingy-page a` out-specified component color rules. */
 .thingy-page a:not([class]) {
-  color: var(--color-accent);
+  color: var(--thingy-accent);
 }
 
 .thingy-page table {
@@ -87,14 +87,14 @@
 .thingy-page td {
   text-align: left;
   padding: 0.35rem 0.8rem 0.35rem 0;
-  border-bottom: 1px solid var(--color-border, rgb(0 0 0 / 12%));
+  border-bottom: 1px solid var(--thingy-border, rgb(0 0 0 / 12%));
 }
 
 .thingy-page footer {
   text-align: center;
   margin-top: 3rem;
   font-size: 0.9rem;
-  color: var(--color-text-muted);
+  color: var(--thingy-text-muted);
 }
 
 /* Stat tiles and owner cards for the About page. */
@@ -106,8 +106,8 @@
 }
 
 .thingy-page .stat {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--thingy-surface);
+  border: 1px solid var(--thingy-border);
   border-radius: 12px;
   padding: 0.9rem 1rem;
   text-align: center;
@@ -117,12 +117,12 @@
   display: block;
   font-size: 1.45rem;
   font-variant-numeric: tabular-nums;
-  color: var(--color-accent);
+  color: var(--thingy-accent);
 }
 
 .thingy-page .stat span {
   font-size: 0.82rem;
-  color: var(--color-text-muted);
+  color: var(--thingy-text-muted);
 }
 
 .thingy-page .owner {
@@ -138,14 +138,14 @@
 .thingy-page .owner .cadence {
   margin-left: auto;
   font-size: 0.8rem;
-  color: var(--color-text-muted);
+  color: var(--thingy-text-muted);
   white-space: nowrap;
 }
 
 .thingy-page .flow {
   font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 0.82rem;
-  color: var(--color-text-soft);
+  color: var(--thingy-text-soft);
   overflow-x: auto;
   white-space: nowrap;
   padding: 0.6rem 0;
@@ -166,7 +166,7 @@
   align-items: center;
   gap: 0.45rem;
   font-weight: 700;
-  color: var(--color-text);
+  color: var(--thingy-text);
   text-decoration: none;
 }
 
@@ -182,17 +182,17 @@
 }
 
 .thingy-page-nav nav a {
-  color: var(--color-text-soft);
+  color: var(--thingy-text-soft);
   text-decoration: none;
   font-size: 0.95rem;
 }
 
 .thingy-page-nav nav a:hover {
-  color: var(--color-accent);
+  color: var(--thingy-accent);
 }
 
 .thingy-page-nav nav a[aria-current='page'] {
-  color: var(--color-accent);
+  color: var(--thingy-accent);
   font-weight: 600;
 }
 

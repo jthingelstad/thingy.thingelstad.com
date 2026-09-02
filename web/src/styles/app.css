@@ -1,0 +1,13 @@
+/* Single style entry for the SPA. Layer order is the whole trick: the
+   legacy stylesheets (tokens, answer typography, auth/share pages) sit in
+   a layer declared BEFORE Tailwind's, so utilities always win over legacy
+   element rules while custom properties still cascade normally. */
+
+@layer legacy;
+
+@import './tailwind.css';
+@import './thingy-base.css' layer(legacy);
+@import './answer.css' layer(legacy);
+@import './thingy-auth.css' layer(legacy);
+@import './thingy-page.css' layer(legacy);
+@import './share.css' layer(legacy);

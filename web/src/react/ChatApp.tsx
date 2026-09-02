@@ -184,6 +184,15 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
     invalidateConversations();
   }
 
+  async function searchConversations(query: string) {
+    const data = await session.postJson('/conversations', { action: 'search', query }, session.authHeaders());
+    const matches = (data as { matches?: Array<{ conversation_id?: string; snippet?: string }> }).matches;
+    return (Array.isArray(matches) ? matches : []).map((match) => ({
+      conversation_id: String(match.conversation_id || ''),
+      snippet: String(match.snippet || '')
+    }));
+  }
+
   const { text: welcome, suggestions } = useAgentWelcome(guest, Boolean(initial.prompt));
   const [railCollapsed, setRailCollapsed] = useState(() => {
     try {
@@ -232,45 +241,49 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
 
   return (
     <TipProvider>
-      <main className="thingy-page">
+      <main className="flex h-dvh overflow-hidden bg-bg font-sans text-ink">
         <h1 className="sr-only">Thingy chat</h1>
         <div
-          className={`thingy-app-shell${guest ? ' is-guest' : ''}${mobileRailOpen ? ' is-mobile-rail-open' : ''}${railCollapsed ? ' is-collapsed' : ''}`}
+          className={`thingy-app-shell flex min-w-0 flex-1${guest ? ' is-guest' : ''}${mobileRailOpen ? ' is-mobile-rail-open' : ''}`}
           id="thingy-app-shell"
         >
           {guest ? null : (
-            <Rail
-              collapsed={railCollapsed}
-              onToggleCollapsed={() => setRailCollapsed(!railCollapsed)}
-              conversations={conversations}
-              activeId={activeId}
-              onSelect={selectConversation}
-              onNew={newConversation}
-              onShare={(id, shared) => void shareConversation(id, shared)}
-              onRename={(id, current) => void renameConversation(id, current)}
-              onDelete={(id) => void deleteConversation(id)}
-              filterInputRef={filterInputRef}
-              onSearch={async (query) => {
-                const data = await session.postJson(
-                  '/conversations',
-                  { action: 'search', query },
-                  session.authHeaders()
-                );
-                const matches = (data as { matches?: Array<{ conversation_id?: string; snippet?: string }> }).matches;
-                return (Array.isArray(matches) ? matches : []).map((match) => ({
-                  conversation_id: String(match.conversation_id || ''),
-                  snippet: String(match.snippet || '')
-                }));
-              }}
-            />
+            <>
+              <div
+                className={`z-40 shrink-0 max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:transition-transform max-md:duration-200 ${
+                  mobileRailOpen ? 'max-md:visible max-md:translate-x-0' : 'max-md:invisible max-md:-translate-x-full'
+                } ${railCollapsed ? 'md:hidden' : 'md:block'}`}
+              >
+                <Rail
+                  collapsed={false}
+                  onToggleCollapsed={() => {
+                    setMobileRailOpen(false);
+                    setRailCollapsed(true);
+                  }}
+                  conversations={conversations}
+                  activeId={activeId}
+                  onSelect={selectConversation}
+                  onNew={newConversation}
+                  onShare={(id, shared) => void shareConversation(id, shared)}
+                  onRename={(id, current) => void renameConversation(id, current)}
+                  onDelete={(id) => void deleteConversation(id)}
+                  filterInputRef={filterInputRef}
+                  onSearch={searchConversations}
+                />
+              </div>
+              <div
+                className={`rail-scrim fixed inset-0 z-30 bg-black/35 md:hidden ${mobileRailOpen ? '' : 'hidden'}`}
+                aria-hidden="true"
+                onClick={() => setMobileRailOpen(false)}
+              />
+            </>
           )}
-          {guest ? null : <div className="rail-scrim" aria-hidden="true" onClick={() => setMobileRailOpen(false)} />}
-          <section className="thingy-conversation">
-            <div className="mobile-chatbar thingy-aui-header">
+          <section className="thingy-conversation flex min-w-0 flex-1 flex-col">
+            <div className="mobile-chatbar flex h-14 shrink-0 items-center gap-2 border-b border-line-soft px-3">
               {guest ? null : (
                 <button
                   type="button"
-                  className="mobile-chatbar-circle"
+                  className="mobile-chatbar-circle grid size-9 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-ink md:hidden [&_svg]:size-[18px]"
                   aria-label={mobileRailOpen ? 'Hide conversations' : 'Show conversations'}
                   aria-expanded={mobileRailOpen}
                   onClick={() => setMobileRailOpen(!mobileRailOpen)}
@@ -278,6 +291,18 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                   <Icon name="panel-left" />
                 </button>
               )}
+              {!guest && railCollapsed ? (
+                <Tip label="Expand sidebar">
+                  <button
+                    type="button"
+                    className="hidden size-9 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-ink md:grid [&_svg]:size-[18px]"
+                    aria-label="Expand sidebar"
+                    onClick={() => setRailCollapsed(false)}
+                  >
+                    <Icon name="panel-left" />
+                  </button>
+                </Tip>
+              ) : null}
               <HeaderTitle
                 title={conversations.find((entry) => entry.id === activeId)?.title || 'New chat'}
                 canRename={Boolean(activeId)}
@@ -285,12 +310,12 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                   renameMutation.mutate({ id: activeId, title });
                 }}
               />
-              <div className="mobile-chatbar-actions">
+              <div className="mobile-chatbar-actions ml-auto flex items-center gap-1">
                 {activeId ? (
                   <Tip label="Share conversation">
                     <button
                       type="button"
-                      className="mobile-chatbar-action"
+                      className="mobile-chatbar-action grid size-9 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-ink [&_svg]:size-[18px]"
                       aria-label="Share conversation"
                       onClick={() => {
                         const entry = conversations.find((item) => item.id === activeId);
@@ -304,7 +329,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                 <Tip label="New chat">
                   <button
                     type="button"
-                    className="mobile-chatbar-action"
+                    className="mobile-chatbar-action grid size-9 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-ink [&_svg]:size-[18px]"
                     aria-label="New chat"
                     onClick={newConversation}
                   >
@@ -314,7 +339,11 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
               </div>
             </div>
             {initial.from ? (
-              <a className="return-chip" href={initial.from.href} data-tinylytics-event="network.return">
+              <a
+                className="return-chip mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 py-1.5 text-[13px] font-semibold text-ink hover:border-accent [&_svg]:size-3.5"
+                href={initial.from.href}
+                data-tinylytics-event="network.return"
+              >
                 <Icon name="arrow-left" />
                 <span>
                   Return to <strong>{initial.from.name}</strong>
@@ -322,7 +351,10 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
               </a>
             ) : null}
             {guest ? (
-              <aside className="thingy-guest-banner" aria-label="Guest preview">
+              <aside
+                className="thingy-guest-banner mx-auto mt-3 flex w-[min(48rem,calc(100%-2rem))] flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/40 bg-accent-soft px-4 py-2.5 text-[13.5px] text-ink"
+                aria-label="Guest preview"
+              >
                 <span>
                   {guestRemaining === 0
                     ? "You've used today's guest questions."
@@ -330,7 +362,12 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                       ? `Guest preview — ${guestRemaining} question${guestRemaining === 1 ? '' : 's'} left today.`
                       : 'Guest preview — ask a few questions, no account needed.'}
                 </span>
-                <a href={session.signInUrl('/chat/')}>Sign in free for more</a>
+                <a
+                  className="font-bold text-accent-deep underline underline-offset-2"
+                  href={session.signInUrl('/chat/')}
+                >
+                  Sign in free for more
+                </a>
               </aside>
             ) : null}
             <ThreadHost

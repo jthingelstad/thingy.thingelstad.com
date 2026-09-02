@@ -1,12 +1,9 @@
-/* Entry bundle for the public shared-conversation page (/c/<token>): the
-   site's base tokens, the content-page nav/layout, and the chat message
-   styles the snapshot renders with. */
-@import url('./thingy-base.css');
-@import url('./thingy-page.css');
-@import url('./thingy-messages.css');
+/* Public shared-conversation page (/c/<token>) rules on the base
+   tokens; layout chrome comes from thingy-page.css, answer typography
+   from answer.css. */
 
 .thingy-shared .thingy-shared-loading {
-  color: var(--color-text-muted);
+  color: var(--thingy-text-muted);
 }
 
 .thingy-shared-header h1 {
@@ -14,7 +11,7 @@
 }
 
 .thingy-shared-byline {
-  color: var(--color-text-muted);
+  color: var(--thingy-text-muted);
   font-size: 0.95rem;
   margin-top: 0;
 }
@@ -28,7 +25,7 @@
 }
 
 .thingy-shared-cta {
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--thingy-border);
   margin-top: 2.5rem;
   padding-top: 1.5rem;
 }
@@ -36,7 +33,7 @@
 .thingy-shared-cta-button,
 .thingy-page a.thingy-shared-cta-button {
   display: inline-block;
-  background: var(--color-accent);
+  background: var(--thingy-accent);
   border-radius: 8px;
 
   /* Token pair keeps contrast in both themes: near-white on deep teal in
@@ -44,7 +41,7 @@
      selector is required - the content-page link rule (.thingy-page a,
      specificity 0,1,1) otherwise overrides this color with the accent,
      making the label invisible on its own background. */
-  color: var(--color-bg);
+  color: var(--thingy-bg);
   font-weight: 600;
   padding: 0.55rem 1.1rem;
   text-decoration: none;

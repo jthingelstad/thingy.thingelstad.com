@@ -63,7 +63,7 @@
 .subscribe-error {
   min-height: 0;
   margin-top: var(--space-xs);
-  color: var(--color-audio-accent);
+  color: var(--thingy-audio-accent);
   font-size: var(--size-xs);
 }
 

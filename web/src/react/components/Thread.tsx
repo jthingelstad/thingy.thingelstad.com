@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { AssistantRuntimeProvider, ThreadPrimitive, useAui, useLocalRuntime } from '@assistant-ui/react';
-import { trackEvent as track } from '../../shared/thingy-analytics.ts';
 import { promptDialog } from '../../shared/stores/dialog-store.ts';
 import { trackEvent } from '../../shared/thingy-analytics.ts';
 import {
@@ -20,14 +19,14 @@ function SuggestionChips({ suggestions }: { suggestions: string[] }) {
   const aui = useAui();
   if (!suggestions.length) return null;
   return (
-    <div className="thingy-aui-suggestions" aria-label="Suggested questions">
+    <div className="flex flex-wrap gap-2" aria-label="Suggested questions">
       {suggestions.map((suggestion) => (
         <button
           key={suggestion}
           type="button"
-          className="thingy-aui-suggestion"
+          className="thingy-aui-suggestion rounded-full border border-line bg-surface px-3.5 py-1.5 text-left text-[13.5px] leading-snug text-ink transition-colors hover:border-accent hover:bg-accent-soft"
           onClick={() => {
-            track('librarian.welcome_suggestion');
+            trackEvent('librarian.welcome_suggestion');
             aui.composer.setText(suggestion);
             aui.composer.send();
           }}
@@ -41,14 +40,14 @@ function SuggestionChips({ suggestions }: { suggestions: string[] }) {
 
 function Thread({ guest, welcome, suggestions }: { guest: boolean; welcome: string; suggestions: string[] }) {
   return (
-    <ThreadPrimitive.Root className="librarian-chat thingy-chat thingy-aui-thread">
-      <ThreadPrimitive.Viewport className="thingy-chat-scroll" autoScroll>
-        <div className="librarian-messages">
+    <ThreadPrimitive.Root className="librarian-chat thingy-aui-thread flex min-h-0 flex-1 flex-col has-[.thingy-aui-empty]:justify-center">
+      <ThreadPrimitive.Viewport className="thingy-chat-scroll min-h-0 flex-1 overflow-y-auto has-[.thingy-aui-empty]:flex-none has-[.thingy-aui-empty]:overflow-visible">
+        <div className="librarian-messages mx-auto w-full max-w-3xl px-4 pt-6 pb-2">
           <ThreadPrimitive.Empty>
-            <div className="thingy-aui-empty">
+            <div className="thingy-aui-empty flex flex-col gap-4">
               <article className="librarian-message librarian-message-assistant">
                 <div className="librarian-answer-content">
-                  <p>{welcome}</p>
+                  <p className="text-[17px] leading-relaxed text-ink">{welcome}</p>
                 </div>
               </article>
               <SuggestionChips suggestions={suggestions} />
@@ -57,7 +56,11 @@ function Thread({ guest, welcome, suggestions }: { guest: boolean; welcome: stri
           <ThreadPrimitive.Messages components={{ UserMessage, AssistantMessage, EditComposer }} />
         </div>
         <ThreadPrimitive.ScrollToBottom asChild>
-          <button type="button" className="thingy-aui-scrollbottom" aria-label="Jump to latest" title="Jump to latest">
+          <button
+            type="button"
+            className="sticky bottom-3.5 left-1/2 z-10 grid size-9 -translate-x-1/2 place-items-center rounded-full border border-line bg-surface text-ink shadow-md transition-colors hover:border-accent disabled:hidden [&_svg]:size-4"
+            aria-label="Jump to latest"
+          >
             <Icon name="arrow-down" />
           </button>
         </ThreadPrimitive.ScrollToBottom>

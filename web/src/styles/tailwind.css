@@ -11,7 +11,6 @@
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 @theme inline {
-  --color-*: initial;
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
@@ -25,11 +24,44 @@
   --color-accent-soft: var(--accent-soft);
   --color-highlight: var(--highlight);
   --color-code: var(--code-bg);
-  --color-error: var(--color-error);
+  --color-error: var(--thingy-error);
   --color-transparent: transparent;
   --color-current: currentcolor;
 
   --font-sans: var(--sans);
   --font-serif: var(--serif);
   --font-mono: ui-monospace, 'SF Mono', menlo, monaco, monospace;
+}
+
+/* Hover-reveal message actions: quiet by default on pointer devices,
+   visible on hover or keyboard focus, always-on for the newest message.
+   Touch screens keep them visible. */
+@layer components {
+  @media (hover: hover) {
+    .librarian-message .thingy-message-actions {
+      opacity: 0;
+      transition: opacity 130ms ease;
+    }
+
+    .librarian-message:hover .thingy-message-actions,
+    .librarian-message:focus-within .thingy-message-actions,
+    .librarian-messages > .librarian-message:last-child .thingy-message-actions {
+      opacity: 1;
+    }
+  }
+
+  /* Links inside the dark user bubble stay legible. */
+  .librarian-message-user a {
+    color: inherit;
+    text-decoration: underline;
+  }
+
+  /* Preflight strips list markers; answers want them back. */
+  .librarian-answer-content ul {
+    list-style: disc;
+  }
+
+  .librarian-answer-content ol {
+    list-style: decimal;
+  }
 }
