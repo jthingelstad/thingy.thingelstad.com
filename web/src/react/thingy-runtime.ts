@@ -26,6 +26,9 @@ export interface ThingyThreadBinding {
   sharedMessageCount?: number;
   onConversationId?: (id: string) => void;
   onGuestRemaining?: (remaining: number) => void;
+  // The history load reports the stored title - deep-history permalinks
+  // reload outside the rail's window and would otherwise show "New chat".
+  onConversationTitle?: (id: string, title: string) => void;
   onTurnRecorded?: () => void;
 }
 
@@ -210,6 +213,9 @@ export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdap
             state.citations = Array.isArray(data.citations) ? (data.citations as ThingyCitation[]) : [];
           } else if (eventName === 'error') {
             streamErrorMessage = String(data.error || 'Thingy is unavailable.');
+            // Guest quota rejections carry guest_remaining: 0 so the
+            // composer locks instead of inviting a doomed retry (QA F04).
+            if (typeof data.guest_remaining === 'number') binding.onGuestRemaining?.(data.guest_remaining);
           }
         }
         await reading;
@@ -325,6 +331,8 @@ export function createThingyHistoryAdapter(binding: ThingyThreadBinding): Thread
         session.authHeaders()
       );
       const stored = Array.isArray(data.messages) ? (data.messages as StoredMessage[]) : [];
+      const title = String((data.conversation as { title?: string } | undefined)?.title || '').trim();
+      if (title) binding.onConversationTitle?.(binding.conversationId, title);
       return { messages: historyItemsFromStored(stored) as never };
     },
     async append() {

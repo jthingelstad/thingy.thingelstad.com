@@ -85,6 +85,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
         invalidateConversations();
       },
       onGuestRemaining: setGuestRemaining,
+      onConversationTitle: (id, title) => setKnownTitle({ id, title }),
       onTurnRecorded: () => invalidateConversations()
     };
     bindingRef.current = next;
@@ -531,7 +532,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
               suggestions={mountedId ? [] : suggestions}
               initialPrompt={activeId || threadEpoch > 0 ? undefined : initial.prompt}
               composerLocked={guest && guestRemaining === 0}
-              draftKey={guest ? 'guest' : conversationKey}
+              draftKey={guest ? 'guest' : activeId || 'new'}
             />
           </section>
         </div>

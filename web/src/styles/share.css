@@ -86,11 +86,19 @@
     color: #000 !important;
   }
 
+  .librarian-message-user,
+  .librarian-message-user * {
+    /* Printers default to backgrounds OFF: the bubble's light-on-dark
+       text must flip to dark, all the way down the nested spans (QA
+       F05 - the question printed nearly white on white). */
+    border-color: #bbb;
+    background: none !important;
+    color: #000 !important;
+  }
+
   .librarian-message-user {
     border: 1px solid #bbb;
     border-radius: 8px;
-    background: none !important;
-    color: #000 !important;
     padding: 0.5rem 0.75rem;
   }
 

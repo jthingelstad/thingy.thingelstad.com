@@ -43,6 +43,7 @@ export function HeaderTitle({
       <input
         className="w-[min(420px,100%)] rounded-md border border-accent bg-surface px-1.5 py-0.5 font-sans text-[15px] font-bold text-ink outline-none"
         type="text"
+        aria-label="Conversation title"
         value={draft}
         maxLength={120}
         autoFocus

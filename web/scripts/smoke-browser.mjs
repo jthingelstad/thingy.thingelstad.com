@@ -300,6 +300,33 @@ async function checkSharePage(browser) {
   assert.equal(await wtLink.getAttribute('href'), 'https://weekly.thingelstad.com/archive/127/');
   assert.ok(await page.locator('.thingy-guest-banner').isVisible(), 'share guest banner renders');
   assert.ok(await page.locator('#librarian-question').isVisible(), 'share follow-up composer is live');
+
+  // SUBMIT a follow-up: F01 shipped the share shell without the stream
+  // URL and the composer errored before any request - rendering alone
+  // proves nothing. The mock asserts share_token rides the request.
+  let sawShareToken = false;
+  await page.route(`${streamHost}/chat`, async (route) => {
+    try {
+      sawShareToken = Boolean(JSON.parse(route.request().postData() || '{}').share_token);
+    } catch {
+      sawShareToken = false;
+    }
+    const sse = [
+      ['meta', { request_id: 'share-follow', guest: true, guest_remaining: 2, contract_version: '4.8.0' }],
+      ['answer_delta', { delta: 'A guest follow-up answer.' }],
+      ['answer', { answer: 'A guest follow-up answer.' }],
+      ['citations', { citations: [] }],
+      ['done', { request_id: 'share-follow', guest: true, guest_remaining: 2 }]
+    ]
+      .map(([eventName, data]) => `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`)
+      .join('');
+    await route.fulfill({ contentType: 'text/event-stream; charset=utf-8', body: sse });
+  });
+  await page.locator('#librarian-question').fill('Guest follow-up question?');
+  await page.locator('button.composer-send').first().click();
+  await page.waitForFunction(() => document.body.textContent.includes('A guest follow-up answer.'));
+  assert.ok(sawShareToken, 'the guest follow-up carries share_token');
+
   await assertAccessible(page, 'share page');
   assertNoUiFailures(failures, 'share page');
   await context.close();

@@ -26,6 +26,26 @@ export function Composer({
   // and used to wipe whatever was typed. sessionStorage keeps it for the
   // tab's lifetime without persisting reader text durably.
   const storageKey = draftKey ? `thingyDraft:${draftKey}` : '';
+  // A first turn starts under the stable 'new' key and the server then
+  // assigns the conversation id: migrate the draft to the id-keyed slot
+  // so it stays with THIS conversation instead of resurfacing in the
+  // next New chat (QA F03). Only 'new' migrates - switching between
+  // conversations must never move drafts across them.
+  const prevStorageKeyRef = useRef(storageKey);
+  useEffect(() => {
+    const previous = prevStorageKeyRef.current;
+    prevStorageKeyRef.current = storageKey;
+    if (!storageKey || previous === storageKey || previous !== 'thingyDraft:new') return;
+    try {
+      const pending = window.sessionStorage.getItem(previous);
+      if (pending && !window.sessionStorage.getItem(storageKey)) {
+        window.sessionStorage.setItem(storageKey, pending);
+      }
+      window.sessionStorage.removeItem(previous);
+    } catch {
+      /* private browsing */
+    }
+  }, [storageKey]);
   useEffect(() => {
     if (!storageKey) return;
     if (!textRef.current) {

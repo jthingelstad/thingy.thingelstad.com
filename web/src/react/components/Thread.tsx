@@ -86,7 +86,8 @@ function Thread({
   suggestions,
   readOnly,
   composerLocked,
-  draftKey
+  draftKey,
+  historyPending
 }: {
   guest: boolean;
   welcome: string;
@@ -94,6 +95,7 @@ function Thread({
   readOnly?: boolean;
   composerLocked?: boolean;
   draftKey?: string;
+  historyPending?: boolean;
 }) {
   return (
     <ThreadPrimitive.Root
@@ -112,19 +114,22 @@ function Thread({
                 </article>
                 <SuggestionChips suggestions={suggestions} />
               </div>
-            ) : (
-              // A mounted conversation whose history is still loading:
-              // transcript skeletons, not a flash of the greeting.
-              <div className="flex flex-col gap-5 pt-2" aria-hidden="true">
-                <div className="ml-auto h-10 w-3/5 animate-pulse rounded-2xl bg-surface-2" />
-                <div className="flex flex-col gap-2.5">
-                  <div className="h-4 w-full animate-pulse rounded-md bg-surface-2" />
-                  <div className="h-4 w-11/12 animate-pulse rounded-md bg-surface-2" />
-                  <div className="h-4 w-4/6 animate-pulse rounded-md bg-surface-2" />
-                </div>
-              </div>
-            )}
+            ) : null}
           </ThreadPrimitive.Empty>
+          {historyPending ? (
+            // A mounted conversation whose history is still loading:
+            // transcript skeletons, not a flash of the greeting. Rendered
+            // outside ThreadPrimitive.Empty - aui does not show Empty
+            // while the history adapter's load is in flight.
+            <div className="thingy-history-skeleton flex flex-col gap-5 pt-2" aria-hidden="true">
+              <div className="ml-auto h-10 w-3/5 animate-pulse rounded-2xl bg-surface-2" />
+              <div className="flex flex-col gap-2.5">
+                <div className="h-4 w-full animate-pulse rounded-md bg-surface-2" />
+                <div className="h-4 w-11/12 animate-pulse rounded-md bg-surface-2" />
+                <div className="h-4 w-4/6 animate-pulse rounded-md bg-surface-2" />
+              </div>
+            </div>
+          ) : null}
           <ThreadPrimitive.Messages components={{ UserMessage, AssistantMessage, EditComposer }} />
           <StreamingAnnouncer />
         </div>
@@ -170,6 +175,9 @@ export function ThreadHost({
   draftKey?: string;
 }) {
   const adapter = useMemo(() => createThingyAdapter(binding), [binding]);
+  const [historyPending, setHistoryPending] = useState(() =>
+    Boolean(binding.conversationId && !binding.guest && !sharedMessages?.length)
+  );
   const history = useMemo(() => {
     if (sharedMessages?.length) {
       return {
@@ -181,7 +189,17 @@ export function ThreadHost({
         }
       };
     }
-    return createThingyHistoryAdapter(binding);
+    const inner = createThingyHistoryAdapter(binding);
+    return {
+      async load() {
+        try {
+          return await inner.load();
+        } finally {
+          setHistoryPending(false);
+        }
+      },
+      append: inner.append
+    };
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [binding]);
   const feedback = useMemo(
@@ -230,6 +248,7 @@ export function ThreadHost({
         readOnly={readOnly}
         composerLocked={composerLocked}
         draftKey={draftKey}
+        historyPending={historyPending}
       />
     </AssistantRuntimeProvider>
   );

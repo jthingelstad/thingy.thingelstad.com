@@ -85,12 +85,18 @@ export function htmlConfigPlugin(): Plugin {
             .map((value) => new URL(value).origin)
         )
       ).join(' ');
-      return html
-        .replaceAll('__THINGY_TINYLYTICS_ID__', tinylyticsId)
-        .replaceAll('__THINGY_CONNECT_SRC__', connectSrc)
-        .replace('__THINGY_CHAT_CONFIG__', encode(config))
-        .replace('__THINGY_SIGNIN_CONFIG__', encode({ librarianApiUrl }))
-        .replace('__THINGY_SHARE_CONFIG__', encode({ librarianApiUrl, tinylyticsId }));
+      return (
+        html
+          .replaceAll('__THINGY_TINYLYTICS_ID__', tinylyticsId)
+          .replaceAll('__THINGY_CONNECT_SRC__', connectSrc)
+          .replace('__THINGY_CHAT_CONFIG__', encode(config))
+          .replace('__THINGY_SIGNIN_CONFIG__', encode({ librarianApiUrl }))
+          // The share shell mounts the LIVE thread (contract 4.7) - its
+          // composer streams /chat, so it needs the stream URL too. Its
+          // omission shipped the guest-continuation feature unable to send
+          // at all (QA F01).
+          .replace('__THINGY_SHARE_CONFIG__', encode({ librarianApiUrl, librarianStreamUrl, tinylyticsId }))
+      );
     }
   };
 }
