@@ -81,6 +81,12 @@ npm run qa:real -- --cleanup-only
   turns appear at the link.
 - Fast-click New Chat; only one active local "New chat" shell should remain.
 - Expand/collapse the rail and switch conversations.
+- Desktop shows the conversation header (title + New chat + actions menu with
+  Share/Rename/Delete) above the transcript; the rail-toggle circle appears
+  only on phone widths.
+- Homepage: primary CTA is the teal button, guest note + three example
+  question chips render under it, and the footer shows the kudos robot plus
+  hit/country counts once Tinylytics loads.
 - Account panel shows "Today's usage" (chat pool; MCP pool once used).
 
 ## Guest Preview

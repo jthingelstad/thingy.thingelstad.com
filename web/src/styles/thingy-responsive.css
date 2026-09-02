@@ -67,9 +67,140 @@
   }
 }
 
-.mobile-chatbar,
 .rail-scrim {
   display: none;
+}
+
+/* Conversation header - title plus the Share/Rename/Delete menu - on every
+   width. It was phone-only for a while, which left those actions (and the
+   conversation title) unreachable on desktop. The phone shell below
+   restyles it; these are the width-agnostic component styles. */
+.mobile-chatbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+}
+
+.thingy-app-shell.is-auth .mobile-chatbar {
+  display: none;
+}
+
+.mobile-chatbar-circle {
+  display: none;
+}
+
+.mobile-chatbar-circle,
+.mobile-chatbar-action,
+.mobile-chatbar-menu-button {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  color: var(--ink);
+  box-shadow: 0 10px 26px rgb(23 33 31 / 10%);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.mobile-chatbar-action,
+.mobile-chatbar-menu-button {
+  display: grid;
+}
+
+.mobile-chatbar-circle svg,
+.mobile-chatbar-action svg,
+.mobile-chatbar-menu-button svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mobile-chatbar-menu-button svg {
+  fill: currentcolor;
+  stroke: none;
+}
+
+.mobile-chatbar-menu-button:disabled {
+  opacity: 0.4;
+}
+
+.mobile-chatbar-actions {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mobile-conversation-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  width: 12rem;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 18px 50px -20px rgb(14 43 38 / 50%), 0 2px 10px rgb(14 43 38 / 8%);
+  display: grid;
+  gap: 2px;
+}
+
+.mobile-conversation-menu[hidden] {
+  display: none;
+}
+
+.mobile-conversation-menu button {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.mobile-conversation-menu button:hover {
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+
+.mobile-conversation-menu .danger {
+  color: var(--color-error);
+}
+
+.mobile-chatbar-title {
+  min-width: 0;
+  display: grid;
+  justify-items: start;
+  color: var(--ink);
+  text-align: left;
+}
+
+.mobile-chatbar-title span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
 }
 
 /* Phone shell: mobile header and rail drawer. */
@@ -120,110 +251,13 @@
     z-index: 90;
   }
 
-  .mobile-chatbar-circle,
-  .mobile-chatbar-action,
-  .mobile-chatbar-menu-button {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    min-height: 44px;
+  .mobile-chatbar-circle {
     display: grid;
-    place-items: center;
-    padding: 0;
-    border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--surface) 86%, transparent);
-    color: var(--ink);
-    box-shadow: 0 10px 26px rgb(23 33 31 / 10%);
-    appearance: none;
-    -webkit-appearance: none;
-  }
-
-  .mobile-chatbar-circle svg,
-  .mobile-chatbar-action svg,
-  .mobile-chatbar-menu-button svg {
-    width: 23px;
-    height: 23px;
-    fill: none;
-    stroke: currentcolor;
-    stroke-width: 2.3;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .mobile-chatbar-menu-button svg {
-    fill: currentcolor;
-    stroke: none;
-  }
-
-  .mobile-chatbar-menu-button:disabled {
-    opacity: 0.4;
-  }
-
-  .mobile-chatbar-actions {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .mobile-conversation-menu {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    width: 12rem;
-    padding: 6px;
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    background: var(--surface);
-    box-shadow: 0 18px 50px -20px rgb(14 43 38 / 50%), 0 2px 10px rgb(14 43 38 / 8%);
-    display: grid;
-    gap: 2px;
-  }
-
-  .mobile-conversation-menu[hidden] {
-    display: none;
-  }
-
-  .mobile-conversation-menu button {
-    width: 100%;
-    min-height: 38px;
-    padding: 0 10px;
-    border: 0;
-    border-radius: 10px;
-    background: transparent;
-    color: var(--ink);
-    font-family: var(--sans);
-    font-size: 14px;
-    font-weight: 700;
-    text-align: left;
-  }
-
-  .mobile-conversation-menu button:hover {
-    background: color-mix(in srgb, var(--ink) 7%, transparent);
-  }
-
-  .mobile-conversation-menu .danger {
-    color: var(--color-error);
   }
 
   .mobile-chatbar-title {
-    min-width: 0;
-    display: grid;
     justify-items: center;
-    color: var(--ink);
     text-align: center;
-  }
-
-  .mobile-chatbar-title span {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-family: var(--sans);
-    font-size: 15px;
-    font-weight: 800;
-    line-height: 1.2;
   }
 
   .rail-scrim {

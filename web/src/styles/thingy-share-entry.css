@@ -33,14 +33,25 @@
   padding-top: 1.5rem;
 }
 
-.thingy-shared-cta-button {
+.thingy-shared-cta-button,
+.thingy-page a.thingy-shared-cta-button {
   display: inline-block;
   background: var(--color-accent);
   border-radius: 8px;
-  color: #fff;
+
+  /* Token pair keeps contrast in both themes: near-white on deep teal in
+     light mode, near-black on light teal in dark. The .thingy-page a
+     selector is required - the content-page link rule (.thingy-page a,
+     specificity 0,1,1) otherwise overrides this color with the accent,
+     making the label invisible on its own background. */
+  color: var(--color-bg);
   font-weight: 600;
   padding: 0.55rem 1.1rem;
   text-decoration: none;
+}
+
+.thingy-shared-cta-button:hover {
+  filter: brightness(1.08);
 }
 
 .thingy-shared-cta-more {

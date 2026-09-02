@@ -18,7 +18,7 @@ export function loadTinylytics() {
 
   const script = document.createElement('script');
   script.defer = true;
-  script.src = `https://tinylytics.app/embed/${tinylyticsSiteId}/min.js?events&beacon`;
+  script.src = `https://tinylytics.app/embed/${tinylyticsSiteId}/min.js?events&beacon&hits&countries&kudos=\u{1F916}`;
   script.addEventListener('load', () => {
     window.dispatchEvent(new Event('tinylytics:loaded'));
   });
