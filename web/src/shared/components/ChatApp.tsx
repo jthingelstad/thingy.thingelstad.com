@@ -16,6 +16,8 @@ import { DEFAULT_WELCOME, createChatWelcomeController } from '../thingy-chat-wel
 import {
   activeConversationId,
   chatMessages,
+  guestMode,
+  guestRemaining,
   interactionBusy,
   questionText,
   welcomeInFlight
@@ -171,6 +173,7 @@ function ChatApp() {
     });
   }
   const isSignedIn = signedIn.value;
+  const isGuest = guestMode.value;
   const busy = interactionBusy.value;
   const currentText = questionText.value;
   const activeId = activeConversationId.value;
@@ -184,7 +187,8 @@ function ChatApp() {
   const shellClass = [
     'thingy-app-shell',
     !booted ? 'is-booting' : '',
-    !isSignedIn ? 'is-auth' : '',
+    !isSignedIn && !isGuest ? 'is-auth' : '',
+    isGuest ? 'is-guest' : '',
     collapsed ? 'is-collapsed' : '',
     mobileOpen ? 'is-mobile-rail-open' : ''
   ]
@@ -192,7 +196,7 @@ function ChatApp() {
     .join(' ');
 
   usePersistedBooleanSignal(railCollapsed, COLLAPSED_KEY, collapsed);
-  useMeasuredComposer(inputRef, composerRef, chatPanelRef, currentText, isSignedIn);
+  useMeasuredComposer(inputRef, composerRef, chatPanelRef, currentText, isSignedIn || isGuest);
 
   useEffect(() => {
     signedIn.value = actions.hasSession();
@@ -226,9 +230,24 @@ function ChatApp() {
         else void startAgentWelcome();
       });
       track('librarian.session_resume');
-    } else {
+    } else if (initial.email) {
+      // An explicit email param is a sign-in intent - keep that flow.
       window.location.href = session.signInUrl();
-      track(initial.email ? 'librarian.auth_auto_start' : 'librarian.auth_redirect');
+      track('librarian.auth_auto_start');
+    } else {
+      // Guest lane: no session, no redirect. The composer works, history
+      // stays in this tab, and the server enforces the daily guest caps.
+      guestMode.value = true;
+      startBlankConversation();
+      const greeting = addAssistantMessage({
+        content:
+          "Hi. I'm Thingy - ask me anything about Jamie Thingelstad's public archive: twenty-five years of blog posts, the Weekly Thing newsletter, and the Another Thing podcast. You can try a few questions as a guest; signing in is free for Weekly Thing readers.",
+        label: 'Welcome'
+      });
+      greeting.model.status.value = 'done';
+      welcomeControllerRef.current?.markShown();
+      if (initial.hasPrompt) void maybeSubmitInitialPrompt();
+      track('librarian.guest_visit', initial.hasPrompt ? 'prompt' : 'direct');
     }
     // Route bootstrap must run once for the lifetime of this root.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
@@ -451,7 +470,8 @@ function ChatApp() {
   });
 
   async function maybeSubmitInitialPrompt() {
-    if (!initial.prompt || initialPromptSubmittedRef.current || interactionBusy.value || !actions.hasSession()) return;
+    if (!initial.prompt || initialPromptSubmittedRef.current || interactionBusy.value) return;
+    if (!actions.hasSession() && !guestMode.value) return;
     initialPromptSubmittedRef.current = true;
     setQuestion(initial.prompt);
     await Promise.resolve();
@@ -513,9 +533,12 @@ function ChatApp() {
             mobileMenuOpen={mobileMenuOpen}
             conversationTitle={conversationTitle}
             busy={busy}
-            hasActiveConversation={hasActiveConversation}
+            hasActiveConversation={hasActiveConversation && !isGuest}
             from={initial.from}
-            signedIn={isSignedIn}
+            signedIn={isSignedIn || isGuest}
+            guest={isGuest}
+            guestRemaining={guestRemaining.value}
+            signInHref={session.signInUrl('/chat/')}
             showModeBanner={showModeBanner}
             currentMode={currentMode}
             modeLabel={actions.modeLabel}

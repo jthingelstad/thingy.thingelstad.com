@@ -83,6 +83,16 @@ npm run qa:real -- --cleanup-only
 - Expand/collapse the rail and switch conversations.
 - Account panel shows "Today's usage" (chat pool; MCP pool once used).
 
+## Guest Preview
+
+- In a private window, open `/chat/`: the guest banner and composer render,
+  no redirect to sign-in. Ask a question; the answer streams with citations
+  and the banner counts down.
+- Open `/chat/?prompt=Tell%20me%20about%20issue%20%23100` in a private
+  window; the prompt submits as a guest.
+- `/chat/?email=...` still redirects to sign-in.
+- After the third question the limit message points to sign-in.
+
 ## Static Pages
 
 - `/about/` and `/connect/` render in light and dark with the top nav; the

@@ -31,7 +31,9 @@ function friendlyDate(value: unknown) {
 }
 
 function ctaHtml(signedIn: boolean) {
-  const href = signedIn ? '/chat/' : '/signin/';
+  // Guests can chat now - the chat page runs a guest preview lane, so the
+  // CTA goes straight to the product either way.
+  const href = '/chat/';
   const label = signedIn ? 'Open Thingy' : 'Ask Thingy yourself';
   return (
     '<aside class="thingy-shared-cta">' +

@@ -20,12 +20,16 @@ test('chat reads URL params before Tinylytics strips them', async () => {
 test('chat keeps signed-in invite links out of the sign-in redirect loop', async () => {
   const sourceText = await source('../src/shared/components/ChatApp.tsx');
   const tokenBranch = sourceText.indexOf('} else if (actions.hasSession()) {');
-  const redirectBranch = sourceText.indexOf("track(initial.email ? 'librarian.auth_auto_start'");
+  const emailRedirectBranch = sourceText.indexOf("track('librarian.auth_auto_start')");
+  const guestBranch = sourceText.indexOf("track('librarian.guest_visit'");
 
   assert.ok(tokenBranch > -1);
-  assert.ok(redirectBranch > -1);
+  assert.ok(emailRedirectBranch > -1);
   assert.ok(
-    tokenBranch < redirectBranch,
+    tokenBranch < emailRedirectBranch,
     'a valid stored session must take precedence over email= so signed-in prompt/from links do not bounce through /signin/'
   );
+  // The guest lane must be the LAST resort: session first, explicit email
+  // sign-in intent second, guest preview only when neither applies.
+  assert.ok(guestBranch > emailRedirectBranch, 'guest preview must not swallow explicit email= sign-in links');
 });

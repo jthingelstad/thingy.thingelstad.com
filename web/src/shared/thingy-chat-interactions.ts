@@ -42,7 +42,8 @@ function createChatInteractions(options: ChatInteractionsOptions) {
     cancelWelcome();
     const message = questionText.value.trim();
     if (!message || message.length > maxQuestionChars || !currentScope()) return;
-    if (!(await actions.ensureSession())) return;
+    const guest = actions.isGuestMode();
+    if (!guest && !(await actions.ensureSession())) return;
     stopDictation();
     answerInFlight.value = true;
     const wordCount = message.split(/\s+/).filter(Boolean).length;
@@ -65,8 +66,9 @@ function createChatInteractions(options: ChatInteractionsOptions) {
       }
       if (data.conversation_id) actions.setActiveConversation(data.conversation_id);
       if (data.conversation) actions.upsertConversationSummary(data.conversation);
-      await actions.refreshConversations();
+      if (!guest) await actions.refreshConversations();
       if (!data.stopped) track('librarian.answer_success', `${size}.${(data.citations || []).length}`);
+      if (!data.stopped && guest) track('librarian.guest_answer', `${size}.${(data.citations || []).length}`);
     } catch (error) {
       pending.model.errorMessage.value = errorMessage(error, 'Thingy could not answer that question.');
       if (!isAuthError(error)) pending.model.retryPrompt.value = message;

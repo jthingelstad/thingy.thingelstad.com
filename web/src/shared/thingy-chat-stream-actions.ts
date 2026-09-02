@@ -22,6 +22,12 @@ interface ChatStreamActionsOptions {
   scheduleChatScroll: (options?: { force?: boolean }) => void;
   answerInFlight: () => boolean;
   setStoppable: (value: boolean) => void;
+  // Guest lane: without a session the server keeps no history, so the
+  // client sends its own transcript; guest_remaining rides back on
+  // meta/done for the preview meter.
+  isGuest?: () => boolean;
+  guestHistory?: () => Array<{ role: string; content: string }>;
+  onGuestRemaining?: (remaining: number) => void;
 }
 
 interface WelcomeStreamOptions {
@@ -74,7 +80,8 @@ function createChatStreamActions(options: ChatStreamActionsOptions) {
           mode: options.currentConversationMode(),
           conversation_id: conversationId || undefined,
           client_context: userLocalContext(),
-          user_profile: options.readerProfileContext()
+          user_profile: options.readerProfileContext(),
+          ...(options.isGuest?.() ? { history: options.guestHistory?.() || [] } : {})
         }
       });
     } catch (error) {
@@ -95,6 +102,9 @@ function createChatStreamActions(options: ChatStreamActionsOptions) {
     const renderer = createAssistantStreamRenderer({ model, scroll: options.scheduleChatScroll });
 
     function applyEvent(eventName: string, data: ThingyStreamData) {
+      if ((eventName === 'meta' || eventName === 'done') && typeof data.guest_remaining === 'number') {
+        options.onGuestRemaining?.(data.guest_remaining);
+      }
       if (eventName === 'meta') {
         requestId = data.request_id || requestId;
         if (data.mode) options.onMode(data.mode);

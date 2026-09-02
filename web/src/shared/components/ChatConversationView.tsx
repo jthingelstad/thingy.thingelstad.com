@@ -21,6 +21,9 @@ interface ChatConversationViewProps {
   hasActiveConversation: boolean;
   from: { href: string; name: string } | null;
   signedIn: boolean;
+  guest: boolean;
+  guestRemaining: number | null;
+  signInHref: string;
   showModeBanner: boolean;
   currentMode: string;
   modeLabel: (mode: string) => string;
@@ -86,6 +89,21 @@ function ChatConversationView(props: ChatConversationViewProps) {
         onUnshare={props.onUnshare}
         shared={props.shared}
       />
+
+      {props.guest ? (
+        <aside class="thingy-guest-banner" aria-label="Guest preview">
+          <span>
+            {props.guestRemaining === 0
+              ? "You've used today's guest questions."
+              : typeof props.guestRemaining === 'number'
+                ? `Guest preview — ${props.guestRemaining} question${props.guestRemaining === 1 ? '' : 's'} left today.`
+                : 'Guest preview — ask a few questions, no account needed.'}
+          </span>
+          <a href={props.signInHref} data-tinylytics-event="librarian.guest_signin_click">
+            Sign in free for more
+          </a>
+        </aside>
+      ) : null}
 
       {props.from ? (
         <a class="return-chip" href={props.from.href} data-tinylytics-event="network.return">

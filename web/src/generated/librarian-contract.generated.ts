@@ -217,15 +217,17 @@ export interface LibrarianStreamBase {
   kind?: string;
   tool_name?: string;
   toolName?: string;
+  guest?: boolean;
+  guest_remaining?: number;
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = '14c17565ce87facfc7c24bc3a2b31e15a22f908dea8d1cf0e53bd5aad9a7f4bb';
+export const LIBRARIAN_CONTRACT_SHA256 = '7d89b0978d4b368e06b54807621645610a0e61363cfed89da32dee0c8b6fc63b';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '4.0.0',
+  version: '4.1.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
@@ -778,6 +780,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         toolName: {
           type: 'string'
+        },
+        guest: {
+          type: 'boolean'
+        },
+        guest_remaining: {
+          type: 'number'
         }
       },
       additionalProperties: true
@@ -1105,6 +1113,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         toolName: {
           type: 'string'
+        },
+        guest: {
+          type: 'boolean'
+        },
+        guest_remaining: {
+          type: 'number'
         }
       },
       additionalProperties: true
@@ -1226,6 +1240,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         toolName: {
           type: 'string'
+        },
+        guest: {
+          type: 'boolean'
+        },
+        guest_remaining: {
+          type: 'number'
         }
       },
       additionalProperties: true
@@ -1347,6 +1367,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         toolName: {
           type: 'string'
+        },
+        guest: {
+          type: 'boolean'
+        },
+        guest_remaining: {
+          type: 'number'
         }
       },
       additionalProperties: true
@@ -1468,6 +1494,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         toolName: {
           type: 'string'
+        },
+        guest: {
+          type: 'boolean'
+        },
+        guest_remaining: {
+          type: 'number'
         }
       },
       required: ['delta'],
@@ -1590,6 +1622,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         toolName: {
           type: 'string'
+        },
+        guest: {
+          type: 'boolean'
+        },
+        guest_remaining: {
+          type: 'number'
         }
       },
       required: ['answer'],
@@ -1712,6 +1750,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         toolName: {
           type: 'string'
+        },
+        guest: {
+          type: 'boolean'
+        },
+        guest_remaining: {
+          type: 'number'
         }
       },
       required: ['citations'],
@@ -1834,6 +1878,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         toolName: {
           type: 'string'
+        },
+        guest: {
+          type: 'boolean'
+        },
+        guest_remaining: {
+          type: 'number'
         }
       },
       additionalProperties: true
@@ -1955,6 +2005,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         toolName: {
           type: 'string'
+        },
+        guest: {
+          type: 'boolean'
+        },
+        guest_remaining: {
+          type: 'number'
         }
       },
       required: ['error'],

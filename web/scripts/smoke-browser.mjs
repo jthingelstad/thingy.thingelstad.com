@@ -149,6 +149,21 @@ async function checkSignInRedirect(browser) {
   await context.close();
 }
 
+async function checkGuestPreview(browser) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const failures = collectUiFailures(page);
+  await page.goto(`${baseUrl}/chat/`);
+  await page.waitForSelector('.thingy-guest-banner');
+  await page.waitForSelector('.librarian-chat:not([hidden])');
+  assert.match(await page.locator('.thingy-guest-banner').textContent(), /Guest preview/);
+  assert.ok(await page.locator('#librarian-question').isVisible(), 'guest composer is available');
+  assert.equal(await page.locator('.rail').isVisible(), false, 'guest view hides the conversation rail');
+  await assertAccessible(page, 'guest chat');
+  assertNoUiFailures(failures, 'guest chat');
+  await context.close();
+}
+
 async function checkChat(browser) {
   const context = await browser.newContext();
   await seedSession(context);
@@ -286,6 +301,7 @@ async function main() {
     const browser = await browserType.launch();
     try {
       await checkSignInRedirect(browser);
+      await checkGuestPreview(browser);
       await checkChat(browser);
       await checkMobileChat(browser);
     } finally {

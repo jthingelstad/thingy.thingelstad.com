@@ -14,8 +14,11 @@ import {
   activeMode as activeModeSignal,
   answerInFlight as answerInFlightSignal,
   availableModes as availableModesSignal,
+  chatMessages as chatMessagesSignal,
   conversationCreateInFlight as conversationCreateInFlightSignal,
   conversations as conversationsSignal,
+  guestMode as guestModeSignal,
+  guestRemaining as guestRemainingSignal,
   stoppable as stoppableSignal
 } from './stores/chat-store.ts';
 import { displayPreferredName as displayPreferredNameSignal } from './stores/ui-store.ts';
@@ -141,8 +144,26 @@ function createChatActions(options: ChatActionsOptions = {}) {
     });
   }
 
+  // Guest lane: the server holds no history for guests, so the transcript
+  // travels with each question, rebuilt from the rendered messages.
+  function guestHistory() {
+    const history: Array<{ role: string; content: string }> = [];
+    for (const message of chatMessagesSignal.value) {
+      if (message.role === 'user' && message.prompt) {
+        history.push({ role: 'user', content: String(message.prompt) });
+      } else if (message.role === 'assistant' && message.model?.status.value === 'done') {
+        const content = String(message.model.content.value || '').trim();
+        if (content) history.push({ role: 'assistant', content });
+      }
+    }
+    return history;
+  }
+
   const streamActions = createChatStreamActions({
     streamBase,
+    isGuest: () => guestModeSignal.value,
+    guestHistory,
+    onGuestRemaining: (remaining) => (guestRemainingSignal.value = remaining),
     authHeaders,
     getActiveConversationId: () => state.activeConversationId,
     isLocalConversationId: conversationActions.isLocalConversationId,
@@ -173,6 +194,7 @@ function createChatActions(options: ChatActionsOptions = {}) {
     ensureSession: authActions.ensureSession,
     fetchConversation: conversationActions.fetchConversation,
     isAwaitingName: authActions.isAwaitingName,
+    isGuestMode: () => guestModeSignal.value,
     isLocalConversationId: conversationActions.isLocalConversationId,
     isStoppable: streamActions.isStoppable,
     modeLabel: conversationActions.modeLabel,

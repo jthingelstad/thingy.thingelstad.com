@@ -141,6 +141,16 @@ product direction.
 - The email-me-this-answer feature was retired in the same change; share
   links replaced it. Contract 4.0.0 carries both halves.
 
+### Guest Preview (2026-09)
+
+- Anyone can ask a few questions without signing in: the chat page runs a
+  guest lane when no session exists. Three questions per visitor per day, a
+  100-answer global daily circuit breaker that fails closed, archive-read
+  tools only, and no server-side persistence - history stays in the tab.
+- This is what makes the ~350 "Tell me about issue #N" archive links and
+  every shared conversation an actual demo instead of a sign-in wall.
+- Sign-in stays the path to saved conversations, sharing, and full quotas.
+
 ## Conversation Modes (retired 2026-09)
 
 The mode system - Research Guide, Thought Partner, Trusted Circle alongside

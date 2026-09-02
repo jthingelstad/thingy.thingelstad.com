@@ -45,6 +45,15 @@ const conversationCreateInFlight = signal(false);
 // True while an answer is streaming AND the user can abort it.
 const stoppable = signal(false);
 
+// --- Guest lane -------------------------------------------------------------
+
+// True when the visitor is using chat without a session (guest preview).
+const guestMode = signal(false);
+
+// Questions the guest has left today, from the stream's guest_remaining
+// field. null until the first guest answer reports it.
+const guestRemaining = signal<number | null>(null);
+
 const interactionBusy = computed(() => answerInFlight.value || conversationCreateInFlight.value);
 
 export {
@@ -55,6 +64,8 @@ export {
   chatMessages,
   conversationCreateInFlight,
   conversations,
+  guestMode,
+  guestRemaining,
   interactionBusy,
   questionText,
   stoppable,

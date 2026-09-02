@@ -51,7 +51,12 @@ Thingy is, the archive inventory, architecture, and the AGENT-TEAM) and
 `/connect/` (how to add the Librarian MCP server to Claude, ChatGPT, Claude
 Code, or any MCP client). The app handles auth UI, streams `/chat` SSE from
 the Librarian Lambda, renders citations and inline photo thumbnails,
-collects feedback, and runs browser-only UX. While signed in, the chat page
+collects feedback, and runs browser-only UX. Visitors without a session get
+the guest preview lane (2026-09): the composer works, history stays
+client-side and rides each request as `history`, the server enforces the
+guest caps (3/visitor/day, 100/day global fail-closed breaker, kill switch
+`THINGY_GUEST_CHAT=off` in the Librarian), and the banner links to
+sign-in. An explicit `email` URL param still routes to sign-in. While signed in, the chat page
 also registers the archive tools with the browser's model context (WebMCP,
 `web/src/shared/thingy-webmcp.ts`, proxying to `/api/tools`). It has no
 server of its own - static hosting only. (The Dispatch surface was removed in 2026-08; `/dispatch/` is now a
@@ -216,7 +221,8 @@ Current Tinylytics usage:
   (`src/shared/thingy-analytics.ts`): auth/session, answer
   success/error/stop, feedback, shares, conversations, share links
   (`librarian.share_link_create`/`_revoke` in chat;
-  `librarian.share_view`/`share_cta` on the public page), plus
+  `librarian.share_view`/`share_cta` on the public page), guest lane
+  (`librarian.guest_visit`, `guest_answer`, `guest_signin_click`), plus
   `librarian.client_error` (global error/unhandledrejection handlers on
   chat and sign-in) and `librarian.webmcp_*` (registration and
   unreachable-tool counters)

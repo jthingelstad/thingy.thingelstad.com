@@ -70,6 +70,39 @@
   display: none;
 }
 
+/* Guest preview: chat is live but there is no account and no saved
+   conversations, so the rail (and its scrim) has nothing to offer. The
+   chatbar stays for the title. */
+.thingy-app-shell.is-guest {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.thingy-app-shell.is-guest .rail,
+.thingy-app-shell.is-guest .rail-scrim {
+  display: none;
+}
+
+.thingy-app-shell.is-guest .thingy-conversation {
+  grid-column: 1;
+}
+
+.thingy-guest-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  background: var(--color-accent-soft);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-soft);
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+}
+
+.thingy-guest-banner a {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
 /* Rail frame. */
 .rail {
   position: sticky;
