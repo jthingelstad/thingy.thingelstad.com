@@ -20,12 +20,11 @@ function SuggestionChips({ suggestions }: { suggestions: string[] }) {
   const aui = useAui();
   if (!suggestions.length) return null;
   return (
-    <div className="thingy-aui-suggestions" role="list" aria-label="Suggested questions">
+    <div className="thingy-aui-suggestions" aria-label="Suggested questions">
       {suggestions.map((suggestion) => (
         <button
           key={suggestion}
           type="button"
-          role="listitem"
           className="thingy-aui-suggestion"
           onClick={() => {
             track('librarian.welcome_suggestion');
