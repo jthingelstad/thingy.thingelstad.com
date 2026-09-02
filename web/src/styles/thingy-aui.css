@@ -547,3 +547,77 @@
 .thingy-app-shell.is-collapsed .thingy-aui-rail-filter {
   display: none;
 }
+
+/* Centered empty state: with no messages yet, the welcome, chips, and
+   composer sit together mid-screen (Claude's hero-composer moment); once
+   a message exists the layout snaps back to composer-at-bottom. */
+.thingy-aui-thread:has(.thingy-aui-empty) {
+  justify-content: center;
+}
+
+.thingy-aui-thread:has(.thingy-aui-empty) .thingy-chat-scroll {
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.thingy-aui-thread:has(.thingy-aui-empty) .thingy-composer-zone {
+  position: static;
+  background: none;
+}
+
+.thingy-aui-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Hover-reveal message actions: quiet by default, visible on hover or
+   keyboard focus, always on for the newest message. Touch screens keep
+   them always visible. */
+@media (hover: hover) {
+  .librarian-message .librarian-feedback,
+  .librarian-message .thingy-aui-user-actions {
+    opacity: 0;
+    transition: opacity 130ms ease;
+  }
+
+  .librarian-message:hover .librarian-feedback,
+  .librarian-message:focus-within .librarian-feedback,
+  .librarian-message:hover .thingy-aui-user-actions,
+  .librarian-message:focus-within .thingy-aui-user-actions,
+  .librarian-messages > .librarian-message:last-child .librarian-feedback,
+  .librarian-messages > .librarian-message:last-child .thingy-aui-user-actions {
+    opacity: 1;
+  }
+}
+
+/* Click-to-edit conversation title in the header. */
+.thingy-title-edit {
+  border: none;
+  background: none;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  border-radius: 6px;
+  font: inherit;
+  color: inherit;
+  cursor: text;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thingy-title-edit:hover {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.thingy-title-input {
+  width: min(420px, 100%);
+  border: 1px solid var(--color-accent);
+  border-radius: 6px;
+  padding: 2px 6px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  outline: none;
+}

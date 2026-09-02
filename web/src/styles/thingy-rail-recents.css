@@ -43,7 +43,10 @@
   align-items: center;
   border: 1px solid transparent;
   border-radius: 8px;
-  transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .rail-recent.is-active {
@@ -57,7 +60,7 @@
 }
 
 .rail-recent.is-active::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: 6px auto 6px 4px;
   width: 3px;
@@ -147,18 +150,11 @@
   color: var(--ink-soft);
 }
 
-
 .rail-recent-mode .thingy-icon {
   width: 17px;
   height: 17px;
   stroke-width: 2.05;
 }
-
-
-
-
-
-
 
 .rail-recent-del {
   width: 26px;
@@ -173,7 +169,10 @@
   color: var(--muted);
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.12s ease, color 0.12s ease, background 0.12s ease;
+  transition:
+    opacity 0.12s ease,
+    color 0.12s ease,
+    background 0.12s ease;
 }
 
 .rail-recent:hover .rail-recent-del,

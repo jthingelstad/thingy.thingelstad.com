@@ -1,5 +1,5 @@
 /* Entry bundle for static content pages (/connect/, /about/): the site's
    base tokens + the shared content-page layout, so these pages share the
    exact palette and typography of the rest of Thingy. */
-@import url("./thingy-base.css");
-@import url("./thingy-page.css");
+@import url('./thingy-base.css');
+@import url('./thingy-page.css');

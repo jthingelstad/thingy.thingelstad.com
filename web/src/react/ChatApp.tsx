@@ -18,6 +18,63 @@ export interface ChatInitial {
   from: { href: string; name: string } | null;
 }
 
+// Click-to-edit conversation title in the header (Claude convention).
+function HeaderTitle({
+  title,
+  canRename,
+  onRename
+}: {
+  title: string;
+  canRename: boolean;
+  onRename: (title: string) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  if (!editing || !canRename) {
+    return (
+      <div className="mobile-chatbar-title">
+        {canRename ? (
+          <button
+            type="button"
+            className="thingy-title-edit"
+            title="Rename conversation"
+            onClick={() => {
+              setDraft(title);
+              setEditing(true);
+            }}
+          >
+            {title}
+          </button>
+        ) : (
+          <span>{title}</span>
+        )}
+      </div>
+    );
+  }
+  const commit = () => {
+    const next = draft.trim();
+    setEditing(false);
+    if (next && next !== title) void onRename(next);
+  };
+  return (
+    <div className="mobile-chatbar-title">
+      <input
+        className="thingy-title-input"
+        type="text"
+        value={draft}
+        maxLength={120}
+        autoFocus
+        onChange={(event) => setDraft(event.currentTarget.value)}
+        onBlur={commit}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') commit();
+          if (event.key === 'Escape') setEditing(false);
+        }}
+      />
+    </div>
+  );
+}
+
 export function ChatApp({ initial }: { initial: ChatInitial }) {
   const [signedIn] = useState(() => session.sessionActive());
   const guest = !signedIn;
@@ -32,6 +89,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
   const [guestRemaining, setGuestRemaining] = useState<number | null>(null);
   const [mobileRailOpen, setMobileRailOpen] = useState(false);
   const bindingRef = useRef<ThingyThreadBinding | null>(null);
+  const filterInputRef = useRef<HTMLInputElement | null>(null);
 
   const conversationKey = mountedId || `new-${threadEpoch}`;
   const binding = useMemo<ThingyThreadBinding>(() => {
@@ -166,9 +224,16 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      // Claude's conventions: Cmd+K = search/filter, Cmd+Shift+O = new chat.
+      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'o') {
         event.preventDefault();
         newConversation();
+        return;
+      }
+      if ((event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setMobileRailOpen(true);
+        window.setTimeout(() => filterInputRef.current?.focus(), 60);
       }
     }
     function onStorage(event: StorageEvent) {
@@ -205,6 +270,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
             onShare={(id, shared) => void shareConversation(id, shared)}
             onRename={(id, current) => void renameConversation(id, current)}
             onDelete={(id) => void deleteConversation(id)}
+            filterInputRef={filterInputRef}
           />
         )}
         {guest ? null : <div className="rail-scrim" aria-hidden="true" onClick={() => setMobileRailOpen(false)} />}
@@ -221,9 +287,18 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                 <Icon name="panel-left" />
               </button>
             )}
-            <div className="mobile-chatbar-title">
-              <span>{conversations.find((c) => c.id === activeId)?.title || 'New chat'}</span>
-            </div>
+            <HeaderTitle
+              title={conversations.find((entry) => entry.id === activeId)?.title || 'New chat'}
+              canRename={Boolean(activeId)}
+              onRename={async (title) => {
+                await session.postJson(
+                  '/conversations',
+                  { action: 'rename', conversation_id: activeId, title },
+                  session.authHeaders()
+                );
+                void refreshConversations();
+              }}
+            />
             <div className="mobile-chatbar-actions">
               {activeId ? (
                 <button

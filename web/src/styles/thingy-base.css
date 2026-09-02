@@ -46,9 +46,9 @@
   --code-bg: var(--color-code-bg);
 
   /* Typography */
-  --serif: "Source Serif 4", "Charter", "Sitka Text", cambria, georgia, serif;
-  --sans: "Source Sans 3", -apple-system, blinkmacsystemfont, "Segoe UI", helvetica, arial, sans-serif;
-  --mono: "JetBrains Mono", ui-monospace, sfmono-regular, "SF Mono", menlo, consolas, monospace;
+  --serif: 'Source Serif 4', 'Charter', 'Sitka Text', cambria, georgia, serif;
+  --sans: 'Source Sans 3', -apple-system, blinkmacsystemfont, 'Segoe UI', helvetica, arial, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, sfmono-regular, 'SF Mono', menlo, consolas, monospace;
   --font-body: var(--sans);
   --font-heading: var(--sans);
   --font-mono: var(--mono);
@@ -79,7 +79,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --color-bg: #101716;
     --color-surface: #17211f;
     --color-surface-2: #202c29;
@@ -101,6 +101,31 @@
     --shadow-subtle: none;
     --shadow-agent: none;
   }
+}
+
+/* Explicit reader choice (data-theme on <html>) beats the OS setting in
+   both directions; the tokens must match the media-query block above. */
+:root[data-theme='dark'] {
+  --color-bg: #101716;
+  --color-surface: #17211f;
+  --color-surface-2: #202c29;
+  --color-text: #eaf0ed;
+  --color-text-soft: #bcc8c3;
+  --color-text-muted: #899791;
+  --color-accent: #65c8bc;
+  --color-error: #e0705c;
+  --color-accent-hover: #8edbd2;
+  --color-accent-soft: rgb(101 200 188 / 16%);
+  --color-audio-accent: #d98a56;
+  --color-border: #2c3a36;
+  --color-border-light: #22302d;
+  --color-highlight: rgb(101 200 188 / 22%);
+  --color-code-bg: #202c29;
+  --source-newsletter: #73a7f3;
+  --source-blog: #d98a56;
+  --source-podcast: #6fcf9c;
+  --shadow-subtle: none;
+  --shadow-agent: none;
 }
 
 html {
@@ -133,11 +158,17 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-em, i {
+em,
+i {
   font-style: italic;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
   font-weight: 700;
   line-height: 1.2;
@@ -147,12 +178,25 @@ h1, h2, h3, h4, h5, h6 {
   text-wrap: pretty;
 }
 
-h1 { font-size: var(--size-3xl); }
-h2 { font-size: var(--size-2xl); }
-h3 { font-size: var(--size-xl); }
-h4 { font-size: var(--size-lg); }
+h1 {
+  font-size: var(--size-3xl);
+}
 
-p { margin-bottom: var(--space-md); }
+h2 {
+  font-size: var(--size-2xl);
+}
+
+h3 {
+  font-size: var(--size-xl);
+}
+
+h4 {
+  font-size: var(--size-lg);
+}
+
+p {
+  margin-bottom: var(--space-md);
+}
 
 a {
   color: var(--color-accent);
@@ -161,7 +205,9 @@ a {
   transition: color 0.15s ease;
 }
 
-a:hover { color: var(--color-accent-hover); }
+a:hover {
+  color: var(--color-accent-hover);
+}
 
 blockquote {
   border-left: 3px solid var(--color-accent);
@@ -216,7 +262,8 @@ table {
   font-size: var(--size-sm);
 }
 
-th, td {
+th,
+td {
   padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--color-border);
   text-align: left;

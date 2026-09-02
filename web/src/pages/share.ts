@@ -4,6 +4,9 @@ import { createRoot } from 'react-dom/client';
 import { registerClientErrorTracking } from '../shared/thingy-analytics.ts';
 import { loadTinylytics } from '../shared/thingy-tinylytics-loader.ts';
 import { ShareApp } from '../react/ShareApp.tsx';
+import { initTheme } from '../shared/thingy-theme.ts';
+
+initTheme();
 
 registerClientErrorTracking('share');
 const root = document.getElementById('thingy-shared-root');

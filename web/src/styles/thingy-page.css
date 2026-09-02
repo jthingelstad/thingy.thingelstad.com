@@ -37,7 +37,7 @@
 
 .thingy-page code,
 .thingy-page pre {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 0.88em;
   background: var(--color-code-bg, rgb(0 0 0 / 6%));
   border-radius: 5px;
@@ -69,7 +69,7 @@
   margin-bottom: 0.35rem;
 }
 
- /* Classless links only: content prose gets the accent, while any link
+/* Classless links only: content prose gets the accent, while any link
    that carries a class is a component and keeps its own colors. This is
    the structural fix for the invisible share-button bug - a bare
    `.thingy-page a` out-specified component color rules. */
@@ -143,7 +143,7 @@
 }
 
 .thingy-page .flow {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 0.82rem;
   color: var(--color-text-soft);
   overflow-x: auto;

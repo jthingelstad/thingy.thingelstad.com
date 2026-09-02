@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type RefObject } from 'react';
 import { AccountPanel } from '../AccountPanel.tsx';
 import { Icon } from './Icon.tsx';
 
@@ -47,7 +47,8 @@ export function Rail({
   onNew,
   onShare,
   onRename,
-  onDelete
+  onDelete,
+  filterInputRef
 }: {
   collapsed: boolean;
   onToggleCollapsed: () => void;
@@ -58,6 +59,7 @@ export function Rail({
   onShare: (id: string, shared: boolean) => void;
   onRename: (id: string, current: string) => void;
   onDelete: (id: string) => void;
+  filterInputRef?: RefObject<HTMLInputElement | null>;
 }) {
   const [filter, setFilter] = useState('');
   const groups = useMemo(() => {
@@ -85,10 +87,11 @@ export function Rail({
         </button>
       </div>
       <div className="rail-body">
-        {conversations.length > 5 ? (
+        {conversations.length > 0 ? (
           <div className="thingy-aui-rail-filter">
             <Icon name="search" />
             <input
+              ref={filterInputRef}
               type="search"
               placeholder="Filter chats"
               aria-label="Filter conversations"

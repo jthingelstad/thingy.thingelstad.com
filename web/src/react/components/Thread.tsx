@@ -46,12 +46,14 @@ function Thread({ guest, welcome, suggestions }: { guest: boolean; welcome: stri
       <ThreadPrimitive.Viewport className="thingy-chat-scroll" autoScroll>
         <div className="librarian-messages">
           <ThreadPrimitive.Empty>
-            <article className="librarian-message librarian-message-assistant">
-              <div className="librarian-answer-content">
-                <p>{welcome}</p>
-              </div>
-            </article>
-            <SuggestionChips suggestions={suggestions} />
+            <div className="thingy-aui-empty">
+              <article className="librarian-message librarian-message-assistant">
+                <div className="librarian-answer-content">
+                  <p>{welcome}</p>
+                </div>
+              </article>
+              <SuggestionChips suggestions={suggestions} />
+            </div>
           </ThreadPrimitive.Empty>
           <ThreadPrimitive.Messages components={{ UserMessage, AssistantMessage, EditComposer }} />
         </div>

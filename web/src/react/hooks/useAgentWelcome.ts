@@ -17,7 +17,7 @@ export function useAgentWelcome(guest: boolean, seeded: boolean) {
   // Never a static question list - Jamie's product rule.
   const [suggestions, setSuggestions] = useState<string[]>([]);
   useEffect(() => {
-    if (guest || seeded) return undefined;
+    if (seeded) return undefined;
     const controller = new AbortController();
     void (async () => {
       try {
@@ -31,8 +31,8 @@ export function useAgentWelcome(guest: boolean, seeded: boolean) {
           payload: {
             scope: 'all',
             mode: 'thingy',
-            client_context: userLocalContext(),
-            user_profile: { preferred_name: String(session.storedProfile().preferred_name || '') }
+            client_context: guest ? {} : userLocalContext(),
+            user_profile: guest ? {} : { preferred_name: String(session.storedProfile().preferred_name || '') }
           }
         });
         let text = '';
@@ -53,7 +53,7 @@ export function useAgentWelcome(guest: boolean, seeded: boolean) {
             );
           }
         });
-        trackEvent('librarian.welcome_success');
+        trackEvent('librarian.welcome_success', guest ? 'guest' : 'reader');
       } catch {
         trackEvent('librarian.welcome_error', 'client');
       }

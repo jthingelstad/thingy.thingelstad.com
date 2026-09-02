@@ -21,7 +21,9 @@
   border-radius: 16px;
   background: var(--surface);
   color: var(--ink);
-  box-shadow: 0 24px 70px -24px rgb(14 43 38 / 55%), 0 4px 16px rgb(14 43 38 / 10%);
+  box-shadow:
+    0 24px 70px -24px rgb(14 43 38 / 55%),
+    0 4px 16px rgb(14 43 38 / 10%);
 }
 
 .thingy-dialog h2 {

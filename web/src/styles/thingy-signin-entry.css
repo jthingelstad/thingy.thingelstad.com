@@ -1,4 +1,4 @@
 /* Style entry for the standalone sign-in page: base tokens/typography plus
    the sign-in card. The chat surface loads the full manifest (thingy.css). */
-@import url("./thingy-base.css");
-@import url("./thingy-auth.css");
+@import url('./thingy-base.css');
+@import url('./thingy-auth.css');

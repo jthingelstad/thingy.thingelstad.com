@@ -8,6 +8,9 @@ import { loadTinylytics } from '../shared/thingy-tinylytics-loader.ts';
 import { bootWebMcp } from '../shared/thingy-webmcp.ts';
 import * as session from '../shared/thingy-session.ts';
 import { ChatApp, type ChatInitial } from './ChatApp.tsx';
+import { initTheme } from '../shared/thingy-theme.ts';
+
+initTheme();
 
 registerClientErrorTracking('chat');
 

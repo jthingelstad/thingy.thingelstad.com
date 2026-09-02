@@ -124,11 +124,11 @@
   font-size: 15px;
 }
 
-.thingy-signin-message[data-kind="error"] {
+.thingy-signin-message[data-kind='error'] {
   color: #b54730;
 }
 
-.thingy-signin-message[data-kind="success"] {
+.thingy-signin-message[data-kind='success'] {
   color: var(--accent-deep);
 }
 
@@ -165,7 +165,7 @@
 }
 
 .thingy-signin-code input {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   letter-spacing: 0.3em;
   text-align: center;
 }

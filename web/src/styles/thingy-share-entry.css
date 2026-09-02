@@ -1,9 +1,9 @@
 /* Entry bundle for the public shared-conversation page (/c/<token>): the
    site's base tokens, the content-page nav/layout, and the chat message
    styles the snapshot renders with. */
-@import url("./thingy-base.css");
-@import url("./thingy-page.css");
-@import url("./thingy-messages.css");
+@import url('./thingy-base.css');
+@import url('./thingy-page.css');
+@import url('./thingy-messages.css');
 
 .thingy-shared .thingy-shared-loading {
   color: var(--color-text-muted);

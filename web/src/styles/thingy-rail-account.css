@@ -15,7 +15,9 @@
   background: transparent;
   cursor: pointer;
   text-align: left;
-  transition: background 0.14s ease, border-color 0.14s ease;
+  transition:
+    background 0.14s ease,
+    border-color 0.14s ease;
 }
 
 .rail-account-btn:hover {
@@ -93,7 +95,9 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
-  box-shadow: 0 14px 40px -18px rgb(14 43 38 / 45%), 0 2px 8px rgb(14 43 38 / 8%);
+  box-shadow:
+    0 14px 40px -18px rgb(14 43 38 / 45%),
+    0 2px 8px rgb(14 43 38 / 8%);
   max-height: min(680px, calc(100vh - 38px));
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -273,7 +277,9 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
-  box-shadow: 0 30px 90px -45px rgb(14 43 38 / 55%), 0 6px 24px rgb(14 43 38 / 14%);
+  box-shadow:
+    0 30px 90px -45px rgb(14 43 38 / 55%),
+    0 6px 24px rgb(14 43 38 / 14%);
 }
 
 .thingy-memory-header {
@@ -424,7 +430,7 @@
   cursor: pointer;
 }
 
-.thingy-memory-tabs button[aria-selected="true"] {
+.thingy-memory-tabs button[aria-selected='true'] {
   border-bottom-color: var(--accent-deep);
   color: var(--ink);
 }
@@ -636,4 +642,32 @@
   .thingy-memory-dl dd {
     margin-bottom: 8px;
   }
+}
+
+/* Theme picker row in the account menu. */
+.rail-theme-setting {
+  padding-top: 2px;
+}
+
+.rail-theme-options {
+  display: flex;
+  gap: 6px;
+}
+
+.rail-theme-options button {
+  flex: 1 1 0;
+  padding: 6px 0;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  background: var(--color-surface);
+  color: var(--color-text-soft);
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.rail-theme-options button.is-active {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-text);
 }

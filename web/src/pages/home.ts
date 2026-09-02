@@ -1,6 +1,9 @@
 import '../styles/thingy-home-entry.css';
 import { loadTinylytics } from '../shared/thingy-tinylytics-loader.ts';
 import { refreshAuth, sessionActive } from '../shared/thingy-session.ts';
+import { initTheme } from '../shared/thingy-theme.ts';
+
+initTheme();
 
 loadTinylytics();
 

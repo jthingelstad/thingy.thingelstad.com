@@ -106,11 +106,6 @@
   color: var(--accent-deep);
 }
 
-
-
-
-
-
 .thingy-home-meta {
   display: inline-flex;
   align-items: center;
@@ -196,64 +191,59 @@
 @media (width <= 560px) {
   .thingy-home-hero,
   .thingy-home-guest-note {
-  flex-basis: 100%;
-  margin: 2px 0 0;
-  color: var(--ink-soft);
-  font-size: 14.5px;
-  line-height: 1.5;
-}
+    flex-basis: 100%;
+    margin: 2px 0 0;
+    color: var(--ink-soft);
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
 
-.thingy-home-actions a.thingy-home-textlink {
-  display: inline;
-  min-height: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: none;
-  color: inherit;
-  font-weight: 650;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
+  .thingy-home-actions a.thingy-home-textlink {
+    display: inline;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: inherit;
+    font-weight: 650;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
 
-.thingy-home-actions a.thingy-home-textlink:hover {
-  color: var(--accent-deep);
-}
+  .thingy-home-actions a.thingy-home-textlink:hover {
+    color: var(--accent-deep);
+  }
 
+  .thingy-home-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    color: var(--ink-soft);
+    font-size: 13px;
+  }
 
+  .thingy-home-meta .tinylytics_kudos {
+    appearance: none;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: 15px;
+    line-height: 1;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
 
+  .thingy-home-meta .tinylytics_kudos:hover {
+    border-color: var(--accent-deep);
+  }
 
+  .thingy-home-hits:empty {
+    display: none;
+  }
 
-
-.thingy-home-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  margin-left: auto;
-  color: var(--ink-soft);
-  font-size: 13px;
-}
-
-.thingy-home-meta .tinylytics_kudos {
-  appearance: none;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface);
-  font-size: 15px;
-  line-height: 1;
-  padding: 6px 10px;
-  cursor: pointer;
-}
-
-.thingy-home-meta .tinylytics_kudos:hover {
-  border-color: var(--accent-deep);
-}
-
-.thingy-home-hits:empty {
-  display: none;
-}
-
-.thingy-home-grid {
+  .thingy-home-grid {
     grid-template-columns: 1fr;
   }
 
