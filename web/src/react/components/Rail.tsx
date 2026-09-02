@@ -54,7 +54,9 @@ export function Rail({
   onRename,
   onDelete,
   filterInputRef,
-  onSearch
+  onSearch,
+  total = 0,
+  onOpenHistory
 }: {
   collapsed: boolean;
   onToggleCollapsed: () => void;
@@ -66,7 +68,9 @@ export function Rail({
   onRename: (id: string, current: string) => void;
   onDelete: (id: string) => void;
   filterInputRef?: RefObject<HTMLInputElement | null>;
-  onSearch?: (query: string) => Promise<Array<{ conversation_id: string; snippet: string }>>;
+  onSearch?: (query: string) => Promise<Array<{ conversation_id: string; snippet: string; title?: string }>>;
+  total?: number;
+  onOpenHistory?: () => void;
 }) {
   const [filter, setFilter] = useState('');
   // Full-content matches from the server (contract 4.5) as a query keyed
@@ -87,6 +91,13 @@ export function Rail({
     if (filter.trim().length < 2) return new Map<string, string>();
     return new Map(searchMatches.map((match) => [match.conversation_id, match.snippet]));
   }, [searchMatches, filter]);
+  // Matches beyond the rail's loaded window (contract 4.6 carries their
+  // titles) render as their own group so deep history stays reachable.
+  const historyMatches = useMemo(() => {
+    if (filter.trim().length < 2) return [];
+    const loaded = new Set(conversations.map((entry) => entry.id));
+    return searchMatches.filter((match) => !loaded.has(match.conversation_id) && match.title);
+  }, [searchMatches, filter, conversations]);
   const groups = useMemo(() => {
     const needleNow = filter.trim().toLowerCase();
     const visible = needleNow
@@ -141,6 +152,27 @@ export function Rail({
           <p className="px-2 pt-2 font-sans text-xs font-semibold tracking-wide text-muted uppercase">
             No matching chats
           </p>
+        ) : null}
+        {historyMatches.length ? (
+          <div>
+            <p className="px-2 pt-3 pb-1 font-sans text-[11px] font-bold tracking-wider text-muted uppercase">
+              From your history
+            </p>
+            <ul className="grid min-w-0 gap-0.5">
+              {historyMatches.map((match) => (
+                <li key={match.conversation_id} className="min-w-0 overflow-hidden rounded-lg hover:bg-surface-2">
+                  <button
+                    type="button"
+                    className="block w-full truncate px-2.5 py-2 text-left font-sans text-[13.5px] text-ink"
+                    onClick={() => onSelect(match.conversation_id)}
+                  >
+                    <span className="block truncate">{match.title}</span>
+                    <span className="mt-0.5 block truncate text-[11.5px] text-muted">{match.snippet}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         ) : null}
         {groups.map((group) => (
           <div key={group.label}>
@@ -212,6 +244,18 @@ export function Rail({
           </div>
         ))}
       </div>
+      {onOpenHistory ? (
+        <div className="px-2 pb-1">
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left font-sans text-[13px] font-bold text-muted transition-colors hover:bg-surface-2 hover:text-ink [&_svg]:size-4"
+            onClick={onOpenHistory}
+          >
+            <Icon name="messages-square" />
+            All chats{total ? ` · ${total}` : ''}
+          </button>
+        </div>
+      ) : null}
       <div className="border-t border-line-soft p-2">
         <AccountPanel />
       </div>

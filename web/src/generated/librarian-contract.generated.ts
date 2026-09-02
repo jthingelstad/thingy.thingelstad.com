@@ -232,12 +232,12 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = '30ea49532147c4cc2329090788950527ac2cdc574d44a6f77f91cb7c2ee7aec9';
+export const LIBRARIAN_CONTRACT_SHA256 = '7ccba882161a54c0d5ac2f83e5e21a542742fe6cbe14bac7cd7babfcd13322f5';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '4.5.0',
+  version: '4.6.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
@@ -849,6 +849,9 @@ export const LIBRARIAN_CONTRACT = {
               items: {
                 $ref: '#/$defs/conversation'
               }
+            },
+            total: {
+              type: 'number'
             }
           },
           required: ['conversations'],
@@ -922,6 +925,12 @@ export const LIBRARIAN_CONTRACT = {
                     type: 'string'
                   },
                   snippet: {
+                    type: 'string'
+                  },
+                  title: {
+                    type: 'string'
+                  },
+                  updated_at: {
                     type: 'string'
                   }
                 },

@@ -15,6 +15,7 @@ import { ThreadHost } from './components/Thread.tsx';
 import { DialogHost } from './components/DialogHost.tsx';
 import { Tip, TipProvider } from './components/Tip.tsx';
 import { HeaderTitle } from './components/HeaderTitle.tsx';
+import { HistoryDialog, type HistoryMatch } from './components/HistoryDialog.tsx';
 
 export interface ChatInitial {
   prompt: string;
@@ -33,6 +34,10 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
   const [threadEpoch, setThreadEpoch] = useState(0);
   const [guestRemaining, setGuestRemaining] = useState<number | null>(null);
   const [mobileRailOpen, setMobileRailOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  // Titles learned from history/search selection, so the header can name
+  // conversations that sit beyond the rail's loaded window.
+  const [knownTitle, setKnownTitle] = useState<{ id: string; title: string } | null>(null);
   const bindingRef = useRef<ThingyThreadBinding | null>(null);
   const filterInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -40,20 +45,25 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
   // is a cached query, mutations update it optimistically, and everything
   // that used to call refreshConversations() invalidates instead.
   const queryClient = useQueryClient();
-  const { data: conversations = [] } = useQuery({
+  const { data: conversationData } = useQuery({
     queryKey: ['conversations'],
     enabled: !guest,
-    queryFn: async (): Promise<ConversationSummary[]> => {
+    queryFn: async (): Promise<{ conversations: ConversationSummary[]; total: number }> => {
       const data = await session.postJson('/conversations', { action: 'list' }, session.authHeaders());
       const list = Array.isArray(data.conversations) ? data.conversations : [];
-      return list.map((entry) => ({
-        id: String(entry.conversation_id || entry.id || ''),
-        title: String(entry.title || 'Untitled chat'),
-        shared_at: String(entry.shared_at || ''),
-        updated_at: String(entry.updated_at || '')
-      }));
+      return {
+        conversations: list.map((entry) => ({
+          id: String(entry.conversation_id || entry.id || ''),
+          title: String(entry.title || 'Untitled chat'),
+          shared_at: String(entry.shared_at || ''),
+          updated_at: String(entry.updated_at || '')
+        })),
+        total: Number((data as { total?: number }).total || list.length)
+      };
     }
   });
+  const conversations = conversationData?.conversations ?? [];
+  const conversationTotal = conversationData?.total ?? 0;
   const invalidateConversations = () => void queryClient.invalidateQueries({ queryKey: ['conversations'] });
 
   const conversationKey = mountedId || `new-${threadEpoch}`;
@@ -122,10 +132,11 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
     setMobileRailOpen(false);
   }
 
-  function selectConversation(id: string) {
+  function selectConversation(id: string, title?: string) {
     setActiveId(id);
     setMountedId(id);
     setMobileRailOpen(false);
+    if (title) setKnownTitle({ id, title });
   }
 
   async function deleteConversation(id: string) {
@@ -184,13 +195,31 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
     invalidateConversations();
   }
 
-  async function searchConversations(query: string) {
+  async function searchConversations(query: string): Promise<HistoryMatch[]> {
     const data = await session.postJson('/conversations', { action: 'search', query }, session.authHeaders());
-    const matches = (data as { matches?: Array<{ conversation_id?: string; snippet?: string }> }).matches;
+    const matches = (
+      data as { matches?: Array<{ conversation_id?: string; snippet?: string; title?: string; updated_at?: string }> }
+    ).matches;
     return (Array.isArray(matches) ? matches : []).map((match) => ({
       conversation_id: String(match.conversation_id || ''),
-      snippet: String(match.snippet || '')
+      snippet: String(match.snippet || ''),
+      title: String(match.title || ''),
+      updated_at: String(match.updated_at || '')
     }));
+  }
+
+  async function listConversationPage(offset: number) {
+    const data = await session.postJson('/conversations', { action: 'list', offset, limit: 50 }, session.authHeaders());
+    const list = Array.isArray(data.conversations) ? data.conversations : [];
+    return {
+      conversations: list.map((entry) => ({
+        id: String(entry.conversation_id || entry.id || ''),
+        title: String(entry.title || 'Untitled chat'),
+        shared_at: String(entry.shared_at || ''),
+        updated_at: String(entry.updated_at || '')
+      })),
+      total: Number((data as { total?: number }).total || list.length)
+    };
   }
 
   const { text: welcome, suggestions } = useAgentWelcome(guest, Boolean(initial.prompt));
@@ -269,6 +298,8 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                   onDelete={(id) => void deleteConversation(id)}
                   filterInputRef={filterInputRef}
                   onSearch={searchConversations}
+                  total={conversationTotal}
+                  onOpenHistory={() => setHistoryOpen(true)}
                 />
               </div>
               <div
@@ -304,7 +335,11 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                 </Tip>
               ) : null}
               <HeaderTitle
-                title={conversations.find((entry) => entry.id === activeId)?.title || 'New chat'}
+                title={
+                  conversations.find((entry) => entry.id === activeId)?.title ||
+                  (knownTitle?.id === activeId ? knownTitle.title : '') ||
+                  'New chat'
+                }
                 canRename={Boolean(activeId)}
                 onRename={async (title) => {
                   renameMutation.mutate({ id: activeId, title });
@@ -380,6 +415,16 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
             />
           </section>
         </div>
+        <HistoryDialog
+          open={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+          onSelect={(id, title) => selectConversation(id, title)}
+          onShare={(id, shared) => void shareConversation(id, shared)}
+          onRename={(id, current) => void renameConversation(id, current)}
+          onDelete={(id) => void deleteConversation(id)}
+          listPage={listConversationPage}
+          search={searchConversations}
+        />
         <DialogHost />
       </main>
     </TipProvider>
