@@ -4,7 +4,7 @@
   flex-direction: column;
   align-items: stretch;
   gap: 0;
-  min-height: 116px;
+  min-height: 0;
   padding: 0;
   overflow: visible;
 }
@@ -12,9 +12,9 @@
 .composer-box.thingy-input textarea {
   resize: none;
   width: 100%;
-  min-height: 58px;
+  min-height: 24px;
   max-height: 240px;
-  padding: 18px 20px 4px;
+  padding: 14px 18px 2px;
   border: 0;
   background: transparent;
   color: var(--ink);
@@ -59,7 +59,10 @@
   appearance: none;
   -webkit-appearance: none;
   line-height: 0;
-  transition: background 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
+  transition:
+    background 0.14s ease,
+    color 0.14s ease,
+    box-shadow 0.14s ease;
   width: 36px;
   min-width: 36px;
   padding: 0;
@@ -142,7 +145,11 @@
   line-height: 0;
   overflow: hidden;
   box-shadow: 0 8px 20px rgb(23 33 31 / 18%);
-  transition: background 0.14s ease, border-color 0.14s ease, transform 0.14s ease, opacity 0.14s ease;
+  transition:
+    background 0.14s ease,
+    border-color 0.14s ease,
+    transform 0.14s ease,
+    opacity 0.14s ease;
 }
 
 :is(.composer-send, .librarian-form button.composer-send):hover:not(:disabled) {

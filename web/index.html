@@ -1,141 +1,159 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://tinylytics.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://tinylytics.app; connect-src 'self' https://tinylytics.app">
-  <title>Thingy — Jamie Thingelstad&#39;s Archive Agent</title>
-  <meta name="description" content="Thingy is Jamie Thingelstad&#39;s public archive agent for exploring his writing, newsletter, and podcast.">
-  <meta name="robots" content="index, follow, max-image-preview:large">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://tinylytics.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://tinylytics.app; connect-src 'self' https://tinylytics.app"
+    />
+    <title>Thingy — Jamie Thingelstad&#39;s Archive Agent</title>
+    <meta
+      name="description"
+      content="Thingy is Jamie Thingelstad&#39;s public archive agent for exploring his writing, newsletter, and podcast."
+    />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
 
+    <meta property="og:title" content="Thingy — Jamie Thingelstad's Archive Agent" />
+    <meta
+      property="og:description"
+      content="Thingy is Jamie Thingelstad&#39;s public archive agent for exploring his writing, newsletter, and podcast."
+    />
+    <meta property="og:url" content="https://thingy.thingelstad.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Thingy" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:image" content="https://thingy.thingelstad.com/img/thingy.png" />
+    <meta property="og:image:alt" content="Thingy, Jamie Thingelstad's archive agent" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Thingy — Jamie Thingelstad's Archive Agent" />
+    <meta
+      name="twitter:description"
+      content="Thingy is Jamie Thingelstad&#39;s public archive agent for exploring his writing, newsletter, and podcast."
+    />
+    <meta name="twitter:image" content="https://thingy.thingelstad.com/img/thingy.png" />
+    <meta name="twitter:image:alt" content="Thingy, Jamie Thingelstad's archive agent" />
 
-  <meta property="og:title" content="Thingy — Jamie Thingelstad's Archive Agent">
-  <meta property="og:description" content="Thingy is Jamie Thingelstad&#39;s public archive agent for exploring his writing, newsletter, and podcast.">
-  <meta property="og:url" content="https://thingy.thingelstad.com/">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Thingy">
-  <meta property="og:locale" content="en_US">
-  <meta property="og:image" content="https://thingy.thingelstad.com/img/thingy.png">
-  <meta property="og:image:alt" content="Thingy, Jamie Thingelstad's archive agent">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Thingy — Jamie Thingelstad's Archive Agent">
-  <meta name="twitter:description" content="Thingy is Jamie Thingelstad&#39;s public archive agent for exploring his writing, newsletter, and podcast.">
-  <meta name="twitter:image" content="https://thingy.thingelstad.com/img/thingy.png">
-  <meta name="twitter:image:alt" content="Thingy, Jamie Thingelstad's archive agent">
+    <link rel="canonical" href="https://thingy.thingelstad.com/" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
-  <link rel="canonical" href="https://thingy.thingelstad.com/">
-  <link rel="sitemap" type="application/xml" href="/sitemap.xml">
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="webmention" href="https://tinylytics.app/webmention/__THINGY_TINYLYTICS_ID__" />
 
-  <link rel="webmention" href="https://tinylytics.app/webmention/__THINGY_TINYLYTICS_ID__">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400..600&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    />
 
+    <link rel="preconnect" href="https://tinylytics.app" />
 
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400..600&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
-
-  <link rel="preconnect" href="https://tinylytics.app">
-
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
+    <script type="application/ld+json">
       {
-        "@type": "WebSite",
-        "@id": "https://thingy.thingelstad.com/#website",
-        "url": "https://thingy.thingelstad.com/",
-        "name": "Thingy",
-        "description": "Thingy is Jamie Thingelstad's public archive agent for exploring his writing, newsletter, and podcast.",
-        "publisher": { "@id": "https://www.thingelstad.com/#jamie" }
-      },
-      {
-        "@type": "WebApplication",
-        "@id": "https://thingy.thingelstad.com/#app",
-        "name": "Thingy",
-        "url": "https://thingy.thingelstad.com/",
-        "applicationCategory": "ReferenceApplication",
-        "operatingSystem": "Web",
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "description": "An AI archive agent that answers questions across The Weekly Thing newsletter, the thingelstad.com blog, and the Another Thing podcast — with citations back to the original writing. Also available as an MCP server for Claude, Codex, and other AI assistants.",
-        "author": { "@id": "https://www.thingelstad.com/#jamie" },
-        "about": [
-          { "@type": "CreativeWorkSeries", "name": "The Weekly Thing", "url": "https://weekly.thingelstad.com/" },
-          { "@type": "Blog", "name": "thingelstad.com", "url": "https://www.thingelstad.com/" },
-          { "@type": "PodcastSeries", "name": "Another Thing", "url": "https://another.thingelstad.com/" }
-        ]
-      },
-      {
-        "@type": "Person",
-        "@id": "https://www.thingelstad.com/#jamie",
-        "name": "Jamie Thingelstad",
-        "url": "https://www.thingelstad.com/",
-        "sameAs": [
-          "https://weekly.thingelstad.com/",
-          "https://another.thingelstad.com/"
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://thingy.thingelstad.com/#website",
+            "url": "https://thingy.thingelstad.com/",
+            "name": "Thingy",
+            "description": "Thingy is Jamie Thingelstad's public archive agent for exploring his writing, newsletter, and podcast.",
+            "publisher": { "@id": "https://www.thingelstad.com/#jamie" }
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://thingy.thingelstad.com/#app",
+            "name": "Thingy",
+            "url": "https://thingy.thingelstad.com/",
+            "applicationCategory": "ReferenceApplication",
+            "operatingSystem": "Web",
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "description": "An AI archive agent that answers questions across The Weekly Thing newsletter, the thingelstad.com blog, and the Another Thing podcast — with citations back to the original writing. Also available as an MCP server for Claude, Codex, and other AI assistants.",
+            "author": { "@id": "https://www.thingelstad.com/#jamie" },
+            "about": [
+              { "@type": "CreativeWorkSeries", "name": "The Weekly Thing", "url": "https://weekly.thingelstad.com/" },
+              { "@type": "Blog", "name": "thingelstad.com", "url": "https://www.thingelstad.com/" },
+              { "@type": "PodcastSeries", "name": "Another Thing", "url": "https://another.thingelstad.com/" }
+            ]
+          },
+          {
+            "@type": "Person",
+            "@id": "https://www.thingelstad.com/#jamie",
+            "name": "Jamie Thingelstad",
+            "url": "https://www.thingelstad.com/",
+            "sameAs": ["https://weekly.thingelstad.com/", "https://another.thingelstad.com/"]
+          }
         ]
       }
-    ]
-  }
-  </script>
-</head>
-<body>
-  <main id="main-content">
+    </script>
+  </head>
+  <body>
+    <main id="main-content">
+      <section class="thingy-home">
+        <div class="thingy-home-hero">
+          <div class="thingy-home-image">
+            <img src="/img/thingy.png" alt="Thingy" width="1022" height="1022" loading="eager" />
+          </div>
+          <div class="thingy-home-copy">
+            <p class="eyebrow">Jamie Thingelstad&rsquo;s archive agent</p>
+            <h1>Meet Thingy.</h1>
+            <p class="thingy-home-lede">
+              Thingy is the librarian for Jamie&rsquo;s public archive &mdash; 350 newsletter issues, ten thousand blog
+              posts back to 2000, photos, links, and the podcast. Ask it anything and it answers with citations back to
+              the original writing.
+            </p>
+            <div class="thingy-home-actions">
+              <a class="primary" href="/chat/" data-tinylytics-event="home.start_chat">Start Chatting</a>
+              <p class="thingy-home-guest-note">
+                No account needed &mdash; ask a few questions free.
+                <a href="https://weekly.thingelstad.com/">Weekly Thing</a> readers sign in for saved conversations and
+                more.
+              </p>
+            </div>
+          </div>
+        </div>
 
-<section class="thingy-home">
-  <div class="thingy-home-hero">
-    <div class="thingy-home-image">
-      <img src="/img/thingy.png" alt="Thingy" width="1022" height="1022" loading="eager">
-    </div>
-    <div class="thingy-home-copy">
-      <p class="eyebrow">Jamie Thingelstad&rsquo;s archive agent</p>
-      <h1>Meet Thingy.</h1>
-      <p class="thingy-home-lede">Thingy is the librarian for Jamie&rsquo;s public archive &mdash; 350 newsletter issues, ten thousand blog posts back to 2000, photos, links, and the podcast. Ask it anything and it answers with citations back to the original writing.</p>
-      <div class="thingy-home-actions">
-        <a class="primary" href="/chat/" data-tinylytics-event="home.start_chat">Start Chatting</a>
-        <p class="thingy-home-guest-note">No account needed &mdash; ask a few questions free. Weekly Thing readers sign in for saved conversations and more.</p>
-      </div>
-      <div class="thingy-home-examples" aria-label="Try an example question">
-        <a href="/chat/?prompt=When%20did%20Jamie%20first%20write%20about%20Ethereum%3F" data-tinylytics-event="home.example_prompt">When did Jamie first write about Ethereum?</a>
-        <a href="/chat/?prompt=Show%20me%20photos%20from%20bike%20rides" data-tinylytics-event="home.example_prompt">Show me photos from bike rides</a>
-        <a href="/chat/?prompt=What%20was%20Jamie%20reading%20in%202019%3F" data-tinylytics-event="home.example_prompt">What was Jamie reading in 2019?</a>
-      </div>
-    </div>
-  </div>
+        <div class="thingy-home-grid" aria-label="Thingy surfaces">
+          <article>
+            <h2>Chat</h2>
+            <p>
+              Ask questions across Jamie&rsquo;s archive, pull on threads, and use Thingy as a guide through years of
+              published ideas.
+            </p>
+            <a href="/chat/">Open Chat</a>
+          </article>
+          <article>
+            <h2>Connect your AI</h2>
+            <p>
+              Bring the archive into Claude, ChatGPT, or any MCP client &mdash; the same tools Thingy uses, in your own
+              assistant.
+            </p>
+            <a href="/connect/">Connect an assistant</a>
+          </article>
+          <article>
+            <h2>About Thingy</h2>
+            <p>
+              What the archive holds &mdash; 25 years of writing, photos, and links &mdash; and how an open-source AI
+              librarian answers from it.
+            </p>
+            <a href="/about/">About Thingy</a>
+          </article>
+        </div>
 
-  <div class="thingy-home-grid" aria-label="Thingy surfaces">
-    <article>
-      <h2>Chat</h2>
-      <p>Ask questions across Jamie&rsquo;s archive, pull on threads, and use Thingy as a guide through years of published ideas.</p>
-      <a href="/chat/">Open Chat</a>
-    </article>
-    <article>
-      <h2>Connect your AI</h2>
-      <p>Bring the archive into Claude, ChatGPT, or any MCP client &mdash; the same tools Thingy uses, in your own assistant.</p>
-      <a href="/connect/">Connect an assistant</a>
-    </article>
-    <article>
-      <h2>About Thingy</h2>
-      <p>What the archive holds &mdash; 25 years of writing, photos, and links &mdash; and how an open-source AI librarian answers from it.</p>
-      <a href="/about/">About Thingy</a>
-    </article>
-  </div>
-
-  <div class="thingy-home-network" aria-label="Jamie Thingelstad sites">
-    <a href="https://www.thingelstad.com/">thingelstad.com</a>
-    <a href="https://weekly.thingelstad.com/">Weekly Thing</a>
-    <a href="https://another.thingelstad.com/">Another Thing</a>
-    <span class="thingy-home-meta">
-      <button class="tinylytics_kudos" type="button" title="Send a kudo">&#129302;</button>
-      <span class="thingy-home-hits"><span class="tinylytics_hits"></span> <span class="tinylytics_countries"></span></span>
-    </span>
-  </div>
-</section>
-  <script type="module" src="/src/pages/home.ts"></script>
-  </main>
-
-
-
-</body>
+        <div class="thingy-home-network" aria-label="Jamie Thingelstad sites">
+          <a href="https://www.thingelstad.com/">thingelstad.com</a>
+          <a href="https://weekly.thingelstad.com/">Weekly Thing</a>
+          <a href="https://another.thingelstad.com/">Another Thing</a>
+          <span class="thingy-home-meta">
+            <span class="thingy-home-hits"
+              ><span class="tinylytics_hits"></span> <span class="tinylytics_countries"></span
+            ></span>
+          </span>
+        </div>
+      </section>
+      <script type="module" src="/src/pages/home.ts"></script>
+    </main>
+  </body>
 </html>

@@ -81,7 +81,7 @@ export function Rail({
         </button>
         <img className="rail-mark" src="/img/thingy.png" alt="" width="1022" height="1022" />
         <button type="button" className="rail-newchat thingy-aui-newchat" onClick={onNew}>
-          <Icon name="pencil" /> {collapsed ? '' : 'New chat'}
+          <Icon name="square-pen" /> {collapsed ? '' : 'New chat'}
         </button>
       </div>
       <div className="rail-body">

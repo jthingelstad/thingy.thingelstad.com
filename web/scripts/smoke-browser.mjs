@@ -199,14 +199,12 @@ async function checkChat(browser) {
   await page.waitForSelector('.librarian-message-assistant');
   assert.match(await page.locator('.librarian-message-assistant').first().textContent(), /Hi\. I'm Thingy/);
 
-  await page.waitForSelector('#librarian-question-count .composer-count');
-  const countLocator = page.locator('#librarian-question-count .composer-count');
-  assert.equal((await countLocator.textContent()).trim(), '0 / 1200', 'count starts at 0');
+  // The counter stays hidden until the reader nears the 1200 cap.
+  await page.waitForSelector('#librarian-question-count .composer-count', { state: 'hidden' });
+  await page.locator('#librarian-question').fill('x'.repeat(1050));
+  await page.waitForSelector('#librarian-question-count .composer-count', { state: 'visible' });
   await page.locator('#librarian-question').fill('Hello Thingy');
-  await page.waitForFunction(() => {
-    const el = document.querySelector('#librarian-question-count .composer-count');
-    return el && /^12 \/ 1200/.test(el.textContent || '');
-  });
+  await page.waitForSelector('#librarian-question-count .composer-count', { state: 'hidden' });
   const sendButton = page.locator('button.composer-send').first();
   assert.equal(await sendButton.isEnabled(), true, 'welcome personalization does not disable the composer');
   mocks.releaseWelcome();

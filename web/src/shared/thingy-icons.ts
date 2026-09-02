@@ -22,6 +22,7 @@ import search from 'lucide-static/icons/search.svg?raw';
 import share2 from 'lucide-static/icons/share-2.svg?raw';
 import shieldCheck from 'lucide-static/icons/shield-check.svg?raw';
 import sparkles from 'lucide-static/icons/sparkles.svg?raw';
+import squarePen from 'lucide-static/icons/square-pen.svg?raw';
 import square from 'lucide-static/icons/square.svg?raw';
 import trash2 from 'lucide-static/icons/trash-2.svg?raw';
 import chevronRight from 'lucide-static/icons/chevron-right.svg?raw';
@@ -57,6 +58,7 @@ const icons = {
   'share-2': share2,
   'shield-check': shieldCheck,
   sparkles,
+  'square-pen': squarePen,
   square,
   trash: trash2,
   'thumbs-down': thumbsDown,

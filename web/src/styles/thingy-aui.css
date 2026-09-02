@@ -25,7 +25,7 @@
   line-height: 1.5;
   resize: none;
   outline: none;
-  min-height: 44px;
+  min-height: 24px;
   max-height: 40dvh;
 }
 
@@ -34,6 +34,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  padding: 2px 10px 10px 12px;
 }
 
 .thingy-aui-composer-hint {
@@ -387,10 +388,9 @@
   stroke-width: 2;
 }
 
-@media (width <= 640px) {
-  .thingy-aui-count.is-quiet {
-    display: none;
-  }
+/* The counter only matters when the reader approaches the 1200 cap. */
+.thingy-aui-count.is-quiet {
+  display: none;
 }
 
 /* Fenced code blocks (react-markdown, 2026-09-03): header bar with

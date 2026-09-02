@@ -225,6 +225,20 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
               <span>{conversations.find((c) => c.id === activeId)?.title || 'New chat'}</span>
             </div>
             <div className="mobile-chatbar-actions">
+              {activeId ? (
+                <button
+                  type="button"
+                  className="mobile-chatbar-action"
+                  aria-label="Share conversation"
+                  title="Share conversation"
+                  onClick={() => {
+                    const entry = conversations.find((item) => item.id === activeId);
+                    void shareConversation(activeId, Boolean(entry?.shared_at));
+                  }}
+                >
+                  <Icon name="share" />
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="mobile-chatbar-action"
@@ -232,7 +246,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                 title="New chat"
                 onClick={newConversation}
               >
-                <Icon name="pencil" />
+                <Icon name="square-pen" />
               </button>
             </div>
           </div>
