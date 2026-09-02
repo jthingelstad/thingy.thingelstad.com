@@ -101,6 +101,7 @@ export interface LibrarianConversationMessage {
   toolNames?: Array<string>;
   request_id?: string;
   requestId?: string;
+  parent_request_id?: string;
   citations?: Array<unknown>;
   [key: string]: unknown;
 }
@@ -230,12 +231,12 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = '065aa8de8102db11dfbbf8decf2b13694c2c2ecb311918a198c66c0829e66b04';
+export const LIBRARIAN_CONTRACT_SHA256 = 'b8ad3472c376d5db2a9f09dc418b0a3ee10afaccb6259175bff3a5c329e4e2df';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '4.2.0',
+  version: '4.3.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
@@ -434,6 +435,9 @@ export const LIBRARIAN_CONTRACT = {
           type: 'string'
         },
         requestId: {
+          type: 'string'
+        },
+        parent_request_id: {
           type: 'string'
         },
         citations: {
@@ -941,6 +945,9 @@ export const LIBRARIAN_CONTRACT = {
             type: 'string'
           },
           conversation_id: {
+            type: 'string'
+          },
+          parent_request_id: {
             type: 'string'
           },
           scope: {

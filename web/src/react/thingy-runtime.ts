@@ -60,6 +60,17 @@ export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdap
     async *run({ messages, abortSignal }) {
       const lastUser = [...messages].reverse().find((message) => message.role === 'user');
       const question = lastUser ? messageText(lastUser) : '';
+      // Branch anchor: the turn this message follows is simply the nearest
+      // preceding assistant message in the context assistant-ui hands us -
+      // its metadata carries the Librarian request_id. First turns (and
+      // guests) send none.
+      const lastUserIndex = lastUser ? messages.lastIndexOf(lastUser) : -1;
+      const parentAssistant = [...messages.slice(0, Math.max(0, lastUserIndex))]
+        .reverse()
+        .find((message) => message.role === 'assistant');
+      const parentRequestId = String(
+        ((parentAssistant?.metadata?.custom || {}) as { request_id?: string }).request_id || ''
+      );
       const controller = new AbortController();
       abortSignal.addEventListener('abort', () => controller.abort(), { once: true });
 
@@ -77,6 +88,7 @@ export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdap
             scope: 'all',
             mode: 'thingy',
             conversation_id: binding.conversationId || undefined,
+          parent_request_id: parentRequestId || undefined,
             client_context: userLocalContext(),
             user_profile: {},
             // Guests have no server-side history; the transcript rides along.
@@ -175,13 +187,26 @@ export function createThingyHistoryAdapter(binding: ThingyThreadBinding): Thread
         session.authHeaders()
       );
       const stored = Array.isArray(data.messages) ? data.messages : [];
+      // Real tree reconstruction: turns carry parent_request_id (4.3), so a
+      // user message's parent is the assistant message of the turn it
+      // follows, and branches survive reload. Rows from pre-branching turns
+      // have no parent ids and chain linearly, exactly as before.
       const items: Array<{ parentId: string | null; message: ThreadMessageLike }> = [];
-      let parentId: string | null = null;
+      let previousId: string | null = null;
+      const seenAssistantIds = new Set<string>();
       for (const [index, message] of stored.entries()) {
         const role = message.role === 'assistant' ? 'assistant' : 'user';
         const text = String(message.content || '');
         if (!text.trim()) continue;
-        const id = `${role}-${String(message.request_id || index)}-${index}`;
+        const requestId = String(message.request_id || `row-${index}`);
+        const id = role === 'user' ? `u-${requestId}` : `a-${requestId}`;
+        const declaredParent = String((message as { parent_request_id?: string }).parent_request_id || '');
+        let parentId: string | null;
+        if (role === 'user') {
+          parentId = declaredParent && seenAssistantIds.has(`a-${declaredParent}`) ? `a-${declaredParent}` : declaredParent ? null : previousId;
+        } else {
+          parentId = `u-${requestId}`;
+        }
         items.push({
           parentId,
           message: {
@@ -194,7 +219,7 @@ export function createThingyHistoryAdapter(binding: ThingyThreadBinding): Thread
                   status: { type: 'complete', reason: 'stop' },
                   metadata: {
                     custom: {
-                      request_id: String(message.request_id || ''),
+                      request_id: requestId,
                       citations: Array.isArray(message.citations) ? message.citations : []
                     }
                   }
@@ -202,7 +227,8 @@ export function createThingyHistoryAdapter(binding: ThingyThreadBinding): Thread
               : {})
           } as ThreadMessageLike
         });
-        parentId = id;
+        if (role === 'assistant') seenAssistantIds.add(id);
+        previousId = id;
       }
       return { messages: items as never };
     },
