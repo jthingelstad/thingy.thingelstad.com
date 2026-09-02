@@ -51,7 +51,10 @@ function Thread({
   readOnly?: boolean;
 }) {
   return (
-    <ThreadPrimitive.Root className="librarian-chat thingy-aui-thread flex min-h-0 flex-1 flex-col has-[.thingy-aui-empty]:justify-center">
+    <ThreadPrimitive.Root
+      data-readonly={readOnly ? 'true' : undefined}
+      className="librarian-chat thingy-aui-thread flex min-h-0 flex-1 flex-col has-[.thingy-aui-empty]:justify-center"
+    >
       <ThreadPrimitive.Viewport className="thingy-chat-scroll min-h-0 flex-1 overflow-y-auto has-[.thingy-aui-empty]:flex-none has-[.thingy-aui-empty]:overflow-visible">
         <div className="librarian-messages mx-auto w-full max-w-3xl px-4 pt-6 pb-2">
           <ThreadPrimitive.Empty>

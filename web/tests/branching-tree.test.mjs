@@ -96,3 +96,18 @@ test('empty rows are skipped without breaking the chain', () => {
     ['u-r1', 'u-r2']
   );
 });
+
+test('share payloads without request ids pair by adjacency', () => {
+  // The public /share/<token> response omits request_id; the assistant row
+  // must chain to the preceding user row instead of an id that never existed.
+  const items = historyItemsFromStored([
+    { role: 'user', content: 'q1' },
+    { role: 'assistant', content: 'a1' },
+    { role: 'user', content: 'q2' },
+    { role: 'assistant', content: 'a2' }
+  ]);
+  const byId = new Map(items.map((item) => [item.message.id, item.parentId]));
+  assert.equal(byId.get('a-row-1'), 'u-row-0');
+  assert.equal(byId.get('u-row-2'), 'a-row-1');
+  assert.equal(byId.get('a-row-3'), 'u-row-2');
+});

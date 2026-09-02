@@ -79,6 +79,7 @@ export function AssistantMessage() {
             type="button"
             className={ACTION_BUTTON}
             aria-label="Share answer"
+            data-rw-action=""
             onClick={(event) => {
               const host = messageHostOf(event);
               if (host) void messageActionsService.shareAnswer(host);
@@ -94,6 +95,7 @@ export function AssistantMessage() {
                 type="button"
                 className={`${ACTION_BUTTON} data-submitted:text-accent-deep`}
                 aria-label="Good response"
+                data-rw-action=""
               >
                 <Icon name="thumbs-up" />
               </button>
@@ -101,14 +103,19 @@ export function AssistantMessage() {
           </Tip>
           <Tip label="Bad response">
             <ActionBarPrimitive.FeedbackNegative asChild>
-              <button type="button" className={`${ACTION_BUTTON} data-submitted:text-error`} aria-label="Bad response">
+              <button
+                type="button"
+                className={`${ACTION_BUTTON} data-submitted:text-error`}
+                aria-label="Bad response"
+                data-rw-action=""
+              >
                 <Icon name="thumbs-down" />
               </button>
             </ActionBarPrimitive.FeedbackNegative>
           </Tip>
           <Tip label="Regenerate answer">
             <ActionBarPrimitive.Reload asChild>
-              <button type="button" className={ACTION_BUTTON} aria-label="Regenerate answer">
+              <button type="button" className={ACTION_BUTTON} aria-label="Regenerate answer" data-rw-action="">
                 <Icon name="rotate-ccw" />
               </button>
             </ActionBarPrimitive.Reload>
@@ -169,6 +176,7 @@ export function UserMessage() {
             type="button"
             className={ACTION_BUTTON}
             aria-label="Share prompt"
+            data-rw-action=""
             onClick={() => void messageActionsService.sharePrompt(promptText)}
           >
             <Icon name="share" />
@@ -177,7 +185,7 @@ export function UserMessage() {
         <ActionBarPrimitive.Root hideWhenRunning autohide="never" className="flex items-center gap-0.5">
           <Tip label="Edit and resend">
             <ActionBarPrimitive.Edit asChild>
-              <button type="button" className={ACTION_BUTTON} aria-label="Edit message">
+              <button type="button" className={ACTION_BUTTON} aria-label="Edit message" data-rw-action="">
                 <Icon name="pencil" />
               </button>
             </ActionBarPrimitive.Edit>

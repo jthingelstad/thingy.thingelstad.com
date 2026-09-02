@@ -214,6 +214,7 @@ export function historyItemsFromStored(stored: StoredMessage[]) {
   const items: Array<{ parentId: string | null; message: ThreadMessageLike }> = [];
   let previousId: string | null = null;
   const seenAssistantIds = new Set<string>();
+  const seenUserIds = new Set<string>();
   for (const [index, message] of stored.entries()) {
     const role = message.role === 'assistant' ? 'assistant' : 'user';
     const text = String(message.content || '');
@@ -230,7 +231,10 @@ export function historyItemsFromStored(stored: StoredMessage[]) {
             ? null
             : previousId;
     } else {
-      parentId = `u-${requestId}`;
+      // Public share payloads omit request_id; the synthetic row ids then
+      // point at a user id that never existed and aui drops the answer as
+      // an orphan. Fall back to adjacency.
+      parentId = seenUserIds.has(`u-${requestId}`) ? `u-${requestId}` : previousId;
     }
     items.push({
       parentId,
@@ -253,6 +257,7 @@ export function historyItemsFromStored(stored: StoredMessage[]) {
       } as ThreadMessageLike
     });
     if (role === 'assistant') seenAssistantIds.add(id);
+    if (role === 'user') seenUserIds.add(id);
     previousId = id;
   }
   return items;

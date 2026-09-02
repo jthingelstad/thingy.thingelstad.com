@@ -14,3 +14,9 @@
 @import './answer.css' layer(components);
 @import './thingy-page.css' layer(components);
 @import './share.css' layer(components);
+
+/* Read-only thread (owner preview of a shared conversation): hide actions
+   that would mutate or send - copy stays. */
+[data-readonly] [data-rw-action] {
+  display: none;
+}
