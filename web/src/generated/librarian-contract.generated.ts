@@ -89,6 +89,8 @@ export interface LibrarianSharedConversation {
   created_at?: string;
   shared_at?: string;
   shared_up_to?: string;
+  owner?: boolean;
+  conversation_id?: string;
   [key: string]: unknown;
 }
 
@@ -232,12 +234,12 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = '7ccba882161a54c0d5ac2f83e5e21a542742fe6cbe14bac7cd7babfcd13322f5';
+export const LIBRARIAN_CONTRACT_SHA256 = 'd8e8dfb9cfbee8fa57b25ba8b0200aba36aba9aff32e6ade8cbf3392bd1ffc7d';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '4.6.0',
+  version: '4.7.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
@@ -401,6 +403,12 @@ export const LIBRARIAN_CONTRACT = {
           type: 'string'
         },
         shared_up_to: {
+          type: 'string'
+        },
+        owner: {
+          type: 'boolean'
+        },
+        conversation_id: {
           type: 'string'
         }
       },
@@ -987,6 +995,9 @@ export const LIBRARIAN_CONTRACT = {
             type: 'string'
           },
           parent_request_id: {
+            type: 'string'
+          },
+          share_token: {
             type: 'string'
           },
           scope: {

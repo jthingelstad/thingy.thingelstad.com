@@ -18,6 +18,12 @@ import * as session from '../shared/thingy-session.ts';
 export interface ThingyThreadBinding {
   conversationId: string;
   guest: boolean;
+  // Share-link continuation (contract 4.7): the server seeds context from
+  // this token; sharedMessageCount marks how many thread messages came
+  // from the shared transcript so the guest lane's client history only
+  // carries the guest's OWN turns (the server already has the rest).
+  shareToken?: string;
+  sharedMessageCount?: number;
   onConversationId?: (id: string) => void;
   onGuestRemaining?: (remaining: number) => void;
   onTurnRecorded?: () => void;
@@ -103,8 +109,13 @@ export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdap
             parent_request_id: parentRequestId,
             client_context: userLocalContext(),
             user_profile: {},
-            // Guests have no server-side history; the transcript rides along.
-            ...(binding.guest ? { history: guestHistoryFromMessages(messages.slice(0, -1)) } : {})
+            ...(binding.shareToken ? { share_token: binding.shareToken } : {}),
+            // Guests have no server-side history; their own turns ride
+            // along (seeded share messages are excluded - the server
+            // rebuilds those from the token).
+            ...(binding.guest
+              ? { history: guestHistoryFromMessages(messages.slice(binding.sharedMessageCount || 0, -1)) }
+              : {})
           }
         });
       } catch (error) {

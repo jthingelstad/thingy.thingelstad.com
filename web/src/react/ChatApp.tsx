@@ -20,17 +20,20 @@ import { HistoryDialog, type HistoryMatch } from './components/HistoryDialog.tsx
 export interface ChatInitial {
   prompt: string;
   from: { href: string; name: string } | null;
+  // Deep link (?conversation=<id>): open this conversation on load -
+  // used by the share page's "open the original / open in Thingy".
+  conversationId?: string;
 }
 
 export function ChatApp({ initial }: { initial: ChatInitial }) {
   const [signedIn] = useState(() => session.sessionActive());
   const guest = !signedIn;
-  const [activeId, setActiveId] = useState('');
+  const [activeId, setActiveId] = useState(() => String(initial.conversationId || ''));
   // The thread's mount identity. Only explicit navigation (rail click, New
   // chat) may change it: when the FIRST turn of a new thread streams its
   // conversation id back, remounting on that id would wipe the in-flight
   // exchange, so onConversationId updates activeId (rail highlight) only.
-  const [mountedId, setMountedId] = useState('');
+  const [mountedId, setMountedId] = useState(() => String(initial.conversationId || ''));
   const [threadEpoch, setThreadEpoch] = useState(0);
   const [guestRemaining, setGuestRemaining] = useState<number | null>(null);
   const [mobileRailOpen, setMobileRailOpen] = useState(false);
@@ -186,13 +189,25 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
     );
     const url = String((data.share as { url?: string } | undefined)?.url || '');
     if (!url) return;
+    let copied = true;
     try {
       await navigator.clipboard.writeText(url);
     } catch {
-      await promptDialog({ title: 'Copy this share link', initialValue: url, confirmLabel: 'Done', hideCancel: true });
+      copied = false;
     }
     trackEvent('librarian.share_link_create');
     invalidateConversations();
+    // Always confirm with the URL in hand - a silent clipboard write reads
+    // as "nothing happened".
+    await promptDialog({
+      title: copied ? 'Share link copied' : 'Copy this share link',
+      body: copied
+        ? 'The link is in your clipboard. Anyone with it can read this conversation and ask their own follow-ups.'
+        : 'Copy the link below - anyone with it can read this conversation and ask their own follow-ups.',
+      initialValue: url,
+      confirmLabel: 'Done',
+      hideCancel: true
+    });
   }
 
   async function searchConversations(query: string): Promise<HistoryMatch[]> {

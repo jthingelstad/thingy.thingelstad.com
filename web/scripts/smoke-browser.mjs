@@ -214,10 +214,14 @@ async function checkSharePage(browser) {
   await page.goto(`${baseUrl}/c/shr_smoketoken`);
   await page.waitForSelector('.thingy-shared-messages');
   assert.match(await page.locator('h1').first().textContent(), /Bison across the archive/);
+  // The transcript loads into the LIVE thread (4.7): user bubble,
+  // citation-linked answer, guest banner, and a working composer.
+  await page.waitForSelector('.librarian-message-user');
   assert.match(await page.locator('.librarian-message-user').textContent(), /Tell me about bison/);
   const wtLink = page.locator('.librarian-answer-content a', { hasText: 'WT127' });
   assert.equal(await wtLink.getAttribute('href'), 'https://weekly.thingelstad.com/archive/127/');
-  assert.ok(await page.locator('.thingy-shared-cta-button').isVisible(), 'share CTA renders');
+  assert.ok(await page.locator('.thingy-guest-banner').isVisible(), 'share guest banner renders');
+  assert.ok(await page.locator('#librarian-question').isVisible(), 'share follow-up composer is live');
   await assertAccessible(page, 'share page');
   assertNoUiFailures(failures, 'share page');
   await context.close();

@@ -6,6 +6,7 @@ import {
   createThingyAdapter,
   createThingyFeedbackAdapter,
   createThingyHistoryAdapter,
+  historyItemsFromStored,
   type ThingyThreadBinding
 } from '../thingy-runtime.ts';
 import { AssistantMessage, EditComposer, UserMessage } from './Messages.tsx';
@@ -38,7 +39,17 @@ function SuggestionChips({ suggestions }: { suggestions: string[] }) {
   );
 }
 
-function Thread({ guest, welcome, suggestions }: { guest: boolean; welcome: string; suggestions: string[] }) {
+function Thread({
+  guest,
+  welcome,
+  suggestions,
+  readOnly
+}: {
+  guest: boolean;
+  welcome: string;
+  suggestions: string[];
+  readOnly?: boolean;
+}) {
   return (
     <ThreadPrimitive.Root className="librarian-chat thingy-aui-thread flex min-h-0 flex-1 flex-col has-[.thingy-aui-empty]:justify-center">
       <ThreadPrimitive.Viewport className="thingy-chat-scroll min-h-0 flex-1 overflow-y-auto has-[.thingy-aui-empty]:flex-none has-[.thingy-aui-empty]:overflow-visible">
@@ -65,7 +76,7 @@ function Thread({ guest, welcome, suggestions }: { guest: boolean; welcome: stri
           </button>
         </ThreadPrimitive.ScrollToBottom>
       </ThreadPrimitive.Viewport>
-      <Composer guest={guest} />
+      {readOnly ? null : <Composer guest={guest} />}
     </ThreadPrimitive.Root>
   );
 }
@@ -75,16 +86,35 @@ export function ThreadHost({
   guest,
   welcome,
   suggestions,
-  initialPrompt
+  initialPrompt,
+  sharedMessages,
+  readOnly
 }: {
   binding: ThingyThreadBinding;
   guest: boolean;
   welcome: string;
   suggestions: string[];
   initialPrompt?: string;
+  // A shared-conversation transcript preloaded into the thread (share
+  // continuation): rendered like history, forked on the first message.
+  sharedMessages?: Array<{ role?: string; content?: string; citations?: unknown }>;
+  readOnly?: boolean;
 }) {
   const adapter = useMemo(() => createThingyAdapter(binding), [binding]);
-  const history = useMemo(() => createThingyHistoryAdapter(binding), [binding]);
+  const history = useMemo(() => {
+    if (sharedMessages?.length) {
+      return {
+        async load() {
+          return { messages: historyItemsFromStored(sharedMessages) as never };
+        },
+        async append() {
+          /* server records turns */
+        }
+      };
+    }
+    return createThingyHistoryAdapter(binding);
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [binding]);
   const feedback = useMemo(
     () =>
       createThingyFeedbackAdapter(async () => {
@@ -104,7 +134,10 @@ export function ThreadHost({
   // nothing to load, and racing an empty async load against a seeded
   // append trips assistant-ui's message repository.
   const runtime = useLocalRuntime(adapter, {
-    adapters: { ...(binding.conversationId && !guest ? { history } : {}), feedback }
+    adapters: {
+      ...((binding.conversationId && !guest) || sharedMessages?.length ? { history } : {}),
+      feedback
+    }
   });
   const sentInitialRef = useRef(false);
   useEffect(() => {
@@ -121,7 +154,7 @@ export function ThreadHost({
   }, []);
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <Thread guest={guest} welcome={welcome} suggestions={suggestions} />
+      <Thread guest={guest} welcome={welcome} suggestions={suggestions} readOnly={readOnly} />
     </AssistantRuntimeProvider>
   );
 }

@@ -28,7 +28,8 @@ registerClientErrorTracking('chat');
 const explore = composeExplorePrompt(bootParams.get('explore'), bootParams.get('issue'));
 const chatInitial: ChatInitial = {
   prompt: (String(bootParams.get('prompt') || '').trim() || explore.prompt).slice(0, 1200),
-  from: resolveFromValue(bootParams.get('from') || explore.sourceUrl || null)
+  from: resolveFromValue(bootParams.get('from') || explore.sourceUrl || null),
+  conversationId: String(bootParams.get('conversation') || '').trim()
 };
 const loginToken = String(bootParams.get('login_token') || bootParams.get('magic_token') || '').trim();
 const emailParam = session.normalizeEmail(bootParams.get('email'));
