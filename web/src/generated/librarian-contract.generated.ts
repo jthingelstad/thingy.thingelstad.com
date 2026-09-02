@@ -135,6 +135,13 @@ export interface LibrarianQuotaOverview {
   [key: string]: unknown;
 }
 
+export interface LibrarianChatModel {
+  id: string;
+  label: string;
+  premium?: boolean;
+  [key: string]: unknown;
+}
+
 export interface LibrarianAccountOverview {
   first_seen_at?: string;
   last_seen_at?: string;
@@ -144,6 +151,7 @@ export interface LibrarianAccountOverview {
   oldest_conversation_at?: string;
   newest_conversation_at?: string;
   quota?: LibrarianQuotaOverview;
+  chat_model?: LibrarianChatModel;
   [key: string]: unknown;
 }
 
@@ -222,12 +230,12 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = '7d89b0978d4b368e06b54807621645610a0e61363cfed89da32dee0c8b6fc63b';
+export const LIBRARIAN_CONTRACT_SHA256 = '065aa8de8102db11dfbbf8decf2b13694c2c2ecb311918a198c66c0829e66b04';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '4.1.0',
+  version: '4.2.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
@@ -530,6 +538,22 @@ export const LIBRARIAN_CONTRACT = {
       },
       additionalProperties: true
     },
+    chatModel: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string'
+        },
+        label: {
+          type: 'string'
+        },
+        premium: {
+          type: 'boolean'
+        }
+      },
+      required: ['id', 'label'],
+      additionalProperties: true
+    },
     accountOverview: {
       type: 'object',
       properties: {
@@ -556,6 +580,9 @@ export const LIBRARIAN_CONTRACT = {
         },
         quota: {
           $ref: '#/$defs/quotaOverview'
+        },
+        chat_model: {
+          $ref: '#/$defs/chatModel'
         }
       },
       additionalProperties: true

@@ -66,6 +66,18 @@ function formatProfileActivity(accountOverview: LibrarianAccountOverview = {}, p
   return `${first} ${second}`;
 }
 
+// The backend reports which model answers this reader (entitlement-routed);
+// for supporters the premium routing is part of what membership buys, so
+// say so rather than leaving it a bare model name.
+function formatChatModel(accountOverview: LibrarianAccountOverview = {}, supporting = false) {
+  const model = accountOverview.chat_model;
+  const label = String(model?.label || '').trim();
+  if (!label) return '';
+  if (model?.premium && supporting) return `${label} — premium model, included with your membership`;
+  if (model?.premium) return `${label} — premium model`;
+  return label;
+}
+
 function formatDailyQuota(accountOverview: LibrarianAccountOverview = {}) {
   const quota = accountOverview.quota;
   if (!quota) return '';
@@ -106,6 +118,7 @@ function AccountProfileModal({
       viewPreferredName ? ['Name', viewPreferredName] : ['Name', 'Not set'],
       email ? ['Email', email] : null,
       ['Access', supporting ? 'Supporting Member' : 'Weekly Thing reader'],
+      formatChatModel(accountOverview, supporting) ? ['AI model', formatChatModel(accountOverview, supporting)] : null,
       ['First seen', formatProfileDate(firstSeen) || 'Not recorded'],
       ['Last activity', formatProfileDate(lastActivity) || 'Not recorded'],
       ['Active span', formatActiveSpan(firstSeen, lastActivity)],
