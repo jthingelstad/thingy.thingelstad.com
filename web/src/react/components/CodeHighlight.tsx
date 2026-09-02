@@ -1,19 +1,25 @@
 // Syntax highlighting for fenced code blocks via shiki (2026-09-03),
-// plugged into assistant-ui's SyntaxHighlighter slot. shiki is imported
-// lazily so the chat bundle only pays for it when an answer actually
-// contains a fenced block; grammars and themes load on demand inside it.
+// plugged into assistant-ui's SyntaxHighlighter slot. Uses shiki's
+// JavaScript regex engine - the default oniguruma engine is WASM, which
+// the site's script-src 'self' CSP blocks. Everything loads lazily so
+// the chat bundle only pays when an answer contains a fenced block.
 // Dual-theme output follows the site's data-theme pattern in CSS.
 
 import { useEffect, useState } from 'react';
 import type { SyntaxHighlighterProps } from '@assistant-ui/react-markdown';
+import type { HighlighterCore } from 'shiki';
 
-type CodeToHtml = (code: string, options: object) => Promise<string>;
+let highlighterPromise: Promise<HighlighterCore> | null = null;
 
-let shikiPromise: Promise<CodeToHtml> | null = null;
-
-function loadShiki(): Promise<CodeToHtml> {
-  shikiPromise ||= import('shiki').then((mod) => mod.codeToHtml as CodeToHtml);
-  return shikiPromise;
+function loadHighlighter(): Promise<HighlighterCore> {
+  highlighterPromise ||= Promise.all([import('shiki'), import('shiki/engine/javascript')]).then(([shiki, engine]) =>
+    shiki.createHighlighter({
+      themes: ['github-light', 'github-dark'],
+      langs: [],
+      engine: engine.createJavaScriptRegexEngine({ forgiving: true })
+    })
+  );
+  return highlighterPromise;
 }
 
 export function CodeHighlight({ components, language, code }: SyntaxHighlighterProps) {
@@ -22,20 +28,22 @@ export function CodeHighlight({ components, language, code }: SyntaxHighlighterP
     let cancelled = false;
     setHtml('');
     if (!language || !code) return undefined;
-    loadShiki()
-      .then((codeToHtml) =>
-        codeToHtml(code, {
+    void (async () => {
+      try {
+        const highlighter = await loadHighlighter();
+        if (!highlighter.getLoadedLanguages().includes(language)) {
+          await highlighter.loadLanguage(language as never);
+        }
+        const rendered = highlighter.codeToHtml(code, {
           lang: language,
           themes: { light: 'github-light', dark: 'github-dark' },
           defaultColor: false
-        })
-      )
-      .then((rendered) => {
+        });
         if (!cancelled) setHtml(rendered);
-      })
-      .catch(() => {
+      } catch {
         // Unknown language or load failure: the plain block below stands.
-      });
+      }
+    })();
     return () => {
       cancelled = true;
     };
