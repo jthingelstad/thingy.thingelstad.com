@@ -25,6 +25,17 @@ export function DialogHost() {
     // Focus keys off the dialog id alone.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [dialog?.id]);
+  useEffect(() => {
+    if (!dialog) return undefined;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        settleDialog(dialog.request.kind === 'prompt' ? null : false);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [dialog]);
   if (!dialog) return null;
   const { request } = dialog;
   const isPrompt = request.kind === 'prompt';
