@@ -124,7 +124,10 @@ product direction.
   tools with the browser's model context (native `document.modelContext` or
   the bundled polyfill), proxying calls to the Librarian's `/tools` door with
   its own quota pool. Kill switch: `window.ThingyConfig.webmcp='off'`.
-  Chrome-native consumption awaits the origin-trial token.
+  The chat shell carries the Chrome WebMCP origin-trial token (registered
+  for `https://thingy.thingelstad.com`, expires 2026-11-17), so Chrome
+  serves the native `document.modelContext` under the trial; the polyfill
+  remains the fallback elsewhere.
 
 ## Current Mode Model
 
