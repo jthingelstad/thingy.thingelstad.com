@@ -278,6 +278,7 @@
   min-width: 0;
 }
 
+.composer-box .thingy-aui-mic,
 .thingy-aui-mic {
   display: grid;
   place-items: center;
@@ -290,9 +291,23 @@
   cursor: pointer;
 }
 
+.composer-box .thingy-aui-mic {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+}
+
+.composer-box .thingy-aui-mic.is-listening,
 .thingy-aui-mic.is-listening {
   border-color: var(--color-error);
   color: var(--color-error);
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
 }
 
 .thingy-aui-mic svg {
@@ -353,6 +368,28 @@
   .thingy-app-shell.is-collapsed .thingy-aui-recents,
   .thingy-app-shell.is-collapsed .thingy-aui-rail-foot,
   .thingy-app-shell.is-collapsed .thingy-aui-newchat {
+    display: none;
+  }
+}
+
+
+.thingy-aui-shared-dot {
+  display: inline-flex;
+  margin-left: 6px;
+  color: var(--ink-soft);
+  vertical-align: -2px;
+}
+
+.thingy-aui-shared-dot svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+}
+
+@media (width <= 640px) {
+  .thingy-aui-count.is-quiet {
     display: none;
   }
 }

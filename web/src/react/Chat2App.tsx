@@ -84,7 +84,10 @@ function ActivityPart(props: { text: string }) {
   return (
     <details className="librarian-activity thingy-aui-activity">
       <summary>
-        Archive work <span className="thingy-aui-activity-count">{lines.length} steps</span>
+        Archive work{' '}
+        <span className="thingy-aui-activity-count">
+          {lines.length} step{lines.length === 1 ? '' : 's'}
+        </span>
       </summary>
       <ul>
         {lines.map((line, index) => (
@@ -291,7 +294,11 @@ function Composer({ guest }: { guest: boolean }) {
               {voiceStatus || (guest ? 'Guest preview' : '')}
             </span>
           </span>
-          <span id="librarian-question-count" className="thingy-aui-count" aria-hidden="true">
+          <span
+            id="librarian-question-count"
+            className={`thingy-aui-count${text.length < 1000 ? ' is-quiet' : ''}`}
+            aria-hidden="true"
+          >
             <span className="composer-count">
               {text.length} / {MAX_QUESTION_CHARS}
             </span>
@@ -704,6 +711,11 @@ export function Chat2App({ initial }: { initial: Chat2Initial }) {
                       }}
                     >
                       {entry.title}
+                      {entry.shared_at ? (
+                        <span className="thingy-aui-shared-dot" title="Shared" aria-label="Shared">
+                          <Icon name="share" />
+                        </span>
+                      ) : null}
                     </button>
                     <span className="thingy-aui-recent-actions">
                       <button

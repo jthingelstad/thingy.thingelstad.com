@@ -282,7 +282,7 @@ export function AccountPanel() {
   }
 
   return (
-    <div ref={rootRef} className="thingy-aui-account">
+    <div ref={rootRef} className="rail-account thingy-aui-account">
       <button
         className="rail-account-btn"
         type="button"
