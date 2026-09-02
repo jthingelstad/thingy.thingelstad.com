@@ -1,15 +1,8 @@
 /* Message surfaces and rendered chat artifacts. */
 
-.librarian-auth.thingy-auth,
 .librarian-chat.thingy-chat {
   border-top: none;
   padding: 20px;
-}
-
-.librarian-auth.thingy-auth {
-  padding-top: 22px;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 48%, transparent), transparent 42%), var(--surface);
 }
 
 .librarian-form {
@@ -21,12 +14,6 @@
   margin-bottom: var(--space-sm);
   font-size: var(--size-sm);
   font-weight: 700;
-}
-
-.librarian-auth-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-sm);
 }
 
 .librarian-form input,
@@ -57,8 +44,7 @@
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-.librarian-form button,
-.librarian-prompts button {
+.librarian-form button {
   border: 1px solid var(--color-accent);
   border-radius: 7px;
   background: var(--color-accent);
@@ -68,8 +54,7 @@
   cursor: pointer;
 }
 
-.librarian-form button:hover,
-.librarian-prompts button:hover {
+.librarian-form button:hover {
   background: var(--color-accent-hover);
   border-color: var(--color-accent-hover);
 }
@@ -77,43 +62,6 @@
 .librarian-form button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.librarian-auth-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-  margin-top: var(--space-sm);
-}
-
-.librarian-auth-actions[hidden],
-.librarian-auth-actions button[hidden] {
-  display: none;
-}
-
-.librarian-email-error {
-  display: block;
-}
-
-.librarian-chat-tools {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: var(--space-md);
-}
-
-.librarian-chat-tools button {
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--color-text-muted);
-  padding: 0.55rem 0.75rem;
-  font: 700 var(--size-sm) / 1 var(--font-ui);
-  cursor: pointer;
-}
-
-.librarian-chat-tools button:hover {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
 }
 
 .form-note {
@@ -148,10 +96,6 @@
     border-color 160ms ease,
     box-shadow 160ms ease,
     transform 160ms ease;
-}
-
-.librarian-message-pending {
-  border-color: var(--color-highlight);
 }
 
 .session-welcome-toggle {
@@ -278,53 +222,8 @@
   max-width: min(44rem, 96%);
 }
 
-.librarian-message-system {
-  color: var(--color-text-muted);
-}
-
 .librarian-answer-content > :first-child {
   margin-top: 0;
-}
-
-.librarian-stream-note {
-  margin: 10px 0 0;
-  color: var(--color-text-muted);
-  font-family: var(--sans);
-  font-size: 14px;
-  font-style: italic;
-}
-
-.librarian-stream-error {
-  margin: 10px 0 0;
-  padding: 10px 12px;
-  border: 1px solid color-mix(in srgb, var(--color-error) 30%, var(--line));
-  border-left: 3px solid var(--color-error);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--color-error) 6%, var(--surface));
-}
-
-.librarian-stream-error p {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-family: var(--sans);
-  font-size: 14.5px;
-}
-
-.librarian-retry {
-  margin-top: 8px;
-  padding: 5px 14px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface);
-  color: inherit;
-  font: inherit;
-  font-family: var(--sans);
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.librarian-retry:hover {
-  border-color: var(--ink);
 }
 
 @media (width <= 640px) {
@@ -350,10 +249,6 @@
 
   .thingy-h1 {
     font-size: 42px;
-  }
-
-  .librarian-auth-row {
-    grid-template-columns: 1fr;
   }
 
   .librarian-message {

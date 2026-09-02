@@ -23,7 +23,9 @@
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, 8px);
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
 }
 
 .thingy-notice.is-visible {
@@ -51,7 +53,6 @@
   overflow: visible;
 }
 
-.thingy-app-shell.is-booting .librarian-auth,
 .thingy-app-shell.is-booting .librarian-chat {
   visibility: hidden;
 }
@@ -152,7 +153,10 @@
   background: transparent;
   color: var(--muted);
   cursor: pointer;
-  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+  transition:
+    background 0.14s ease,
+    color 0.14s ease,
+    border-color 0.14s ease;
 }
 
 .rail-iconbtn:hover {
@@ -239,7 +243,10 @@
   background: var(--surface);
   box-shadow: var(--shadow-subtle);
   overflow: visible;
-  transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease;
+  transition:
+    border-color 0.14s ease,
+    background 0.14s ease,
+    transform 0.14s ease;
 }
 
 .rail-newchat-combo:hover {

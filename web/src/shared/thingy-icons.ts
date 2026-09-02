@@ -1,3 +1,4 @@
+import arrowDown from 'lucide-static/icons/arrow-down.svg?raw';
 import arrowLeft from 'lucide-static/icons/arrow-left.svg?raw';
 import arrowUp from 'lucide-static/icons/arrow-up.svg?raw';
 import brainCircuit from 'lucide-static/icons/brain-circuit.svg?raw';
@@ -30,6 +31,7 @@ import usersRound from 'lucide-static/icons/users-round.svg?raw';
 import x from 'lucide-static/icons/x.svg?raw';
 
 const icons = {
+  'arrow-down': arrowDown,
   'arrow-left': arrowLeft,
   'arrow-up': arrowUp,
   'brain-circuit': brainCircuit,

@@ -44,9 +44,12 @@
   },
   "dependencies": {
     "@assistant-ui/react": "^0.15.17",
+    "@assistant-ui/react-markdown": "^0.14.13",
     "@mcp-b/webmcp-polyfill": "^5.1.0",
     "lucide-static": "^1.25.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
   }
 }

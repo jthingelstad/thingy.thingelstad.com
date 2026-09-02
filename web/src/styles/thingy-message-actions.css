@@ -1,25 +1,4 @@
 /* Message activity, feedback, prompt actions, and loading indicators. */
-.librarian-status-line {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  color: var(--color-text-muted);
-}
-
-.librarian-elapsed {
-  display: inline-flex;
-  align-items: center;
-  min-height: 19px;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 1;
-}
 
 .librarian-activity {
   margin: 0 0 16px;
@@ -47,7 +26,7 @@
 }
 
 .librarian-activity summary::before {
-  content: "";
+  content: '';
   width: 6px;
   height: 6px;
   flex: 0 0 6px;
@@ -71,137 +50,12 @@
   padding: 0;
 }
 
-.librarian-activity-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  margin-bottom: 12px;
-  color: var(--muted);
-  font-family: var(--sans);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-.librarian-activity summary .librarian-activity-kicker {
-  margin-bottom: 0;
-}
-
-.librarian-activity-summary {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 650;
-}
-
 .librarian-activity ol {
   display: grid;
   gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.librarian-activity-step {
-  position: relative;
-  display: block;
-  margin: 0;
-  padding: 0 0 16px 38px;
-  border: 0;
-  background: transparent;
-  color: var(--ink-soft);
-  font-size: 15px;
-  line-height: 1.42;
-}
-
-.librarian-activity-step:not(:last-child)::before {
-  content: "";
-  position: absolute;
-  left: 15px;
-  top: 28px;
-  bottom: 0;
-  width: 1px;
-  background: color-mix(in srgb, var(--muted) 28%, transparent);
-}
-
-.librarian-activity-step-main {
-  min-height: 30px;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--ink-soft);
-  line-height: 1.35;
-}
-
-.librarian-activity-dot {
-  position: absolute;
-  left: 7px;
-  top: 7px;
-  width: 17px;
-  height: 17px;
-  flex: 0 0 17px;
-  border-radius: 999px;
-  border: 1.5px solid var(--muted);
-  background: var(--bg);
-  box-shadow: inset 0 0 0 4px var(--bg);
-}
-
-.librarian-activity-step.is-complete .librarian-activity-dot {
-  display: grid;
-  place-items: center;
-  border-color: var(--muted);
-  box-shadow: none;
-}
-
-.librarian-activity-step.is-complete .librarian-activity-dot::before {
-  content: "";
-  width: 7px;
-  height: 4px;
-  border-left: 1.7px solid currentcolor;
-  border-bottom: 1.7px solid currentcolor;
-  color: var(--muted);
-  transform: translateY(-1px) rotate(-45deg);
-}
-
-.librarian-activity-step.is-active {
-  color: var(--ink);
-}
-
-.librarian-activity-step.is-active .librarian-activity-step-main {
-  color: var(--ink);
-}
-
-.librarian-activity-step.is-active .librarian-activity-dot {
-  border-color: var(--accent);
-  background: var(--accent);
-  box-shadow: 0 0 0 0 rgb(20 119 111 / 34%);
-  animation: librarian-pulse 1.35s ease-in-out infinite;
-}
-
-.librarian-activity-note {
-  max-width: 58rem;
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.45;
-}
-
-.librarian-activity-note a {
-  color: var(--accent-deep);
-  font-weight: 600;
-}
-
-.librarian-thinking-dot {
-  width: 0.58rem;
-  height: 0.58rem;
-  border-radius: 999px;
-  background: var(--color-accent);
-  box-shadow: 0 0 0 0 rgb(20 119 111 / 35%);
-  animation: librarian-pulse 1.35s ease-in-out infinite;
 }
 
 @keyframes librarian-pulse {
@@ -245,7 +99,10 @@
   font-size: 0.95rem;
   line-height: 1;
   cursor: pointer;
-  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
 }
 
 .librarian-feedback button:hover,
@@ -262,19 +119,6 @@
 .librarian-feedback button:disabled {
   cursor: wait;
   opacity: 0.65;
-}
-
-.librarian-feedback-status {
-  min-width: 0;
-  margin-left: 4px;
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-}
-
-.librarian-feedback-status:empty {
-  display: none;
 }
 
 .librarian-prompt-actions {
@@ -314,65 +158,21 @@
   stroke-linejoin: round;
 }
 
-.librarian-prompt-actions .librarian-feedback-status {
-  color: var(--muted);
-}
-
-.librarian-prompts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-height: 2.75rem;
-  margin-bottom: 14px;
-}
-
-.librarian-prompts[hidden] {
-  display: none;
-}
-
-.librarian-prompts span {
-  color: var(--color-text-muted);
-  font: 700 var(--size-sm) / 1.4 var(--font-ui);
-}
-
-.librarian-prompts button {
-  padding: 0.7rem 0.8rem;
-  border-color: color-mix(in srgb, var(--accent) 32%, var(--line));
-  background: color-mix(in srgb, var(--surface) 86%, var(--accent-soft));
-  color: var(--accent-deep);
-  font-weight: 700;
-  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease;
-}
-
-.librarian-prompts button:hover {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #fff;
-  transform: translateY(-1px);
-}
-
-.librarian-prompts-loading span::after {
-  display: inline-block;
-  width: 1.4em;
-  content: "";
-  animation: librarian-loading-dots 1.2s steps(4, end) infinite;
-}
-
 @keyframes librarian-loading-dots {
   0% {
-    content: "";
+    content: '';
   }
 
   25% {
-    content: ".";
+    content: '.';
   }
 
   50% {
-    content: "..";
+    content: '..';
   }
 
   75%,
   100% {
-    content: "...";
+    content: '...';
   }
 }

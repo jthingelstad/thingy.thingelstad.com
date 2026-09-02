@@ -104,13 +104,6 @@
   color: var(--bg);
 }
 
-.librarian-message-system {
-  justify-self: center;
-  max-width: min(38rem, 100%);
-  border-color: var(--line-soft);
-  background: color-mix(in srgb, var(--surface) 86%, var(--surface-2));
-}
-
 .thingy-composer-zone {
   flex: 0 0 auto;
   width: 100%;
@@ -118,50 +111,8 @@
   position: sticky;
   bottom: 0;
   padding: 8px clamp(18px, 5vw, 72px) 24px;
-  background:
-    linear-gradient(180deg, rgb(246 248 245 / 0%), var(--bg) 24%, var(--bg));
+  background: linear-gradient(180deg, rgb(246 248 245 / 0%), var(--bg) 24%, var(--bg));
   z-index: 20;
-}
-
-.librarian-prompts {
-  width: min(100%, 50rem);
-  min-width: 0;
-  margin: 0 auto 10px;
-  min-height: 0;
-  flex-wrap: nowrap;
-  justify-content: flex-start;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 2px;
-  scrollbar-width: none;
-  mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 28px), transparent);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 28px), transparent);
-}
-
-.librarian-prompts::-webkit-scrollbar {
-  display: none;
-}
-
-.librarian-prompts button {
-  flex: 0 0 auto;
-  max-width: min(28rem, 82vw);
-  padding: 8px 10px;
-  border-radius: 999px;
-  border-color: color-mix(in srgb, var(--line) 78%, var(--surface));
-  background: color-mix(in srgb, var(--surface) 92%, var(--bg));
-  color: var(--ink-soft);
-  font-size: 12px;
-  font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.librarian-prompts button:hover {
-  color: var(--ink);
-  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
-  background: color-mix(in srgb, var(--accent-soft) 42%, var(--surface));
 }
 
 .thingy-input {
@@ -176,7 +127,10 @@
   box-shadow:
     0 18px 50px rgb(23 33 31 / 16%),
     0 2px 8px rgb(23 33 31 / 8%);
-  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    background 140ms ease;
 }
 
 .thingy-input:focus-within {
@@ -228,64 +182,6 @@
   color: color-mix(in srgb, var(--muted) 76%, var(--surface));
 }
 
-.librarian-question-actions {
-  grid-column: 2;
-  grid-row: 2;
-  align-self: center;
-}
-
-.librarian-question-actions button {
-  width: 36px;
-  min-width: 36px;
-  height: 36px;
-  min-height: 36px;
-  padding: 0;
-  border-radius: 50%;
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--surface);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.librarian-question-actions button:hover:not(:disabled) {
-  border-color: var(--accent-deep);
-  background: var(--accent-deep);
-}
-
-.librarian-question-actions button:disabled {
-  border-color: color-mix(in srgb, var(--muted) 28%, var(--surface-2));
-  background: color-mix(in srgb, var(--muted) 28%, var(--surface-2));
-  color: color-mix(in srgb, var(--muted) 72%, var(--surface));
-}
-
-.librarian-question-actions button svg {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentcolor;
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.librarian-question-meta {
-  grid-column: 1;
-  grid-row: 2;
-  align-self: center;
-  justify-content: flex-start;
-  padding: 0 4px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 140ms ease;
-}
-
-.thingy-input:focus-within .librarian-question-meta,
-.librarian-question-meta:has(.warning) {
-  opacity: 0.68;
-}
-
 .librarian-message-assistant .librarian-feedback {
   justify-content: flex-start;
   gap: 4px;
@@ -324,11 +220,6 @@
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-
-.librarian-message-assistant .librarian-feedback-status {
-  align-self: center;
-  margin-left: 6px;
 }
 
 @media (width <= 640px) {

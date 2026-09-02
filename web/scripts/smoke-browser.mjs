@@ -174,7 +174,7 @@ async function checkReactChatGuest(browser) {
   assert.match(await page.locator('.thingy-guest-banner').textContent(), /Guest preview/);
   assert.ok(
     (await page.locator('.librarian-message-assistant').first().textContent()).includes("I'm Thingy"),
-    'chat2 guest welcome renders'
+    'react chat guest welcome renders'
   );
   await assertAccessible(page, 'react chat guest');
   assertNoUiFailures(failures, 'react chat guest');

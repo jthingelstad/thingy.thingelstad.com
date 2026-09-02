@@ -7,7 +7,7 @@ async function source(path) {
 }
 
 test('chat reads URL params before Tinylytics strips them', async () => {
-  const entry = await source('../src/react/chat2.tsx');
+  const entry = await source('../src/react/chat.tsx');
 
   assert.ok(entry.indexOf('new URLSearchParams(window.location.search)') > -1);
   assert.ok(entry.indexOf('loadTinylytics();') > -1);
@@ -18,7 +18,7 @@ test('chat reads URL params before Tinylytics strips them', async () => {
 });
 
 test('explicit sign-in intents route to /signin/ before the app renders', async () => {
-  const entry = await source('../src/react/chat2.tsx');
+  const entry = await source('../src/react/chat.tsx');
   const redirect = entry.indexOf('session.signInUrl');
   const renderCall = entry.indexOf('createRoot(host).render');
 

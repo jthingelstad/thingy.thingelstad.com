@@ -7,7 +7,7 @@ import { resolveFromValue } from '../shared/thingy-from.ts';
 import { loadTinylytics } from '../shared/thingy-tinylytics-loader.ts';
 import { bootWebMcp } from '../shared/thingy-webmcp.ts';
 import * as session from '../shared/thingy-session.ts';
-import { Chat2App, type Chat2Initial } from './Chat2App.tsx';
+import { ChatApp, type ChatInitial } from './ChatApp.tsx';
 
 registerClientErrorTracking('chat');
 
@@ -15,7 +15,7 @@ registerClientErrorTracking('chat');
 // page-entry-order test enforces for every chat entry).
 const params = new URLSearchParams(window.location.search);
 const explore = composeExplorePrompt(params.get('explore'), params.get('issue'));
-const initial: Chat2Initial = {
+const initial: ChatInitial = {
   prompt: (String(params.get('prompt') || '').trim() || explore.prompt).slice(0, 1200),
   from: resolveFromValue(params.get('from') || explore.sourceUrl || null)
 };
@@ -27,7 +27,7 @@ if (loginToken || email) {
   window.location.href = session.signInUrl('/chat/');
 } else {
   const host = document.getElementById('thingy-react-root');
-  if (host) createRoot(host).render(<Chat2App initial={initial} />);
+  if (host) createRoot(host).render(<ChatApp initial={initial} />);
 }
 loadTinylytics();
 void bootWebMcp();

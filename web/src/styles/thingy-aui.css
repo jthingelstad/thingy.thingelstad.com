@@ -372,7 +372,6 @@
   }
 }
 
-
 .thingy-aui-shared-dot {
   display: inline-flex;
   margin-left: 6px;
@@ -392,4 +391,96 @@
   .thingy-aui-count.is-quiet {
     display: none;
   }
+}
+
+/* Fenced code blocks (react-markdown, 2026-09-03): header bar with
+   language + copy, monospace panel below. */
+.librarian-answer-content .thingy-aui-codeheader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: color-mix(in srgb, var(--surface-2) 82%, var(--surface));
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.librarian-answer-content .thingy-aui-codeheader button {
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: none;
+  padding: 2px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.librarian-answer-content .thingy-aui-codeheader button:hover {
+  color: var(--ink);
+}
+
+.librarian-answer-content .thingy-aui-codeheader button svg {
+  width: 14px;
+  height: 14px;
+}
+
+.librarian-answer-content .thingy-aui-codeheader + pre,
+.librarian-answer-content pre {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-2) 62%, var(--surface));
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.librarian-answer-content .thingy-aui-codeheader + pre {
+  border-radius: 0 0 8px 8px;
+  border-top: none;
+}
+
+.librarian-answer-content pre code {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* Jump-to-latest pill: assistant-ui disables it at the bottom of the
+   scroll; disabled = hidden. */
+.thingy-aui-scrollbottom {
+  position: sticky;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: var(--shadow-subtle);
+  z-index: 4;
+}
+
+.thingy-aui-scrollbottom:hover {
+  border-color: var(--color-accent);
+}
+
+.thingy-aui-scrollbottom svg {
+  width: 16px;
+  height: 16px;
+}
+
+.thingy-aui-scrollbottom[disabled] {
+  display: none;
 }

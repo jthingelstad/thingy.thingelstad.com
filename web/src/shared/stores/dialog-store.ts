@@ -1,6 +1,6 @@
 // Promise-based in-app dialogs replacing window.confirm / window.prompt.
 // One dialog at a time: opening a new one settles the previous as
-// cancelled. The host component (DialogHost in Chat2App) renders whatever
+// cancelled. The host component (components/DialogHost.tsx) renders whatever
 // this store holds; call sites just await the helper.
 
 interface DialogBase {
