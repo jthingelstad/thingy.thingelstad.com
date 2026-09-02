@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { createRoot } from 'react-dom/client';
-import * as session from '../thingy-session.ts';
-import { errorMessage } from '../thingy-errors.ts';
+import * as session from '../shared/thingy-session.ts';
+import { errorMessage } from '../shared/thingy-errors.ts';
 
 type SecondaryAction = '' | 'subscribe' | 'resend';
 
-function SignInApp() {
+export function SignInApp({ initialLoginToken = '' }: { initialLoginToken?: string }) {
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
-  const loginToken = String(params.get('login_token') || params.get('magic_token') || '').trim();
+  const loginToken = initialLoginToken;
   const returnTo = session.returnPath('/chat/');
   const [email, setEmail] = useState(session.storedEmail());
   const [message, setMessage] = useState('');
@@ -156,7 +155,7 @@ function SignInApp() {
   }
 
   return (
-    <section className="thingy-auth-page">
+    <main className="thingy-auth-page">
       <div className="thingy-auth-card">
         <span className="thingy-auth-mark" aria-hidden="true">
           <img src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager" />
@@ -226,12 +225,6 @@ function SignInApp() {
           </div>
         </div>
       </div>
-    </section>
+    </main>
   );
 }
-
-function mountSignInApp(host: HTMLElement | null) {
-  if (host) createRoot(host).render(<SignInApp />);
-}
-
-export { mountSignInApp };

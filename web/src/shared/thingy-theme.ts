@@ -17,14 +17,22 @@ function storedTheme(): ThingyTheme {
   }
 }
 
+// The attribute is ALWAYS set: 'system' resolves against the OS setting
+// (and follows it live), so both the legacy token blocks and Tailwind's
+// single [data-theme='dark'] variant see one source of truth.
 function applyTheme(theme: ThingyTheme) {
   const root = document.documentElement;
-  if (theme === 'system') delete root.dataset.theme;
-  else root.dataset.theme = theme;
+  const dark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  root.dataset.theme = dark ? 'dark' : 'light';
 }
 
 function initTheme() {
   applyTheme(storedTheme());
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+  const onChange = () => {
+    if (storedTheme() === 'system') applyTheme('system');
+  };
+  if (typeof media.addEventListener === 'function') media.addEventListener('change', onChange);
 }
 
 function setTheme(theme: ThingyTheme) {

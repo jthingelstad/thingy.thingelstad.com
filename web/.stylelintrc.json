@@ -6,5 +6,20 @@
     "keyframes-name-pattern": null,
     "no-descending-specificity": null,
     "property-no-vendor-prefix": null
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/styles/tailwind.css"],
+      "rules": {
+        "import-notation": null,
+        "at-rule-no-unknown": [
+          true,
+          {
+            "ignoreAtRules": ["custom-variant", "theme", "plugin", "variant", "utility", "apply", "source"]
+          }
+        ],
+        "custom-property-empty-line-before": null
+      }
+    }
+  ]
 }

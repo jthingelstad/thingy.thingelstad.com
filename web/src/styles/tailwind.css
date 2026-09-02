@@ -1,0 +1,35 @@
+/* Tailwind v4 substrate (2026-09-03). Utilities ride the EXISTING Thingy
+   token system: thingy-base.css owns the palette and its light/dark
+   switching; the inline theme below maps those runtime variables into
+   Tailwind color/font names, so `bg-surface text-ink border-line` follow
+   the reader's theme with zero duplication. */
+
+@import 'tailwindcss';
+
+/* The theme boot resolves 'system' to an explicit attribute, so a single
+   attribute variant covers all dark rendering. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+@theme inline {
+  --color-*: initial;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
+  --color-accent-soft: var(--accent-soft);
+  --color-highlight: var(--highlight);
+  --color-code: var(--code-bg);
+  --color-error: var(--color-error);
+  --color-transparent: transparent;
+  --color-current: currentcolor;
+
+  --font-sans: var(--sans);
+  --font-serif: var(--serif);
+  --font-mono: ui-monospace, 'SF Mono', menlo, monaco, monospace;
+}

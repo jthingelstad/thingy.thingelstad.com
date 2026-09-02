@@ -2,6 +2,7 @@
 // page-entry routes (home, sign-in, share, about, connect). Preact was
 // removed 2026-09-02 when Thingy committed fully to React + assistant-ui.
 import react from '@vitejs/plugin-react-swc';
+import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 import { resolve } from 'node:path';
 import { SITE, htmlConfigPlugin, librarianProxy } from './vite.shared-config.ts';
@@ -13,7 +14,7 @@ export default defineConfig({
   define: {
     __THINGY_TINYLYTICS_ID__: JSON.stringify(SITE.tinylyticsId)
   },
-  plugins: [react(), htmlConfigPlugin()],
+  plugins: [react(), tailwindcss(), htmlConfigPlugin()],
   build: {
     outDir: '_site',
     emptyOutDir: true,

@@ -2,13 +2,14 @@
   "$schema": "https://unpkg.com/knip@latest/schema.json",
   "entry": [
     "src/pages/*.ts",
-    "src/react/chat.tsx",
     "scripts/*.mjs",
     "tests/*.test.mjs",
     "vite.config.ts",
     "vitest.config.ts",
-    "tests-react/**/*.test.tsx"
+    "tests-react/**/*.test.tsx",
+    "src/app/main.tsx"
   ],
   "project": ["src/**/*.{ts,tsx}", "scripts/**/*.mjs", "tests-react/**/*.{ts,tsx}"],
-  "vite": false
+  "vite": false,
+  "ignoreDependencies": ["tailwindcss"]
 }

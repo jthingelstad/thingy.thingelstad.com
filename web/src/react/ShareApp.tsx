@@ -22,11 +22,6 @@ interface SharedConversationPayload {
   error?: string;
 }
 
-function shareTokenFromPath(pathname: string) {
-  const match = /^\/c\/([A-Za-z0-9_-]+)\/?$/.exec(pathname);
-  return match ? match[1] : '';
-}
-
 function friendlyDate(value: unknown) {
   const time = Date.parse(String(value || ''));
   if (!Number.isFinite(time)) return '';
@@ -66,14 +61,13 @@ function Unavailable({ signedIn }: { signedIn: boolean }) {
   );
 }
 
-export function ShareApp() {
+export function ShareApp({ token = '' }: { token?: string }) {
   const [signedIn] = useState(() => sessionActive());
   const [payload, setPayload] = useState<SharedConversationPayload | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    const token = shareTokenFromPath(window.location.pathname);
-    if (!token) {
+    if (!token || !/^[A-Za-z0-9_-]+$/.test(token)) {
       setFailed(true);
       return;
     }
@@ -100,13 +94,18 @@ export function ShareApp() {
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (failed) return <Unavailable signedIn={signedIn} />;
-  if (!payload) return null;
+  if (failed)
+    return (
+      <SharePage>
+        <Unavailable signedIn={signedIn} />
+      </SharePage>
+    );
+  if (!payload) return <SharePage>{null}</SharePage>;
 
   const sharedDate = friendlyDate(payload.conversation?.shared_at);
   const messages = (payload.messages || []).filter((message) => String(message.content || '').trim());
   return (
-    <>
+    <SharePage>
       <div className="thingy-shared-header">
         <h1>{String(payload.conversation?.title || 'A Thingy conversation')}</h1>
         <p className="thingy-shared-byline">Shared from a Thingy conversation{sharedDate ? ` · ${sharedDate}` : ''}</p>
@@ -130,6 +129,26 @@ export function ShareApp() {
         )}
       </div>
       <Cta signedIn={signedIn} />
+    </SharePage>
+  );
+}
+
+// The /c shell is a bare app mount now; the page chrome renders here.
+function SharePage({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <header className="thingy-page-nav">
+        <a className="brand" href="/">
+          <img src="/img/thingy.png" alt="" />
+          Thingy
+        </a>
+        <nav>
+          <a href="/chat/">Chat</a>
+          <a href="/about/">About</a>
+          <a href="/connect/">Connect</a>
+        </nav>
+      </header>
+      <main className="thingy-page thingy-shared">{children}</main>
     </>
   );
 }

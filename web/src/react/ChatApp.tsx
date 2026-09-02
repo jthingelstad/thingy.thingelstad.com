@@ -232,7 +232,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
 
   return (
     <TipProvider>
-      <section className="thingy-page">
+      <main className="thingy-page">
         <h1 className="sr-only">Thingy chat</h1>
         <div
           className={`thingy-app-shell${guest ? ' is-guest' : ''}${mobileRailOpen ? ' is-mobile-rail-open' : ''}${railCollapsed ? ' is-collapsed' : ''}`}
@@ -344,7 +344,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
           </section>
         </div>
         <DialogHost />
-      </section>
+      </main>
     </TipProvider>
   );
 }
