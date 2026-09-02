@@ -77,7 +77,7 @@ function Thread({
             <div className="thingy-aui-empty flex flex-col gap-4">
               <article className="librarian-message librarian-message-assistant">
                 <div className="librarian-answer-content">
-                  <p className="min-h-14 text-[17px] leading-relaxed text-ink">{welcome}</p>
+                  <p className="min-h-28 text-[17px] leading-relaxed text-ink">{welcome}</p>
                 </div>
               </article>
               <SuggestionChips suggestions={suggestions} />

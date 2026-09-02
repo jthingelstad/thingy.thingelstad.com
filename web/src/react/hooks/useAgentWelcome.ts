@@ -38,11 +38,16 @@ export function useAgentWelcome(guest: boolean, seeded: boolean) {
         let text = '';
         await readStream(response, (eventName, data) => {
           if (eventName === 'answer_delta') {
+            // Buffer, don't render: streaming the welcome delta-by-delta
+            // grew the centered empty state line by line and pushed the
+            // suggestion chips/composer under the pointer (observed
+            // mis-click, twice). One swap when the text is final.
             text += String(data.delta || '');
-            setWelcomeText(text || DEFAULT_WELCOME);
           } else if (eventName === 'answer') {
             text = String(data.answer || text);
             setWelcomeText(text || DEFAULT_WELCOME);
+          } else if (eventName === 'done') {
+            if (text) setWelcomeText(text);
           } else if (eventName === 'suggestions') {
             const list = Array.isArray(data.suggestions) ? data.suggestions : [];
             setSuggestions(
