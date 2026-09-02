@@ -5,7 +5,10 @@ function decodeConfig(value: string) {
   try {
     const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
     const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
-    return JSON.parse(window.atob(padded)) as ThingyPublicConfig;
+    // atob yields Latin-1 code units; the server encoded UTF-8 bytes, so
+    // decode them properly or non-ASCII (the build stamp's middot) mojibakes.
+    const bytes = Uint8Array.from(window.atob(padded), (char) => char.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes)) as ThingyPublicConfig;
   } catch (error) {
     return {};
   }
