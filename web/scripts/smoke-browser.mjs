@@ -164,6 +164,23 @@ async function checkGuestPreview(browser) {
   await context.close();
 }
 
+async function checkChat2Guest(browser) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const failures = collectUiFailures(page);
+  await page.goto(`${baseUrl}/chat2/`);
+  await page.waitForSelector('.thingy-guest-banner');
+  await page.waitForSelector('.thingy-aui-input');
+  assert.match(await page.locator('.thingy-guest-banner').textContent(), /Guest preview/);
+  assert.ok(
+    (await page.locator('.librarian-message-assistant').first().textContent()).includes("I'm Thingy"),
+    'chat2 guest welcome renders'
+  );
+  await assertAccessible(page, 'chat2 guest');
+  assertNoUiFailures(failures, 'chat2 guest');
+  await context.close();
+}
+
 async function checkChat(browser) {
   const context = await browser.newContext();
   await seedSession(context);
@@ -302,6 +319,7 @@ async function main() {
     try {
       await checkSignInRedirect(browser);
       await checkGuestPreview(browser);
+      await checkChat2Guest(browser);
       await checkChat(browser);
       await checkMobileChat(browser);
     } finally {

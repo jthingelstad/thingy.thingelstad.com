@@ -26,6 +26,11 @@ const DEFAULT_WELCOME = "Hi. I'm Thingy. Ask me what you're curious about and I'
 const GUEST_WELCOME =
   "Hi. I'm Thingy - ask me anything about Jamie Thingelstad's public archive: twenty-five years of blog posts, the Weekly Thing newsletter, and the Another Thing podcast. You can try a few questions as a guest; signing in is free for Weekly Thing readers.";
 
+export interface Chat2Initial {
+  prompt: string;
+  from: { href: string; name: string } | null;
+}
+
 interface ConversationSummary {
   id: string;
   title: string;
@@ -317,7 +322,17 @@ function DialogHost() {
 
 // ---------------------------------------------------------------------------
 
-function ThreadHost({ binding, guest, welcome }: { binding: ThingyThreadBinding; guest: boolean; welcome: string }) {
+function ThreadHost({
+  binding,
+  guest,
+  welcome,
+  initialPrompt
+}: {
+  binding: ThingyThreadBinding;
+  guest: boolean;
+  welcome: string;
+  initialPrompt?: string;
+}) {
   const adapter = useMemo(() => createThingyAdapter(binding), [binding]);
   const history = useMemo(() => createThingyHistoryAdapter(binding), [binding]);
   const feedback = useMemo(
@@ -335,7 +350,25 @@ function ThreadHost({ binding, guest, welcome }: { binding: ThingyThreadBinding;
       }),
     []
   );
-  const runtime = useLocalRuntime(adapter, { adapters: { history, feedback } });
+  // History only for existing server conversations: a brand-new thread has
+  // nothing to load, and racing an empty async load against a seeded
+  // append trips assistant-ui's message repository.
+  const runtime = useLocalRuntime(adapter, {
+    adapters: { ...(binding.conversationId && !guest ? { history } : {}), feedback }
+  });
+  const sentInitialRef = useRef(false);
+  useEffect(() => {
+    if (!initialPrompt || sentInitialRef.current) return;
+    sentInitialRef.current = true;
+    // Deferred a tick so the runtime finishes mounting before the seeded
+    // prompt (archive links, homepage example chips) starts the run.
+    const timer = window.setTimeout(() => {
+      runtime.thread.append({ role: 'user', content: [{ type: 'text', text: initialPrompt }] });
+    }, 50);
+    return () => window.clearTimeout(timer);
+    // One-shot on mount.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <Thread guest={guest} welcome={welcome} />
@@ -343,7 +376,7 @@ function ThreadHost({ binding, guest, welcome }: { binding: ThingyThreadBinding;
   );
 }
 
-export function Chat2App() {
+export function Chat2App({ initial }: { initial: Chat2Initial }) {
   const [signedIn] = useState(() => session.sessionActive());
   const guest = !signedIn;
   const [activeId, setActiveId] = useState('');
@@ -530,6 +563,14 @@ export function Chat2App() {
               </button>
             </div>
           </div>
+          {initial.from ? (
+            <a className="return-chip" href={initial.from.href} data-tinylytics-event="network.return">
+              <Icon name="arrow-left" />
+              <span>
+                Return to <strong>{initial.from.name}</strong>
+              </span>
+            </a>
+          ) : null}
           {guest ? (
             <aside className="thingy-guest-banner" aria-label="Guest preview">
               <span>
@@ -544,10 +585,10 @@ export function Chat2App() {
           ) : null}
           <ThreadHost
             key={conversationKey}
-            conversationKey={conversationKey}
             binding={binding}
             guest={guest}
             welcome={welcome}
+            initialPrompt={activeId ? undefined : initial.prompt}
           />
         </section>
       </div>
