@@ -10,7 +10,7 @@ import {
   useAuiState,
   useLocalRuntime
 } from '@assistant-ui/react';
-import { citationMap, renderMarkdown } from '../shared/thingy-markdown.ts';
+import { renderMarkdown } from '../shared/thingy-markdown.ts';
 import { trackEvent } from '../shared/thingy-analytics.ts';
 import { iconSvg } from '../shared/thingy-icons.ts';
 import { activeDialog, confirmDialog, promptDialog } from '../shared/stores/dialog-store.ts';
@@ -317,17 +317,7 @@ function DialogHost() {
 
 // ---------------------------------------------------------------------------
 
-function ThreadHost({
-  conversationKey,
-  binding,
-  guest,
-  welcome
-}: {
-  conversationKey: string;
-  binding: ThingyThreadBinding;
-  guest: boolean;
-  welcome: string;
-}) {
+function ThreadHost({ binding, guest, welcome }: { binding: ThingyThreadBinding; guest: boolean; welcome: string }) {
   const adapter = useMemo(() => createThingyAdapter(binding), [binding]);
   const history = useMemo(() => createThingyHistoryAdapter(binding), [binding]);
   const feedback = useMemo(
