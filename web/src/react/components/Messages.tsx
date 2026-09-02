@@ -3,7 +3,7 @@
 // with Tailwind; the librarian-* class names stay as stable hooks for
 // smoke tests and the answer-typography stylesheet.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   ActionBarPrimitive,
   BranchPickerPrimitive,
@@ -13,6 +13,7 @@ import {
   useAuiState
 } from '@assistant-ui/react';
 import { createChatMessageActions } from '../../shared/thingy-message-actions.ts';
+import { liveActivityStatus } from '../thingy-runtime.ts';
 import { trackEvent } from '../../shared/thingy-analytics.ts';
 import { Icon } from './Icon.tsx';
 import { Tip } from './Tip.tsx';
@@ -38,6 +39,7 @@ function formatElapsed(ms: number) {
 // reloaded history has no start moment to measure from.
 function ResponseTimer() {
   const running = useAuiState((state) => state.message.status?.type === 'running');
+  const phrase = useSyncExternalStore(liveActivityStatus.subscribe, liveActivityStatus.get);
   const [elapsed, setElapsed] = useState(0);
   const startRef = useRef(0);
   const sawRunRef = useRef(false);
@@ -55,8 +57,11 @@ function ResponseTimer() {
   if (!sawRunRef.current) return null;
   return (
     <span className="thingy-response-timer inline-flex items-center gap-1.5 font-mono text-[11.5px] text-muted tabular-nums">
-      {running ? <span className="size-1.5 animate-pulse rounded-full bg-accent motion-reduce:animate-none" /> : null}
+      {running ? (
+        <span className="size-1.5 shrink-0 animate-pulse rounded-full bg-accent motion-reduce:animate-none" />
+      ) : null}
       {formatElapsed(elapsed)}
+      {running && phrase ? <span className="truncate font-sans">· {phrase}</span> : null}
     </span>
   );
 }

@@ -45,6 +45,25 @@ function messageText(message: { content: readonly unknown[] }) {
     .join('');
 }
 
+export const liveActivityStatus = (() => {
+  let value = '';
+  const listeners = new Set<() => void>();
+  return {
+    get: () => value,
+    set(next: string) {
+      if (next === value) return;
+      value = next;
+      listeners.forEach((listener) => listener());
+    },
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    }
+  };
+})();
+
 function assistantParts(state: StreamedTurnState) {
   const parts: Array<Record<string, unknown>> = [];
   if (state.activity.length) {
@@ -147,41 +166,52 @@ export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdap
         });
 
       let streamErrorMessage = '';
-      while (!readerDone || queue.length) {
-        if (!queue.length) {
-          await new Promise<void>((resolve) => {
-            wake = resolve;
-          });
-          wake = null;
-          continue;
-        }
-        const { eventName, data } = queue.shift()!;
-        if (eventName === 'meta' || eventName === 'done') {
-          state.requestId = data.request_id || state.requestId;
-          if (typeof data.guest_remaining === 'number') binding.onGuestRemaining?.(data.guest_remaining);
-          if (data.conversation_id && data.conversation_id !== binding.conversationId) {
-            binding.conversationId = data.conversation_id;
-            binding.onConversationId?.(data.conversation_id);
+      liveActivityStatus.set('Thinking...');
+      try {
+        while (!readerDone || queue.length) {
+          if (!queue.length) {
+            await new Promise<void>((resolve) => {
+              wake = resolve;
+            });
+            wake = null;
+            continue;
           }
-        } else if (eventName === 'status') {
-          const line = String(data.commentary || data.message || '').trim();
-          if (data.kind === 'tool' && line) {
-            state.activity.push(line);
+          const { eventName, data } = queue.shift()!;
+          if (eventName === 'meta' || eventName === 'done') {
+            state.requestId = data.request_id || state.requestId;
+            if (typeof data.guest_remaining === 'number') binding.onGuestRemaining?.(data.guest_remaining);
+            if (data.conversation_id && data.conversation_id !== binding.conversationId) {
+              binding.conversationId = data.conversation_id;
+              binding.onConversationId?.(data.conversation_id);
+            }
+          } else if (eventName === 'status') {
+            const line = String(data.commentary || data.message || '').trim();
+            // Every status phrase drives the live "what's happening" line;
+            // only tool steps also become durable activity rows.
+            if (line) liveActivityStatus.set(String(data.message || line));
+            if (data.kind === 'tool' && line) {
+              state.activity.push(line);
+              yield { content: assistantParts(state) };
+            }
+          } else if (eventName === 'answer_delta') {
+            if (!state.text) liveActivityStatus.set('Writing the answer...');
+            state.text += String(data.delta || '');
             yield { content: assistantParts(state) };
+          } else if (eventName === 'answer') {
+            state.text = String(data.answer || state.text);
+            yield { content: assistantParts(state) };
+          } else if (eventName === 'citations') {
+            state.citations = Array.isArray(data.citations) ? (data.citations as ThingyCitation[]) : [];
+          } else if (eventName === 'error') {
+            streamErrorMessage = String(data.error || 'Thingy is unavailable.');
           }
-        } else if (eventName === 'answer_delta') {
-          state.text += String(data.delta || '');
-          yield { content: assistantParts(state) };
-        } else if (eventName === 'answer') {
-          state.text = String(data.answer || state.text);
-          yield { content: assistantParts(state) };
-        } else if (eventName === 'citations') {
-          state.citations = Array.isArray(data.citations) ? (data.citations as ThingyCitation[]) : [];
-        } else if (eventName === 'error') {
-          streamErrorMessage = String(data.error || 'Thingy is unavailable.');
         }
+        await reading;
+      } finally {
+        // Success, error, or user stop: the live line must not outlive
+        // the run (generator finally runs on .return() too).
+        liveActivityStatus.set('');
       }
-      await reading;
       if (streamErrorMessage) throw new Error(streamErrorMessage);
       if (readError) throw readError instanceof Error ? readError : new Error('Thingy is unavailable.');
       if (!state.text.trim()) throw new Error('Thingy did not return an answer. Please try again.');
