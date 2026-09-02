@@ -494,6 +494,7 @@ export function Chat2App({ initial }: { initial: Chat2Initial }) {
 
   return (
     <section className="thingy-page">
+      <h1 className="sr-only">Thingy chat</h1>
       <div className={`thingy-app-shell${guest ? ' is-guest' : ''}`} id="thingy-app-shell">
         {guest ? null : (
           <nav className="rail thingy-aui-rail" aria-label="Conversations">
