@@ -18,6 +18,7 @@ import { trackEvent } from '../../shared/thingy-analytics.ts';
 import { Icon } from './Icon.tsx';
 import { Tip } from './Tip.tsx';
 import { AssistantMarkdown } from './MarkdownText.tsx';
+import { thingyUrlTransform } from './markdown-config.ts';
 
 const messageActionsService = createChatMessageActions({ track: (name, value) => trackEvent(name, value) });
 
@@ -37,8 +38,19 @@ function formatElapsed(ms: number) {
 // Claude-style response receipt: a live elapsed readout while the answer
 // streams, frozen once it completes. Only turns observed running get one -
 // reloaded history has no start moment to measure from.
+function formatTokens(count: number) {
+  if (count >= 10_000) return `${Math.round(count / 1000)}k tokens`;
+  if (count >= 1_000) return `${(count / 1000).toFixed(1)}k tokens`;
+  return `${count} tokens`;
+}
+
 function ResponseTimer() {
   const running = useAuiState((state) => state.message.status?.type === 'running');
+  const receipt = useAuiState(
+    (state) =>
+      (state.message.metadata?.custom as { receipt?: { duration_ms?: number; total_tokens?: number } } | undefined)
+        ?.receipt
+  );
   const phrase = useSyncExternalStore(liveActivityStatus.subscribe, liveActivityStatus.get);
   const [elapsed, setElapsed] = useState(0);
   const startRef = useRef(0);
@@ -54,13 +66,20 @@ function ResponseTimer() {
     const tick = window.setInterval(() => setElapsed(Date.now() - startRef.current), 1000);
     return () => window.clearInterval(tick);
   }, [running]);
-  if (!sawRunRef.current) return null;
+  // The server's measured duration (4.8 receipt) beats the client's
+  // approximation, and lets reloaded history and share transcripts show
+  // a receipt without ever having run in this session.
+  const serverMs = Number(receipt?.duration_ms || 0);
+  const tokens = Number(receipt?.total_tokens || 0);
+  if (!sawRunRef.current && !serverMs) return null;
+  const shownMs = !running && serverMs ? serverMs : elapsed;
   return (
     <span className="thingy-response-timer inline-flex items-center gap-1.5 font-mono text-[11.5px] text-muted tabular-nums">
       {running ? (
         <span className="size-1.5 shrink-0 animate-pulse rounded-full bg-accent motion-reduce:animate-none" />
       ) : null}
-      {formatElapsed(elapsed)}
+      {formatElapsed(shownMs)}
+      {!running && tokens ? <span className="shrink-0">· {formatTokens(tokens)}</span> : null}
       {running && phrase ? <span className="truncate font-sans">· {phrase}</span> : null}
     </span>
   );
@@ -91,6 +110,58 @@ function ActivityPart(props: { text: string }) {
   );
 }
 
+// Cited sources as a card row under the answer. The inline WT-token
+// autolinks only surface citations the prose happens to mention by
+// number - blog/podcast sources and unmentioned issues were silently
+// dropped, and hover titles don't exist on touch. The metadata rides
+// every message, including reloaded history and share transcripts.
+function SourcesFooter() {
+  const metadata = useAuiState((state) => state.message.metadata);
+  const citations = ((metadata?.custom as { citations?: ThingyCitation[] } | undefined)?.citations || []).filter(
+    (citation) => citation && (citation.url || citation.issue_number)
+  );
+  if (!citations.length) return null;
+  return (
+    <nav className="librarian-sources mt-3 flex flex-wrap gap-1.5" aria-label="Sources">
+      {citations.slice(0, 8).map((citation, index) => {
+        const issue = String(citation.issue_number || '').trim();
+        const kind = String(citation.source_kind || '');
+        const badge = issue ? `WT${issue}` : kind === 'blog' ? 'Blog' : kind === 'podcast' ? 'Podcast' : 'Source';
+        const href = thingyUrlTransform(String(citation.url || (issue ? `/archive/${issue}/` : '')));
+        const date = String(citation.publish_date || '').slice(0, 10);
+        const label = String(citation.subject || '').trim();
+        const card = (
+          <>
+            <span className="shrink-0 rounded bg-accent-soft px-1.5 py-px font-mono text-[10.5px] font-bold text-accent-deep">
+              {badge}
+            </span>
+            {label ? <span className="max-w-56 truncate">{label}</span> : null}
+            {date ? <span className="shrink-0 text-muted tabular-nums">{date}</span> : null}
+          </>
+        );
+        const className =
+          'flex items-center gap-1.5 rounded-lg border border-line bg-surface px-2 py-1 text-[12px] text-ink-soft transition-colors';
+        return href ? (
+          <a
+            key={`${badge}-${index}`}
+            className={`${className} hover:border-accent hover:bg-accent-soft`}
+            href={href}
+            target="_blank"
+            rel="noopener"
+            title={label || badge}
+          >
+            {card}
+          </a>
+        ) : (
+          <span key={`${badge}-${index}`} className={className}>
+            {card}
+          </span>
+        );
+      })}
+    </nav>
+  );
+}
+
 function messageHostOf(event: React.MouseEvent<HTMLButtonElement>) {
   return (event.currentTarget as HTMLElement).closest<HTMLElement>('.librarian-message');
 }
@@ -99,6 +170,7 @@ export function AssistantMessage() {
   return (
     <MessagePrimitive.Root className="librarian-message librarian-message-assistant group w-full py-3">
       <MessagePrimitive.Parts components={{ Text: AssistantMarkdown, Reasoning: ActivityPart }} />
+      <SourcesFooter />
       <div className="mt-1.5 empty:hidden">
         <ResponseTimer />
       </div>

@@ -34,6 +34,7 @@ interface StreamedTurnState {
   text: string;
   citations: ThingyCitation[];
   requestId: string;
+  receipt?: { duration_ms?: number; total_tokens?: number; tool_steps?: number };
 }
 
 function messageText(message: { content: readonly unknown[] }) {
@@ -73,7 +74,7 @@ function assistantParts(state: StreamedTurnState) {
   return parts as never;
 }
 
-function guestHistoryFromMessages(messages: readonly { role: string; content: readonly unknown[] }[]) {
+export function guestHistoryFromMessages(messages: readonly { role: string; content: readonly unknown[] }[]) {
   return messages
     .filter((message) => message.role === 'user' || message.role === 'assistant')
     .map((message) => ({ role: message.role, content: messageText(message) }))
@@ -177,6 +178,11 @@ export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdap
             continue;
           }
           const { eventName, data } = queue.shift()!;
+          if (eventName === 'done') {
+            const receipt = (data as { receipt?: { duration_ms?: number; total_tokens?: number; tool_steps?: number } })
+              .receipt;
+            if (receipt && typeof receipt === 'object') state.receipt = receipt;
+          }
           if (eventName === 'meta' || eventName === 'done') {
             state.requestId = data.request_id || state.requestId;
             if (typeof data.guest_remaining === 'number') binding.onGuestRemaining?.(data.guest_remaining);
@@ -220,7 +226,7 @@ export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdap
       yield {
         content: assistantParts(state),
         metadata: {
-          custom: { request_id: state.requestId, citations: state.citations }
+          custom: { request_id: state.requestId, citations: state.citations, receipt: state.receipt }
         }
       } as never;
     }
@@ -234,6 +240,8 @@ interface StoredMessage {
   parent_request_id?: string;
   created_at?: string;
   citations?: unknown;
+  duration_ms?: number;
+  total_tokens?: number;
 }
 
 // Real tree reconstruction: turns carry parent_request_id (4.3), so a
@@ -282,7 +290,15 @@ export function historyItemsFromStored(stored: StoredMessage[]) {
                   // is for the tree only and must not reach feedback or
                   // parent derivation as if it were real.
                   request_id: message.request_id ? requestId : '',
-                  citations: Array.isArray(message.citations) ? message.citations : []
+                  citations: Array.isArray(message.citations) ? message.citations : [],
+                  ...(Number(message.duration_ms) > 0
+                    ? {
+                        receipt: {
+                          duration_ms: Number(message.duration_ms),
+                          ...(Number(message.total_tokens) > 0 ? { total_tokens: Number(message.total_tokens) } : {})
+                        }
+                      }
+                    : {})
                 }
               }
             }

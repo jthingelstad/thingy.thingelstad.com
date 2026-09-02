@@ -54,3 +54,52 @@
 .thingy-shared-cta-more {
   margin-left: 0.75rem;
 }
+
+/* ---- Print: a shared conversation is exactly the page a newsletter
+   reader prints or sends to Reader mode. Chrome off, transcript flat,
+   citation links legible on paper. ---- */
+@media print {
+  .thingy-page-nav nav,
+  .thingy-guest-banner,
+  .thingy-shared-messages aside,
+  .thingy-composer-zone,
+  .thingy-message-actions,
+  .thingy-response-timer,
+  .thingy-aui-activity,
+  .thingy-aui-suggestion {
+    display: none !important;
+  }
+
+  /* The app lays out as a fixed-height scroll region; print needs the
+     document to flow. */
+  main,
+  .thingy-shared-messages,
+  .thingy-chat-scroll {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .librarian-message-user {
+    border: 1px solid #bbb;
+    border-radius: 8px;
+    background: none !important;
+    color: #000 !important;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Paper can't be clicked: print the destination after each link in the
+     answer body (skip pure fragments). */
+  .librarian-answer-content a[href^='http']::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.8em;
+    color: #555;
+    word-break: break-all;
+  }
+}

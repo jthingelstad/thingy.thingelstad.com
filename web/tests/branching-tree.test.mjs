@@ -111,3 +111,23 @@ test('share payloads without request ids pair by adjacency', () => {
   assert.equal(byId.get('u-row-2'), 'a-row-1');
   assert.equal(byId.get('a-row-3'), 'u-row-2');
 });
+
+test('guest history slices out seeded share turns and the in-flight message', async () => {
+  const { guestHistoryFromMessages } = await import('../src/react/thingy-runtime.ts');
+  const part = (text) => [{ type: 'text', text }];
+  const messages = [
+    { role: 'user', content: part('seeded q') },
+    { role: 'assistant', content: part('seeded a') },
+    { role: 'user', content: part('guest q1') },
+    { role: 'assistant', content: part('guest a1') },
+    { role: 'user', content: part('in-flight q2') }
+  ];
+  // The share page passes sharedMessageCount=2 and slices before calling:
+  // seeded turns are rebuilt server-side from the token, and the final
+  // user message rides as `message`, not history.
+  const history = guestHistoryFromMessages(messages.slice(2, -1));
+  assert.deepEqual(history, [
+    { role: 'user', content: 'guest q1' },
+    { role: 'assistant', content: 'guest a1' }
+  ]);
+});

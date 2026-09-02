@@ -97,6 +97,44 @@ async function routeMockApi(page, { holdWelcome = false } = {}) {
     });
   });
 
+  await page.route(`${streamHost}/chat`, async (route) => {
+    const sse = [
+      ['meta', { request_id: 'smoke-turn', conversation_id: 'conv-smoke', contract_version: '4.8.0' }],
+      ['status', { message: 'Understanding the request...' }],
+      ['status', { kind: 'tool', tool_name: 'search_archive', message: 'Checking Archive search...' }],
+      ['answer_delta', { delta: 'Jamie wrote about smoke tests in ' }],
+      ['answer_delta', { delta: 'WT200 - worth a read.' }],
+      ['answer', { answer: 'Jamie wrote about smoke tests in WT200 - worth a read.' }],
+      [
+        'citations',
+        {
+          citations: [
+            {
+              issue_number: 200,
+              source_kind: 'weekly_thing',
+              subject: 'Weekly Thing 200',
+              publish_date: '2023-01-01T11:00:00Z',
+              section: 'Issue',
+              url: '/archive/200/'
+            }
+          ]
+        }
+      ],
+      [
+        'done',
+        {
+          request_id: 'smoke-turn',
+          conversation_id: 'conv-smoke',
+          mode: 'thingy',
+          receipt: { duration_ms: 4200, total_tokens: 12345, tool_steps: 1 }
+        }
+      ]
+    ]
+      .map(([eventName, data]) => `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`)
+      .join('');
+    await route.fulfill({ contentType: 'text/event-stream; charset=utf-8', body: sse });
+  });
+
   await page.route(`${streamHost}/welcome`, async (route) => {
     await welcomeGate;
     const personalizedWelcome =
@@ -257,6 +295,20 @@ async function checkChat(browser) {
   await page.waitForFunction(() =>
     document.querySelector('.librarian-message-assistant')?.textContent?.includes('Hi. I am Thingy.')
   );
+
+  // One full mocked streamed turn: answer text, WT citation autolink,
+  // sources footer, and the frozen response receipt.
+  await page.locator('#librarian-question').fill('What did Jamie write about smoke tests?');
+  await page.locator('button.composer-send').first().click();
+  await page.waitForFunction(() =>
+    document.querySelector('.librarian-message-assistant:last-of-type')?.textContent?.includes('worth a read')
+  );
+  const wtAnswerLink = page.locator('.librarian-answer-content a', { hasText: 'WT200' });
+  assert.equal(await wtAnswerLink.getAttribute('href'), 'https://weekly.thingelstad.com/archive/200/');
+  await page.waitForSelector('.librarian-sources');
+  assert.match(await page.locator('.librarian-sources').textContent(), /WT200/);
+  await page.waitForSelector('.thingy-response-timer');
+  assert.match(await page.locator('.thingy-response-timer').textContent(), /4s\s*· 12k tokens/);
 
   // Message editing affordances come from assistant-ui now; the empty
   // thread has none, but the account menu must expose the build stamp.

@@ -6,7 +6,14 @@
 
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createRootRoute, createRoute, createRouter, Outlet, RouterProvider } from '@tanstack/react-router';
+import {
+  createRootRoute,
+  createRoute,
+  createRouter,
+  lazyRouteComponent,
+  Outlet,
+  RouterProvider
+} from '@tanstack/react-router';
 import '../styles/app.css';
 import { initTheme } from '../shared/thingy-theme.ts';
 import { registerClientErrorTracking } from '../shared/thingy-analytics.ts';
@@ -16,9 +23,16 @@ import { loadTinylytics } from '../shared/thingy-tinylytics-loader.ts';
 import { bootWebMcp } from '../shared/thingy-webmcp.ts';
 import * as session from '../shared/thingy-session.ts';
 import { bootParams } from './boot.ts';
-import { ChatApp, type ChatInitial } from '../react/ChatApp.tsx';
+import { type ChatInitial } from '../react/ChatApp.tsx';
 import { SignInApp } from '../react/SignInApp.tsx';
-import { ShareApp } from '../react/ShareApp.tsx';
+
+// ChatApp and ShareApp mount the full assistant-ui thread (markdown,
+// shiki hooks, TanStack Query) - the heavy half of the bundle. Loading
+// them lazily keeps the shared entry small, so magic-link landings on
+// /signin stop downloading the whole chat runtime. SignInApp itself
+// stays eager: it IS the light path.
+const LazyChatApp = lazyRouteComponent(() => import('../react/ChatApp.tsx'), 'ChatApp');
+const LazyShareApp = lazyRouteComponent(() => import('../react/ShareApp.tsx'), 'ShareApp');
 
 initTheme();
 registerClientErrorTracking('chat');
@@ -52,7 +66,7 @@ const chatRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/chat',
   component: function ChatRoute() {
-    return <ChatApp initial={chatInitial} />;
+    return <LazyChatApp initial={chatInitial} />;
   }
 });
 
@@ -69,7 +83,7 @@ const shareRoute = createRoute({
   path: '/c/$token',
   component: function ShareRoute() {
     const { token } = shareRoute.useParams();
-    return <ShareApp token={token} />;
+    return <LazyShareApp token={token} />;
   }
 });
 
@@ -79,7 +93,7 @@ const fallbackRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '$',
   component: function FallbackRoute() {
-    return <ChatApp initial={chatInitial} />;
+    return <LazyChatApp initial={chatInitial} />;
   }
 });
 

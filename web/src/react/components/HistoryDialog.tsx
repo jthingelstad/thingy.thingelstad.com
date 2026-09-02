@@ -73,12 +73,19 @@ export function HistoryDialog({
 
   const rows = useMemo(() => {
     if (searching) {
+      // The search contract doesn't carry shared_at; cross-reference the
+      // loaded pages so already-shared conversations don't present the
+      // first-time "Share" affordance (refreshing a link is a different
+      // act than creating a new exposure).
+      const sharedById = new Map(
+        (pages.data?.pages || []).flatMap((page) => page.conversations.map((entry) => [entry.id, entry.shared_at]))
+      );
       return matches.map((match) => ({
         id: match.conversation_id,
         title: match.title || 'Untitled chat',
         updated_at: match.updated_at,
         snippet: match.snippet,
-        shared_at: ''
+        shared_at: sharedById.get(match.conversation_id) || ''
       }));
     }
     return (pages.data?.pages || []).flatMap((page) => page.conversations.map((entry) => ({ ...entry, snippet: '' })));

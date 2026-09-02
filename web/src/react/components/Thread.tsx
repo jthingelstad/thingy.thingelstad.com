@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { AssistantRuntimeProvider, ThreadPrimitive, useAui, useLocalRuntime } from '@assistant-ui/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { AssistantRuntimeProvider, ThreadPrimitive, useAui, useAuiState, useLocalRuntime } from '@assistant-ui/react';
 import { promptDialog } from '../../shared/stores/dialog-store.ts';
 import { trackEvent } from '../../shared/thingy-analytics.ts';
 import {
@@ -61,16 +61,39 @@ function SuggestionChips({ suggestions }: { suggestions: string[] }) {
   );
 }
 
+function StreamingAnnouncer() {
+  const running = useAuiState((state) => Boolean(state.thread.isRunning));
+  const [message, setMessage] = useState('');
+  const sawRunRef = useRef(false);
+  useEffect(() => {
+    if (running) {
+      sawRunRef.current = true;
+      setMessage('Thingy is answering.');
+    } else if (sawRunRef.current) {
+      setMessage('Answer ready.');
+    }
+  }, [running]);
+  return (
+    <span className="sr-only" aria-live="polite" role="status">
+      {message}
+    </span>
+  );
+}
+
 function Thread({
   guest,
   welcome,
   suggestions,
-  readOnly
+  readOnly,
+  composerLocked,
+  draftKey
 }: {
   guest: boolean;
   welcome: string;
   suggestions: string[];
   readOnly?: boolean;
+  composerLocked?: boolean;
+  draftKey?: string;
 }) {
   return (
     <ThreadPrimitive.Root
@@ -80,16 +103,30 @@ function Thread({
       <ThreadPrimitive.Viewport className="thingy-chat-scroll min-h-0 flex-1 overflow-y-auto has-[.thingy-aui-empty]:flex-none has-[.thingy-aui-empty]:overflow-visible">
         <div className="librarian-messages mx-auto w-full max-w-3xl px-4 pt-6 pb-2">
           <ThreadPrimitive.Empty>
-            <div className="thingy-aui-empty flex flex-col gap-4">
-              <article className="librarian-message librarian-message-assistant">
-                <div className="librarian-answer-content">
-                  <p className="min-h-28 text-[17px] leading-relaxed text-ink">{welcome}</p>
+            {welcome ? (
+              <div className="thingy-aui-empty flex flex-col gap-4">
+                <article className="librarian-message librarian-message-assistant">
+                  <div className="librarian-answer-content">
+                    <p className="min-h-28 text-[17px] leading-relaxed text-ink">{welcome}</p>
+                  </div>
+                </article>
+                <SuggestionChips suggestions={suggestions} />
+              </div>
+            ) : (
+              // A mounted conversation whose history is still loading:
+              // transcript skeletons, not a flash of the greeting.
+              <div className="flex flex-col gap-5 pt-2" aria-hidden="true">
+                <div className="ml-auto h-10 w-3/5 animate-pulse rounded-2xl bg-surface-2" />
+                <div className="flex flex-col gap-2.5">
+                  <div className="h-4 w-full animate-pulse rounded-md bg-surface-2" />
+                  <div className="h-4 w-11/12 animate-pulse rounded-md bg-surface-2" />
+                  <div className="h-4 w-4/6 animate-pulse rounded-md bg-surface-2" />
                 </div>
-              </article>
-              <SuggestionChips suggestions={suggestions} />
-            </div>
+              </div>
+            )}
           </ThreadPrimitive.Empty>
           <ThreadPrimitive.Messages components={{ UserMessage, AssistantMessage, EditComposer }} />
+          <StreamingAnnouncer />
         </div>
         <ThreadPrimitive.ScrollToBottom asChild>
           <button
@@ -101,7 +138,7 @@ function Thread({
           </button>
         </ThreadPrimitive.ScrollToBottom>
       </ThreadPrimitive.Viewport>
-      {readOnly ? null : <Composer guest={guest} />}
+      {readOnly ? null : <Composer guest={guest} locked={composerLocked} draftKey={draftKey} />}
     </ThreadPrimitive.Root>
   );
 }
@@ -113,7 +150,9 @@ export function ThreadHost({
   suggestions,
   initialPrompt,
   sharedMessages,
-  readOnly
+  readOnly,
+  composerLocked,
+  draftKey
 }: {
   binding: ThingyThreadBinding;
   guest: boolean;
@@ -124,6 +163,11 @@ export function ThreadHost({
   // continuation): rendered like history, forked on the first message.
   sharedMessages?: Array<{ role?: string; content?: string; citations?: unknown }>;
   readOnly?: boolean;
+  // Guest daily cap reached: the composer disables with an explanation
+  // instead of letting the visitor type into a server error.
+  composerLocked?: boolean;
+  // Keys the per-conversation composer draft in sessionStorage.
+  draftKey?: string;
 }) {
   const adapter = useMemo(() => createThingyAdapter(binding), [binding]);
   const history = useMemo(() => {
@@ -179,7 +223,14 @@ export function ThreadHost({
   }, []);
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <Thread guest={guest} welcome={welcome} suggestions={suggestions} readOnly={readOnly} />
+      <Thread
+        guest={guest}
+        welcome={welcome}
+        suggestions={suggestions}
+        readOnly={readOnly}
+        composerLocked={composerLocked}
+        draftKey={draftKey}
+      />
     </AssistantRuntimeProvider>
   );
 }

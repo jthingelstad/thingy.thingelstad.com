@@ -453,9 +453,11 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
               key={conversationKey}
               binding={binding}
               guest={guest}
-              welcome={welcome}
+              welcome={mountedId ? '' : welcome}
               suggestions={mountedId ? [] : suggestions}
               initialPrompt={activeId ? undefined : initial.prompt}
+              composerLocked={guest && guestRemaining === 0}
+              draftKey={guest ? 'guest' : conversationKey}
             />
           </section>
         </div>

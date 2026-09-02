@@ -56,6 +56,13 @@ export interface LibrarianProfile {
   [key: string]: unknown;
 }
 
+export interface LibrarianReceipt {
+  duration_ms?: number;
+  total_tokens?: number;
+  tool_steps?: number;
+  [key: string]: unknown;
+}
+
 export interface LibrarianConversation {
   id?: string;
   conversation_id?: string;
@@ -105,6 +112,8 @@ export interface LibrarianConversationMessage {
   requestId?: string;
   parent_request_id?: string;
   citations?: Array<unknown>;
+  duration_ms?: number;
+  total_tokens?: number;
   [key: string]: unknown;
 }
 
@@ -231,15 +240,16 @@ export interface LibrarianStreamBase {
   guest?: boolean;
   guest_remaining?: number;
   suggestions?: Array<string>;
+  receipt?: LibrarianReceipt;
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = 'd8e8dfb9cfbee8fa57b25ba8b0200aba36aba9aff32e6ade8cbf3392bd1ffc7d';
+export const LIBRARIAN_CONTRACT_SHA256 = '68d795911c956b19a1196c50b8f4370dd38bbbadb5431bd9cff4875a9181504f';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '4.7.0',
+  version: '4.8.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
@@ -313,6 +323,21 @@ export const LIBRARIAN_CONTRACT = {
           type: 'object',
           properties: {},
           additionalProperties: true
+        }
+      },
+      additionalProperties: true
+    },
+    receipt: {
+      type: 'object',
+      properties: {
+        duration_ms: {
+          type: 'number'
+        },
+        total_tokens: {
+          type: 'number'
+        },
+        tool_steps: {
+          type: 'number'
         }
       },
       additionalProperties: true
@@ -451,6 +476,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         citations: {
           type: 'array'
+        },
+        duration_ms: {
+          type: 'number'
+        },
+        total_tokens: {
+          type: 'number'
         }
       },
       additionalProperties: true
@@ -832,6 +863,9 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             type: 'string'
           }
+        },
+        receipt: {
+          $ref: '#/$defs/receipt'
         }
       },
       additionalProperties: true
@@ -1209,6 +1243,9 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             type: 'string'
           }
+        },
+        receipt: {
+          $ref: '#/$defs/receipt'
         }
       },
       additionalProperties: true
@@ -1342,6 +1379,9 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             type: 'string'
           }
+        },
+        receipt: {
+          $ref: '#/$defs/receipt'
         }
       },
       additionalProperties: true
@@ -1475,6 +1515,9 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             type: 'string'
           }
+        },
+        receipt: {
+          $ref: '#/$defs/receipt'
         }
       },
       additionalProperties: true
@@ -1608,6 +1651,9 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             type: 'string'
           }
+        },
+        receipt: {
+          $ref: '#/$defs/receipt'
         }
       },
       required: ['delta'],
@@ -1742,6 +1788,9 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             type: 'string'
           }
+        },
+        receipt: {
+          $ref: '#/$defs/receipt'
         }
       },
       required: ['answer'],
@@ -1876,6 +1925,9 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             type: 'string'
           }
+        },
+        receipt: {
+          $ref: '#/$defs/receipt'
         }
       },
       required: ['citations'],
@@ -2010,6 +2062,9 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             type: 'string'
           }
+        },
+        receipt: {
+          $ref: '#/$defs/receipt'
         }
       },
       required: ['suggestions'],
@@ -2144,6 +2199,9 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             type: 'string'
           }
+        },
+        receipt: {
+          $ref: '#/$defs/receipt'
         }
       },
       additionalProperties: true
@@ -2277,6 +2335,9 @@ export const LIBRARIAN_CONTRACT = {
           items: {
             type: 'string'
           }
+        },
+        receipt: {
+          $ref: '#/$defs/receipt'
         }
       },
       required: ['error'],

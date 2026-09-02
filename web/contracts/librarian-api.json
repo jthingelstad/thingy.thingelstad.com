@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://thingy.thingelstad.com/contracts/librarian-api.json",
   "title": "Thingy Librarian API Contract",
-  "version": "4.7.0",
+  "version": "4.8.0",
   "compatibility": "breaking",
   "$defs": {
     "mode": {
@@ -79,6 +79,21 @@
           "type": "object",
           "properties": {},
           "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "receipt": {
+      "type": "object",
+      "properties": {
+        "duration_ms": {
+          "type": "number"
+        },
+        "total_tokens": {
+          "type": "number"
+        },
+        "tool_steps": {
+          "type": "number"
         }
       },
       "additionalProperties": true
@@ -222,6 +237,12 @@
         },
         "citations": {
           "type": "array"
+        },
+        "duration_ms": {
+          "type": "number"
+        },
+        "total_tokens": {
+          "type": "number"
         }
       },
       "additionalProperties": true
@@ -606,6 +627,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "receipt": {
+          "$ref": "#/$defs/receipt"
         }
       },
       "additionalProperties": true
@@ -1009,6 +1033,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "receipt": {
+          "$ref": "#/$defs/receipt"
         }
       },
       "additionalProperties": true
@@ -1142,6 +1169,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "receipt": {
+          "$ref": "#/$defs/receipt"
         }
       },
       "additionalProperties": true
@@ -1275,6 +1305,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "receipt": {
+          "$ref": "#/$defs/receipt"
         }
       },
       "additionalProperties": true
@@ -1408,6 +1441,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "receipt": {
+          "$ref": "#/$defs/receipt"
         }
       },
       "required": [
@@ -1544,6 +1580,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "receipt": {
+          "$ref": "#/$defs/receipt"
         }
       },
       "required": [
@@ -1680,6 +1719,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "receipt": {
+          "$ref": "#/$defs/receipt"
         }
       },
       "required": [
@@ -1816,6 +1858,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "receipt": {
+          "$ref": "#/$defs/receipt"
         }
       },
       "required": [
@@ -1952,6 +1997,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "receipt": {
+          "$ref": "#/$defs/receipt"
         }
       },
       "additionalProperties": true
@@ -2085,6 +2133,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "receipt": {
+          "$ref": "#/$defs/receipt"
         }
       },
       "required": [

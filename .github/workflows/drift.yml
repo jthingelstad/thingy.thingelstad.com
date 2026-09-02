@@ -1,7 +1,8 @@
 # Scheduled drift checks - external-state comparisons that should alert but
 # never block a deploy: the vendored Librarian contract vs upstream main, and
-# npm advisories. Failures show up as a red scheduled run (and can be wired to
-# notifications later) instead of turning an unrelated push red.
+# npm advisories. A failure opens (or comments on) a "Drift check failing"
+# issue so it surfaces in Jamie's notifications instead of dying as a red
+# scheduled run nobody is watching.
 name: Drift checks
 
 on:
@@ -32,3 +33,18 @@ jobs:
 
       - name: npm advisories
         run: npm audit --audit-level=high
+
+      - name: Open or update the drift issue on failure
+        if: failure()
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          existing=$(gh issue list --state open --search 'Drift check failing in:title' --json number --jq '.[0].number')
+          body="Scheduled drift check failed: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          Either the vendored Librarian contract no longer matches librarian-thing main, or npm advisories fired."
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "Drift check failing" --body "$body"
+          fi

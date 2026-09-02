@@ -6,7 +6,7 @@
 // of their own. The share's OWNER gets "open the original" instead of a
 // fork of their own conversation.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { trackEvent } from '../shared/thingy-analytics.ts';
 import { librarianApiUrl } from '../shared/thingy-config.ts';
 import { contractRequestHeaders } from '../shared/thingy-contracts.ts';
@@ -34,6 +34,11 @@ interface SharedConversationPayload {
   messages?: SharedMessage[];
   error?: string;
 }
+
+// A revoked/expired link ('gone') and a network hiccup ('error') are
+// different situations: only the first is unrecoverable. Conflating them
+// told readers on a flaky connection the conversation was gone.
+type ShareStatus = 'loading' | 'gone' | 'error' | 'ready';
 
 function friendlyDate(value: unknown) {
   const time = Date.parse(String(value || ''));
@@ -67,17 +72,56 @@ function Unavailable({ signedIn }: { signedIn: boolean }) {
   );
 }
 
+function LoadFailed({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="mx-auto w-full max-w-3xl px-4 py-10">
+      <div className="thingy-shared-header">
+        <h1 className="text-[22px] font-extrabold">Couldn&rsquo;t load this conversation.</h1>
+        <p className="mt-1.5 text-[14.5px] text-ink-soft">
+          Something went wrong on the way to the archive &mdash; the link itself is probably fine.
+        </p>
+        <button
+          type="button"
+          className="mt-4 rounded-lg border border-accent bg-accent-soft px-4 py-2 font-bold text-accent-deep transition-colors hover:bg-accent hover:text-white"
+          onClick={onRetry}
+        >
+          Try again
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Shimmer transcript while the snapshot fetch runs: the page used to be
+// blank under the nav for the whole request.
+function LoadingTranscript() {
+  return (
+    <div className="thingy-shared-loading mx-auto w-full max-w-3xl px-4 pt-5" aria-hidden="true">
+      <div className="h-6 w-72 max-w-full animate-pulse rounded-md bg-surface-2" />
+      <div className="mt-2 h-3.5 w-44 animate-pulse rounded-md bg-surface-2" />
+      <div className="mt-8 ml-auto h-10 w-3/5 animate-pulse rounded-2xl bg-surface-2" />
+      <div className="mt-6 flex flex-col gap-2.5">
+        <div className="h-4 w-full animate-pulse rounded-md bg-surface-2" />
+        <div className="h-4 w-11/12 animate-pulse rounded-md bg-surface-2" />
+        <div className="h-4 w-4/6 animate-pulse rounded-md bg-surface-2" />
+      </div>
+    </div>
+  );
+}
+
 export function ShareApp({ token = '' }: { token?: string }) {
   const [signedIn] = useState(() => sessionActive());
   const [payload, setPayload] = useState<SharedConversationPayload | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [status, setStatus] = useState<ShareStatus>('loading');
   const [forkedId, setForkedId] = useState('');
+  const [guestRemaining, setGuestRemaining] = useState<number | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     if (!token || !/^[A-Za-z0-9_-]+$/.test(token)) {
-      setFailed(true);
+      setStatus('gone');
       return;
     }
+    setStatus('loading');
     void (async () => {
       try {
         const response = await fetch(`${librarianApiUrl()}/share/${encodeURIComponent(token)}`, {
@@ -85,22 +129,30 @@ export function ShareApp({ token = '' }: { token?: string }) {
           credentials: 'include'
         });
         if (!response.ok) {
-          setFailed(true);
-          trackEvent('librarian.share_view', response.status === 404 ? 'gone' : 'error');
+          // 404 = revoked or expired; anything else is the server's bad
+          // moment, not the link's.
+          const gone = response.status === 404;
+          setStatus(gone ? 'gone' : 'error');
+          trackEvent('librarian.share_view', gone ? 'gone' : 'error');
           return;
         }
         const data = (await response.json()) as SharedConversationPayload;
         setPayload(data);
+        setStatus('ready');
         document.title = `${String(data.conversation?.title || 'Shared Conversation')} — Thingy`;
         trackEvent('librarian.share_view', signedIn ? 'signed_in' : 'signed_out');
       } catch {
-        setFailed(true);
+        setStatus('error');
         trackEvent('librarian.share_view', 'error');
       }
     })();
-    // One fetch per page load.
+    // signedIn is fixed for the page's lifetime.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [token]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const sharedMessages = useMemo(
     () => (payload?.messages || []).filter((message) => String(message.content || '').trim()),
@@ -114,7 +166,8 @@ export function ShareApp({ token = '' }: { token?: string }) {
       guest: !signedIn,
       shareToken: token,
       sharedMessageCount: sharedMessages.length,
-      onConversationId: (id) => setForkedId(id)
+      onConversationId: (id) => setForkedId(id),
+      onGuestRemaining: setGuestRemaining
     }),
     // The binding mounts once per share load.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
@@ -138,9 +191,13 @@ export function ShareApp({ token = '' }: { token?: string }) {
         </nav>
       </header>
       <main className="flex h-[calc(100dvh-57px)] flex-col bg-bg font-sans text-ink">
-        {failed ? (
+        {status === 'gone' ? (
           <Unavailable signedIn={signedIn} />
-        ) : !payload ? null : (
+        ) : status === 'error' ? (
+          <LoadFailed onRetry={load} />
+        ) : status === 'loading' || !payload ? (
+          <LoadingTranscript />
+        ) : (
           <>
             <div className="thingy-shared-header mx-auto w-full max-w-3xl px-4 pt-5 pb-2">
               <h1 className="text-[19px] leading-tight font-extrabold">
@@ -191,6 +248,8 @@ export function ShareApp({ token = '' }: { token?: string }) {
                   welcome=""
                   suggestions={[]}
                   sharedMessages={sharedMessages}
+                  composerLocked={!signedIn && guestRemaining === 0}
+                  draftKey={`share:${token}`}
                 />
               )}
               {isOwner ? (

@@ -72,3 +72,34 @@ test('an invalid token never fetches', async () => {
   await screen.findByText(/no longer available/);
   expect(fetch).not.toHaveBeenCalled();
 });
+
+test('a signed-in fork shows the saved-to-your-chats banner', async () => {
+  vi.resetModules();
+  vi.doMock('../src/shared/thingy-session.ts', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../src/shared/thingy-session.ts')>();
+    return { ...actual, sessionActive: () => true };
+  });
+  vi.doMock('../src/react/components/Thread.tsx', () => ({
+    // Lightweight stand-in: the real ThreadHost mounts the aui runtime;
+    // here we only need the fork callback the adapter would fire when
+    // the server mints the reader's new conversation.
+    ThreadHost: ({ binding }: { binding: { onConversationId?: (id: string) => void } }) => {
+      return (
+        <button type="button" onClick={() => binding.onConversationId?.('conv-forked')}>
+          simulate fork
+        </button>
+      );
+    }
+  }));
+  const { ShareApp: MockedShareApp } = await import('../src/react/ShareApp.tsx');
+  const { userEvent } = await import('@testing-library/user-event');
+  const user = userEvent.setup();
+  render(<MockedShareApp token="shr_forktoken" />);
+  await screen.findByRole('heading', { name: 'Bison across the archive' });
+  await user.click(screen.getByRole('button', { name: 'simulate fork' }));
+  await screen.findByText(/Saved to your chats/);
+  const open = screen.getByRole('link', { name: 'Open in Thingy' });
+  expect(open.getAttribute('href')).toBe('/chat/?conversation=conv-forked');
+  vi.doUnmock('../src/react/components/Thread.tsx');
+  vi.doUnmock('../src/shared/thingy-session.ts');
+});
