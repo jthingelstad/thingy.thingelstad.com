@@ -141,8 +141,8 @@ export function Rail({
               ref={filterInputRef}
               className="w-full min-w-0 bg-transparent font-sans text-[13px] text-ink outline-none placeholder:text-muted"
               type="search"
-              placeholder="Filter chats"
-              aria-label="Filter conversations"
+              placeholder="Search chats"
+              aria-label="Search conversations"
               value={filter}
               onChange={(event) => setFilter(event.currentTarget.value)}
             />
