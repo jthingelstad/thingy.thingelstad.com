@@ -96,7 +96,7 @@ export function Rail({
   }, [conversations, filter, contentMatches]);
   return (
     <nav
-      className="rail thingy-aui-rail flex h-full min-h-0 w-[280px] flex-col border-r border-line-soft bg-surface"
+      className="rail thingy-aui-rail flex h-full min-h-0 w-[280px] flex-col overflow-hidden border-r border-line-soft bg-surface"
       aria-label="Conversations"
     >
       <div className="flex items-center gap-2 px-3 pt-3 pb-2">
@@ -147,11 +147,11 @@ export function Rail({
             <p className="px-2 pt-3 pb-1 font-sans text-[11px] font-bold tracking-wider text-muted uppercase">
               {group.label}
             </p>
-            <ul className="thingy-aui-recents grid gap-0.5">
+            <ul className="thingy-aui-recents grid min-w-0 gap-0.5">
               {group.entries.map((entry) => (
                 <li
                   key={entry.id}
-                  className={`group/row relative rounded-lg transition-colors ${
+                  className={`group/row relative min-w-0 overflow-hidden rounded-lg transition-colors ${
                     entry.id === activeId ? 'bg-accent-soft' : 'hover:bg-surface-2'
                   }`}
                 >
