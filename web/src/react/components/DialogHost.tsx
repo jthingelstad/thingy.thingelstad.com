@@ -1,6 +1,9 @@
-// React host for ThingyDialog (same store + CSS as the rest of the app).
+// React host for ThingyDialog on Radix Dialog (2026-09-03): focus trap,
+// Escape, outside-click, and aria wiring come from the primitive; the
+// promise-based dialog-store API and the CSS are unchanged.
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import * as Dialog from '@radix-ui/react-dialog';
 import { activeDialog, settleDialog } from '../../shared/stores/dialog-store.ts';
 
 function useStoreValue<T>(store: { value: T; subscribe: (fn: () => void) => () => void }): T {
@@ -21,73 +24,76 @@ export function DialogHost() {
     setValue(dialog.request.kind === 'prompt' ? String(dialog.request.initialValue || '') : '');
   }
   useEffect(() => {
-    if (dialog) (inputRef.current || textareaRef.current)?.focus();
+    if (dialog) window.setTimeout(() => (inputRef.current || textareaRef.current)?.focus(), 0);
     // Focus keys off the dialog id alone.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [dialog?.id]);
-  useEffect(() => {
-    if (!dialog) return undefined;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.stopPropagation();
-        settleDialog(dialog.request.kind === 'prompt' ? null : false);
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [dialog]);
   if (!dialog) return null;
   const { request } = dialog;
   const isPrompt = request.kind === 'prompt';
   const settle = (v: boolean | string | null) => settleDialog(v);
   const cancel = () => settle(isPrompt ? null : false);
   return (
-    <div className="thingy-dialog-scrim" onClick={cancel}>
-      <div className="thingy-dialog" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <h2>{request.title}</h2>
-        {request.body ? <p className="thingy-dialog-body">{request.body}</p> : null}
-        {isPrompt ? (
-          <form
-            className="thingy-dialog-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              settle(value);
+    <Dialog.Root open onOpenChange={(open) => (open ? undefined : cancel())}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="thingy-dialog-scrim">
+          <Dialog.Content
+            className="thingy-dialog"
+            aria-describedby={undefined}
+            onOpenAutoFocus={(event) => {
+              // The prompt input (or the confirm button) takes focus instead
+              // of Radix's default first-tabbable pick.
+              if (isPrompt) event.preventDefault();
             }}
           >
-            {request.multiline ? (
-              <textarea
-                ref={textareaRef}
-                value={value}
-                rows={4}
-                maxLength={request.maxLength}
-                onInput={(e) => setValue((e.target as HTMLTextAreaElement).value)}
-              />
-            ) : (
-              <input
-                ref={inputRef}
-                type="text"
-                value={value}
-                maxLength={request.maxLength}
-                onInput={(e) => setValue((e.target as HTMLInputElement).value)}
-              />
-            )}
-          </form>
-        ) : null}
-        <div className="thingy-dialog-actions">
-          {request.hideCancel ? null : (
-            <button type="button" className="thingy-dialog-cancel" onClick={cancel}>
-              {request.cancelLabel || 'Cancel'}
-            </button>
-          )}
-          <button
-            type="button"
-            className={`thingy-dialog-confirm${request.danger ? ' danger' : ''}`}
-            onClick={() => settle(isPrompt ? value : true)}
-          >
-            {request.confirmLabel || 'OK'}
-          </button>
-        </div>
-      </div>
-    </div>
+            <Dialog.Title asChild>
+              <h2>{request.title}</h2>
+            </Dialog.Title>
+            {request.body ? <p className="thingy-dialog-body">{request.body}</p> : null}
+            {isPrompt ? (
+              <form
+                className="thingy-dialog-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  settle(value);
+                }}
+              >
+                {request.multiline ? (
+                  <textarea
+                    ref={textareaRef}
+                    value={value}
+                    rows={4}
+                    maxLength={request.maxLength}
+                    onInput={(e) => setValue((e.target as HTMLTextAreaElement).value)}
+                  />
+                ) : (
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={value}
+                    maxLength={request.maxLength}
+                    onInput={(e) => setValue((e.target as HTMLInputElement).value)}
+                  />
+                )}
+              </form>
+            ) : null}
+            <div className="thingy-dialog-actions">
+              {request.hideCancel ? null : (
+                <button type="button" className="thingy-dialog-cancel" onClick={cancel}>
+                  {request.cancelLabel || 'Cancel'}
+                </button>
+              )}
+              <button
+                type="button"
+                className={`thingy-dialog-confirm${request.danger ? ' danger' : ''}`}
+                onClick={() => settle(isPrompt ? value : true)}
+              >
+                {request.confirmLabel || 'OK'}
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Overlay>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }

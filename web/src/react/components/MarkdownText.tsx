@@ -12,6 +12,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Icon } from './Icon.tsx';
 import { BASE_COMPONENTS, citationsByIssue, remarkWtCitations, thingyUrlTransform } from './markdown-config.ts';
+import { CodeHighlight } from './CodeHighlight.tsx';
 
 function CodeHeader({ language, code }: { language: string | undefined; code: string }) {
   const [copied, setCopied] = useState(false);
@@ -37,7 +38,8 @@ function CodeHeader({ language, code }: { language: string | undefined; code: st
 
 const STATIC_COMPONENTS: MarkdownTextPrimitiveProps['components'] = {
   ...BASE_COMPONENTS,
-  CodeHeader
+  CodeHeader,
+  SyntaxHighlighter: CodeHighlight
 };
 
 // Standalone renderer for surfaces outside an assistant-ui message part

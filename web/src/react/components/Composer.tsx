@@ -3,6 +3,7 @@ import { ComposerPrimitive, ThreadPrimitive, useAui, useAuiState } from '@assist
 import { createDictationController, speechInputSupported } from '../../shared/thingy-voice.ts';
 import { trackEvent } from '../../shared/thingy-analytics.ts';
 import { Icon } from './Icon.tsx';
+import { Tip } from './Tip.tsx';
 
 export const MAX_QUESTION_CHARS = 1200;
 
@@ -49,16 +50,17 @@ export function Composer({ guest }: { guest: boolean }) {
         <div className="thingy-aui-composer-row">
           <span className="thingy-aui-composer-left">
             {speechSupported ? (
-              <button
-                type="button"
-                className={`thingy-aui-mic${listening ? ' is-listening' : ''}`}
-                aria-label={listening ? 'Stop voice input' : 'Ask by voice'}
-                aria-pressed={listening}
-                title={listening ? 'Stop voice input' : 'Ask by voice'}
-                onClick={() => (listening ? dictationRef.current?.stop() : dictationRef.current?.start())}
-              >
-                <Icon name="mic" />
-              </button>
+              <Tip label={listening ? 'Stop voice input' : 'Ask by voice'}>
+                <button
+                  type="button"
+                  className={`thingy-aui-mic${listening ? ' is-listening' : ''}`}
+                  aria-label={listening ? 'Stop voice input' : 'Ask by voice'}
+                  aria-pressed={listening}
+                  onClick={() => (listening ? dictationRef.current?.stop() : dictationRef.current?.start())}
+                >
+                  <Icon name="mic" />
+                </button>
+              </Tip>
             ) : null}
             <span className="thingy-aui-composer-hint" aria-live="polite">
               {voiceStatus || (guest ? 'Guest preview' : '')}
@@ -74,18 +76,22 @@ export function Composer({ guest }: { guest: boolean }) {
             </span>
           </span>
           <ThreadPrimitive.If running={false}>
-            <ComposerPrimitive.Send asChild>
-              <button type="button" className="composer-send" aria-label="Ask Thingy">
-                <Icon name="arrow-up" />
-              </button>
-            </ComposerPrimitive.Send>
+            <Tip label="Send">
+              <ComposerPrimitive.Send asChild>
+                <button type="button" className="composer-send" aria-label="Ask Thingy">
+                  <Icon name="arrow-up" />
+                </button>
+              </ComposerPrimitive.Send>
+            </Tip>
           </ThreadPrimitive.If>
           <ThreadPrimitive.If running>
-            <ComposerPrimitive.Cancel asChild>
-              <button type="button" className="composer-send thingy-aui-stop" aria-label="Stop answering" title="Stop">
-                <Icon name="square" />
-              </button>
-            </ComposerPrimitive.Cancel>
+            <Tip label="Stop answering">
+              <ComposerPrimitive.Cancel asChild>
+                <button type="button" className="composer-send thingy-aui-stop" aria-label="Stop answering">
+                  <Icon name="square" />
+                </button>
+              </ComposerPrimitive.Cancel>
+            </Tip>
           </ThreadPrimitive.If>
         </div>
       </ComposerPrimitive.Root>

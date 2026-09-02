@@ -12,6 +12,7 @@ import {
 import { createChatMessageActions } from '../../shared/thingy-message-actions.ts';
 import { trackEvent } from '../../shared/thingy-analytics.ts';
 import { Icon } from './Icon.tsx';
+import { Tip } from './Tip.tsx';
 import { AssistantMarkdown } from './MarkdownText.tsx';
 
 const messageActionsService = createChatMessageActions({ track: (name, value) => trackEvent(name, value) });
@@ -50,44 +51,52 @@ export function AssistantMessage() {
         </ErrorPrimitive.Root>
       </MessagePrimitive.Error>
       <div className="librarian-feedback">
-        <button
-          type="button"
-          aria-label="Copy answer"
-          title="Copy answer"
-          onClick={(event) => {
-            const host = messageHostOf(event);
-            if (host) void messageActionsService.copyAnswerRichText(host);
-          }}
-        >
-          <Icon name="copy" />
-        </button>
-        <button
-          type="button"
-          aria-label="Share answer"
-          title="Share answer"
-          onClick={(event) => {
-            const host = messageHostOf(event);
-            if (host) void messageActionsService.shareAnswer(host);
-          }}
-        >
-          <Icon name="share" />
-        </button>
+        <Tip label="Copy answer">
+          <button
+            type="button"
+            aria-label="Copy answer"
+            onClick={(event) => {
+              const host = messageHostOf(event);
+              if (host) void messageActionsService.copyAnswerRichText(host);
+            }}
+          >
+            <Icon name="copy" />
+          </button>
+        </Tip>
+        <Tip label="Share answer">
+          <button
+            type="button"
+            aria-label="Share answer"
+            onClick={(event) => {
+              const host = messageHostOf(event);
+              if (host) void messageActionsService.shareAnswer(host);
+            }}
+          >
+            <Icon name="share" />
+          </button>
+        </Tip>
         <ActionBarPrimitive.Root hideWhenRunning autohide="never" className="thingy-aui-actionbar">
-          <ActionBarPrimitive.FeedbackPositive asChild>
-            <button type="button" aria-label="Good response" title="Good response">
-              <Icon name="thumbs-up" />
-            </button>
-          </ActionBarPrimitive.FeedbackPositive>
-          <ActionBarPrimitive.FeedbackNegative asChild>
-            <button type="button" aria-label="Bad response" title="Bad response">
-              <Icon name="thumbs-down" />
-            </button>
-          </ActionBarPrimitive.FeedbackNegative>
-          <ActionBarPrimitive.Reload asChild>
-            <button type="button" aria-label="Regenerate answer" title="Regenerate answer">
-              <Icon name="rotate-ccw" />
-            </button>
-          </ActionBarPrimitive.Reload>
+          <Tip label="Good response">
+            <ActionBarPrimitive.FeedbackPositive asChild>
+              <button type="button" aria-label="Good response">
+                <Icon name="thumbs-up" />
+              </button>
+            </ActionBarPrimitive.FeedbackPositive>
+          </Tip>
+          <Tip label="Bad response">
+            <ActionBarPrimitive.FeedbackNegative asChild>
+              <button type="button" aria-label="Bad response">
+                <Icon name="thumbs-down" />
+              </button>
+            </ActionBarPrimitive.FeedbackNegative>
+          </Tip>
+          <Tip label="Regenerate answer">
+            <ActionBarPrimitive.Reload asChild>
+              <button type="button" aria-label="Regenerate answer">
+                <Icon name="rotate-ccw" />
+              </button>
+            </ActionBarPrimitive.Reload>
+          </Tip>
         </ActionBarPrimitive.Root>
         <BranchPickerFooter />
       </div>
@@ -98,19 +107,23 @@ export function AssistantMessage() {
 function BranchPickerFooter() {
   return (
     <BranchPickerPrimitive.Root hideWhenSingleBranch className="thingy-aui-branchpicker">
-      <BranchPickerPrimitive.Previous asChild>
-        <button type="button" aria-label="Previous version" title="Previous version">
-          <Icon name="chevron-left" />
-        </button>
-      </BranchPickerPrimitive.Previous>
+      <Tip label="Previous version">
+        <BranchPickerPrimitive.Previous asChild>
+          <button type="button" aria-label="Previous version">
+            <Icon name="chevron-left" />
+          </button>
+        </BranchPickerPrimitive.Previous>
+      </Tip>
       <span className="thingy-aui-branch-count">
         <BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
       </span>
-      <BranchPickerPrimitive.Next asChild>
-        <button type="button" aria-label="Next version" title="Next version">
-          <Icon name="chevron-right" />
-        </button>
-      </BranchPickerPrimitive.Next>
+      <Tip label="Next version">
+        <BranchPickerPrimitive.Next asChild>
+          <button type="button" aria-label="Next version">
+            <Icon name="chevron-right" />
+          </button>
+        </BranchPickerPrimitive.Next>
+      </Tip>
     </BranchPickerPrimitive.Root>
   );
 }
@@ -123,28 +136,32 @@ export function UserMessage() {
     <MessagePrimitive.Root className="librarian-message librarian-message-user">
       <MessagePrimitive.Parts />
       <div className="librarian-prompt-actions thingy-aui-user-actions">
-        <button
-          type="button"
-          aria-label="Copy prompt"
-          title="Copy prompt"
-          onClick={() => void messageActionsService.copyPrompt(promptText)}
-        >
-          <Icon name="copy" />
-        </button>
-        <button
-          type="button"
-          aria-label="Share prompt"
-          title="Share prompt"
-          onClick={() => void messageActionsService.sharePrompt(promptText)}
-        >
-          <Icon name="share" />
-        </button>
+        <Tip label="Copy prompt">
+          <button
+            type="button"
+            aria-label="Copy prompt"
+            onClick={() => void messageActionsService.copyPrompt(promptText)}
+          >
+            <Icon name="copy" />
+          </button>
+        </Tip>
+        <Tip label="Share prompt">
+          <button
+            type="button"
+            aria-label="Share prompt"
+            onClick={() => void messageActionsService.sharePrompt(promptText)}
+          >
+            <Icon name="share" />
+          </button>
+        </Tip>
         <ActionBarPrimitive.Root hideWhenRunning autohide="never" className="thingy-aui-actionbar">
-          <ActionBarPrimitive.Edit asChild>
-            <button type="button" aria-label="Edit message" title="Edit and resend">
-              <Icon name="pencil" />
-            </button>
-          </ActionBarPrimitive.Edit>
+          <Tip label="Edit and resend">
+            <ActionBarPrimitive.Edit asChild>
+              <button type="button" aria-label="Edit message">
+                <Icon name="pencil" />
+              </button>
+            </ActionBarPrimitive.Edit>
+          </Tip>
         </ActionBarPrimitive.Root>
         <BranchPickerFooter />
       </div>

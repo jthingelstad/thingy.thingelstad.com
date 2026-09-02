@@ -1,8 +1,9 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { buildId } from '../shared/thingy-config.ts';
 import { hasSupportingAccess, savePreferredName } from '../shared/thingy-account.ts';
 import { errorMessage } from '../shared/thingy-errors.ts';
-import { iconSvg } from '../shared/thingy-icons.ts';
+import * as Popover from '@radix-ui/react-popover';
+import { Icon } from './components/Icon.tsx';
 import { confirmDialog } from '../shared/stores/dialog-store.ts';
 import * as session from '../shared/thingy-session.ts';
 import { setTheme, storedTheme, type ThingyTheme } from '../shared/thingy-theme.ts';
@@ -10,10 +11,6 @@ import { setTheme, storedTheme, type ThingyTheme } from '../shared/thingy-theme.
 // React port of the account trigger + menu + profile modal (the Preact
 // versions retired with the Preact chat). Same CSS classes, same /memory
 // contract, same rows - including the entitlement-routed "AI model" row.
-
-function Icon({ name }: { name: string }) {
-  return <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: iconSvg(name) }} />;
-}
 
 function formatProfileDate(value: unknown) {
   const text = String(value || '').trim();
@@ -241,26 +238,9 @@ export function AccountPanel() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [theme, setThemeState] = useState<ThingyTheme>(() => storedTheme());
   const [nameStatus, setNameStatus] = useState('');
-  const rootRef = useRef<HTMLDivElement | null>(null);
   const supporting = hasSupportingAccess(profile);
   const display = email || preferredName;
   const initial = (email || preferredName || 'T')[0].toUpperCase();
-
-  useEffect(() => {
-    function onDocClick(event: MouseEvent) {
-      if (rootRef.current && event.target instanceof Element && rootRef.current.contains(event.target)) return;
-      setOpen(false);
-    }
-    function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpen(false);
-    }
-    document.addEventListener('click', onDocClick);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('click', onDocClick);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, []);
 
   async function handleNameSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -284,88 +264,87 @@ export function AccountPanel() {
   }
 
   return (
-    <div ref={rootRef} className="rail-account thingy-aui-account">
-      <button
-        className="rail-account-btn"
-        type="button"
-        aria-haspopup="true"
-        aria-expanded={open}
-        title="Account"
-        onClick={() => setOpen(!open)}
-      >
-        <span className="rail-avatar" aria-hidden="true">
-          {initial}
-        </span>
-        <span className="rail-account-meta">
-          <span className="rail-account-email">{display || 'Signed in'}</span>
-          <span className="rail-account-sub">{supporting ? 'Supporting Member' : 'Weekly Thing reader'}</span>
-        </span>
-        <span className="rail-account-caret" aria-hidden="true">
-          <Icon name="chevron-down" />
-        </span>
-      </button>
-      <div className="rail-menu" hidden={!open} role="menu">
-        <form className="rail-account-setting" onSubmit={handleNameSubmit}>
-          <label>Name</label>
-          <div className="rail-account-setting-row">
-            <input
-              name="preferred_name"
-              type="text"
-              maxLength={80}
-              autoComplete="name"
-              placeholder="What should Thingy call you?"
-              defaultValue={preferredName}
-            />
-            <button type="submit">Save</button>
-          </div>
-          <p aria-live="polite">{nameStatus}</p>
-        </form>
-        <button
-          type="button"
-          className="rail-memory-trigger"
-          onClick={() => {
-            setProfileOpen(true);
-            setOpen(false);
-          }}
-        >
-          <span className="rail-memory-trigger-icon" aria-hidden="true">
-            <Icon name="users-round" />
-          </span>
-          <span className="rail-memory-trigger-copy">
-            <strong>Show Profile</strong>
-            <small>Account details and activity</small>
-          </span>
-        </button>
-        <div className="rail-menu-sep" role="separator" />
-        <div className="rail-account-setting rail-theme-setting">
-          <label id="thingy-theme-label">Theme</label>
-          <div className="rail-theme-options" role="radiogroup" aria-labelledby="thingy-theme-label">
-            {(['system', 'light', 'dark'] as ThingyTheme[]).map((option) => (
-              <button
-                key={option}
-                type="button"
-                role="radio"
-                aria-checked={theme === option}
-                className={theme === option ? 'is-active' : ''}
-                onClick={() => {
-                  setTheme(option);
-                  setThemeState(option);
-                }}
-              >
-                {option === 'system' ? 'System' : option === 'light' ? 'Light' : 'Dark'}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="rail-menu-sep" role="separator" />
-        <button type="button" role="menuitem" className="danger" onClick={handleLogout}>
-          <Icon name="log-out" />
-          Logout
-        </button>
-        <p className="rail-menu-build" title="Thingy build">
-          Build {buildId()}
-        </p>
-      </div>
+    <div className="rail-account thingy-aui-account">
+      <Popover.Root open={open} onOpenChange={setOpen}>
+        <Popover.Trigger asChild>
+          <button className="rail-account-btn" type="button" title="Account">
+            <span className="rail-avatar" aria-hidden="true">
+              {initial}
+            </span>
+            <span className="rail-account-meta">
+              <span className="rail-account-email">{display || 'Signed in'}</span>
+              <span className="rail-account-sub">{supporting ? 'Supporting Member' : 'Weekly Thing reader'}</span>
+            </span>
+            <span className="rail-account-caret" aria-hidden="true">
+              <Icon name="chevron-down" />
+            </span>
+          </button>
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Content className="rail-menu rail-menu-popover" side="top" align="start" sideOffset={8}>
+            <form className="rail-account-setting" onSubmit={handleNameSubmit}>
+              <label>Name</label>
+              <div className="rail-account-setting-row">
+                <input
+                  name="preferred_name"
+                  type="text"
+                  maxLength={80}
+                  autoComplete="name"
+                  placeholder="What should Thingy call you?"
+                  defaultValue={preferredName}
+                />
+                <button type="submit">Save</button>
+              </div>
+              <p aria-live="polite">{nameStatus}</p>
+            </form>
+            <button
+              type="button"
+              className="rail-memory-trigger"
+              onClick={() => {
+                setProfileOpen(true);
+                setOpen(false);
+              }}
+            >
+              <span className="rail-memory-trigger-icon" aria-hidden="true">
+                <Icon name="users-round" />
+              </span>
+              <span className="rail-memory-trigger-copy">
+                <strong>Show Profile</strong>
+                <small>Account details and activity</small>
+              </span>
+            </button>
+            <div className="rail-menu-sep" role="separator" />
+            <div className="rail-account-setting rail-theme-setting">
+              <label id="thingy-theme-label">Theme</label>
+              <div className="rail-theme-options" role="radiogroup" aria-labelledby="thingy-theme-label">
+                {(['system', 'light', 'dark'] as ThingyTheme[]).map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    role="radio"
+                    aria-checked={theme === option}
+                    className={theme === option ? 'is-active' : ''}
+                    onClick={() => {
+                      setTheme(option);
+                      setThemeState(option);
+                    }}
+                  >
+                    {option === 'system' ? 'System' : option === 'light' ? 'Light' : 'Dark'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="rail-menu-sep" role="separator" />
+            <button type="button" role="menuitem" className="danger" onClick={handleLogout}>
+              <Icon name="log-out" />
+              Logout
+            </button>
+            <p className="rail-menu-build" title="Thingy build">
+              Build {buildId()}
+            </p>
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
       <ProfileModal
         open={profileOpen}
         onClose={() => setProfileOpen(false)}

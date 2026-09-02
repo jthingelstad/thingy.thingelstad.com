@@ -12,6 +12,7 @@ import { Icon } from './components/Icon.tsx';
 import { Rail, type ConversationSummary } from './components/Rail.tsx';
 import { ThreadHost } from './components/Thread.tsx';
 import { DialogHost } from './components/DialogHost.tsx';
+import { Tip, TipProvider } from './components/Tip.tsx';
 
 export interface ChatInitial {
   prompt: string;
@@ -253,117 +254,125 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
   }, []);
 
   return (
-    <section className="thingy-page">
-      <h1 className="sr-only">Thingy chat</h1>
-      <div
-        className={`thingy-app-shell${guest ? ' is-guest' : ''}${mobileRailOpen ? ' is-mobile-rail-open' : ''}${railCollapsed ? ' is-collapsed' : ''}`}
-        id="thingy-app-shell"
-      >
-        {guest ? null : (
-          <Rail
-            collapsed={railCollapsed}
-            onToggleCollapsed={() => setRailCollapsed(!railCollapsed)}
-            conversations={conversations}
-            activeId={activeId}
-            onSelect={selectConversation}
-            onNew={newConversation}
-            onShare={(id, shared) => void shareConversation(id, shared)}
-            onRename={(id, current) => void renameConversation(id, current)}
-            onDelete={(id) => void deleteConversation(id)}
-            filterInputRef={filterInputRef}
-            onSearch={async (query) => {
-              const data = await session.postJson('/conversations', { action: 'search', query }, session.authHeaders());
-              const matches = (data as { matches?: Array<{ conversation_id?: string; snippet?: string }> }).matches;
-              return (Array.isArray(matches) ? matches : []).map((match) => ({
-                conversation_id: String(match.conversation_id || ''),
-                snippet: String(match.snippet || '')
-              }));
-            }}
-          />
-        )}
-        {guest ? null : <div className="rail-scrim" aria-hidden="true" onClick={() => setMobileRailOpen(false)} />}
-        <section className="thingy-conversation">
-          <div className="mobile-chatbar thingy-aui-header">
-            {guest ? null : (
-              <button
-                type="button"
-                className="mobile-chatbar-circle"
-                aria-label={mobileRailOpen ? 'Hide conversations' : 'Show conversations'}
-                aria-expanded={mobileRailOpen}
-                onClick={() => setMobileRailOpen(!mobileRailOpen)}
-              >
-                <Icon name="panel-left" />
-              </button>
-            )}
-            <HeaderTitle
-              title={conversations.find((entry) => entry.id === activeId)?.title || 'New chat'}
-              canRename={Boolean(activeId)}
-              onRename={async (title) => {
-                await session.postJson(
+    <TipProvider>
+      <section className="thingy-page">
+        <h1 className="sr-only">Thingy chat</h1>
+        <div
+          className={`thingy-app-shell${guest ? ' is-guest' : ''}${mobileRailOpen ? ' is-mobile-rail-open' : ''}${railCollapsed ? ' is-collapsed' : ''}`}
+          id="thingy-app-shell"
+        >
+          {guest ? null : (
+            <Rail
+              collapsed={railCollapsed}
+              onToggleCollapsed={() => setRailCollapsed(!railCollapsed)}
+              conversations={conversations}
+              activeId={activeId}
+              onSelect={selectConversation}
+              onNew={newConversation}
+              onShare={(id, shared) => void shareConversation(id, shared)}
+              onRename={(id, current) => void renameConversation(id, current)}
+              onDelete={(id) => void deleteConversation(id)}
+              filterInputRef={filterInputRef}
+              onSearch={async (query) => {
+                const data = await session.postJson(
                   '/conversations',
-                  { action: 'rename', conversation_id: activeId, title },
+                  { action: 'search', query },
                   session.authHeaders()
                 );
-                void refreshConversations();
+                const matches = (data as { matches?: Array<{ conversation_id?: string; snippet?: string }> }).matches;
+                return (Array.isArray(matches) ? matches : []).map((match) => ({
+                  conversation_id: String(match.conversation_id || ''),
+                  snippet: String(match.snippet || '')
+                }));
               }}
             />
-            <div className="mobile-chatbar-actions">
-              {activeId ? (
+          )}
+          {guest ? null : <div className="rail-scrim" aria-hidden="true" onClick={() => setMobileRailOpen(false)} />}
+          <section className="thingy-conversation">
+            <div className="mobile-chatbar thingy-aui-header">
+              {guest ? null : (
                 <button
                   type="button"
-                  className="mobile-chatbar-action"
-                  aria-label="Share conversation"
-                  title="Share conversation"
-                  onClick={() => {
-                    const entry = conversations.find((item) => item.id === activeId);
-                    void shareConversation(activeId, Boolean(entry?.shared_at));
-                  }}
+                  className="mobile-chatbar-circle"
+                  aria-label={mobileRailOpen ? 'Hide conversations' : 'Show conversations'}
+                  aria-expanded={mobileRailOpen}
+                  onClick={() => setMobileRailOpen(!mobileRailOpen)}
                 >
-                  <Icon name="share" />
+                  <Icon name="panel-left" />
                 </button>
-              ) : null}
-              <button
-                type="button"
-                className="mobile-chatbar-action"
-                aria-label="New chat"
-                title="New chat"
-                onClick={newConversation}
-              >
-                <Icon name="square-pen" />
-              </button>
+              )}
+              <HeaderTitle
+                title={conversations.find((entry) => entry.id === activeId)?.title || 'New chat'}
+                canRename={Boolean(activeId)}
+                onRename={async (title) => {
+                  await session.postJson(
+                    '/conversations',
+                    { action: 'rename', conversation_id: activeId, title },
+                    session.authHeaders()
+                  );
+                  void refreshConversations();
+                }}
+              />
+              <div className="mobile-chatbar-actions">
+                {activeId ? (
+                  <Tip label="Share conversation">
+                    <button
+                      type="button"
+                      className="mobile-chatbar-action"
+                      aria-label="Share conversation"
+                      onClick={() => {
+                        const entry = conversations.find((item) => item.id === activeId);
+                        void shareConversation(activeId, Boolean(entry?.shared_at));
+                      }}
+                    >
+                      <Icon name="share" />
+                    </button>
+                  </Tip>
+                ) : null}
+                <Tip label="New chat">
+                  <button
+                    type="button"
+                    className="mobile-chatbar-action"
+                    aria-label="New chat"
+                    onClick={newConversation}
+                  >
+                    <Icon name="square-pen" />
+                  </button>
+                </Tip>
+              </div>
             </div>
-          </div>
-          {initial.from ? (
-            <a className="return-chip" href={initial.from.href} data-tinylytics-event="network.return">
-              <Icon name="arrow-left" />
-              <span>
-                Return to <strong>{initial.from.name}</strong>
-              </span>
-            </a>
-          ) : null}
-          {guest ? (
-            <aside className="thingy-guest-banner" aria-label="Guest preview">
-              <span>
-                {guestRemaining === 0
-                  ? "You've used today's guest questions."
-                  : typeof guestRemaining === 'number'
-                    ? `Guest preview — ${guestRemaining} question${guestRemaining === 1 ? '' : 's'} left today.`
-                    : 'Guest preview — ask a few questions, no account needed.'}
-              </span>
-              <a href={session.signInUrl('/chat/')}>Sign in free for more</a>
-            </aside>
-          ) : null}
-          <ThreadHost
-            key={conversationKey}
-            binding={binding}
-            guest={guest}
-            welcome={welcome}
-            suggestions={mountedId ? [] : suggestions}
-            initialPrompt={activeId ? undefined : initial.prompt}
-          />
-        </section>
-      </div>
-      <DialogHost />
-    </section>
+            {initial.from ? (
+              <a className="return-chip" href={initial.from.href} data-tinylytics-event="network.return">
+                <Icon name="arrow-left" />
+                <span>
+                  Return to <strong>{initial.from.name}</strong>
+                </span>
+              </a>
+            ) : null}
+            {guest ? (
+              <aside className="thingy-guest-banner" aria-label="Guest preview">
+                <span>
+                  {guestRemaining === 0
+                    ? "You've used today's guest questions."
+                    : typeof guestRemaining === 'number'
+                      ? `Guest preview — ${guestRemaining} question${guestRemaining === 1 ? '' : 's'} left today.`
+                      : 'Guest preview — ask a few questions, no account needed.'}
+                </span>
+                <a href={session.signInUrl('/chat/')}>Sign in free for more</a>
+              </aside>
+            ) : null}
+            <ThreadHost
+              key={conversationKey}
+              binding={binding}
+              guest={guest}
+              welcome={welcome}
+              suggestions={mountedId ? [] : suggestions}
+              initialPrompt={activeId ? undefined : initial.prompt}
+            />
+          </section>
+        </div>
+        <DialogHost />
+      </section>
+    </TipProvider>
   );
 }

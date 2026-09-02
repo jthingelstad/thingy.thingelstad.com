@@ -631,3 +631,59 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Radix-hosted account menu: the popper wrapper positions it, so the
+   panel drops its absolute placement and matches the trigger width. */
+.rail-menu-popover {
+  position: static;
+  inset: auto;
+  width: var(--radix-popover-trigger-width);
+  z-index: 1200;
+}
+
+/* Radix tooltips for icon-only controls. */
+.thingy-tip {
+  z-index: 1400;
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ink) 94%, var(--surface));
+  color: var(--bg);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  box-shadow: var(--shadow-subtle);
+}
+
+/* shiki dual-theme code blocks: the light palette is the default; the
+   dark palette switches with the same data-theme rules as the tokens. */
+.thingy-shiki pre.shiki {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 0 0 8px 8px;
+  border-top: none;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  background: color-mix(in srgb, var(--surface-2) 62%, var(--surface)) !important;
+}
+
+.thingy-shiki pre.shiki code {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.thingy-shiki pre.shiki span {
+  color: var(--shiki-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .thingy-shiki pre.shiki span {
+    color: var(--shiki-dark);
+  }
+}
+
+:root[data-theme='dark'] .thingy-shiki pre.shiki span {
+  color: var(--shiki-dark);
+}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { AccountPanel } from '../AccountPanel.tsx';
 import { Icon } from './Icon.tsx';
+import { Tip } from './Tip.tsx';
 
 export interface ConversationSummary {
   id: string;
@@ -97,15 +98,16 @@ export function Rail({
   return (
     <nav className="rail thingy-aui-rail" aria-label="Conversations">
       <div className="thingy-aui-rail-head">
-        <button
-          type="button"
-          className="thingy-aui-collapse"
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          onClick={onToggleCollapsed}
-        >
-          <Icon name="panel-left" />
-        </button>
+        <Tip label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+          <button
+            type="button"
+            className="thingy-aui-collapse"
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            onClick={onToggleCollapsed}
+          >
+            <Icon name="panel-left" />
+          </button>
+        </Tip>
         <img className="rail-mark" src="/img/thingy.png" alt="" width="1022" height="1022" />
         <button type="button" className="rail-newchat thingy-aui-newchat" onClick={onNew}>
           <Icon name="square-pen" /> {collapsed ? '' : 'New chat'}
@@ -144,25 +146,25 @@ export function Rail({
                     ) : null}
                   </button>
                   <span className="thingy-aui-recent-actions">
-                    <button
-                      type="button"
-                      title={entry.shared_at ? 'Refresh share link' : 'Share'}
-                      aria-label="Share"
-                      onClick={() => onShare(entry.id, Boolean(entry.shared_at))}
-                    >
-                      <Icon name="share" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Rename"
-                      aria-label="Rename"
-                      onClick={() => onRename(entry.id, entry.title)}
-                    >
-                      <Icon name="pencil" />
-                    </button>
-                    <button type="button" title="Delete" aria-label="Delete" onClick={() => onDelete(entry.id)}>
-                      <Icon name="trash" />
-                    </button>
+                    <Tip label={entry.shared_at ? 'Refresh share link' : 'Share'}>
+                      <button
+                        type="button"
+                        aria-label="Share"
+                        onClick={() => onShare(entry.id, Boolean(entry.shared_at))}
+                      >
+                        <Icon name="share" />
+                      </button>
+                    </Tip>
+                    <Tip label="Rename">
+                      <button type="button" aria-label="Rename" onClick={() => onRename(entry.id, entry.title)}>
+                        <Icon name="pencil" />
+                      </button>
+                    </Tip>
+                    <Tip label="Delete">
+                      <button type="button" aria-label="Delete" onClick={() => onDelete(entry.id)}>
+                        <Icon name="trash" />
+                      </button>
+                    </Tip>
                   </span>
                 </li>
               ))}
