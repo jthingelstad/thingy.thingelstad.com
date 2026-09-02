@@ -484,3 +484,66 @@
 .thingy-aui-scrollbottom[disabled] {
   display: none;
 }
+
+/* Corpus-grounded suggestion chips under the welcome (empty thread). */
+.thingy-aui-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 0;
+  max-width: 44rem;
+}
+
+.thingy-aui-suggestion {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  padding: 7px 14px;
+  font-size: 0.88rem;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+.thingy-aui-suggestion:hover {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 7%, var(--surface));
+}
+
+/* Rail filter box above the grouped recents. */
+.thingy-aui-rail-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 10px 8px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.thingy-aui-rail-filter svg {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+}
+
+.thingy-aui-rail-filter input {
+  border: none;
+  background: none;
+  outline: none;
+  width: 100%;
+  min-width: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+
+.thingy-app-shell.is-collapsed .thingy-aui-rail-filter {
+  display: none;
+}

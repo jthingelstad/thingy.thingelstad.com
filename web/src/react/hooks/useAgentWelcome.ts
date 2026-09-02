@@ -12,6 +12,10 @@ const GUEST_WELCOME =
 
 export function useAgentWelcome(guest: boolean, seeded: boolean) {
   const [welcomeText, setWelcomeText] = useState(guest ? GUEST_WELCOME : DEFAULT_WELCOME);
+  // Corpus-grounded follow-up chips (contract 4.4): the welcome agent
+  // retrieves real archive passages and grounds each suggestion in one.
+  // Never a static question list - Jamie's product rule.
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   useEffect(() => {
     if (guest || seeded) return undefined;
     const controller = new AbortController();
@@ -39,6 +43,14 @@ export function useAgentWelcome(guest: boolean, seeded: boolean) {
           } else if (eventName === 'answer') {
             text = String(data.answer || text);
             setWelcomeText(text || DEFAULT_WELCOME);
+          } else if (eventName === 'suggestions') {
+            const list = Array.isArray(data.suggestions) ? data.suggestions : [];
+            setSuggestions(
+              list
+                .map((entry) => String(entry || '').trim())
+                .filter(Boolean)
+                .slice(0, 3)
+            );
           }
         });
         trackEvent('librarian.welcome_success');
@@ -50,5 +62,5 @@ export function useAgentWelcome(guest: boolean, seeded: boolean) {
     // One welcome per page load.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  return welcomeText;
+  return { text: welcomeText, suggestions };
 }

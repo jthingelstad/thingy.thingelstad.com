@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { AssistantRuntimeProvider, ThreadPrimitive, useLocalRuntime } from '@assistant-ui/react';
+import { AssistantRuntimeProvider, ThreadPrimitive, useAui, useLocalRuntime } from '@assistant-ui/react';
+import { trackEvent as track } from '../../shared/thingy-analytics.ts';
 import { promptDialog } from '../../shared/stores/dialog-store.ts';
 import { trackEvent } from '../../shared/thingy-analytics.ts';
 import {
@@ -12,7 +13,34 @@ import { AssistantMessage, EditComposer, UserMessage } from './Messages.tsx';
 import { Composer } from './Composer.tsx';
 import { Icon } from './Icon.tsx';
 
-function Thread({ guest, welcome }: { guest: boolean; welcome: string }) {
+// Corpus-grounded follow-up chips from the welcome agent (contract 4.4).
+// Each suggestion is grounded in retrieved archive passages server-side -
+// never a static sampled list. Tapping one sends it as the first message.
+function SuggestionChips({ suggestions }: { suggestions: string[] }) {
+  const aui = useAui();
+  if (!suggestions.length) return null;
+  return (
+    <div className="thingy-aui-suggestions" role="list" aria-label="Suggested questions">
+      {suggestions.map((suggestion) => (
+        <button
+          key={suggestion}
+          type="button"
+          role="listitem"
+          className="thingy-aui-suggestion"
+          onClick={() => {
+            track('librarian.welcome_suggestion');
+            aui.composer.setText(suggestion);
+            aui.composer.send();
+          }}
+        >
+          {suggestion}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Thread({ guest, welcome, suggestions }: { guest: boolean; welcome: string; suggestions: string[] }) {
   return (
     <ThreadPrimitive.Root className="librarian-chat thingy-chat thingy-aui-thread">
       <ThreadPrimitive.Viewport className="thingy-chat-scroll" autoScroll>
@@ -23,6 +51,7 @@ function Thread({ guest, welcome }: { guest: boolean; welcome: string }) {
                 <p>{welcome}</p>
               </div>
             </article>
+            <SuggestionChips suggestions={suggestions} />
           </ThreadPrimitive.Empty>
           <ThreadPrimitive.Messages components={{ UserMessage, AssistantMessage, EditComposer }} />
         </div>
@@ -41,11 +70,13 @@ export function ThreadHost({
   binding,
   guest,
   welcome,
+  suggestions,
   initialPrompt
 }: {
   binding: ThingyThreadBinding;
   guest: boolean;
   welcome: string;
+  suggestions: string[];
   initialPrompt?: string;
 }) {
   const adapter = useMemo(() => createThingyAdapter(binding), [binding]);
@@ -86,7 +117,7 @@ export function ThreadHost({
   }, []);
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <Thread guest={guest} welcome={welcome} />
+      <Thread guest={guest} welcome={welcome} suggestions={suggestions} />
     </AssistantRuntimeProvider>
   );
 }

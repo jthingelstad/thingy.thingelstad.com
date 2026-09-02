@@ -228,15 +228,16 @@ export interface LibrarianStreamBase {
   toolName?: string;
   guest?: boolean;
   guest_remaining?: number;
+  suggestions?: Array<string>;
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = 'b8ad3472c376d5db2a9f09dc418b0a3ee10afaccb6259175bff3a5c329e4e2df';
+export const LIBRARIAN_CONTRACT_SHA256 = '5c864bed0938c2b57a09373c456616bcb245ff589009f9847efcd1388a57958c';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '4.3.0',
+  version: '4.4.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
@@ -817,6 +818,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         guest_remaining: {
           type: 'number'
+        },
+        suggestions: {
+          type: 'array',
+          items: {
+            type: 'string'
+          }
         }
       },
       additionalProperties: true
@@ -1153,6 +1160,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         guest_remaining: {
           type: 'number'
+        },
+        suggestions: {
+          type: 'array',
+          items: {
+            type: 'string'
+          }
         }
       },
       additionalProperties: true
@@ -1280,6 +1293,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         guest_remaining: {
           type: 'number'
+        },
+        suggestions: {
+          type: 'array',
+          items: {
+            type: 'string'
+          }
         }
       },
       additionalProperties: true
@@ -1407,6 +1426,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         guest_remaining: {
           type: 'number'
+        },
+        suggestions: {
+          type: 'array',
+          items: {
+            type: 'string'
+          }
         }
       },
       additionalProperties: true
@@ -1534,6 +1559,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         guest_remaining: {
           type: 'number'
+        },
+        suggestions: {
+          type: 'array',
+          items: {
+            type: 'string'
+          }
         }
       },
       required: ['delta'],
@@ -1662,6 +1693,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         guest_remaining: {
           type: 'number'
+        },
+        suggestions: {
+          type: 'array',
+          items: {
+            type: 'string'
+          }
         }
       },
       required: ['answer'],
@@ -1790,9 +1827,149 @@ export const LIBRARIAN_CONTRACT = {
         },
         guest_remaining: {
           type: 'number'
+        },
+        suggestions: {
+          type: 'array',
+          items: {
+            type: 'string'
+          }
         }
       },
       required: ['citations'],
+      additionalProperties: true
+    },
+    suggestions: {
+      type: 'object',
+      properties: {
+        token: {
+          type: 'string'
+        },
+        email: {
+          type: 'string'
+        },
+        status: {
+          type: 'string'
+        },
+        message: {
+          type: 'string'
+        },
+        error: {
+          type: 'string'
+        },
+        errorMessage: {
+          type: 'string'
+        },
+        profile: {
+          $ref: '#/$defs/profile'
+        },
+        entitlements: {
+          type: 'array',
+          items: {
+            type: 'string'
+          }
+        },
+        modes: {
+          type: 'array',
+          items: {
+            $ref: '#/$defs/mode'
+          }
+        },
+        request_id: {
+          type: 'string'
+        },
+        requestId: {
+          type: 'string'
+        },
+        conversations: {
+          type: 'array',
+          items: {
+            $ref: '#/$defs/conversation'
+          }
+        },
+        conversation: {
+          $ref: '#/$defs/conversation'
+        },
+        messages: {
+          type: 'array',
+          items: {
+            $ref: '#/$defs/conversationMessage'
+          }
+        },
+        supporting_member: {
+          type: 'boolean'
+        },
+        data: {},
+        code: {
+          type: 'string'
+        },
+        account: {
+          $ref: '#/$defs/accountOverview'
+        },
+        reaction: {
+          type: 'string'
+        },
+        ok: {
+          type: 'boolean'
+        },
+        has_comment: {
+          type: 'boolean'
+        },
+        share: {
+          $ref: '#/$defs/conversationShare'
+        },
+        contract_version: {
+          type: 'string'
+        },
+        mode: {
+          type: 'string'
+        },
+        conversation_id: {
+          type: 'string'
+        },
+        delta: {
+          type: 'string'
+        },
+        answer: {
+          type: 'string'
+        },
+        citations: {
+          type: 'array',
+          items: {
+            $ref: '#/$defs/citation'
+          }
+        },
+        commentary: {
+          type: 'string'
+        },
+        detail: {
+          type: 'string'
+        },
+        note: {
+          type: 'string'
+        },
+        kind: {
+          type: 'string'
+        },
+        tool_name: {
+          type: 'string'
+        },
+        toolName: {
+          type: 'string'
+        },
+        guest: {
+          type: 'boolean'
+        },
+        guest_remaining: {
+          type: 'number'
+        },
+        suggestions: {
+          type: 'array',
+          items: {
+            type: 'string'
+          }
+        }
+      },
+      required: ['suggestions'],
       additionalProperties: true
     },
     done: {
@@ -1918,6 +2095,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         guest_remaining: {
           type: 'number'
+        },
+        suggestions: {
+          type: 'array',
+          items: {
+            type: 'string'
+          }
         }
       },
       additionalProperties: true
@@ -2045,6 +2228,12 @@ export const LIBRARIAN_CONTRACT = {
         },
         guest_remaining: {
           type: 'number'
+        },
+        suggestions: {
+          type: 'array',
+          items: {
+            type: 'string'
+          }
         }
       },
       required: ['error'],
