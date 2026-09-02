@@ -45,13 +45,6 @@
   fill: currentcolor;
 }
 
-.thingy-aui-disclaimer {
-  margin: 6px 0 0;
-  text-align: center;
-  color: var(--ink-soft);
-  font-size: 12.5px;
-}
-
 .thingy-aui-activity {
   margin: 0 0 10px;
   color: var(--ink-soft);

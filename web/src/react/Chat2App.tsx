@@ -312,7 +312,6 @@ function Composer({ guest }: { guest: boolean }) {
           </ThreadPrimitive.If>
         </div>
       </ComposerPrimitive.Root>
-      <p className="thingy-aui-disclaimer">Thingy is AI and can make mistakes. Please double-check responses.</p>
     </div>
   );
 }
