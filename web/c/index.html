@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://tinylytics.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://fonts.googleapis.com https://tinylytics.app __THINGY_CONNECT_SRC__">
+  <meta name="thingy-config" content="__THINGY_SHARE_CONFIG__">
+  <title>Shared Conversation — Thingy</title>
+  <meta name="description" content="A conversation with Thingy, Jamie Thingelstad's archive agent, shared by a reader.">
+  <meta name="robots" content="noindex, follow">
+
+  <meta property="og:title" content="A Thingy conversation">
+  <meta property="og:description" content="A conversation with Thingy, Jamie Thingelstad's archive agent, shared by a reader.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Thingy">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:image" content="https://thingy.thingelstad.com/img/thingy.png">
+  <meta property="og:image:alt" content="Thingy, Jamie Thingelstad's archive agent">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="A Thingy conversation">
+  <meta name="twitter:description" content="A conversation with Thingy, Jamie Thingelstad's archive agent, shared by a reader.">
+  <meta name="twitter:image" content="https://thingy.thingelstad.com/img/thingy.png">
+
+  <link rel="canonical" href="https://thingy.thingelstad.com/">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400..600&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+</head>
+<body>
+  <header class="thingy-page-nav">
+    <a class="brand" href="/"><img src="/img/thingy.png" alt="">Thingy</a>
+    <nav>
+      <a href="/chat/">Chat</a>
+      <a href="/about/">About</a>
+      <a href="/connect/">Connect</a>
+    </nav>
+  </header>
+  <main class="thingy-page thingy-shared" id="thingy-shared-root">
+    <p class="thingy-shared-loading">Loading shared conversation…</p>
+  </main>
+  <script type="module" src="/src/pages/share.ts"></script>
+</body>
+</html>

@@ -401,6 +401,41 @@ function ChatApp() {
     mobileRailOpen.value = false;
   }
 
+  async function shareActiveConversation() {
+    const conversation = actions.activeConversation();
+    if (!conversation || interactionBusy.value) return;
+    setMobileMenuOpen(false);
+    if (actions.isLocalConversationId(conversation.id)) {
+      showNotice('Ask a question first — an empty conversation has nothing to share.');
+      return;
+    }
+    const alreadyShared = Boolean(conversation.shared_at);
+    const confirmed = window.confirm(
+      alreadyShared
+        ? 'Refresh the share link to include the latest messages? The link stays the same.'
+        : 'Share this conversation? Anyone with the link can read the entire conversation, including your questions. You can stop sharing at any time.'
+    );
+    if (!confirmed) return;
+    const share = await actions.shareConversation(conversation.id);
+    if (!share || !share.url) return;
+    try {
+      await navigator.clipboard.writeText(String(share.url));
+      showNotice('Share link copied — anyone with it can read this conversation.');
+    } catch (_error) {
+      window.prompt('Copy this share link:', String(share.url));
+    }
+  }
+
+  async function unshareActiveConversation() {
+    const conversation = actions.activeConversation();
+    if (!conversation || interactionBusy.value) return;
+    setMobileMenuOpen(false);
+    if (!window.confirm('Stop sharing this conversation? The link stops working immediately.')) return;
+    if (await actions.unshareConversation(conversation.id)) {
+      showNotice('Sharing stopped. The link no longer works.');
+    }
+  }
+
   const interactions = createChatInteractions({
     actions,
     maxQuestionChars: MAX_QUESTION_CHARS,
@@ -494,10 +529,12 @@ function ChatApp() {
             onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
             onRename={() => void renameActiveConversation()}
             onDelete={() => void deleteActiveConversation()}
+            onShare={() => void shareActiveConversation()}
+            onUnshare={() => void unshareActiveConversation()}
+            shared={Boolean(activeConversation?.shared_at)}
             onScroll={() => (autoFollowRef.current = nearBottom())}
             onRetry={interactions.retryAnswer}
             submitFeedback={interactions.submitFeedback}
-            emailAnswer={interactions.emailAnswer}
             track={track}
             onSubmit={handleSubmit}
             onQuestionInput={setQuestion}

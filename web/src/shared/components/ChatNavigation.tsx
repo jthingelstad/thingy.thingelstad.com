@@ -72,6 +72,9 @@ interface MobileChatBarProps {
   onToggleMenu: () => void;
   onRename: () => void;
   onDelete: () => void;
+  onShare: () => void;
+  onUnshare: () => void;
+  shared: boolean;
 }
 
 function MobileChatBar(props: MobileChatBarProps) {
@@ -117,6 +120,14 @@ function MobileChatBar(props: MobileChatBarProps) {
           <ThingyIcon name="more-horizontal" />
         </button>
         <div class="mobile-conversation-menu" id="mobile-conversation-menu" hidden={!props.menuOpen} role="menu">
+          <button type="button" role="menuitem" onClick={props.onShare}>
+            Share…
+          </button>
+          {props.shared ? (
+            <button type="button" role="menuitem" onClick={props.onUnshare}>
+              Stop sharing
+            </button>
+          ) : null}
           <button type="button" role="menuitem" onClick={props.onRename}>
             Rename
           </button>

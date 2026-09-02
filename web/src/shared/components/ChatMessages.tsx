@@ -13,11 +13,10 @@ interface ChatMessagesProps {
   scrollContainer: () => HTMLElement | null;
   onRetry: (messageId: string, prompt: string) => void;
   submitFeedback: (input: FeedbackInput) => Promise<{ reaction?: string }>;
-  emailAnswer?: (input: { requestId: string }) => Promise<unknown>;
   track?: (name: string, value?: string) => void;
 }
 
-function ChatMessages({ scrollContainer, onRetry, submitFeedback, emailAnswer, track }: ChatMessagesProps) {
+function ChatMessages({ scrollContainer, onRetry, submitFeedback, track }: ChatMessagesProps) {
   const messages = chatMessages.value;
 
   useEffect(() => {
@@ -60,7 +59,6 @@ function ChatMessages({ scrollContainer, onRetry, submitFeedback, emailAnswer, t
                 requestId={requestId}
                 retryPrompt={message.prompt}
                 onRetry={(prompt) => onRetry(message.id, prompt)}
-                emailAnswer={emailAnswer}
                 submitFeedback={submitFeedback}
                 track={track}
               />

@@ -44,7 +44,9 @@ it.) Casual schema changes break this repo. Version before changing.
 ## Surface Responsibilities
 
 `web/` is a Vite-built static app served from S3 + CloudFront. Its surfaces are
-chat, sign-in, and account, plus two static content pages: `/about/` (what
+chat, sign-in, account, and the public shared-conversation page (`/c/<token>`,
+one shell for every token; the CloudFront function rewrites the path and the
+page fetches `/api/share/<token>`), plus two static content pages: `/about/` (what
 Thingy is, the archive inventory, architecture, and the AGENT-TEAM) and
 `/connect/` (how to add the Librarian MCP server to Claude, ChatGPT, Claude
 Code, or any MCP client). The app handles auth UI, streams `/chat` SSE from
@@ -125,11 +127,12 @@ THINGY_SMOKE_URL=http://localhost:8080 npm run smoke
 Key files:
 
 - `web/index.html`, `web/chat/index.html`, `web/signin/index.html`,
-  `web/about/index.html`, `web/connect/index.html`: static route shells.
+  `web/c/index.html`, `web/about/index.html`, `web/connect/index.html`:
+  static route shells.
   (`web/dispatch/index.html` is a redirect stub kept for old links; the
   Dispatch surface was removed in 2026-08.)
 - `web/src/pages/`: Vite page entrypoints (`home`, `chat`, `signin`,
-  `about`, `connect`).
+  `share`, `about`, `connect`).
 - `web/src/shared/`: browser-side app modules (`thingy-webmcp.ts` is the
   WebMCP registration module; kill switch `window.ThingyConfig.webmcp`).
 - `web/src/styles/thingy.css`: stylesheet manifest imported by app page
@@ -207,7 +210,9 @@ Current Tinylytics usage:
   network navigation
 - programmatic app events posted straight to the collector
   (`src/shared/thingy-analytics.ts`): auth/session, answer
-  success/error/stop, feedback, shares, conversations, plus
+  success/error/stop, feedback, shares, conversations, share links
+  (`librarian.share_link_create`/`_revoke` in chat;
+  `librarian.share_view`/`share_cta` on the public page), plus
   `librarian.client_error` (global error/unhandledrejection handlers on
   chat and sign-in) and `librarian.webmcp_*` (registration and
   unreachable-tool counters)
@@ -221,7 +226,8 @@ on localhost, and both honor the `tinylytics_ignore` opt-out.
 ## SEO / Crawlers
 
 The public pages - `/`, `/about/`, `/connect/` - are indexable; the chat and
-sign-in app shells are `noindex, follow` (no crawlable content, and crawl
+sign-in app shells and the shared-conversation page (`/c/<token>` - reader
+content, never indexed) are `noindex, follow` (no crawlable content, and crawl
 equity should concentrate on the real pages).
 
 Current files:

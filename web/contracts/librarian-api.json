@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://thingy.thingelstad.com/contracts/librarian-api.json",
   "title": "Thingy Librarian API Contract",
-  "version": "3.1.0",
+  "version": "4.0.0",
   "compatibility": "breaking",
   "$defs": {
     "mode": {
@@ -121,8 +121,63 @@
         },
         "draft": {
           "type": "boolean"
+        },
+        "share_token": {
+          "type": "string"
+        },
+        "shared_at": {
+          "type": "string"
+        },
+        "shared_up_to": {
+          "type": "string"
         }
       },
+      "additionalProperties": true
+    },
+    "conversationShare": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "shared_at": {
+          "type": "string"
+        },
+        "shared_up_to": {
+          "type": "string"
+        },
+        "expires_at": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "token",
+        "url"
+      ],
+      "additionalProperties": true
+    },
+    "sharedConversation": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "shared_at": {
+          "type": "string"
+        },
+        "shared_up_to": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title"
+      ],
       "additionalProperties": true
     },
     "conversationMessage": {
@@ -363,6 +418,9 @@
         },
         "has_comment": {
           "type": "boolean"
+        },
+        "share": {
+          "$ref": "#/$defs/conversationShare"
         }
       },
       "additionalProperties": true
@@ -463,6 +521,9 @@
         },
         "has_comment": {
           "type": "boolean"
+        },
+        "share": {
+          "$ref": "#/$defs/conversationShare"
         },
         "contract_version": {
           "type": "string"
@@ -576,7 +637,53 @@
             "conversation"
           ],
           "additionalProperties": true
+        },
+        "share": {
+          "type": "object",
+          "properties": {
+            "share": {
+              "$ref": "#/$defs/conversationShare"
+            }
+          },
+          "required": [
+            "share"
+          ],
+          "additionalProperties": true
+        },
+        "unshare": {
+          "type": "object",
+          "properties": {
+            "ok": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "ok"
+          ],
+          "additionalProperties": true
         }
+      }
+    },
+    "/share/{token}": {
+      "actions": {},
+      "schema": {
+        "type": "object",
+        "properties": {
+          "conversation": {
+            "$ref": "#/$defs/sharedConversation"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/conversationMessage"
+            }
+          }
+        },
+        "required": [
+          "conversation",
+          "messages"
+        ],
+        "additionalProperties": true
       }
     },
     "/feedback": {
@@ -764,6 +871,9 @@
         "has_comment": {
           "type": "boolean"
         },
+        "share": {
+          "$ref": "#/$defs/conversationShare"
+        },
         "contract_version": {
           "type": "string"
         },
@@ -881,6 +991,9 @@
         },
         "has_comment": {
           "type": "boolean"
+        },
+        "share": {
+          "$ref": "#/$defs/conversationShare"
         },
         "contract_version": {
           "type": "string"
@@ -1000,6 +1113,9 @@
         "has_comment": {
           "type": "boolean"
         },
+        "share": {
+          "$ref": "#/$defs/conversationShare"
+        },
         "contract_version": {
           "type": "string"
         },
@@ -1117,6 +1233,9 @@
         },
         "has_comment": {
           "type": "boolean"
+        },
+        "share": {
+          "$ref": "#/$defs/conversationShare"
         },
         "contract_version": {
           "type": "string"
@@ -1239,6 +1358,9 @@
         "has_comment": {
           "type": "boolean"
         },
+        "share": {
+          "$ref": "#/$defs/conversationShare"
+        },
         "contract_version": {
           "type": "string"
         },
@@ -1359,6 +1481,9 @@
         },
         "has_comment": {
           "type": "boolean"
+        },
+        "share": {
+          "$ref": "#/$defs/conversationShare"
         },
         "contract_version": {
           "type": "string"
@@ -1481,6 +1606,9 @@
         "has_comment": {
           "type": "boolean"
         },
+        "share": {
+          "$ref": "#/$defs/conversationShare"
+        },
         "contract_version": {
           "type": "string"
         },
@@ -1598,6 +1726,9 @@
         },
         "has_comment": {
           "type": "boolean"
+        },
+        "share": {
+          "$ref": "#/$defs/conversationShare"
         },
         "contract_version": {
           "type": "string"

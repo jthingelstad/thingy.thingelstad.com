@@ -33,8 +33,9 @@ product direction.
 - Reworked the UX from a publication-style page into a chat-client experience.
 - Added responsive mobile navigation, conversation rail, conversation actions, cache-busted assets, and a
   dedicated sign-in page.
-- Added richer message actions: copy, share, email-me-this-answer, feedback, and prompt audio input.
-  (The response audio playback button was removed in 2026-08; do not reintroduce browser TTS.)
+- Added richer message actions: copy, share, feedback, and prompt audio input.
+  (The response audio playback button was removed in 2026-08; do not reintroduce browser TTS.
+  Email-me-this-answer was retired in 2026-09 when share links shipped.)
 
 ### Real Authentication
 
@@ -86,7 +87,7 @@ product direction.
 - Librarian (`librarian-thing`) owns one generated, versioned contract for successful Librarian JSON responses and SSE events.
 - Thingy validates live payloads against that artifact and negotiates the supported major contract version
   on every request. Additive changes remain compatible within a major; breaking changes require a new
-  major. The contract is currently 3.1.0.
+  major. The contract is currently 4.0.0.
 
 ### Public MCP + Archive Intelligence (2026-08)
 
@@ -128,6 +129,20 @@ product direction.
   for `https://thingy.thingelstad.com`, expires 2026-11-17), so Chrome
   serves the native `document.modelContext` under the trial; the polyfill
   remains the fallback elsewhere.
+
+### Shareable Conversation Permalinks (2026-09)
+
+- A signed-in reader can share a conversation from the conversation menu:
+  the Librarian mints a revocable `shr_` token and the public page at
+  `/c/<token>` renders the read-only snapshot - markdown, citations, photo
+  thumbnails - with a sign-in CTA for new readers.
+- Shares snapshot by cutoff: turns added after sharing stay private until
+  the reader re-shares (same URL, cutoff advances). Stop sharing kills the
+  link immediately (`cache-control: no-store` end to end).
+- Sharing pins the conversation for a year (`ttl_floor`), so links outlive
+  the 45-day conversation retention cadence.
+- The email-me-this-answer feature was retired in the same change; share
+  links replaced it. Contract 4.0.0 carries both halves.
 
 ## Current Mode Model
 

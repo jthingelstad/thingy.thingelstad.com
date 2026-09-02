@@ -69,6 +69,26 @@ export interface LibrarianConversation {
   preview?: string;
   local?: boolean;
   draft?: boolean;
+  share_token?: string;
+  shared_at?: string;
+  shared_up_to?: string;
+  [key: string]: unknown;
+}
+
+export interface LibrarianConversationShare {
+  token: string;
+  url: string;
+  shared_at?: string;
+  shared_up_to?: string;
+  expires_at?: string;
+  [key: string]: unknown;
+}
+
+export interface LibrarianSharedConversation {
+  title: string;
+  created_at?: string;
+  shared_at?: string;
+  shared_up_to?: string;
   [key: string]: unknown;
 }
 
@@ -149,6 +169,7 @@ export interface LibrarianApiResponse {
   reaction?: string;
   ok?: boolean;
   has_comment?: boolean;
+  share?: LibrarianConversationShare;
   [key: string]: unknown;
 }
 
@@ -183,6 +204,7 @@ export interface LibrarianStreamBase {
   reaction?: string;
   ok?: boolean;
   has_comment?: boolean;
+  share?: LibrarianConversationShare;
   contract_version?: string;
   mode?: string;
   conversation_id?: string;
@@ -198,12 +220,12 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = '299082981049f55672c1cd4d4dfb0606c061c00508255ecdbf5d543e50dbea6c';
+export const LIBRARIAN_CONTRACT_SHA256 = '14c17565ce87facfc7c24bc3a2b31e15a22f908dea8d1cf0e53bd5aad9a7f4bb';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '3.1.0',
+  version: '4.0.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
@@ -319,8 +341,58 @@ export const LIBRARIAN_CONTRACT = {
         },
         draft: {
           type: 'boolean'
+        },
+        share_token: {
+          type: 'string'
+        },
+        shared_at: {
+          type: 'string'
+        },
+        shared_up_to: {
+          type: 'string'
         }
       },
+      additionalProperties: true
+    },
+    conversationShare: {
+      type: 'object',
+      properties: {
+        token: {
+          type: 'string'
+        },
+        url: {
+          type: 'string'
+        },
+        shared_at: {
+          type: 'string'
+        },
+        shared_up_to: {
+          type: 'string'
+        },
+        expires_at: {
+          type: 'string'
+        }
+      },
+      required: ['token', 'url'],
+      additionalProperties: true
+    },
+    sharedConversation: {
+      type: 'object',
+      properties: {
+        title: {
+          type: 'string'
+        },
+        created_at: {
+          type: 'string'
+        },
+        shared_at: {
+          type: 'string'
+        },
+        shared_up_to: {
+          type: 'string'
+        }
+      },
+      required: ['title'],
       additionalProperties: true
     },
     conversationMessage: {
@@ -561,6 +633,9 @@ export const LIBRARIAN_CONTRACT = {
         },
         has_comment: {
           type: 'boolean'
+        },
+        share: {
+          $ref: '#/$defs/conversationShare'
         }
       },
       additionalProperties: true
@@ -661,6 +736,9 @@ export const LIBRARIAN_CONTRACT = {
         },
         has_comment: {
           type: 'boolean'
+        },
+        share: {
+          $ref: '#/$defs/conversationShare'
         },
         contract_version: {
           type: 'string'
@@ -765,7 +843,46 @@ export const LIBRARIAN_CONTRACT = {
           },
           required: ['conversation'],
           additionalProperties: true
+        },
+        share: {
+          type: 'object',
+          properties: {
+            share: {
+              $ref: '#/$defs/conversationShare'
+            }
+          },
+          required: ['share'],
+          additionalProperties: true
+        },
+        unshare: {
+          type: 'object',
+          properties: {
+            ok: {
+              type: 'boolean'
+            }
+          },
+          required: ['ok'],
+          additionalProperties: true
         }
+      }
+    },
+    '/share/{token}': {
+      actions: {},
+      schema: {
+        type: 'object',
+        properties: {
+          conversation: {
+            $ref: '#/$defs/sharedConversation'
+          },
+          messages: {
+            type: 'array',
+            items: {
+              $ref: '#/$defs/conversationMessage'
+            }
+          }
+        },
+        required: ['conversation', 'messages'],
+        additionalProperties: true
       }
     },
     '/feedback': {
@@ -947,6 +1064,9 @@ export const LIBRARIAN_CONTRACT = {
         has_comment: {
           type: 'boolean'
         },
+        share: {
+          $ref: '#/$defs/conversationShare'
+        },
         contract_version: {
           type: 'string'
         },
@@ -1064,6 +1184,9 @@ export const LIBRARIAN_CONTRACT = {
         },
         has_comment: {
           type: 'boolean'
+        },
+        share: {
+          $ref: '#/$defs/conversationShare'
         },
         contract_version: {
           type: 'string'
@@ -1183,6 +1306,9 @@ export const LIBRARIAN_CONTRACT = {
         has_comment: {
           type: 'boolean'
         },
+        share: {
+          $ref: '#/$defs/conversationShare'
+        },
         contract_version: {
           type: 'string'
         },
@@ -1300,6 +1426,9 @@ export const LIBRARIAN_CONTRACT = {
         },
         has_comment: {
           type: 'boolean'
+        },
+        share: {
+          $ref: '#/$defs/conversationShare'
         },
         contract_version: {
           type: 'string'
@@ -1420,6 +1549,9 @@ export const LIBRARIAN_CONTRACT = {
         has_comment: {
           type: 'boolean'
         },
+        share: {
+          $ref: '#/$defs/conversationShare'
+        },
         contract_version: {
           type: 'string'
         },
@@ -1538,6 +1670,9 @@ export const LIBRARIAN_CONTRACT = {
         },
         has_comment: {
           type: 'boolean'
+        },
+        share: {
+          $ref: '#/$defs/conversationShare'
         },
         contract_version: {
           type: 'string'
@@ -1658,6 +1793,9 @@ export const LIBRARIAN_CONTRACT = {
         has_comment: {
           type: 'boolean'
         },
+        share: {
+          $ref: '#/$defs/conversationShare'
+        },
         contract_version: {
           type: 'string'
         },
@@ -1775,6 +1913,9 @@ export const LIBRARIAN_CONTRACT = {
         },
         has_comment: {
           type: 'boolean'
+        },
+        share: {
+          $ref: '#/$defs/conversationShare'
         },
         contract_version: {
           type: 'string'

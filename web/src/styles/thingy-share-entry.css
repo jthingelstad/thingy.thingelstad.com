@@ -1,0 +1,48 @@
+/* Entry bundle for the public shared-conversation page (/c/<token>): the
+   site's base tokens, the content-page nav/layout, and the chat message
+   styles the snapshot renders with. */
+@import url("./thingy-base.css");
+@import url("./thingy-page.css");
+@import url("./thingy-messages.css");
+
+.thingy-shared .thingy-shared-loading {
+  color: var(--color-text-muted);
+}
+
+.thingy-shared-header h1 {
+  margin-bottom: 0.25rem;
+}
+
+.thingy-shared-byline {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  margin-top: 0;
+}
+
+.thingy-shared-messages {
+  margin: 2rem 0;
+}
+
+.thingy-shared-messages .librarian-message {
+  margin-bottom: 1.25rem;
+}
+
+.thingy-shared-cta {
+  border-top: 1px solid var(--color-border);
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+}
+
+.thingy-shared-cta-button {
+  display: inline-block;
+  background: var(--color-accent);
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  text-decoration: none;
+}
+
+.thingy-shared-cta-more {
+  margin-left: 0.75rem;
+}

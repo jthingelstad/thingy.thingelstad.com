@@ -34,10 +34,12 @@ interface ChatConversationViewProps {
   onToggleMobileMenu: () => void;
   onRename: () => void;
   onDelete: () => void;
+  onShare: () => void;
+  onUnshare: () => void;
+  shared: boolean;
   onScroll: () => void;
   onRetry: (messageId: string, prompt: string) => void;
   submitFeedback: (input: { requestId: string; reaction: string; comment: string }) => Promise<ThingyApiResponse>;
-  emailAnswer?: (input: { requestId: string }) => Promise<unknown>;
   track: (name: string, value?: string) => void;
   onSubmit: (event: JSX.TargetedSubmitEvent<HTMLFormElement>) => void;
   onQuestionInput: (value: string) => void;
@@ -80,6 +82,9 @@ function ChatConversationView(props: ChatConversationViewProps) {
         onToggleMenu={props.onToggleMobileMenu}
         onRename={props.onRename}
         onDelete={props.onDelete}
+        onShare={props.onShare}
+        onUnshare={props.onUnshare}
+        shared={props.shared}
       />
 
       {props.from ? (
@@ -112,7 +117,6 @@ function ChatConversationView(props: ChatConversationViewProps) {
               scrollContainer={() => props.scrollRef.current}
               onRetry={props.onRetry}
               submitFeedback={props.submitFeedback}
-              emailAnswer={props.emailAnswer}
               track={props.track}
             />
           </div>

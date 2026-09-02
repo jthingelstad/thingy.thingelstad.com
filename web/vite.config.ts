@@ -87,7 +87,8 @@ function htmlConfigPlugin(): Plugin {
         .replaceAll('__THINGY_TINYLYTICS_ID__', tinylyticsId)
         .replaceAll('__THINGY_CONNECT_SRC__', connectSrc)
         .replace('__THINGY_CHAT_CONFIG__', encode(config))
-        .replace('__THINGY_SIGNIN_CONFIG__', encode({ librarianApiUrl }));
+        .replace('__THINGY_SIGNIN_CONFIG__', encode({ librarianApiUrl }))
+        .replace('__THINGY_SHARE_CONFIG__', encode({ librarianApiUrl, tinylyticsId }));
     }
   };
 }
@@ -135,6 +136,10 @@ export default defineConfig({
         // redirect stub (no JS entry) kept so old links land on /chat/.
         dispatch: resolve(__dirname, 'dispatch/index.html'),
         signin: resolve(__dirname, 'signin/index.html'),
+        // Public shared-conversation page; every /c/<token> URL serves this
+        // one shell (CloudFront function rewrite) and the page reads the
+        // token from the path.
+        share: resolve(__dirname, 'c/index.html'),
         connect: resolve(__dirname, 'connect/index.html'),
         about: resolve(__dirname, 'about/index.html')
       }

@@ -17,7 +17,7 @@ Librarian implementation in `librarian-thing`
 ## Web UX
 
 - [ ] Keep the mobile/tablet/desktop QA checklist current for rail, New Chat, voice input, feedback comments, expired sessions, and prompt links.
-- [ ] Consider a conversation export/share view that preserves markdown, citations, and artifacts.
+- [x] Conversation share links shipped 2026-09 (`/c/<token>`, share/unshare in the conversation menu).
 
 ## Operator Experience
 

@@ -71,8 +71,14 @@ npm run qa:real -- --cleanup-only
   active in the rail.
 - Ask a photo question ("photos from bike rides"); inline thumbnails should
   render and click through to the source page in a new tab.
-- Use the message actions: copy, share, email-me-this-answer (arrives at the
-  signed-in address), thumbs up/down. There is no audio playback button.
+- Use the message actions: copy, share, thumbs up/down. There is no audio
+  playback button and no email button (retired for share links, 2026-09).
+- Share a conversation from the conversation menu: confirm dialog states the
+  whole conversation becomes readable, the link lands on the clipboard, and
+  opening it in a private window renders the snapshot with citations and the
+  sign-in CTA. Stop sharing; the same link now shows the unavailable state.
+- Re-share an already-shared conversation; the URL stays the same and newer
+  turns appear at the link.
 - Fast-click New Chat; only one active local "New chat" shell should remain.
 - Expand/collapse the rail and switch conversations.
 - Account panel shows "Today's usage" (chat pool; MCP pool once used).

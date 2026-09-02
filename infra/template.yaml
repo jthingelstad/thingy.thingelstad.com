@@ -91,6 +91,12 @@ Resources:
             request.uri = uri.slice(4) || '/';
             return request;
           }
+          if (uri.indexOf('/c/') === 0) {
+            // Shared-conversation permalinks: every /c/<token> serves the one
+            // share shell; the page reads the token from location.pathname.
+            request.uri = '/c/index.html';
+            return request;
+          }
           if (uri === '/') {
             request.uri = '/index.html';
           } else if (uri.charAt(uri.length - 1) === '/') {

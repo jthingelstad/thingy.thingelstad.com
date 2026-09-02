@@ -17,10 +17,10 @@ test('runtime validators and requests use the generated Librarian contract versi
     validateStreamData('meta', { contract_version: LIBRARIAN_CONTRACT_VERSION }).contract_version,
     LIBRARIAN_CONTRACT_VERSION
   );
-  // The stack is fully on 3.x; only the current major is readable.
-  assert.equal(validateStreamData('meta', { contract_version: '3.9.0' }).contract_version, '3.9.0');
+  // The stack is fully on 4.x; only the current major is readable.
+  assert.equal(validateStreamData('meta', { contract_version: '4.9.0' }).contract_version, '4.9.0');
   assert.throws(() => validateStreamData('meta', { contract_version: '1.0.0' }), /this client expects/);
-  assert.throws(() => validateStreamData('meta', { contract_version: '2.0.0' }), /this client expects/);
+  assert.throws(() => validateStreamData('meta', { contract_version: '3.0.0' }), /this client expects/);
   assert.throws(() => validateStreamData('meta', { contract_version: '99.0.0' }), /this client expects/);
 });
 

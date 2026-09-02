@@ -191,6 +191,8 @@ function createChatActions(options: ChatActionsOptions = {}) {
     renameConversation: conversationActions.renameConversation,
     savedActiveConversation: conversationActions.savedActiveConversation,
     setActiveConversation: conversationActions.setActiveConversation,
+    shareConversation: conversationActions.shareConversation,
+    unshareConversation: conversationActions.unshareConversation,
     setAwaitingName: authActions.setAwaitingName,
     setUserProfile: authActions.setUserProfile,
     stopActiveAnswer: streamActions.stopActiveAnswer,

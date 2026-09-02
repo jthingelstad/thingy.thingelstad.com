@@ -321,6 +321,49 @@ function createChatConversationActions(options: ChatConversationActionsOptions) 
     return options.post({ action: 'get', conversation_id: id });
   }
 
+  function patchConversationShareFields(id: string, fields: Record<string, string>) {
+    state.conversations = state.conversations.map((entry) =>
+      entry.id === id || entry.conversation_id === id ? { ...entry, ...fields } : entry
+    );
+    options.onActiveConversationChanged();
+  }
+
+  // Creates the public share link, or refreshes it (same URL, cutoff moved
+  // to now) when the conversation is already shared.
+  async function shareConversation(id: string) {
+    if (!id || isLocalConversationId(id)) return null;
+    try {
+      const data = await options.post({ action: 'share', conversation_id: id });
+      const share = data.share;
+      if (!share || !share.url) throw new Error('Share response was incomplete');
+      patchConversationShareFields(id, {
+        share_token: String(share.token || ''),
+        shared_at: String(share.shared_at || ''),
+        shared_up_to: String(share.shared_up_to || '')
+      });
+      options.track('librarian.share_link_create');
+      return share;
+    } catch (_error) {
+      showNotice('Could not create the share link. Please try again.');
+      options.track('librarian.conversations_error', 'share');
+      return null;
+    }
+  }
+
+  async function unshareConversation(id: string) {
+    if (!id || isLocalConversationId(id)) return false;
+    try {
+      await options.post({ action: 'unshare', conversation_id: id });
+      patchConversationShareFields(id, { share_token: '', shared_at: '', shared_up_to: '' });
+      options.track('librarian.share_link_revoke');
+      return true;
+    } catch (_error) {
+      showNotice('Could not stop sharing. Please try again.');
+      options.track('librarian.conversations_error', 'unshare');
+      return false;
+    }
+  }
+
   return {
     activeConversation,
     createConversationShellForMode,
@@ -335,6 +378,8 @@ function createChatConversationActions(options: ChatConversationActionsOptions) 
     renameConversation,
     savedActiveConversation,
     setActiveConversation,
+    shareConversation,
+    unshareConversation,
     upsertConversationSummary,
     upsertPendingConversation
   };
