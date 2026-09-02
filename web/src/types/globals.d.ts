@@ -104,51 +104,6 @@ interface ThingyChatState {
   preferredName: string;
 }
 
-interface ThingyActivityStep {
-  label: string;
-  note?: string;
-  kind?: string;
-}
-
-type AssistantMessageStatus = 'pending' | 'streaming' | 'done' | 'stopped' | 'error' | 'static';
-
-interface AssistantMessageModel {
-  id: string;
-  content: import('@preact/signals').Signal<string>;
-  citations: import('@preact/signals').Signal<ThingyCitation[]>;
-  activity: import('@preact/signals').Signal<ThingyActivityStep[]>;
-  commentary: import('@preact/signals').Signal<string[]>;
-  status: import('@preact/signals').Signal<AssistantMessageStatus>;
-  statusFallback: import('@preact/signals').Signal<string>;
-  label: import('@preact/signals').Signal<string>;
-  errorMessage: import('@preact/signals').Signal<string>;
-  retryPrompt: import('@preact/signals').Signal<string>;
-  requestId: import('@preact/signals').Signal<string>;
-  startedAt: import('@preact/signals').Signal<number>;
-  elapsedSeconds: import('@preact/signals').Signal<number>;
-}
-
-interface AssistantMessageOptions {
-  content?: unknown;
-  citations?: ThingyCitation[];
-  activity?: ThingyActivityStep[];
-  commentary?: string[];
-  status?: AssistantMessageStatus;
-  statusFallback?: string;
-  label?: string;
-  requestId?: unknown;
-  startedAt?: number;
-  elapsedSeconds?: number;
-}
-
-interface ThingyChatViewMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  prompt?: string;
-  scope?: string;
-  model?: AssistantMessageModel;
-}
-
 interface ThingyTokenPayload {
   exp?: number;
 }

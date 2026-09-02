@@ -1,9 +1,7 @@
 // Promise-based in-app dialogs replacing window.confirm / window.prompt.
 // One dialog at a time: opening a new one settles the previous as
-// cancelled. The host component (ThingyDialog.tsx) renders whatever this
-// signal holds; call sites just await the helper.
-
-import { signal } from '@preact/signals';
+// cancelled. The host component (DialogHost in Chat2App) renders whatever
+// this store holds; call sites just await the helper.
 
 interface DialogBase {
   title: string;
@@ -35,7 +33,27 @@ interface ActiveDialog {
   resolve: (value: boolean | string | null) => void;
 }
 
-const activeDialog = signal<ActiveDialog | null>(null);
+// Minimal framework-free store with the {value, subscribe} shape the React
+// host reads through useSyncExternalStore.
+function createStore<T>(initial: T) {
+  let current = initial;
+  const listeners = new Set<() => void>();
+  return {
+    get value() {
+      return current;
+    },
+    set value(next: T) {
+      current = next;
+      listeners.forEach((listener) => listener());
+    },
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    }
+  };
+}
+
+const activeDialog = createStore<ActiveDialog | null>(null);
 let nextDialogId = 1;
 
 function cancelledValue(request: DialogRequest) {

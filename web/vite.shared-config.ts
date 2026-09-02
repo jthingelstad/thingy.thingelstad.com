@@ -1,7 +1,6 @@
-// Shared build config pieces used by BOTH vite configs (the Preact app
-// build in vite.config.ts and the React chat build in
-// vite.react.config.ts). Keep SITE, the HTML config injection, and the
-// dev proxy in one place so the two builds cannot drift.
+// Build config pieces for vite.config.ts: SITE, the HTML config
+// injection, and the dev proxy. (Formerly shared between the Preact and
+// React build passes; the site is single-pass React since 2026-09-02.)
 
 import { execSync } from 'node:child_process';
 import { type Plugin } from 'vite';

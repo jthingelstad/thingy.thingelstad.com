@@ -1,13 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@latest/schema.json",
-  "entry": [
-    "src/pages/*.ts",
-    "src/react/chat2.tsx",
-    "scripts/*.mjs",
-    "tests/*.test.mjs",
-    "vite.config.ts",
-    "vite.react.config.ts"
-  ],
+  "entry": ["src/pages/*.ts", "src/react/chat2.tsx", "scripts/*.mjs", "tests/*.test.mjs", "vite.config.ts"],
   "project": ["src/**/*.{ts,tsx}", "scripts/**/*.mjs"],
   "vite": false
 }

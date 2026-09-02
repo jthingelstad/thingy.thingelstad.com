@@ -7,7 +7,7 @@ import { confirmDialog } from '../shared/stores/dialog-store.ts';
 import * as session from '../shared/thingy-session.ts';
 
 // React port of the account trigger + menu + profile modal (the Preact
-// versions retired with /chat-classic/). Same CSS classes, same /memory
+// versions retired with the Preact chat). Same CSS classes, same /memory
 // contract, same rows - including the entitlement-routed "AI model" row.
 
 function Icon({ name }: { name: string }) {

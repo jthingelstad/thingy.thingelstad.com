@@ -21,7 +21,7 @@ import { userLocalContext } from '../shared/thingy-local-context.ts';
 import { AccountPanel } from './AccountPanel.tsx';
 import { trackEvent } from '../shared/thingy-analytics.ts';
 import { iconSvg } from '../shared/thingy-icons.ts';
-import { activeDialog, confirmDialog, promptDialog } from '../shared/stores/dialog-store.ts';
+import { activeDialog, confirmDialog, promptDialog, settleDialog } from '../shared/stores/dialog-store.ts';
 import * as session from '../shared/thingy-session.ts';
 import {
   createThingyAdapter,
@@ -407,9 +407,7 @@ function DialogHost() {
   if (!dialog) return null;
   const { request } = dialog;
   const isPrompt = request.kind === 'prompt';
-  const settle = (v: boolean | string | null) => {
-    import('../shared/stores/dialog-store.ts').then((m) => m.settleDialog(v));
-  };
+  const settle = (v: boolean | string | null) => settleDialog(v);
   const cancel = () => settle(isPrompt ? null : false);
   return (
     <div className="thingy-dialog-scrim" onClick={cancel}>

@@ -1,8 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "jsxImportSource": "react",
-    "types": ["vite/client"]
-  },
-  "include": ["src/react", "src/types"]
-}

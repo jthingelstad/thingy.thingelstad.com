@@ -1,5 +1,5 @@
-import { render, type JSX } from 'preact';
-import { useEffect, useMemo, useState } from 'preact/hooks';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { createRoot } from 'react-dom/client';
 import * as session from '../thingy-session.ts';
 import { errorMessage } from '../thingy-errors.ts';
 
@@ -122,12 +122,12 @@ function SignInApp() {
     }
   }
 
-  function handleSubmit(event: JSX.TargetedSubmitEvent<HTMLFormElement>) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     void requestMagicLink('check');
   }
 
-  async function submitCode(event: JSX.TargetedSubmitEvent<HTMLFormElement>) {
+  async function submitCode(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const digits = code.replace(/[^0-9]/g, '');
     if (digits.length !== 6) {
@@ -156,21 +156,21 @@ function SignInApp() {
   }
 
   return (
-    <section class="thingy-auth-page">
-      <div class="thingy-auth-card">
-        <span class="thingy-auth-mark" aria-hidden="true">
+    <section className="thingy-auth-page">
+      <div className="thingy-auth-card">
+        <span className="thingy-auth-mark" aria-hidden="true">
           <img src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager" />
         </span>
-        <div class="thingy-auth-content">
-          <p class="thingy-auth-kicker">Thingy access</p>
-          <h1 class="thingy-auth-title">Sign in to Thingy</h1>
-          <p class="thingy-auth-copy">
+        <div className="thingy-auth-content">
+          <p className="thingy-auth-kicker">Thingy access</p>
+          <h1 className="thingy-auth-title">Sign in to Thingy</h1>
+          <p className="thingy-auth-copy">
             Enter your email address and Thingy will send a private sign-in link. Weekly Thing readers can use Chat, and
             supporting members get the deeper features.
           </p>
-          <form class="thingy-signin-form" onSubmit={handleSubmit}>
-            <label for="thingy-signin-email">Email address</label>
-            <div class="thingy-signin-row">
+          <form className="thingy-signin-form" onSubmit={handleSubmit}>
+            <label htmlFor="thingy-signin-email">Email address</label>
+            <div className="thingy-signin-row">
               <input
                 id="thingy-signin-email"
                 name="email"
@@ -180,20 +180,20 @@ function SignInApp() {
                 required
                 placeholder="you@example.com"
                 value={email}
-                onInput={(event) => setEmail(event.currentTarget.value)}
+                onChange={(event) => setEmail(event.currentTarget.value)}
               />
               <button type="submit" disabled={busy}>
                 Send Link
               </button>
             </div>
           </form>
-          <p class="thingy-signin-message" data-kind={messageKind} aria-live="polite">
+          <p className="thingy-signin-message" data-kind={messageKind} aria-live="polite">
             {message}
           </p>
           {codeEntry ? (
-            <form class="thingy-signin-form thingy-signin-code" onSubmit={submitCode}>
-              <label for="thingy-signin-code">Sign-in code</label>
-              <div class="thingy-signin-row">
+            <form className="thingy-signin-form thingy-signin-code" onSubmit={submitCode}>
+              <label htmlFor="thingy-signin-code">Sign-in code</label>
+              <div className="thingy-signin-row">
                 <input
                   id="thingy-signin-code"
                   name="one-time-code"
@@ -204,7 +204,7 @@ function SignInApp() {
                   maxLength={6}
                   placeholder="123456"
                   value={code}
-                  onInput={(event) => setCode(event.currentTarget.value)}
+                  onChange={(event) => setCode(event.currentTarget.value)}
                 />
                 <button type="submit" disabled={busy || code.replace(/[^0-9]/g, '').length !== 6}>
                   Sign In
@@ -212,7 +212,7 @@ function SignInApp() {
               </div>
             </form>
           ) : null}
-          <div class="thingy-signin-secondary" hidden={!secondary}>
+          <div className="thingy-signin-secondary" hidden={!secondary}>
             {secondary === 'subscribe' ? (
               <button type="button" disabled={busy} onClick={() => void requestMagicLink('subscribe')}>
                 Add Me to The Weekly Thing
@@ -231,7 +231,7 @@ function SignInApp() {
 }
 
 function mountSignInApp(host: HTMLElement | null) {
-  if (host) render(<SignInApp />, host);
+  if (host) createRoot(host).render(<SignInApp />);
 }
 
 export { mountSignInApp };

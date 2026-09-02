@@ -2,13 +2,13 @@
   "name": "thingy-web",
   "version": "0.1.0",
   "private": true,
-  "description": "Standalone Thingy web app \u2014 thin client of the Librarian API.",
+  "description": "Standalone Thingy web app — thin client of the Librarian API.",
   "type": "module",
   "engines": {
     "node": ">=24 <25"
   },
   "scripts": {
-    "build": "vite build && vite build --config vite.react.config.ts",
+    "build": "vite build",
     "contract:generate": "node scripts/generate-contract-client.mjs",
     "contract:generate:check": "node scripts/generate-contract-client.mjs --check",
     "contract:sync": "node scripts/sync-contract.mjs",
@@ -24,12 +24,11 @@
     "smoke": "node scripts/smoke-browser.mjs",
     "test": "node --test tests/*.test.mjs",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-exclude='src/generated/**' --test-coverage-exclude='tests/**' --test-coverage-lines=60 --test-coverage-branches=58 --test-coverage-functions=46 tests/*.test.mjs",
-    "typecheck": "tsc --noEmit && tsc -p tsconfig.react.json --noEmit",
+    "typecheck": "tsc --noEmit",
     "verify": "npm run contract:generate:check && npm run format:check && npm run lint && npm run lint:css && npm run typecheck && npm run knip && npm run test:coverage"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
-    "@preact/preset-vite": "^2.10.6",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
@@ -46,9 +45,7 @@
   "dependencies": {
     "@assistant-ui/react": "^0.15.17",
     "@mcp-b/webmcp-polyfill": "^5.1.0",
-    "@preact/signals": "^2.9.4",
     "lucide-static": "^1.25.0",
-    "preact": "^10.29.7",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   }

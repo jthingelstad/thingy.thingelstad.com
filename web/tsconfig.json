@@ -7,12 +7,12 @@
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "preact",
+    "jsxImportSource": "react",
     "noEmit": true,
     "strict": true,
     "skipLibCheck": true,
     "types": ["node", "vite/client"]
   },
   "include": ["src", "vite.config.ts"],
-  "exclude": ["node_modules", "_site", "src/react"]
+  "exclude": ["node_modules", "_site"]
 }

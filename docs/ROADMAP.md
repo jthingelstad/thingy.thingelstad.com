@@ -161,10 +161,10 @@ product direction.
   and branch navigation, plus assistant-ui's scroll/keyboard/lifecycle
   handling. In-app dialogs, guest lane, seeded prompts, share, WebMCP all
   carried over.
-- Known v1 notes: branches are client-side (server history stays linear);
-  voice dictation and the agentic welcome are not yet ported to the React
-  surface (classic still has them); the account panel modal is reachable
-  from /chat-classic/ until ported.
+- v1 gaps all closed by 2026-09-02: full feature parity ported (voice
+  dictation, agentic welcome, account panel), branching went server-aware
+  (contract 4.3.0, parent_request_id chains), and Preact was removed
+  entirely - the site is one React Vite build.
 
 ## Conversation Modes (retired 2026-09)
 
