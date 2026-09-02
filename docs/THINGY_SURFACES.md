@@ -19,7 +19,7 @@ registry, served to third-party AI clients over OAuth 2.1).
 
 The web application owns the complete reader experience:
 
-- Authenticated chat and Research Guide modes.
+- Authenticated chat (conversation modes retired 2026-09).
 - Source and scope selection.
 - Conversation history and account profile controls.
 - Feedback and diagnostics exposed to the reader.

@@ -1,8 +1,7 @@
 # Thingy Roadmap
 
 Thingy is evolving from an archive search surface into an authenticated archive agent: a conversational
-interface to Jamie's published work that can remember context, reason across corpora, and eventually offer
-different conversation modes based on who is signed in.
+interface to Jamie's published work that can remember context and reason across corpora.
 
 This document is the living roadmap for the public Thingy web surface and its relationship to the
 Librarian API (`librarian-thing`). Historical build briefs belong under `docs/history/`; this file should reflect the current
@@ -10,12 +9,10 @@ product direction.
 
 ## Product Principles
 
-- **Published archive first.** Thingy represents Jamie's published work. Conversation modes can change
-  posture and depth, but they should not require a hidden private corpus by default.
-- **Identity unlocks capability.** Magic-link authentication lets Thingy know who it is talking to, attach
-  conversations to users, and grant modes by entitlement.
-- **Modes are not alter egos.** A mode is a conversation-level contract: permission, tone, tool policy,
-  logging, and user expectation. A conversation should not silently change modes midstream.
+- **Published archive first.** Thingy represents Jamie's published work and should not require a
+  hidden private corpus.
+- **Identity unlocks capability.** Magic-link authentication lets Thingy know who it is talking to,
+  attach conversations to users, and grant capabilities by entitlement.
 - **The web app is the experience.** Thingy is a focused, authenticated web client for nuanced,
   multi-conversation archive work.
 - **The backend stays authoritative.** Auth, entitlements, conversation history, evaluation, tools, and
@@ -144,75 +141,27 @@ product direction.
 - The email-me-this-answer feature was retired in the same change; share
   links replaced it. Contract 4.0.0 carries both halves.
 
-## Current Mode Model
+## Conversation Modes (retired 2026-09)
 
-### Conversation Modes
+The mode system - Research Guide, Thought Partner, Trusted Circle alongside
+default Thingy - was designed, partially built, and then retired as a
+user-facing feature: the mode picker went in the 2026-08 chat streamline and
+Jamie confirmed the retirement on 2026-09-01. Every conversation is default
+Thingy.
 
-Conversation modes are now the first identity-aware capability beyond default Thingy. They are stored on
-the conversation, enforced by the backend, and shown clearly in the web app and operator reports.
+What remains, deliberately:
 
-Initial modes:
+- Conversations store a `mode` and the backend still entitlement-checks it,
+  so reopening an old non-thingy conversation keeps its stored mode.
+- The earlier decision stands that Thingy never gets a hidden private
+  corpus as an implementation detail. If private material is ever
+  introduced, it is a separate product decision with explicit visibility
+  guarantees, tests, and operator reporting.
 
-- **Thingy**: default mode for authenticated readers. Helpful, careful, grounded in the public archive.
-- **Research Guide**: deeper synthesis for supporting members. Better trails, timelines, comparisons, and
-  "teach me through the archive" behavior.
-- **Thought Partner**: owner-only initially. More challenging and reflective; helps Jamie interrogate his
-  own published thinking, contradictions, recurring themes, and avoided questions.
-- **Trusted Circle**: warmer mode for explicitly invited family or close friends, still based on the
-  published archive unless a separate, explicit data policy is created.
-
-Mode rules:
-
-- A conversation is created in exactly one mode.
-- Changing mode starts a new conversation, optionally seeded with a summary or continuation prompt.
-- Mode is logged on every conversation and evaluator record.
-- The operator dashboard/report should filter and group by mode.
-- The client may hide unavailable modes, but the API must enforce entitlement checks.
-
-### Entitlements
-
-Mode access should be based on backend entitlements, not UI-only state.
-
-Entitlement sources:
-
-- **Owner**: explicit server-side allowlist for Jamie's verified email address.
-- **Supporting member**: Buttondown subscriber status or Buttondown tags.
-- **Trusted circle**: Buttondown tags are the cleanest operator interface. For example,
-  `thingy-trusted-circle`, `thingy-family`, or `thingy-close-friends`.
-- **Reader**: any verified subscriber/reader allowed into Thingy.
-
-Buttondown tags are attractive because they keep the permission UI where the audience already lives and
-avoid building a custom admin panel too early. The Librarian API should normalize whatever Buttondown
-returns into a small set of durable entitlements such as `reader`, `supporting_member`, `trusted_circle`,
-and `owner`.
-
-### Logging and Evaluation
-
-Conversation modes need first-class observability.
-
-- Store `mode`, source scope, eval status, feedback, tool traces, and artifacts on canonical server-side conversations.
-- Store `mode` on every turn/evaluation event so mode-specific failures are easy to audit.
-- Keep evaluator checks mode-aware: default Thingy should not overbuild, Research Guide should reason carefully across timelines, Thought Partner should challenge without inventing private context, and Trusted Circle should be warm without becoming ungrounded.
-- Show mode filters in the operator report.
-- Include mode in operator reports without making them verbose.
-
-### No Hidden Owner Corpus for Now
-
-The earlier roadmap proposed a private/owner corpus with unpublished drafts. That is no longer the
-default direction.
-
-Thought Partner should start by challenging Jamie using the same published archive that readers can ask
-about. That is both safer and conceptually cleaner: the mode changes the relationship to the material, not
-the material itself.
-
-If private material is ever introduced, it should be treated as a separate product decision with explicit
-visibility guarantees, tests, and operator reporting. It should not sneak in as an implementation detail
-of Thought Partner.
+Do not build new modes or mode UI without an explicit product decision.
 
 ## Near-Term Direction
 
-- **Mode rollout and permissions**: finish the operational path for granting Trusted Circle access
-  through Buttondown tags and make the operator report clearly surface mode usage.
 - **Better operator dashboard**: keep review in a local/web operator interface grounded in server-side
   conversations.
 - **Corpus freshness observability**: make it obvious when the API corpus was last built from each
@@ -243,7 +192,7 @@ Recommended shape:
 - The first version should read like something Jamie is comfortable putting on the public site, not like a
   private structured database.
 - Thingy should ingest those pages as part of the published blog corpus and use them as context for
-  answers and mode-specific reasoning.
+  answers and richer temporal reasoning.
 - Keep the shape loose at first: prose, headings, dates, and links are enough. Avoid schema until the
   product need is obvious.
 
@@ -289,30 +238,12 @@ whole archive. The long-term behavior should be:
 - Source distinction remains in the index and citations.
 - Advanced users can still inspect or influence source scope when useful.
 
-## Possible Member Features
-
-### Supporting Member Research Guide
-
-Supporting members could get a deeper mode that feels special without becoming private:
-
-- Longer synthesis.
-- Better timelines.
-- More cross-source trails.
-- "Build me a reading path" prompts.
-- Early access to experimental archive features.
-
 ## Open Decisions
 
-1. Should `Research Guide` be supporting-member-only, or available to all readers with usage limits?
-2. Which specific people should receive Trusted Circle mode?
-3. Should supporting members receive any mode beyond Research Guide?
-4. Should the temporal layer include personal entries that Thingy may use but not quote?
-5. How aggressive should Thought Partner be, and what should the evaluator consider "too much"?
-6. Should corpus/source selectors eventually disappear entirely, or remain as an advanced control?
+1. Should the temporal layer include personal entries that Thingy may use but not quote?
+2. Should corpus/source selectors eventually disappear entirely, or remain as an advanced control?
 
 ## Suggested Next Build Sequence
 
-1. Use real conversations and evaluator notes to keep tuning each mode.
-2. Decide whether Research Guide should stay supporting-member-only.
-3. Add the Trusted Circle Buttondown tags to actual people when there is a concrete invite list.
-4. Prototype one publishable timeline page and verify that Thingy can use it without over-structuring it.
+1. Use real conversations and evaluator notes to keep tuning answer quality.
+2. Prototype one publishable timeline page and verify that Thingy can use it without over-structuring it.

@@ -4,15 +4,10 @@ Concrete follow-ups for the web surface. Backend/API tasks live with the
 Librarian implementation in `librarian-thing`
 (`docs/librarian-tasks.md`).
 
-## Access And Modes
+## Access
 
-- [ ] Add Buttondown tags for people who should get Trusted Circle mode:
-  - `thingy-trusted-circle`
-  - `thingy-family`
-  - `thingy-close-friends`
-- [ ] Decide whether Research Guide remains supporting-member-only.
-- [ ] Decide whether supporting members should receive any warmer or experimental mode beyond Research Guide.
-- [ ] Keep the UI copy clear that modes change posture, not access to hidden material.
+(Conversation modes were retired 2026-09; the mode rollout tasks that lived
+here went with them. See `docs/ROADMAP.md` for the retirement record.)
 
 ## Web UX
 

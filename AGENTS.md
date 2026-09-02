@@ -58,10 +58,14 @@ server of its own - static hosting only. (The Dispatch surface was removed in 20
 redirect stub to `/chat/`. The answer text-to-speech button was removed in
 2026-08 - do not reintroduce browser speechSynthesis.)
 
-Conversation modes are backend-enforced and conversation-scoped. Current modes
-are default Thingy, Research Guide, Thought Partner, and Trusted Circle. Start
-with the published archive only; do not introduce a hidden private corpus unless
-Jamie explicitly makes that a separate product decision.
+Conversation modes were retired as a user-facing feature (the mode picker
+went in the 2026-08 chat streamline; Jamie confirmed the retirement
+2026-09-01). Every new conversation is default Thingy. Vestigial plumbing
+remains - conversations store a `mode`, the backend still entitlement-checks
+it, and reopening an old non-thingy conversation keeps its stored mode - but
+do not build new mode UI or new modes without an explicit product decision.
+The archive stays published-only; do not introduce a hidden private corpus
+unless Jamie explicitly makes that a separate product decision.
 
 ## First Checks
 
@@ -334,7 +338,7 @@ Resolve conflicts carefully and rerun the build before pushing.
 
 Ask before:
 
-- changing the public/private Thingy mode boundary
+- changing the public/private boundary of what Thingy can see or serve
 - adding new server infrastructure in this repo
 - changing auth behavior beyond UI copy/flow
 - touching deployment/DNS/CORS outside this repo
@@ -343,6 +347,6 @@ Ask before:
 
 When in doubt, start at `docs/ROADMAP.md` for direction and
 `../librarian-thing/ALIGNMENT.md` for the cross-repo map. If a task would alter the
-Librarian API contract, add a new conversation mode, or change entitlement
+Librarian API contract or change entitlement
 behavior, make sure the backend remains authoritative and the API-side reports
 can see what happened.
