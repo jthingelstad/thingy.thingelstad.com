@@ -88,7 +88,7 @@ export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdap
             scope: 'all',
             mode: 'thingy',
             conversation_id: binding.conversationId || undefined,
-          parent_request_id: parentRequestId || undefined,
+            parent_request_id: parentRequestId || undefined,
             client_context: userLocalContext(),
             user_profile: {},
             // Guests have no server-side history; the transcript rides along.
@@ -203,7 +203,12 @@ export function createThingyHistoryAdapter(binding: ThingyThreadBinding): Thread
         const declaredParent = String((message as { parent_request_id?: string }).parent_request_id || '');
         let parentId: string | null;
         if (role === 'user') {
-          parentId = declaredParent && seenAssistantIds.has(`a-${declaredParent}`) ? `a-${declaredParent}` : declaredParent ? null : previousId;
+          parentId =
+            declaredParent && seenAssistantIds.has(`a-${declaredParent}`)
+              ? `a-${declaredParent}`
+              : declaredParent
+                ? null
+                : previousId;
         } else {
           parentId = `u-${requestId}`;
         }
