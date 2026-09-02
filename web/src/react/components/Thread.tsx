@@ -18,16 +18,21 @@ import { Icon } from './Icon.tsx';
 // never a static sampled list. Tapping one sends it as the first message.
 function SuggestionChips({ suggestions }: { suggestions: string[] }) {
   const aui = useAui();
+  // DETERMINISTIC GEOMETRY: three stacked single-line rows whether the
+  // chips are skeletons or real. Wrapped pill rows re-broke the mis-click
+  // fix in live QA - long questions wrapped to a second row the skeleton
+  // never reserved, and the extra row landed under the pointer. One
+  // truncated line per chip means loading and loaded states occupy
+  // exactly the same box.
+  const CHIP_ROW =
+    'block w-full max-w-xl truncate rounded-xl border px-3.5 py-1.5 text-left text-[13.5px] leading-snug';
   if (!suggestions.length) {
-    // Hold the row's height while suggestions load so the centered empty
-    // state doesn't reflow and drop a chip under the pointer (observed
-    // mis-click). Same border/padding as real chips = same height.
     return (
-      <div className="flex min-h-9 flex-wrap gap-2" aria-hidden="true">
+      <div className="grid gap-2" aria-hidden="true">
         {[0, 1, 2].map((slot) => (
           <span
             key={slot}
-            className="w-40 animate-pulse rounded-full border border-line-soft bg-surface-2 px-3.5 py-1.5 text-[13.5px] leading-snug text-transparent select-none"
+            className={`${CHIP_ROW} animate-pulse border-line-soft bg-surface-2 text-transparent select-none`}
           >
             &nbsp;
           </span>
@@ -36,12 +41,13 @@ function SuggestionChips({ suggestions }: { suggestions: string[] }) {
     );
   }
   return (
-    <div className="flex min-h-9 flex-wrap gap-2" aria-label="Suggested questions">
-      {suggestions.map((suggestion) => (
+    <div className="grid gap-2" aria-label="Suggested questions">
+      {suggestions.slice(0, 3).map((suggestion) => (
         <button
           key={suggestion}
           type="button"
-          className="thingy-aui-suggestion rounded-full border border-line bg-surface px-3.5 py-1.5 text-left text-[13.5px] leading-snug text-ink transition-colors hover:border-accent hover:bg-accent-soft"
+          title={suggestion}
+          className={`thingy-aui-suggestion ${CHIP_ROW} border-line bg-surface text-ink transition-colors hover:border-accent hover:bg-accent-soft`}
           onClick={() => {
             trackEvent('librarian.welcome_suggestion');
             aui.composer.setText(suggestion);
