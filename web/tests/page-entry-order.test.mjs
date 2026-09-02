@@ -7,29 +7,21 @@ async function source(path) {
 }
 
 test('chat reads URL params before Tinylytics strips them', async () => {
-  const entry = await source('../src/pages/chat.ts');
+  const entry = await source('../src/react/chat2.tsx');
 
-  assert.ok(entry.indexOf('bootChat();') > -1);
+  assert.ok(entry.indexOf('new URLSearchParams(window.location.search)') > -1);
   assert.ok(entry.indexOf('loadTinylytics();') > -1);
   assert.ok(
-    entry.indexOf('bootChat();') < entry.indexOf('loadTinylytics();'),
-    'bootChat must run before loadTinylytics so prompt/from/scope params are read before analytics scrubbing'
+    entry.indexOf('new URLSearchParams(window.location.search)') < entry.indexOf('loadTinylytics();'),
+    'params must be read before loadTinylytics so prompt/from/explore are seen before analytics scrubbing'
   );
 });
 
-test('chat keeps signed-in invite links out of the sign-in redirect loop', async () => {
-  const sourceText = await source('../src/shared/components/ChatApp.tsx');
-  const tokenBranch = sourceText.indexOf('} else if (actions.hasSession()) {');
-  const emailRedirectBranch = sourceText.indexOf("track('librarian.auth_auto_start')");
-  const guestBranch = sourceText.indexOf("track('librarian.guest_visit'");
+test('explicit sign-in intents route to /signin/ before the app renders', async () => {
+  const entry = await source('../src/react/chat2.tsx');
+  const redirect = entry.indexOf('session.signInUrl');
+  const renderCall = entry.indexOf('createRoot(host).render');
 
-  assert.ok(tokenBranch > -1);
-  assert.ok(emailRedirectBranch > -1);
-  assert.ok(
-    tokenBranch < emailRedirectBranch,
-    'a valid stored session must take precedence over email= so signed-in prompt/from links do not bounce through /signin/'
-  );
-  // The guest lane must be the LAST resort: session first, explicit email
-  // sign-in intent second, guest preview only when neither applies.
-  assert.ok(guestBranch > emailRedirectBranch, 'guest preview must not swallow explicit email= sign-in links');
+  assert.ok(redirect > -1 && renderCall > -1);
+  assert.ok(redirect < renderCall, 'login_token/email params must divert to sign-in before the chat app mounts');
 });

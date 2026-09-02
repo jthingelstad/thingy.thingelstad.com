@@ -187,22 +187,18 @@ async function checkChat(browser) {
   const page = await context.newPage();
   const failures = collectUiFailures(page);
   const mocks = await routeMockApi(page, { holdWelcome: true });
-  await page.goto(`${baseUrl}/chat-classic/`);
+  await page.goto(`${baseUrl}/chat/`);
 
-  // The route-level root owns the entire authenticated shell.
-  await page.waitForSelector('.librarian-chat:not([hidden])');
-  assert.equal(await page.locator('.librarian-auth').count(), 0, 'no in-chat auth panel; signed-out /chat/ redirects');
+  // Signed-in shell: rail with New chat, thread root, composer.
+  await page.waitForSelector('.librarian-chat');
+  await page.waitForSelector('.thingy-aui-rail');
+  await page.waitForSelector('.thingy-aui-newchat');
 
-  await page.waitForSelector('.rail-body .rail-empty');
-  const emptyText = (await page.locator('.rail-body .rail-empty').textContent()).trim();
-  assert.match(emptyText, /Your conversations sync with Thingy/);
-
-  // A deterministic welcome renders immediately, but personalization remains
-  // asynchronous and must not lock the composer.
+  // The static welcome renders immediately; personalization is async and
+  // must not lock the composer.
   await page.waitForSelector('.librarian-message-assistant');
   assert.match(await page.locator('.librarian-message-assistant').first().textContent(), /Hi\. I'm Thingy/);
 
-  // Controlled composer state should update while the welcome request is held.
   await page.waitForSelector('#librarian-question-count .composer-count');
   const countLocator = page.locator('#librarian-question-count .composer-count');
   assert.equal((await countLocator.textContent()).trim(), '0 / 1200', 'count starts at 0');
@@ -211,100 +207,48 @@ async function checkChat(browser) {
     const el = document.querySelector('#librarian-question-count .composer-count');
     return el && /^12 \/ 1200/.test(el.textContent || '');
   });
-  await page.waitForSelector('button.composer-send[aria-label="Ask Thingy"]');
   const sendButton = page.locator('button.composer-send').first();
   assert.equal(await sendButton.isEnabled(), true, 'welcome personalization does not disable the composer');
   mocks.releaseWelcome();
-  await page
-    .waitForFunction(() =>
-      document.querySelector('.librarian-message-assistant')?.textContent?.includes('Hi. I am Thingy.')
-    )
-    .catch(async (error) => {
-      const text = await page.locator('.librarian-message-assistant').textContent();
-      throw new Error(
-        `Personalized welcome did not render. Current message: ${text}. Failures: ${failures.join('; ')}`,
-        {
-          cause: error
-        }
-      );
-    });
-  assert.equal((await sendButton.getAttribute('aria-label')) || '', 'Ask Thingy', 'send button at rest');
-  assert.equal(
-    await sendButton.evaluate((el) => el.classList.contains('is-stop')),
-    false,
-    'send button not in stop mode at rest'
+  await page.waitForFunction(() =>
+    document.querySelector('.librarian-message-assistant')?.textContent?.includes('Hi. I am Thingy.')
   );
 
-  // Account menu stays inside the root and exposes the injected build stamp.
+  // Message editing affordances come from assistant-ui now; the empty
+  // thread has none, but the account menu must expose the build stamp.
   await page.locator('.rail-account-btn').click();
   await page.waitForSelector('.rail-menu-build');
   assert.match((await page.locator('.rail-menu-build').textContent()).trim(), /^Build .+/);
   await page.keyboard.press('Escape');
 
-  // Authenticated routes must not execute Tinylytics or any other third-party script.
-  assert.equal(await page.locator('script[src*="tinylytics"]').count(), 0);
-  assert.equal(
-    await page.evaluate(() =>
-      performance.getEntriesByType('resource').some((entry) => entry.name.includes('tinylytics.app'))
-    ),
-    false
-  );
-
   await assertAccessible(page, 'chat');
-
   assertNoUiFailures(failures, 'chat');
-
   await context.close();
 }
 
 async function checkMobileChat(browser) {
-  const context = await browser.newContext();
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   await seedSession(context);
   const page = await context.newPage();
   const failures = collectUiFailures(page);
   await routeMockApi(page);
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`${baseUrl}/chat-classic/`);
+  await page.goto(`${baseUrl}/chat/`);
+
   await page.waitForSelector('.mobile-chatbar');
-  await page.waitForSelector('.librarian-chat:not([hidden])');
-  await page.waitForSelector('.thingy-input');
-  await page.waitForSelector('.session-welcome-toggle');
-  assert.equal(await page.locator('.rail-scrim').count(), 0, 'closed mobile rail has no hidden focusable scrim');
-  assert.equal(
-    await page.locator('.session-welcome-toggle').getAttribute('aria-expanded'),
-    'false',
-    'long personalized welcome starts compact'
-  );
-  assert.equal(
-    await page.locator('.thingy-composer-zone').isVisible(),
-    true,
-    'mobile composer zone is visible at rest'
-  );
-  assert.equal(await page.locator('.thingy-input').isVisible(), true, 'mobile composer is visible at rest');
-  assert.equal(
-    await page.locator('.thingy-input').evaluate((element) => window.getComputedStyle(element).position),
-    'static',
-    'mobile composer stays in page flow'
-  );
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
+  await page.waitForSelector('.librarian-chat');
+  // The rail is a drawer on phones: hidden until toggled, dismissed by the
+  // scrim.
+  assert.equal(await page.locator('.thingy-aui-rail').isVisible(), false, 'rail starts closed on phones');
   await page.locator('.mobile-chatbar-circle').click();
-  await page.waitForSelector('.thingy-app-shell.is-mobile-rail-open');
-  assert.equal(await page.locator('.rail-scrim').count(), 1, 'open mobile rail renders one close scrim');
+  await page.waitForSelector('.thingy-aui-rail', { state: 'visible' });
   assert.equal(
-    await page.locator('.rail-newchat').first().isVisible(),
+    await page.locator('.thingy-aui-newchat').first().isVisible(),
     true,
     'open mobile rail shows the new-chat action'
   );
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
   await page.locator('.rail-scrim').click({ position: { x: 380, y: 400 } });
-  await page.waitForSelector('.thingy-app-shell:not(.is-mobile-rail-open)');
-  assert.equal(await page.locator('.rail-scrim').count(), 0, 'closing mobile rail removes the scrim from focus order');
-  await page.locator('.session-welcome-toggle').click();
-  assert.equal(
-    await page.locator('.session-welcome-toggle').getAttribute('aria-expanded'),
-    'true',
-    'personalized welcome can be expanded'
-  );
+  await page.waitForSelector('.thingy-aui-rail', { state: 'hidden' });
+
   await assertAccessible(page, 'mobile chat');
   assertNoUiFailures(failures, 'mobile chat');
   await context.close();

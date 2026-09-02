@@ -10,6 +10,7 @@ import { librarianApiUrl, librarianStreamUrl } from '../shared/thingy-config.ts'
 import { userLocalContext } from '../shared/thingy-local-context.ts';
 import { postJsonStream, read } from '../shared/thingy-stream.ts';
 import { AGENT_RESPONSE_TIMEOUT_MS } from '../shared/thingy-timeouts.ts';
+import { isAuthError } from '../shared/thingy-url.ts';
 import * as session from '../shared/thingy-session.ts';
 
 // Mutable per-page binding shared between the adapter, the history adapter,
@@ -62,24 +63,35 @@ export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdap
       const controller = new AbortController();
       abortSignal.addEventListener('abort', () => controller.abort(), { once: true });
 
-      const response = await postJsonStream({
-        baseUrl: librarianStreamUrl(),
-        path: '/chat',
-        controller,
-        timeoutMs: AGENT_RESPONSE_TIMEOUT_MS,
-        abortMessage: 'Thingy spent too long in the archive. Please try again with a narrower angle.',
-        headers: session.authHeaders(),
-        payload: {
-          message: question,
-          scope: 'all',
-          mode: 'thingy',
-          conversation_id: binding.conversationId || undefined,
-          client_context: userLocalContext(),
-          user_profile: {},
-          // Guests have no server-side history; the transcript rides along.
-          ...(binding.guest ? { history: guestHistoryFromMessages(messages.slice(0, -1)) } : {})
+      let response: Response;
+      try {
+        response = await postJsonStream({
+          baseUrl: librarianStreamUrl(),
+          path: '/chat',
+          controller,
+          timeoutMs: AGENT_RESPONSE_TIMEOUT_MS,
+          abortMessage: 'Thingy spent too long in the archive. Please try again with a narrower angle.',
+          headers: session.authHeaders(),
+          payload: {
+            message: question,
+            scope: 'all',
+            mode: 'thingy',
+            conversation_id: binding.conversationId || undefined,
+            client_context: userLocalContext(),
+            user_profile: {},
+            // Guests have no server-side history; the transcript rides along.
+            ...(binding.guest ? { history: guestHistoryFromMessages(messages.slice(0, -1)) } : {})
+          }
+        });
+      } catch (error) {
+        // An expired session answers 401: clear it and hand off to sign-in
+        // instead of leaving a dead composer (classic-chat behavior).
+        if (!binding.guest && isAuthError(error)) {
+          session.clearAuth();
+          window.location.href = session.signInUrl('/chat/');
         }
-      });
+        throw error;
+      }
 
       const state: StreamedTurnState = { activity: [], text: '', citations: [], requestId: '' };
       const queue: Array<{ eventName: string; data: ThingyStreamData }> = [];

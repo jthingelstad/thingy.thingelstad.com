@@ -17,8 +17,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         home: resolve(__dirname, 'index.html'),
-        // The classic (Preact) chat, kept for rollback after the 2026-09-02
-        // assistant-ui cutover; remove once the React chat has settled.
+        // /chat-classic/ was the rollback route during the assistant-ui
+        // migration; now a redirect stub to /chat/ (like /dispatch/).
         chatClassic: resolve(__dirname, 'chat-classic/index.html'),
         // The Dispatch surface was removed in 2026-08; /dispatch/ is a static
         // redirect stub (no JS entry) kept so old links land on /chat/.

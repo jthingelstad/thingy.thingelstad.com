@@ -161,6 +161,7 @@
    set only at desktop - never unconditionally (that would defeat the
    phone drawer's display: none). */
 .thingy-aui-rail {
+  position: relative;
   flex-direction: column;
   min-height: 0;
   border-right: 1px solid var(--line);
@@ -274,8 +275,91 @@
   stroke-width: 2;
 }
 
-.thingy-aui-rail-foot {
-  margin-top: auto;
-  padding: 8px 6px;
-  font-size: 12.5px;
+/* Feature-port additions (2026-09-02): composer voice + counter, rail
+   collapse, account panel seat. */
+
+.thingy-aui-composer-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.thingy-aui-mic {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.thingy-aui-mic.is-listening {
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.thingy-aui-mic svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.thingy-aui-count {
+  color: var(--ink-soft);
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 12px;
+  margin-right: 8px;
+}
+
+.thingy-aui-collapse {
+  position: absolute;
+  top: 10px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.thingy-aui-collapse:hover {
+  color: var(--accent-deep);
+}
+
+.thingy-aui-collapse svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+}
+
+@media (width >= 641px) {
+  .thingy-app-shell.is-collapsed .thingy-aui-rail {
+    padding: 14px 6px;
+  }
+
+  .thingy-app-shell.is-collapsed .thingy-aui-rail .rail-mark {
+    width: 44px;
+    height: 44px;
+  }
+
+  .thingy-app-shell.is-collapsed .thingy-aui-rail-label,
+  .thingy-app-shell.is-collapsed .thingy-aui-recents,
+  .thingy-app-shell.is-collapsed .thingy-aui-rail-foot,
+  .thingy-app-shell.is-collapsed .thingy-aui-newchat {
+    display: none;
+  }
 }

@@ -7,10 +7,18 @@ import {
   ErrorPrimitive,
   MessagePrimitive,
   ThreadPrimitive,
+  useAui,
   useAuiState,
   useLocalRuntime
 } from '@assistant-ui/react';
+import { librarianStreamUrl } from '../shared/thingy-config.ts';
 import { renderMarkdown } from '../shared/thingy-markdown.ts';
+import { createChatMessageActions } from '../shared/thingy-message-actions.ts';
+import { createDictationController, speechInputSupported } from '../shared/thingy-voice.ts';
+import { postJsonStream, read as readStream } from '../shared/thingy-stream.ts';
+import { AGENT_SETUP_TIMEOUT_MS } from '../shared/thingy-timeouts.ts';
+import { userLocalContext } from '../shared/thingy-local-context.ts';
+import { AccountPanel } from './AccountPanel.tsx';
 import { trackEvent } from '../shared/thingy-analytics.ts';
 import { iconSvg } from '../shared/thingy-icons.ts';
 import { activeDialog, confirmDialog, promptDialog } from '../shared/stores/dialog-store.ts';
@@ -21,6 +29,8 @@ import {
   createThingyHistoryAdapter,
   type ThingyThreadBinding
 } from './thingy-runtime.ts';
+
+const messageActionsService = createChatMessageActions({ track: (name, value) => trackEvent(name, value) });
 
 const DEFAULT_WELCOME = "Hi. I'm Thingy. Ask me what you're curious about and I'll help you explore the archive.";
 const GUEST_WELCOME =
@@ -85,12 +95,8 @@ function ActivityPart(props: { text: string }) {
   );
 }
 
-function copyMessageText(event: React.MouseEvent<HTMLButtonElement>) {
-  const host = (event.currentTarget as HTMLElement).closest('.librarian-message');
-  const content = host?.querySelector('.librarian-answer-content');
-  const text = content?.textContent || '';
-  if (text) void navigator.clipboard?.writeText(text).catch(() => {});
-  trackEvent('librarian.answer_copy', 'plain');
+function messageHostOf(event: React.MouseEvent<HTMLButtonElement>) {
+  return (event.currentTarget as HTMLElement).closest<HTMLElement>('.librarian-message');
 }
 
 function AssistantMessage() {
@@ -103,8 +109,27 @@ function AssistantMessage() {
         </ErrorPrimitive.Root>
       </MessagePrimitive.Error>
       <div className="librarian-feedback">
-        <button type="button" aria-label="Copy answer" title="Copy answer" onClick={copyMessageText}>
+        <button
+          type="button"
+          aria-label="Copy answer"
+          title="Copy answer"
+          onClick={(event) => {
+            const host = messageHostOf(event);
+            if (host) void messageActionsService.copyAnswerRichText(host);
+          }}
+        >
           <Icon name="copy" />
+        </button>
+        <button
+          type="button"
+          aria-label="Share answer"
+          title="Share answer"
+          onClick={(event) => {
+            const host = messageHostOf(event);
+            if (host) void messageActionsService.shareAnswer(host);
+          }}
+        >
+          <Icon name="share" />
         </button>
         <ActionBarPrimitive.Root hideWhenRunning autohide="never" className="thingy-aui-actionbar">
           <ActionBarPrimitive.FeedbackPositive asChild>
@@ -150,10 +175,29 @@ function BranchPickerFooter() {
 }
 
 function UserMessage() {
+  const promptText = useAuiState((state) =>
+    state.message.content.map((part) => ('text' in part ? String(part.text || '') : '')).join('')
+  );
   return (
     <MessagePrimitive.Root className="librarian-message librarian-message-user">
       <MessagePrimitive.Parts />
       <div className="librarian-prompt-actions thingy-aui-user-actions">
+        <button
+          type="button"
+          aria-label="Copy prompt"
+          title="Copy prompt"
+          onClick={() => void messageActionsService.copyPrompt(promptText)}
+        >
+          <Icon name="copy" />
+        </button>
+        <button
+          type="button"
+          aria-label="Share prompt"
+          title="Share prompt"
+          onClick={() => void messageActionsService.sharePrompt(promptText)}
+        >
+          <Icon name="share" />
+        </button>
         <ActionBarPrimitive.Root hideWhenRunning autohide="never" className="thingy-aui-actionbar">
           <ActionBarPrimitive.Edit asChild>
             <button type="button" aria-label="Edit message" title="Edit and resend">
@@ -187,7 +231,34 @@ function EditComposer() {
 
 // ---------------------------------------------------------------------------
 
+const MAX_QUESTION_CHARS = 1200;
+
 function Composer({ guest }: { guest: boolean }) {
+  const aui = useAui();
+  const text = useAuiState((state) => state.composer.text);
+  const textRef = useRef('');
+  textRef.current = text;
+  const [listening, setListening] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState('');
+  const dictationRef = useRef<ReturnType<typeof createDictationController> | null>(null);
+  const speechSupported = speechInputSupported();
+  useEffect(() => {
+    if (!speechSupported) return undefined;
+    dictationRef.current = createDictationController({
+      maxChars: MAX_QUESTION_CHARS,
+      getText: () => textRef.current,
+      onText: (value) => aui.composer.setText(value),
+      onStatus: setVoiceStatus,
+      onListeningChange: setListening,
+      onTrack: (name, value) => trackEvent(name, value)
+    });
+    return () => {
+      dictationRef.current?.dispose();
+      dictationRef.current = null;
+    };
+    // Dictation owns a SpeechRecognition instance for the composer's life.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <div className="thingy-composer-zone">
       <ComposerPrimitive.Root className="librarian-form librarian-question-form thingy-input composer-box">
@@ -199,10 +270,32 @@ function Composer({ guest }: { guest: boolean }) {
           className="thingy-aui-input"
           placeholder="Ask Thingy…"
           rows={1}
+          maxLength={MAX_QUESTION_CHARS}
           autoFocus
         />
         <div className="thingy-aui-composer-row">
-          <span className="thingy-aui-composer-hint">{guest ? 'Guest preview' : ''}</span>
+          <span className="thingy-aui-composer-left">
+            {speechSupported ? (
+              <button
+                type="button"
+                className={`thingy-aui-mic${listening ? ' is-listening' : ''}`}
+                aria-label={listening ? 'Stop voice input' : 'Ask by voice'}
+                aria-pressed={listening}
+                title={listening ? 'Stop voice input' : 'Ask by voice'}
+                onClick={() => (listening ? dictationRef.current?.stop() : dictationRef.current?.start())}
+              >
+                <Icon name="mic" />
+              </button>
+            ) : null}
+            <span className="thingy-aui-composer-hint" aria-live="polite">
+              {voiceStatus || (guest ? 'Guest preview' : '')}
+            </span>
+          </span>
+          <span id="librarian-question-count" className="thingy-aui-count" aria-hidden="true">
+            <span className="composer-count">
+              {text.length} / {MAX_QUESTION_CHARS}
+            </span>
+          </span>
           <ThreadPrimitive.If running={false}>
             <ComposerPrimitive.Send asChild>
               <button type="button" className="composer-send" aria-label="Ask Thingy">
@@ -222,6 +315,49 @@ function Composer({ guest }: { guest: boolean }) {
       <p className="thingy-aui-disclaimer">Thingy is AI and can make mistakes. Please double-check responses.</p>
     </div>
   );
+}
+
+function useAgentWelcome(guest: boolean, seeded: boolean) {
+  const [welcomeText, setWelcomeText] = useState(guest ? GUEST_WELCOME : DEFAULT_WELCOME);
+  useEffect(() => {
+    if (guest || seeded) return undefined;
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await postJsonStream({
+          baseUrl: librarianStreamUrl(),
+          path: '/welcome',
+          controller,
+          timeoutMs: AGENT_SETUP_TIMEOUT_MS,
+          abortMessage: 'welcome timeout',
+          headers: session.authHeaders(),
+          payload: {
+            scope: 'all',
+            mode: 'thingy',
+            client_context: userLocalContext(),
+            user_profile: { preferred_name: String(session.storedProfile().preferred_name || '') }
+          }
+        });
+        let text = '';
+        await readStream(response, (eventName, data) => {
+          if (eventName === 'answer_delta') {
+            text += String(data.delta || '');
+            setWelcomeText(text || DEFAULT_WELCOME);
+          } else if (eventName === 'answer') {
+            text = String(data.answer || text);
+            setWelcomeText(text || DEFAULT_WELCOME);
+          }
+        });
+        trackEvent('librarian.welcome_success');
+      } catch {
+        trackEvent('librarian.welcome_error', 'client');
+      }
+    })();
+    return () => controller.abort();
+    // One welcome per page load.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return welcomeText;
 }
 
 function Thread({ guest, welcome }: { guest: boolean; welcome: string }) {
@@ -492,21 +628,67 @@ export function Chat2App({ initial }: { initial: Chat2Initial }) {
     void refreshConversations();
   }
 
-  const welcome = guest ? GUEST_WELCOME : DEFAULT_WELCOME;
+  const welcome = useAgentWelcome(guest, Boolean(initial.prompt));
+  const [railCollapsed, setRailCollapsed] = useState(() => {
+    try {
+      return window.localStorage.getItem('thingyRailCollapsed') === '1';
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('thingyRailCollapsed', railCollapsed ? '1' : '0');
+    } catch {
+      /* private browsing */
+    }
+  }, [railCollapsed]);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        newConversation();
+      }
+    }
+    function onStorage(event: StorageEvent) {
+      if (event.key !== null && event.key !== session.signedInHintKey && event.key !== session.storageKey) return;
+      const nowSignedIn = session.sessionActive();
+      // Signed out (or in) from another tab: reload into the right mode.
+      if (nowSignedIn !== signedIn) window.location.reload();
+    }
+    document.addEventListener('keydown', onKeyDown);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('storage', onStorage);
+    };
+    // Bound once; newConversation identity is stable enough for a shortcut.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <section className="thingy-page">
       <h1 className="sr-only">Thingy chat</h1>
       <div
-        className={`thingy-app-shell${guest ? ' is-guest' : ''}${mobileRailOpen ? ' is-mobile-rail-open' : ''}`}
+        className={`thingy-app-shell${guest ? ' is-guest' : ''}${mobileRailOpen ? ' is-mobile-rail-open' : ''}${railCollapsed ? ' is-collapsed' : ''}`}
         id="thingy-app-shell"
       >
         {guest ? null : (
           <nav className="rail thingy-aui-rail" aria-label="Conversations">
             <div className="thingy-aui-rail-head">
+              <button
+                type="button"
+                className="thingy-aui-collapse"
+                aria-label={railCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                title={railCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                onClick={() => setRailCollapsed(!railCollapsed)}
+              >
+                <Icon name="panel-left" />
+              </button>
               <img className="rail-mark" src="/img/thingy.png" alt="" width="1022" height="1022" />
               <button type="button" className="rail-newchat thingy-aui-newchat" onClick={newConversation}>
-                <Icon name="pencil" /> New chat
+                <Icon name="pencil" /> {railCollapsed ? '' : 'New chat'}
               </button>
             </div>
             <div className="rail-body">
@@ -555,7 +737,7 @@ export function Chat2App({ initial }: { initial: Chat2Initial }) {
               </ul>
             </div>
             <div className="thingy-aui-rail-foot">
-              <a href="/chat-classic/">Classic chat</a>
+              <AccountPanel />
             </div>
           </nav>
         )}
