@@ -3,6 +3,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Rail, type ConversationSummary } from '../src/react/components/Rail.tsx';
 import { TipProvider } from '../src/react/components/Tip.tsx';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 afterEach(cleanup);
 
@@ -13,21 +14,24 @@ function iso(daysAgo: number) {
 }
 
 function renderRail(conversations: ConversationSummary[], onSearch?: (q: string) => Promise<never[]>) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <TipProvider>
-      <Rail
-        collapsed={false}
-        onToggleCollapsed={noop}
-        conversations={conversations}
-        activeId=""
-        onSelect={noop}
-        onNew={noop}
-        onShare={noop}
-        onRename={noop}
-        onDelete={noop}
-        onSearch={onSearch}
-      />
-    </TipProvider>
+    <QueryClientProvider client={queryClient}>
+      <TipProvider>
+        <Rail
+          collapsed={false}
+          onToggleCollapsed={noop}
+          conversations={conversations}
+          activeId=""
+          onSelect={noop}
+          onNew={noop}
+          onShare={noop}
+          onRename={noop}
+          onDelete={noop}
+          onSearch={onSearch}
+        />
+      </TipProvider>
+    </QueryClientProvider>
   );
 }
 

@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import '../styles/thingy.css';
 import '../styles/thingy-aui.css';
 import { registerClientErrorTracking } from '../shared/thingy-analytics.ts';
@@ -8,6 +9,10 @@ import { loadTinylytics } from '../shared/thingy-tinylytics-loader.ts';
 import { bootWebMcp } from '../shared/thingy-webmcp.ts';
 import * as session from '../shared/thingy-session.ts';
 import { ChatApp, type ChatInitial } from './ChatApp.tsx';
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: 1, staleTime: 30_000 } }
+});
 import { initTheme } from '../shared/thingy-theme.ts';
 
 initTheme();
@@ -30,7 +35,12 @@ if (loginToken || email) {
   window.location.href = session.signInUrl('/chat/');
 } else {
   const host = document.getElementById('thingy-react-root');
-  if (host) createRoot(host).render(<ChatApp initial={initial} />);
+  if (host)
+    createRoot(host).render(
+      <QueryClientProvider client={queryClient}>
+        <ChatApp initial={initial} />
+      </QueryClientProvider>
+    );
 }
 loadTinylytics();
 void bootWebMcp();

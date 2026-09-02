@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useState, type RefObject } from 'react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { AccountPanel } from '../AccountPanel.tsx';
 import { Icon } from './Icon.tsx';
 import { Tip } from './Tip.tsx';
@@ -65,29 +66,24 @@ export function Rail({
   onSearch?: (query: string) => Promise<Array<{ conversation_id: string; snippet: string }>>;
 }) {
   const [filter, setFilter] = useState('');
-  // Full-content matches from the server (contract 4.5): debounced, and a
-  // sequence guard drops stale responses when the reader keeps typing.
-  const [contentMatches, setContentMatches] = useState<Map<string, string>>(new Map());
-  const searchSeq = useRef(0);
+  // Full-content matches from the server (contract 4.5) as a query keyed
+  // on the debounced needle: caching, stale-response handling, and
+  // previous-results-while-typing come from TanStack Query.
+  const [needle, setNeedle] = useState('');
   useEffect(() => {
-    const needle = filter.trim();
-    if (needle.length < 2 || !onSearch) {
-      setContentMatches(new Map());
-      return undefined;
-    }
-    const seq = ++searchSeq.current;
-    const timer = window.setTimeout(() => {
-      onSearch(needle)
-        .then((matches) => {
-          if (searchSeq.current !== seq) return;
-          setContentMatches(new Map(matches.map((match) => [match.conversation_id, match.snippet])));
-        })
-        .catch(() => {
-          /* title matches still apply */
-        });
-    }, 300);
+    const timer = window.setTimeout(() => setNeedle(filter.trim()), 300);
     return () => window.clearTimeout(timer);
-  }, [filter, onSearch]);
+  }, [filter]);
+  const { data: searchMatches = [] } = useQuery({
+    queryKey: ['conversation-search', needle],
+    enabled: needle.length >= 2 && Boolean(onSearch),
+    placeholderData: keepPreviousData,
+    queryFn: () => onSearch!(needle)
+  });
+  const contentMatches = useMemo(() => {
+    if (filter.trim().length < 2) return new Map<string, string>();
+    return new Map(searchMatches.map((match) => [match.conversation_id, match.snippet]));
+  }, [searchMatches, filter]);
   const groups = useMemo(() => {
     const needle = filter.trim().toLowerCase();
     const visible = needle

@@ -2,7 +2,8 @@
 // dialogs, keyboard shortcuts, and conversation actions. Message-level UI
 // lives in components/; the wire protocol lives in thingy-runtime.ts.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { confirmDialog, promptDialog } from '../shared/stores/dialog-store.ts';
 import { trackEvent } from '../shared/thingy-analytics.ts';
 import * as session from '../shared/thingy-session.ts';
@@ -30,11 +31,30 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
   // exchange, so onConversationId updates activeId (rail highlight) only.
   const [mountedId, setMountedId] = useState('');
   const [threadEpoch, setThreadEpoch] = useState(0);
-  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [guestRemaining, setGuestRemaining] = useState<number | null>(null);
   const [mobileRailOpen, setMobileRailOpen] = useState(false);
   const bindingRef = useRef<ThingyThreadBinding | null>(null);
   const filterInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Server state via TanStack Query (2026-09-03): the conversation list
+  // is a cached query, mutations update it optimistically, and everything
+  // that used to call refreshConversations() invalidates instead.
+  const queryClient = useQueryClient();
+  const { data: conversations = [] } = useQuery({
+    queryKey: ['conversations'],
+    enabled: !guest,
+    queryFn: async (): Promise<ConversationSummary[]> => {
+      const data = await session.postJson('/conversations', { action: 'list' }, session.authHeaders());
+      const list = Array.isArray(data.conversations) ? data.conversations : [];
+      return list.map((entry) => ({
+        id: String(entry.conversation_id || entry.id || ''),
+        title: String(entry.title || 'Untitled chat'),
+        shared_at: String(entry.shared_at || ''),
+        updated_at: String(entry.updated_at || '')
+      }));
+    }
+  });
+  const invalidateConversations = () => void queryClient.invalidateQueries({ queryKey: ['conversations'] });
 
   const conversationKey = mountedId || `new-${threadEpoch}`;
   const binding = useMemo<ThingyThreadBinding>(() => {
@@ -43,42 +63,57 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
       guest,
       onConversationId: (id) => {
         setActiveId(id);
-        void refreshConversations();
+        invalidateConversations();
       },
       onGuestRemaining: setGuestRemaining,
-      onTurnRecorded: () => void refreshConversations()
+      onTurnRecorded: () => invalidateConversations()
     };
     bindingRef.current = next;
     return next;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationKey, guest]);
 
-  const refreshConversations = useCallback(async () => {
-    if (guest) return;
-    try {
-      const data = await session.postJson('/conversations', { action: 'list' }, session.authHeaders());
-      const list = Array.isArray(data.conversations) ? data.conversations : [];
-      setConversations(
-        list.map((entry) => ({
-          id: String(entry.conversation_id || entry.id || ''),
-          title: String(entry.title || 'Untitled chat'),
-          shared_at: String(entry.shared_at || ''),
-          updated_at: String(entry.updated_at || '')
-        }))
-      );
-    } catch {
-      /* rail stays as-is */
-    }
-  }, [guest]);
-
   useEffect(() => {
-    if (!guest) void refreshConversations();
     // Event name predates the chat2->chat rename; kept for Tinylytics
     // continuity.
     trackEvent('librarian.chat2_visit', guest ? 'guest' : 'reader');
     // Boot effect: runs once per page load by design.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const renameMutation = useMutation({
+    mutationFn: async ({ id, title }: { id: string; title: string }) =>
+      session.postJson('/conversations', { action: 'rename', conversation_id: id, title }, session.authHeaders()),
+    onMutate: async ({ id, title }) => {
+      await queryClient.cancelQueries({ queryKey: ['conversations'] });
+      const previous = queryClient.getQueryData<ConversationSummary[]>(['conversations']);
+      queryClient.setQueryData<ConversationSummary[]>(['conversations'], (old = []) =>
+        old.map((entry) => (entry.id === id ? { ...entry, title } : entry))
+      );
+      return { previous };
+    },
+    onError: (_error, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(['conversations'], context.previous);
+    },
+    onSettled: invalidateConversations
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) =>
+      session.postJson('/conversations', { action: 'delete', conversation_id: id }, session.authHeaders()),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['conversations'] });
+      const previous = queryClient.getQueryData<ConversationSummary[]>(['conversations']);
+      queryClient.setQueryData<ConversationSummary[]>(['conversations'], (old = []) =>
+        old.filter((entry) => entry.id !== id)
+      );
+      return { previous };
+    },
+    onError: (_error, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(['conversations'], context.previous);
+    },
+    onSettled: invalidateConversations
+  });
 
   function newConversation() {
     setActiveId('');
@@ -101,9 +136,8 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
       danger: true
     });
     if (!ok) return;
-    await session.postJson('/conversations', { action: 'delete', conversation_id: id }, session.authHeaders());
     if (id === activeId) newConversation();
-    void refreshConversations();
+    deleteMutation.mutate(id);
   }
 
   async function renameConversation(id: string, current: string) {
@@ -116,8 +150,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
       })
     )?.trim();
     if (!title || title === current) return;
-    await session.postJson('/conversations', { action: 'rename', conversation_id: id, title }, session.authHeaders());
-    void refreshConversations();
+    renameMutation.mutate({ id, title });
   }
 
   async function shareConversation(id: string, shared: boolean) {
@@ -148,7 +181,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
       await promptDialog({ title: 'Copy this share link', initialValue: url, confirmLabel: 'Done', hideCancel: true });
     }
     trackEvent('librarian.share_link_create');
-    void refreshConversations();
+    invalidateConversations();
   }
 
   const { text: welcome, suggestions } = useAgentWelcome(guest, Boolean(initial.prompt));
@@ -249,12 +282,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                 title={conversations.find((entry) => entry.id === activeId)?.title || 'New chat'}
                 canRename={Boolean(activeId)}
                 onRename={async (title) => {
-                  await session.postJson(
-                    '/conversations',
-                    { action: 'rename', conversation_id: activeId, title },
-                    session.authHeaders()
-                  );
-                  void refreshConversations();
+                  renameMutation.mutate({ id: activeId, title });
                 }}
               />
               <div className="mobile-chatbar-actions">
