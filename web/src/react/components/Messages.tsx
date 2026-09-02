@@ -46,6 +46,7 @@ function formatTokens(count: number) {
 
 function ResponseTimer() {
   const running = useAuiState((state) => state.message.status?.type === 'running');
+  const messageId = useAuiState((state) => state.message.id);
   const receipt = useAuiState(
     (state) =>
       (state.message.metadata?.custom as { receipt?: { duration_ms?: number; total_tokens?: number } } | undefined)
@@ -55,14 +56,25 @@ function ResponseTimer() {
   const [elapsed, setElapsed] = useState(0);
   const startRef = useRef(0);
   const sawRunRef = useRef(false);
+  const idRef = useRef(messageId);
+  // assistant-ui renders message slots keyed by INDEX, so this component
+  // instance serves whichever message occupies the slot - branch switches
+  // and regenerations arrive as id/run changes, not remounts.
+  if (idRef.current !== messageId) {
+    idRef.current = messageId;
+    startRef.current = 0;
+    sawRunRef.current = false;
+  }
   useEffect(() => {
     if (!running) {
       if (startRef.current) setElapsed(Date.now() - startRef.current);
       return;
     }
     sawRunRef.current = true;
-    if (!startRef.current) startRef.current = Date.now();
-    setElapsed(Date.now() - startRef.current);
+    // Each run measures from ITS OWN start - a regenerate must not show
+    // cumulative time since the original generation.
+    startRef.current = Date.now();
+    setElapsed(0);
     const tick = window.setInterval(() => setElapsed(Date.now() - startRef.current), 1000);
     return () => window.clearInterval(tick);
   }, [running]);

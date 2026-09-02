@@ -3,7 +3,9 @@
 Thingy is the standalone web home for Jamie Thingelstad's archive agent:
 `https://thingy.thingelstad.com/`.
 
-Surfaces: the chat app (`/chat/`), sign-in (`/signin/`), and two static
+Surfaces: the chat app (`/chat/`), sign-in (`/signin/`), the live
+shared-conversation pages (`/c/<token>` - a share link mounts the real
+thread so visitors can ask follow-ups in place), and two static
 content pages - `/about/` (what Thingy is, the archive inventory, and how it
 works) and `/connect/` (adding the Librarian MCP server at
 `librarian.thingelstad.com/mcp` to Claude, ChatGPT, Claude Code, or any MCP
@@ -74,6 +76,14 @@ link. Non-numeric or out-of-range values are ignored.
 Example:
 
 - `https://thingy.thingelstad.com/chat/?issue=348`
+
+### `conversation`
+
+The id of the conversation to open. The chat app keeps this parameter in
+sync as you move between conversations - permalinks work, back/forward
+walk the conversations you visited, and reload restores the open one.
+Signed-in readers only; guests never adopt a deep-linked id. This is the
+one Thingy parameter deliberately not stripped before analytics loads.
 
 ### `email`
 
@@ -165,12 +175,12 @@ Enabled Tinylytics features:
 - Beacon delivery for outbound links with `beacon`.
 - Tinylytics Webmention endpoint in the document head.
 
-The executable Tinylytics embed only loads on the public homepage (the
-loader is called from every page for URL-parameter hygiene, but no-ops off
-`/`). Chat and sign-in deliberately do not execute third-party JavaScript
-because those routes handle one-time login values (magic tokens, codes) and
-session state; the session credential itself is an HttpOnly cookie no script
-can read, and keeping third-party code out preserves that guarantee. Existing event hooks remain safe no-ops when the embed is absent.
+The minified Tinylytics embed loads on every page (since 2026-09-01;
+previously homepage-only, which silenced all app events). The loader
+strips one-time login values and other control parameters from the URL
+BEFORE the embed executes, and the session credential is an HttpOnly
+cookie no script can read. Event hooks remain safe no-ops when the embed
+is absent (localhost, `tinylytics_ignore`).
 
 Public hit counters, country flags, and kudos are intentionally not shown in
 the current chat-client UI.

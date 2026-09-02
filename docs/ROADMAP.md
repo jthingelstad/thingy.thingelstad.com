@@ -84,7 +84,7 @@ product direction.
 - Librarian (`librarian-thing`) owns one generated, versioned contract for successful Librarian JSON responses and SSE events.
 - Thingy validates live payloads against that artifact and negotiates the supported major contract version
   on every request. Additive changes remain compatible within a major; breaking changes require a new
-  major. The contract is currently 4.0.0.
+  major. The contract is currently 4.8.0 (4.x line: share links 4.0, branching 4.3, welcome suggestions 4.4, rail search 4.5, history paging 4.6, live share continuation 4.7, durable receipts 4.8).
 
 ### Public MCP + Archive Intelligence (2026-08)
 
@@ -139,7 +139,7 @@ product direction.
 - Sharing pins the conversation for a year (`ttl_floor`), so links outlive
   the 45-day conversation retention cadence.
 - The email-me-this-answer feature was retired in the same change; share
-  links replaced it. Contract 4.0.0 carries both halves.
+  links replaced it. Contract 4.0.0 carried both halves; live continuation landed in 4.7, durable receipts in 4.8.
 
 ### Guest Preview (2026-09)
 

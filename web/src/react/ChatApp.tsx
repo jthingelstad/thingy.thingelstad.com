@@ -101,8 +101,16 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
   }, []);
 
   const renameMutation = useMutation({
-    mutationFn: async ({ id, title }: { id: string; title: string }) =>
-      session.postJson('/conversations', { action: 'rename', conversation_id: id, title }, session.authHeaders()),
+    mutationFn: async ({ id, title }: { id: string; title: string }) => {
+      // The rail cache only holds the recent window; the header falls
+      // back to knownTitle for deep-history conversations.
+      setKnownTitle({ id, title });
+      return session.postJson(
+        '/conversations',
+        { action: 'rename', conversation_id: id, title },
+        session.authHeaders()
+      );
+    },
     onMutate: async ({ id, title }) => {
       await queryClient.cancelQueries({ queryKey: ['conversations'] });
       const previous = queryClient.getQueryData<ConversationPage>(['conversations']);
@@ -168,11 +176,20 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
   // (/chat/?conversation=<id>), so reload and copy-link both work, and
   // back/forward walk the conversations you visited. Guests have no
   // server-side conversations to link to.
+  const urlSyncedRef = useRef(false);
   useEffect(() => {
     if (guest) return;
     const wanted = activeId ? `/chat/?conversation=${encodeURIComponent(activeId)}` : '/chat/';
     const current = `${window.location.pathname}${window.location.search}`;
-    if (current !== wanted) window.history.pushState({ thingyConversation: activeId }, '', wanted);
+    if (current !== wanted) {
+      // Preserve TanStack Router's own history state; the first sync is a
+      // URL normalization and must replace, not push (a pushed entry
+      // makes the first Back press look dead).
+      const state = { ...window.history.state, thingyConversation: activeId };
+      if (urlSyncedRef.current) window.history.pushState(state, '', wanted);
+      else window.history.replaceState(state, '', wanted);
+    }
+    urlSyncedRef.current = true;
   }, [activeId, guest]);
 
   useEffect(() => {
@@ -184,8 +201,12 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
     function onPopState() {
       const id = new URLSearchParams(window.location.search).get('conversation') || '';
       setActiveId(id);
-      setMountedId(id);
-      if (!id) setThreadEpoch((n) => n + 1);
+      setMountedId((current) => {
+        // Already on the empty new-chat thread: no remount, keep drafts.
+        if (!id && !current) return current;
+        if (!id) setThreadEpoch((n) => n + 1);
+        return id;
+      });
     }
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
@@ -508,7 +529,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
               guest={guest}
               welcome={mountedId ? '' : welcome}
               suggestions={mountedId ? [] : suggestions}
-              initialPrompt={activeId ? undefined : initial.prompt}
+              initialPrompt={activeId || threadEpoch > 0 ? undefined : initial.prompt}
               composerLocked={guest && guestRemaining === 0}
               draftKey={guest ? 'guest' : conversationKey}
             />

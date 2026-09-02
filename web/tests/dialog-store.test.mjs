@@ -34,3 +34,13 @@ test('opening a second dialog settles the first as cancelled', async () => {
   settleDialog('done');
   assert.equal(await second, 'done');
 });
+
+test('a confirm with altLabel can resolve alt; plain confirms cannot', async () => {
+  const pending = confirmDialog({ title: 'Shared', confirmLabel: 'Copy', altLabel: 'Stop sharing' });
+  settleDialog('alt');
+  assert.equal(await pending, 'alt');
+
+  const plain = confirmDialog({ title: 'Plain' });
+  settleDialog(true);
+  assert.equal(await plain, true);
+});

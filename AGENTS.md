@@ -224,6 +224,10 @@ Document behavior changes in `README.md` when touching these.
   URL as the return link. Explicit `prompt` wins.
 - `issue`: Weekly Thing issue number; composes a guided-look question and
   defaults the return link to the archive page.
+- `conversation`: id of the open conversation. The chat app keeps this in
+  sync via pushState (back/forward walk visited conversations; reload
+  restores the same one). Signed-in only - guests never adopt a
+  deep-linked id. Deliberately NOT stripped before analytics loads.
 
 Privacy requirement: after the app reads these params, the Tinylytics loader
 strips `email`, `prompt`, `from`, `explore`, `issue`, `scope`, `corpus`,

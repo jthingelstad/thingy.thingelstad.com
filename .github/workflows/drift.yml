@@ -5,6 +5,12 @@
 # scheduled run nobody is watching.
 name: Drift checks
 
+# The failure step below files an issue; the repo's default workflow
+# token is read-only, so grant issues:write explicitly.
+permissions:
+  contents: read
+  issues: write
+
 on:
   schedule:
     - cron: "17 11 * * *"

@@ -87,10 +87,50 @@ async function routeMockApi(page, { holdWelcome = false } = {}) {
   });
 
   await page.route(`${apiHost}/conversations`, async (route) => {
+    const action = (() => {
+      try {
+        return JSON.parse(route.request().postData() || '{}').action || 'list';
+      } catch {
+        return 'list';
+      }
+    })();
+    // The permalink reload path re-opens the mock conversation via 'get'.
+    if (action === 'get') {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          conversation: { conversation_id: 'conv-smoke', title: 'Smoke conversation', turn_count: 1 },
+          messages: [
+            { role: 'user', content: 'What did Jamie write about smoke tests?', request_id: 'smoke-turn' },
+            {
+              role: 'assistant',
+              content: 'Jamie wrote about smoke tests in WT200 - worth a read.',
+              request_id: 'smoke-turn',
+              citations: [
+                {
+                  issue_number: 200,
+                  source_kind: 'weekly_thing',
+                  subject: 'Weekly Thing 200',
+                  publish_date: '2023-01-01T11:00:00Z',
+                  section: 'Issue',
+                  url: '/archive/200/'
+                }
+              ],
+              duration_ms: 4200,
+              total_tokens: 12345
+            }
+          ]
+        })
+      });
+      return;
+    }
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
-        conversations: [],
+        conversations: [
+          { conversation_id: 'conv-smoke', title: 'Smoke conversation', updated_at: '2026-09-01T00:00:00Z' }
+        ],
+        total: 1,
         modes: [{ id: 'thingy', label: 'Thingy' }],
         entitlements: ['supporting_member']
       })
@@ -309,6 +349,26 @@ async function checkChat(browser) {
   assert.match(await page.locator('.librarian-sources').textContent(), /WT200/);
   await page.waitForSelector('.thingy-response-timer');
   assert.match(await page.locator('.thingy-response-timer').textContent(), /4s\s*· 12k tokens/);
+
+  // Permalink + tab title: the URL names the conversation the mock
+  // stream minted, and Back returns to the clean new-chat URL.
+  assert.match(page.url(), /\?conversation=conv-smoke/);
+  assert.match(await page.title(), /— Thingy$/);
+  await page.goBack();
+  assert.ok(!page.url().includes('conversation='), 'Back returns to the new-chat URL');
+  await page.goForward();
+  assert.match(page.url(), /\?conversation=conv-smoke/);
+
+  // Composer drafts survive a reload (sessionStorage per conversation).
+  await page.locator('#librarian-question').fill('draft to survive reload');
+  await page.reload();
+  await page.waitForSelector('#librarian-question');
+  assert.equal(await page.locator('#librarian-question').inputValue(), 'draft to survive reload');
+  // The reload restored the permalink conversation from the 'get' mock:
+  // durable receipt and sources render from STORED turn data.
+  await page.waitForSelector('.thingy-response-timer');
+  assert.match(await page.locator('.thingy-response-timer').textContent(), /4s\s*· 12k tokens/);
+  await page.waitForSelector('.librarian-sources');
 
   // Message editing affordances come from assistant-ui now; the empty
   // thread has none, but the account menu must expose the build stamp.

@@ -10,7 +10,9 @@ const PAYLOAD = {
       role: 'assistant',
       content: 'Jamie wrote about bison in WT127.',
       request_id: 'r1',
-      citations: [{ issue_number: 127, url: '/archive/127/', subject: 'Bison' }]
+      citations: [{ issue_number: 127, url: '/archive/127/', subject: 'Bison' }],
+      duration_ms: 61000,
+      total_tokens: 48000
     }
   ]
 };
@@ -35,6 +37,9 @@ test('renders the shared conversation live: transcript, banner, composer', async
   expect(wtLink.getAttribute('href')).toBe('https://weekly.thingelstad.com/archive/127/');
   expect(screen.getByLabelText('Guest preview')).toBeTruthy();
   expect(screen.getByPlaceholderText('Ask Thingy…')).toBeTruthy();
+  // The 4.8 stored receipt renders without the turn ever running here.
+  await screen.findByText(/1m 1s/);
+  expect(screen.getByText(/48k tokens/)).toBeTruthy();
 });
 
 test('the owner sees open-the-original instead of a composer', async () => {
