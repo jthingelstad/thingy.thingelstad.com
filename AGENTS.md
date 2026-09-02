@@ -50,8 +50,8 @@ assistant-ui supplies the message lifecycle (streaming, stop, edit,
 regenerate, branching). There is deliberately NO Vercel AI SDK and NO
 Next.js - the Librarian Lambda is the agent runtime and the site stays
 static. Preact was fully removed 2026-09-02: the whole site is one React
-Vite build, and the /chat-classic/ and /chat2/ migration stubs are gone
-(/dispatch/ remains for old public links). Other surfaces are
+Vite build, and the migration/legacy redirect stubs (/chat-classic/,
+/chat2/, /dispatch/) are gone. Other surfaces are
 sign-in, account, and the public shared-conversation page (`/c/<token>`,
 one shell for every token; the CloudFront function rewrites the path and the
 page fetches `/api/share/<token>`), plus two static content pages: `/about/` (what
@@ -67,8 +67,8 @@ guest caps (3/visitor/day, 100/day global fail-closed breaker, kill switch
 sign-in. An explicit `email` URL param still routes to sign-in. While signed in, the chat page
 also registers the archive tools with the browser's model context (WebMCP,
 `web/src/shared/thingy-webmcp.ts`, proxying to `/api/tools`). It has no
-server of its own - static hosting only. (The Dispatch surface was removed in 2026-08; `/dispatch/` is now a
-redirect stub to `/chat/`. The answer text-to-speech button was removed in
+server of its own - static hosting only. (The Dispatch surface and its `/dispatch/` route were removed in
+2026-08/2026-09. The answer text-to-speech button was removed in
 2026-08 - do not reintroduce browser speechSynthesis.)
 
 Conversation modes were retired as a user-facing feature (the mode picker
@@ -146,8 +146,6 @@ Key files:
 - `web/index.html`, `web/chat/index.html`, `web/signin/index.html`,
   `web/c/index.html`, `web/about/index.html`, `web/connect/index.html`:
   static route shells.
-  (`web/dispatch/index.html` is a redirect stub kept for old links; the
-  Dispatch surface was removed in 2026-08.)
 - `web/src/pages/`: page entrypoints (`home`, `signin`, `share`, `about`,
   `connect`) - vanilla TS boot modules; `signin` mounts the React
   SignInApp.

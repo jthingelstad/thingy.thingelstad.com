@@ -24,7 +24,7 @@ The web application owns the complete reader experience:
 - Conversation history and account profile controls.
 - Feedback and diagnostics exposed to the reader.
 
-(The Dispatch surface was removed in 2026-08; `/dispatch/` is a redirect stub.)
+(The Dispatch surface was removed in 2026-08; its `/dispatch/` redirect stub was removed 2026-09.)
 
 The web application is statically built and served from a private S3 bucket
 behind CloudFront; the same distribution fronts the Librarian same-origin as

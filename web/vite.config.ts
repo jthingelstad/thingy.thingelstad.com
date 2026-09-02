@@ -21,9 +21,6 @@ export default defineConfig({
       input: {
         home: resolve(__dirname, 'index.html'),
         chat: resolve(__dirname, 'chat/index.html'),
-        // The Dispatch surface was removed in 2026-08; /dispatch/ is a static
-        // redirect stub (no JS entry) kept so old links land on /chat/.
-        dispatch: resolve(__dirname, 'dispatch/index.html'),
         signin: resolve(__dirname, 'signin/index.html'),
         // Public shared-conversation page; every /c/<token> URL serves this
         // one shell (CloudFront function rewrite) and the page reads the

@@ -120,8 +120,6 @@ Key web files:
 
 - `web/index.html`, `web/chat/index.html`, `web/signin/index.html`,
   `web/about/index.html`, `web/connect/index.html`: static route shells.
-  (`web/dispatch/index.html` is a redirect stub to `/chat/` kept for old
-  links; the Dispatch surface was removed in 2026-08.)
 - `web/src/pages/`: Vite entrypoints for each route.
 - `web/src/shared/`: browser-side app modules.
 - `web/src/styles/`: shared styles imported by the page entrypoints.
