@@ -89,42 +89,27 @@
   line-height: 1.5;
 }
 
-.thingy-home-examples {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 14px;
+.thingy-home-actions a.thingy-home-textlink {
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
-.thingy-home-examples a {
-  padding: 7px 13px;
-  border: 1px solid color-mix(in srgb, var(--accent-deep) 42%, var(--line));
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 80%, var(--bg));
-  color: var(--ink);
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.thingy-home-examples a::before {
-  content: "\201C";
-  color: var(--accent-deep);
-  font-weight: 800;
-  margin-right: 2px;
-}
-
-.thingy-home-examples a::after {
-  content: "\201D";
-  color: var(--accent-deep);
-  font-weight: 800;
-  margin-left: 2px;
-}
-
-.thingy-home-examples a:hover {
-  border-color: var(--accent-deep);
+.thingy-home-actions a.thingy-home-textlink:hover {
   color: var(--accent-deep);
 }
+
+
+
+
+
 
 .thingy-home-meta {
   display: inline-flex;
@@ -218,42 +203,27 @@
   line-height: 1.5;
 }
 
-.thingy-home-examples {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 14px;
+.thingy-home-actions a.thingy-home-textlink {
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
-.thingy-home-examples a {
-  padding: 7px 13px;
-  border: 1px solid color-mix(in srgb, var(--accent-deep) 42%, var(--line));
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 80%, var(--bg));
-  color: var(--ink);
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.thingy-home-examples a::before {
-  content: "\201C";
-  color: var(--accent-deep);
-  font-weight: 800;
-  margin-right: 2px;
-}
-
-.thingy-home-examples a::after {
-  content: "\201D";
-  color: var(--accent-deep);
-  font-weight: 800;
-  margin-left: 2px;
-}
-
-.thingy-home-examples a:hover {
-  border-color: var(--accent-deep);
+.thingy-home-actions a.thingy-home-textlink:hover {
   color: var(--accent-deep);
 }
+
+
+
+
+
 
 .thingy-home-meta {
   display: inline-flex;
