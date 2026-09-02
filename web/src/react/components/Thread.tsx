@@ -70,7 +70,9 @@ function StreamingAnnouncer() {
       sawRunRef.current = true;
       setMessage('Thingy is answering.');
     } else if (sawRunRef.current) {
-      setMessage('Answer ready.');
+      // Neutral on purpose: this also fires after a rejection or error,
+      // where "Answer ready" was announced misleadingly (QA R2-01).
+      setMessage('Thingy finished responding.');
     }
   }, [running]);
   return (
@@ -100,6 +102,7 @@ function Thread({
   return (
     <ThreadPrimitive.Root
       data-readonly={readOnly ? 'true' : undefined}
+      data-guest-locked={composerLocked ? 'true' : undefined}
       className="librarian-chat thingy-aui-thread flex min-h-0 flex-1 flex-col has-[.thingy-aui-empty]:justify-center"
     >
       <ThreadPrimitive.Viewport className="thingy-chat-scroll min-h-0 flex-1 overflow-y-auto has-[.thingy-aui-empty]:flex-none has-[.thingy-aui-empty]:overflow-visible">

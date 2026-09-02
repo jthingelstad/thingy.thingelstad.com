@@ -33,3 +33,10 @@
     overflow: hidden;
   }
 }
+
+/* Guest quota reached: the locked composer must not leave the error
+   surface's retry as an alternate submission path (QA R2-01). */
+[data-guest-locked] .thingy-error-retry,
+[data-guest-locked] button[aria-label='Regenerate answer'] {
+  display: none;
+}

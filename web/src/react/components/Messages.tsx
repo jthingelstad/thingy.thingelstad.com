@@ -192,7 +192,7 @@ export function AssistantMessage() {
           <ActionBarPrimitive.Reload asChild>
             <button
               type="button"
-              className="rounded-md border border-error/40 px-2.5 py-1 text-[13px] font-bold text-error transition-colors hover:bg-error/10"
+              className="thingy-error-retry rounded-md border border-error/40 px-2.5 py-1 text-[13px] font-bold text-error transition-colors hover:bg-error/10"
               data-rw-action=""
             >
               Try again
