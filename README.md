@@ -45,9 +45,12 @@ back to that exact URL. Unknown values are ignored.
 
 ### `prompt`
 
-Seeds the question box and auto-submits once the visitor is authenticated. When
-`prompt` is present, Thingy skips the generated welcome and starts with the
-prompt instead.
+Seeds the question box. Signed-in readers auto-submit; guests get the
+composer prefilled and press send themselves (crawler protection: the
+blog's explore links were auto-firing a guest model call for every
+JS-executing crawler that followed them, 2026-09-02). When `prompt` is
+present, Thingy skips the generated welcome and starts with the prompt
+instead.
 
 Example:
 

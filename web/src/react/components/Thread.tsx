@@ -231,8 +231,16 @@ export function ThreadHost({
     if (!initialPrompt || sentInitialRef.current) return;
     sentInitialRef.current = true;
     // Deferred a tick so the runtime finishes mounting before the seeded
-    // prompt (archive links, homepage example chips) starts the run.
+    // prompt (archive links, homepage example chips) is applied.
     const timer = window.setTimeout(() => {
+      if (guest) {
+        // Guests only PREFILL: the blog's explore links auto-submitted
+        // for every JS-executing crawler walking twenty years of posts -
+        // 100 model calls on 2026-09-02 with zero humans involved. A
+        // human presses send; a crawler never does.
+        runtime.thread.composer.setText(initialPrompt);
+        return;
+      }
       runtime.thread.append({ role: 'user', content: [{ type: 'text', text: initialPrompt }] });
     }, 50);
     return () => window.clearTimeout(timer);

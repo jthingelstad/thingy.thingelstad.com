@@ -232,11 +232,24 @@ async function checkGuestPreview(browser) {
   const context = await browser.newContext();
   const page = await context.newPage();
   const failures = collectUiFailures(page);
-  await page.goto(`${baseUrl}/chat/`);
+  // Seeded explore/prompt links must PREFILL for guests, never
+  // auto-submit: the blog's explore links auto-fired a model call for
+  // every JS-executing crawler (100 harvested answers on 2026-09-02).
+  let guestChatFired = false;
+  await page.route(`${streamHost}/chat`, async (route) => {
+    guestChatFired = true;
+    await route.abort();
+  });
+  await page.goto(`${baseUrl}/chat/?prompt=${encodeURIComponent('Seeded crawler-bait question?')}`);
   await page.waitForSelector('.thingy-guest-banner');
   await page.waitForSelector('.librarian-chat:not([hidden])');
   assert.match(await page.locator('.thingy-guest-banner').textContent(), /Guest preview/);
   assert.ok(await page.locator('#librarian-question').isVisible(), 'guest composer is available');
+  await page.waitForFunction(() =>
+    document.querySelector('#librarian-question')?.value?.includes('Seeded crawler-bait question?')
+  );
+  await page.waitForTimeout(400);
+  assert.equal(guestChatFired, false, 'a seeded prompt must not auto-submit on the guest lane');
   assert.equal(await page.locator('.rail').isVisible(), false, 'guest view hides the conversation rail');
   await assertAccessible(page, 'guest chat');
   assertNoUiFailures(failures, 'guest chat');

@@ -217,7 +217,10 @@ Document behavior changes in `README.md` when touching these.
 - `from`: Prefer an actual sending URL, URL-encoded. Thingy matches the host
   against known properties, highlights the matching nav item, labels it
   `Return`, and rewrites that link to the exact source URL.
-- `prompt`: Seeds the question and submits after auth/beta notice.
+- `prompt`: Seeds the question. Signed-in readers auto-submit; guests get
+  the composer prefilled and must press send (crawler protection - the
+  blog's explore links were auto-firing a model call for every
+  JS-executing crawler, 2026-09-02).
 - `email`: Prefills the auth field and starts subscriber auth.
 - `explore`: Canonical https URL of a source page; Thingy composes the
   exploration question itself (`src/shared/thingy-explore.ts`) and uses the
