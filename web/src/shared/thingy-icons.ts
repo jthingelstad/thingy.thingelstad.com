@@ -22,6 +22,8 @@ import share2 from 'lucide-static/icons/share-2.svg?raw';
 import shieldCheck from 'lucide-static/icons/shield-check.svg?raw';
 import sparkles from 'lucide-static/icons/sparkles.svg?raw';
 import square from 'lucide-static/icons/square.svg?raw';
+import trash2 from 'lucide-static/icons/trash-2.svg?raw';
+import chevronRight from 'lucide-static/icons/chevron-right.svg?raw';
 import thumbsDown from 'lucide-static/icons/thumbs-down.svg?raw';
 import thumbsUp from 'lucide-static/icons/thumbs-up.svg?raw';
 import usersRound from 'lucide-static/icons/users-round.svg?raw';
@@ -34,6 +36,7 @@ const icons = {
   check,
   'chevron-down': chevronDown,
   'chevron-left': chevronLeft,
+  'chevron-right': chevronRight,
   copy,
   library,
   'log-out': logOut,
@@ -53,6 +56,7 @@ const icons = {
   'shield-check': shieldCheck,
   sparkles,
   square,
+  trash: trash2,
   'thumbs-down': thumbsDown,
   'thumbs-up': thumbsUp,
   'users-round': usersRound,

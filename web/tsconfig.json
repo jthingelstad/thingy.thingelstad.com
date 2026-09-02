@@ -14,5 +14,5 @@
     "types": ["node", "vite/client"]
   },
   "include": ["src", "vite.config.ts"],
-  "exclude": ["node_modules", "_site"]
+  "exclude": ["node_modules", "_site", "src/react"]
 }

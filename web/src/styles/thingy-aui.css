@@ -1,0 +1,272 @@
+/* Bridge styles for the assistant-ui chat surface (/chat2/): the aui
+   primitives are unstyled; these rules dress them in the existing token
+   system alongside the shared chat classes they reuse. */
+
+.thingy-aui-thread {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 0;
+}
+
+.thingy-aui-thread .thingy-chat-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.thingy-aui-input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  min-height: 44px;
+  max-height: 40dvh;
+}
+
+.thingy-aui-composer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.thingy-aui-composer-hint {
+  color: var(--ink-soft);
+  font-size: 12.5px;
+}
+
+.thingy-aui-stop svg {
+  fill: currentcolor;
+}
+
+.thingy-aui-disclaimer {
+  margin: 6px 0 0;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+}
+
+.thingy-aui-activity {
+  margin: 0 0 10px;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+}
+
+.thingy-aui-activity summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.thingy-aui-activity-count {
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+.thingy-aui-actionbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.thingy-aui-error {
+  border: 1px solid color-mix(in srgb, var(--color-error) 45%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-error) 8%, var(--surface));
+  color: var(--ink);
+  padding: 10px 12px;
+  font-size: 14.5px;
+}
+
+.thingy-aui-branchpicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+}
+
+.thingy-aui-branchpicker button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.thingy-aui-branchpicker svg,
+.thingy-aui-actionbar svg,
+.thingy-aui-user-actions svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.thingy-aui-edit-composer {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 10px;
+}
+
+.thingy-aui-edit-input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  resize: vertical;
+  min-height: 60px;
+  outline: none;
+}
+
+.thingy-aui-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.thingy-aui-edit-actions button {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.thingy-aui-edit-actions button.primary {
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
+  color: var(--bg);
+}
+
+/* Rail (React port keeps the visual language of the Preact rail) */
+.thingy-aui-rail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--line);
+  padding: 14px 10px;
+  gap: 12px;
+}
+
+.thingy-aui-rail-head {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+
+.thingy-aui-rail .rail-mark {
+  width: 96px;
+  height: 96px;
+}
+
+.thingy-aui-newchat {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.thingy-aui-rail-label {
+  margin: 4px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.thingy-aui-recents {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.thingy-aui-recents li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 10px;
+  padding: 2px 4px;
+}
+
+.thingy-aui-recents li.is-active {
+  background: color-mix(in srgb, var(--accent-deep) 12%, transparent);
+}
+
+.thingy-aui-recent {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 13.5px;
+  padding: 7px 6px;
+  cursor: pointer;
+}
+
+.thingy-aui-recent-actions {
+  display: none;
+  gap: 2px;
+}
+
+.thingy-aui-recents li:hover .thingy-aui-recent-actions,
+.thingy-aui-recents li.is-active .thingy-aui-recent-actions {
+  display: inline-flex;
+}
+
+.thingy-aui-recent-actions button {
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  padding: 4px;
+  cursor: pointer;
+}
+
+.thingy-aui-recent-actions button:hover {
+  color: var(--accent-deep);
+}
+
+.thingy-aui-recent-actions svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+}
+
+.thingy-aui-rail-foot {
+  margin-top: auto;
+  padding: 8px 6px;
+  font-size: 12.5px;
+}
