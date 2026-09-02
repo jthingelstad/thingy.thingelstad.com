@@ -43,8 +43,16 @@ it.) Casual schema changes break this repo. Version before changing.
 
 ## Surface Responsibilities
 
-`web/` is a Vite-built static app served from S3 + CloudFront. Its surfaces are
-chat, sign-in, account, and the public shared-conversation page (`/c/<token>`,
+`web/` is a Vite-built static app served from S3 + CloudFront. The chat at
+`/chat/` is a React app built on assistant-ui (cutover 2026-09-02): a custom
+`ThingyRuntime` ChatModelAdapter speaks the Librarian's contract 4.x SSE, and
+assistant-ui supplies the message lifecycle (streaming, stop, edit,
+regenerate, branching). There is deliberately NO Vercel AI SDK and NO
+Next.js - the Librarian Lambda is the agent runtime and the site stays
+static. The previous Preact chat is parked at `/chat-classic/` for rollback
+(remove once the React chat has settled; rollback = swap the two inputs in
+the vite configs). Other surfaces are
+sign-in, account, and the public shared-conversation page (`/c/<token>`,
 one shell for every token; the CloudFront function rewrites the path and the
 page fetches `/api/share/<token>`), plus two static content pages: `/about/` (what
 Thingy is, the archive inventory, architecture, and the AGENT-TEAM) and
@@ -94,7 +102,7 @@ sed -n '1,220p' web/src/pages/chat.ts
 
 ## Common Commands
 
-Web build:
+Web build (two vite passes - the Preact pages, then the React chat):
 
 ```sh
 cd web
@@ -140,8 +148,13 @@ Key files:
   static route shells.
   (`web/dispatch/index.html` is a redirect stub kept for old links; the
   Dispatch surface was removed in 2026-08.)
-- `web/src/pages/`: Vite page entrypoints (`home`, `chat`, `signin`,
-  `share`, `about`, `connect`).
+- `web/src/pages/`: Preact/vanilla page entrypoints (`home`, `chat` - now
+  serving /chat-classic/, `signin`, `share`, `about`, `connect`).
+- `web/src/react/`: the React chat (`chat2.tsx` entry, `Chat2App.tsx`,
+  `thingy-runtime.ts` - the contract-4.x ChatModelAdapter plus
+  history/feedback adapters). Built by the SECOND vite pass
+  (`vite.react.config.ts`, shared pieces in `vite.shared-config.ts`);
+  `npm run build` runs both passes.
 - `web/src/shared/`: browser-side app modules (`thingy-webmcp.ts` is the
   WebMCP registration module; kill switch `window.ThingyConfig.webmcp`).
 - `web/src/styles/thingy.css`: stylesheet manifest imported by app page

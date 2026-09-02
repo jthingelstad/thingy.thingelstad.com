@@ -151,6 +151,21 @@ product direction.
   every shared conversation an actual demo instead of a sign-in wall.
 - Sign-in stays the path to saved conversations, sharing, and full quotas.
 
+### The assistant-ui Chat (2026-09-02)
+
+- The chat surface moved to React + assistant-ui 0.15: a custom
+  ThingyRuntime adapter speaks the existing Librarian contract (no Vercel
+  AI SDK, no Next.js, no new infrastructure - still a static build on the
+  same S3/CloudFront). Thingy's own markdown/citation renderer stays.
+- New interaction mechanics readers never had: message editing, regenerate,
+  and branch navigation, plus assistant-ui's scroll/keyboard/lifecycle
+  handling. In-app dialogs, guest lane, seeded prompts, share, WebMCP all
+  carried over.
+- Known v1 notes: branches are client-side (server history stays linear);
+  voice dictation and the agentic welcome are not yet ported to the React
+  surface (classic still has them); the account panel modal is reachable
+  from /chat-classic/ until ported.
+
 ## Conversation Modes (retired 2026-09)
 
 The mode system - Research Guide, Thought Partner, Trusted Circle alongside
