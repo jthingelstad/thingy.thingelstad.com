@@ -145,7 +145,13 @@ Key files:
 - `web/src/shared/`: browser-side app modules (`thingy-webmcp.ts` is the
   WebMCP registration module; kill switch `window.ThingyConfig.webmcp`).
 - `web/src/styles/thingy.css`: stylesheet manifest imported by app page
-  entries. Static content pages (`/about/`, `/connect/`) use
+  entries. CSS convention: component selectors must be able to win -
+  page-level tag rules stay scoped to classless elements (see
+  `.thingy-page a:not([class])`); never style a bare tag inside a page
+  scope in a way a classed component would need to out-specify. In-app
+  confirmations and text inputs use `ThingyDialog` (`confirmDialog`/
+  `promptDialog` in `stores/dialog-store.ts`) - never
+  `window.confirm`/`window.prompt`. Static content pages (`/about/`, `/connect/`) use
   `thingy-page-entry.css` -> `thingy-page.css` on the same design tokens
   (`thingy-base.css`; includes `--color-error`).
 - `web/public/robots.txt`: `robots.txt`.

@@ -13,6 +13,7 @@ import { normalizeModes } from '../thingy-modes.ts';
 import { createAssistantMessageModel } from '../models/assistant-message.ts';
 import { createDictationController, speechInputSupported } from '../thingy-voice.ts';
 import { DEFAULT_WELCOME, createChatWelcomeController } from '../thingy-chat-welcome.ts';
+import { confirmDialog, promptDialog } from '../stores/dialog-store.ts';
 import {
   activeConversationId,
   chatMessages,
@@ -35,6 +36,7 @@ import { ChatConversationView } from './ChatConversationView.tsx';
 import { ChatRail } from './ChatNavigation.tsx';
 import { Notice } from './Notice.tsx';
 import { MobileRailScrim } from './MobileRailScrim.tsx';
+import { ThingyDialogHost } from './ThingyDialog.tsx';
 import { useMeasuredComposer, usePersistedBooleanSignal } from '../hooks/useThingyBrowserUi.ts';
 
 const MAX_QUESTION_CHARS = 1200;
@@ -391,7 +393,14 @@ function ChatApp() {
   }
 
   async function deleteConversation(id: string) {
-    if (interactionBusy.value || !id || !window.confirm('Delete this conversation?')) return;
+    if (interactionBusy.value || !id) return;
+    const confirmed = await confirmDialog({
+      title: 'Delete this conversation?',
+      body: 'The conversation and its saved history are removed for good.',
+      confirmLabel: 'Delete',
+      danger: true
+    });
+    if (!confirmed) return;
     const wasLocal = actions.isLocalConversationId(id);
     const result = await actions.deleteConversation(id);
     if (!result.ok) return;
@@ -407,7 +416,14 @@ function ChatApp() {
     if (!conversation || interactionBusy.value) return;
     setMobileMenuOpen(false);
     const current = conversation.title || 'Untitled chat';
-    const title = window.prompt('Rename conversation', current)?.trim();
+    const title = (
+      await promptDialog({
+        title: 'Rename conversation',
+        initialValue: current,
+        maxLength: 120,
+        confirmLabel: 'Rename'
+      })
+    )?.trim();
     if (!title || title === current) return;
     await actions.renameConversation(conversation.id, title);
   }
@@ -429,10 +445,18 @@ function ChatApp() {
       return;
     }
     const alreadyShared = Boolean(conversation.shared_at);
-    const confirmed = window.confirm(
+    const confirmed = await confirmDialog(
       alreadyShared
-        ? 'Refresh the share link to include the latest messages? The link stays the same.'
-        : 'Share this conversation? Anyone with the link can read the entire conversation, including your questions. You can stop sharing at any time.'
+        ? {
+            title: 'Refresh the share link?',
+            body: 'The link stays the same and picks up the latest messages.',
+            confirmLabel: 'Refresh link'
+          }
+        : {
+            title: 'Share this conversation?',
+            body: 'Anyone with the link can read the entire conversation, including your questions. You can stop sharing at any time.',
+            confirmLabel: 'Share'
+          }
     );
     if (!confirmed) return;
     const share = await actions.shareConversation(conversation.id);
@@ -441,7 +465,12 @@ function ChatApp() {
       await navigator.clipboard.writeText(String(share.url));
       showNotice('Share link copied — anyone with it can read this conversation.');
     } catch (_error) {
-      window.prompt('Copy this share link:', String(share.url));
+      await promptDialog({
+        title: 'Copy this share link',
+        initialValue: String(share.url),
+        confirmLabel: 'Done',
+        hideCancel: true
+      });
     }
   }
 
@@ -449,7 +478,13 @@ function ChatApp() {
     const conversation = actions.activeConversation();
     if (!conversation || interactionBusy.value) return;
     setMobileMenuOpen(false);
-    if (!window.confirm('Stop sharing this conversation? The link stops working immediately.')) return;
+    const confirmed = await confirmDialog({
+      title: 'Stop sharing this conversation?',
+      body: 'The link stops working immediately.',
+      confirmLabel: 'Stop sharing',
+      danger: true
+    });
+    if (!confirmed) return;
     if (await actions.unshareConversation(conversation.id)) {
       showNotice('Sharing stopped. The link no longer works.');
     }
@@ -570,6 +605,7 @@ function ChatApp() {
         </div>
       </section>
       <Notice />
+      <ThingyDialogHost />
     </>
   );
 }

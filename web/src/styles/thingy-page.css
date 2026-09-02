@@ -69,7 +69,11 @@
   margin-bottom: 0.35rem;
 }
 
-.thingy-page a {
+ /* Classless links only: content prose gets the accent, while any link
+   that carries a class is a component and keeps its own colors. This is
+   the structural fix for the invisible share-button bug - a bare
+   `.thingy-page a` out-specified component color rules. */
+.thingy-page a:not([class]) {
   color: var(--color-accent);
 }
 

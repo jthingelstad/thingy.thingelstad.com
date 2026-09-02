@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { createChatMessageActions } from '../thingy-message-actions.ts';
+import { promptDialog } from '../stores/dialog-store.ts';
 import { iconSvg } from '../thingy-icons.ts';
 
 type MessageActionKind = 'copy' | 'retry' | 'share' | 'up' | 'down';
@@ -120,7 +121,13 @@ function MessageActions({
     if (!requestId || saving || reaction === nextReaction) return;
     let comment = '';
     if (nextReaction === 'down') {
-      const value = window.prompt('What went wrong?');
+      const value = await promptDialog({
+        title: 'What went wrong?',
+        body: 'Optional, but it helps Jamie tune Thingy.',
+        multiline: true,
+        maxLength: 1000,
+        confirmLabel: 'Send feedback'
+      });
       if (value === null) return;
       comment = value.trim().slice(0, 1000);
     }

@@ -1,0 +1,123 @@
+/* In-app dialog (ThingyDialog.tsx): confirmations and small text inputs
+   on the site's own tokens, replacing the browser-native
+   window.confirm/window.prompt boxes. */
+
+.thingy-dialog-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(10 16 15 / 44%);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.thingy-dialog {
+  width: min(26rem, 100%);
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 24px 70px -24px rgb(14 43 38 / 55%), 0 4px 16px rgb(14 43 38 / 10%);
+}
+
+.thingy-dialog h2 {
+  margin: 0 0 6px;
+  font-family: var(--sans);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.thingy-dialog-body {
+  margin: 0 0 4px;
+  color: var(--ink-soft);
+  font-size: 14.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.thingy-dialog-form {
+  margin-top: 10px;
+}
+
+.thingy-dialog-form input,
+.thingy-dialog-form textarea {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.thingy-dialog-form textarea {
+  resize: vertical;
+  min-height: 84px;
+}
+
+.thingy-dialog-form input:focus-visible,
+.thingy-dialog-form textarea:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 1px;
+}
+
+.thingy-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.thingy-dialog-actions button {
+  min-height: 38px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.thingy-dialog-actions .thingy-dialog-confirm {
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
+  color: var(--bg);
+}
+
+.thingy-dialog-actions .thingy-dialog-confirm.danger {
+  border-color: var(--color-error);
+  background: var(--color-error);
+  color: var(--bg);
+}
+
+.thingy-dialog-actions button:hover {
+  filter: brightness(1.06);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .thingy-dialog {
+    animation: thingy-dialog-in 0.14s ease-out;
+  }
+
+  @keyframes thingy-dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.98);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
