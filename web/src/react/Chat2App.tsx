@@ -53,7 +53,9 @@ function AssistantText({ text }: { text: string }) {
   const metadata = useAuiState((state) => state.message.metadata);
   const citations = ((metadata?.custom as { citations?: ThingyCitation[] } | undefined)?.citations ||
     []) as ThingyCitation[];
-  const html = useMemo(() => renderMarkdown(text, citations), [text, citations]);
+  // renderMarkdown is a cheap pure function; recomputing per streamed frame
+  // matches what the Preact renderer did.
+  const html = renderMarkdown(text, citations);
   return <div className="librarian-answer-content" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
