@@ -39,10 +39,12 @@ jobs:
       # npm audit and the upstream-contract fetch moved to drift.yml: both
       # depend on external state (advisory feed, librarian-thing main) and
       # were turning unrelated pushes red / blocking deploys on outages.
-      # The deploy gate still runs contract:generate:check inside verify,
-      # which proves the vendored artifact and generated client agree.
+      # contract:generate:check proves the vendored artifact and the
+      # generated client agree without touching the network.
 
       - run: npx playwright install --with-deps chromium webkit
+
+      - run: npm run contract:generate:check
 
       - run: npm run format:check
 
@@ -55,6 +57,8 @@ jobs:
       - run: npm run knip
 
       - run: npm run test:coverage
+
+      - run: npm run test:components
 
       - run: npm run build
         env:

@@ -3,6 +3,7 @@
 // with Tailwind; the librarian-* class names stay as stable hooks for
 // smoke tests and the answer-typography stylesheet.
 
+import { useEffect, useRef, useState } from 'react';
 import {
   ActionBarPrimitive,
   BranchPickerPrimitive,
@@ -26,6 +27,40 @@ const ACTION_BUTTON =
 // newest message keeps its controls visible (rule in tailwind.css).
 const ACTIONS_ROW = 'thingy-message-actions mt-1 flex items-center gap-0.5';
 
+function formatElapsed(ms: number) {
+  const seconds = Math.max(1, Math.round(ms / 1000));
+  if (seconds < 60) return `${seconds}s`;
+  return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+}
+
+// Claude-style response receipt: a live elapsed readout while the answer
+// streams, frozen once it completes. Only turns observed running get one -
+// reloaded history has no start moment to measure from.
+function ResponseTimer() {
+  const running = useAuiState((state) => state.message.status?.type === 'running');
+  const [elapsed, setElapsed] = useState(0);
+  const startRef = useRef(0);
+  const sawRunRef = useRef(false);
+  useEffect(() => {
+    if (!running) {
+      if (startRef.current) setElapsed(Date.now() - startRef.current);
+      return;
+    }
+    sawRunRef.current = true;
+    if (!startRef.current) startRef.current = Date.now();
+    setElapsed(Date.now() - startRef.current);
+    const tick = window.setInterval(() => setElapsed(Date.now() - startRef.current), 1000);
+    return () => window.clearInterval(tick);
+  }, [running]);
+  if (!sawRunRef.current) return null;
+  return (
+    <span className="thingy-response-timer inline-flex items-center gap-1.5 font-mono text-[11.5px] text-muted tabular-nums">
+      {running ? <span className="size-1.5 animate-pulse rounded-full bg-accent motion-reduce:animate-none" /> : null}
+      {formatElapsed(elapsed)}
+    </span>
+  );
+}
+
 function ActivityPart(props: { text: string }) {
   const lines = props.text.split('\n').filter(Boolean);
   if (!lines.length) return null;
@@ -40,7 +75,11 @@ function ActivityPart(props: { text: string }) {
       </summary>
       <ul className="mt-1.5 ml-2 grid gap-1 border-l-2 border-line-soft pl-3 text-[13px] text-ink-soft">
         {lines.map((line, index) => (
-          <li key={index}>{line}</li>
+          // Failed steps arrive prefixed with ✗ from the stream - show them
+          // in the error tone so the row reads like a failed command.
+          <li key={index} className={line.startsWith('✗') ? 'text-error' : undefined}>
+            {line}
+          </li>
         ))}
       </ul>
     </details>
@@ -55,9 +94,21 @@ export function AssistantMessage() {
   return (
     <MessagePrimitive.Root className="librarian-message librarian-message-assistant group w-full py-3">
       <MessagePrimitive.Parts components={{ Text: AssistantMarkdown, Reasoning: ActivityPart }} />
+      <div className="mt-1.5 empty:hidden">
+        <ResponseTimer />
+      </div>
       <MessagePrimitive.Error>
-        <ErrorPrimitive.Root className="mt-2 rounded-lg border border-error/40 bg-error/8 px-3.5 py-2.5 text-sm text-error">
+        <ErrorPrimitive.Root className="mt-2 flex flex-wrap items-center gap-3 rounded-lg border border-error/40 bg-error/8 px-3.5 py-2.5 text-sm text-error">
           <ErrorPrimitive.Message />
+          <ActionBarPrimitive.Reload asChild>
+            <button
+              type="button"
+              className="rounded-md border border-error/40 px-2.5 py-1 text-[13px] font-bold text-error transition-colors hover:bg-error/10"
+              data-rw-action=""
+            >
+              Try again
+            </button>
+          </ActionBarPrimitive.Reload>
         </ErrorPrimitive.Root>
       </MessagePrimitive.Error>
       <div className={ACTIONS_ROW}>

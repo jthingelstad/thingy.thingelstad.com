@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { confirmDialog, promptDialog } from '../shared/stores/dialog-store.ts';
 import { trackEvent } from '../shared/thingy-analytics.ts';
+import { errorMessage } from '../shared/thingy-errors.ts';
 import * as session from '../shared/thingy-session.ts';
 import { type ThingyThreadBinding } from './thingy-runtime.ts';
 import { useAgentWelcome } from './hooks/useAgentWelcome.ts';
@@ -48,10 +49,11 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
   // is a cached query, mutations update it optimistically, and everything
   // that used to call refreshConversations() invalidates instead.
   const queryClient = useQueryClient();
+  type ConversationPage = { conversations: ConversationSummary[]; total: number };
   const { data: conversationData } = useQuery({
     queryKey: ['conversations'],
     enabled: !guest,
-    queryFn: async (): Promise<{ conversations: ConversationSummary[]; total: number }> => {
+    queryFn: async (): Promise<ConversationPage> => {
       const data = await session.postJson('/conversations', { action: 'list' }, session.authHeaders());
       const list = Array.isArray(data.conversations) ? data.conversations : [];
       return {
@@ -67,7 +69,11 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
   });
   const conversations = conversationData?.conversations ?? [];
   const conversationTotal = conversationData?.total ?? 0;
-  const invalidateConversations = () => void queryClient.invalidateQueries({ queryKey: ['conversations'] });
+  const invalidateConversations = () => {
+    void queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    void queryClient.invalidateQueries({ queryKey: ['conversations-all'] });
+    void queryClient.removeQueries({ queryKey: ['conversation-search'] });
+  };
 
   const conversationKey = mountedId || `new-${threadEpoch}`;
   const binding = useMemo<ThingyThreadBinding>(() => {
@@ -99,9 +105,14 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
       session.postJson('/conversations', { action: 'rename', conversation_id: id, title }, session.authHeaders()),
     onMutate: async ({ id, title }) => {
       await queryClient.cancelQueries({ queryKey: ['conversations'] });
-      const previous = queryClient.getQueryData<ConversationSummary[]>(['conversations']);
-      queryClient.setQueryData<ConversationSummary[]>(['conversations'], (old = []) =>
-        old.map((entry) => (entry.id === id ? { ...entry, title } : entry))
+      const previous = queryClient.getQueryData<ConversationPage>(['conversations']);
+      queryClient.setQueryData<ConversationPage>(
+        ['conversations'],
+        (old) =>
+          old && {
+            ...old,
+            conversations: old.conversations.map((entry) => (entry.id === id ? { ...entry, title } : entry))
+          }
       );
       return { previous };
     },
@@ -116,9 +127,15 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
       session.postJson('/conversations', { action: 'delete', conversation_id: id }, session.authHeaders()),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['conversations'] });
-      const previous = queryClient.getQueryData<ConversationSummary[]>(['conversations']);
-      queryClient.setQueryData<ConversationSummary[]>(['conversations'], (old = []) =>
-        old.filter((entry) => entry.id !== id)
+      const previous = queryClient.getQueryData<ConversationPage>(['conversations']);
+      queryClient.setQueryData<ConversationPage>(
+        ['conversations'],
+        (old) =>
+          old && {
+            ...old,
+            conversations: old.conversations.filter((entry) => entry.id !== id),
+            total: Math.max(0, old.total - 1)
+          }
       );
       return { previous };
     },
@@ -182,13 +199,24 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
           }
     );
     if (!confirmed) return;
-    const data = await session.postJson(
-      '/conversations',
-      { action: 'share', conversation_id: id },
-      session.authHeaders()
-    );
-    const url = String((data.share as { url?: string } | undefined)?.url || '');
-    if (!url) return;
+    let url = '';
+    try {
+      const data = await session.postJson(
+        '/conversations',
+        { action: 'share', conversation_id: id },
+        session.authHeaders()
+      );
+      url = String((data.share as { url?: string } | undefined)?.url || '');
+      if (!url) throw new Error('The share response carried no link.');
+    } catch (error) {
+      await confirmDialog({
+        title: 'Sharing failed',
+        body: errorMessage(error, 'Thingy could not create the share link. Please try again.'),
+        confirmLabel: 'OK',
+        hideCancel: true
+      });
+      return;
+    }
     let copied = true;
     try {
       await navigator.clipboard.writeText(url);
@@ -264,6 +292,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
       if ((event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === 'k') {
         event.preventDefault();
         setMobileRailOpen(true);
+        setRailCollapsed(false);
         window.setTimeout(() => filterInputRef.current?.focus(), 60);
       }
     }

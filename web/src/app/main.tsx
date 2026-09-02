@@ -29,7 +29,9 @@ const explore = composeExplorePrompt(bootParams.get('explore'), bootParams.get('
 const chatInitial: ChatInitial = {
   prompt: (String(bootParams.get('prompt') || '').trim() || explore.prompt).slice(0, 1200),
   from: resolveFromValue(bootParams.get('from') || explore.sourceUrl || null),
-  conversationId: String(bootParams.get('conversation') || '').trim()
+  // Guests never adopt a deep-linked conversation id - it would ride
+  // guest requests as someone else's conversation_id.
+  conversationId: session.sessionActive() ? String(bootParams.get('conversation') || '').trim() : ''
 };
 const loginToken = String(bootParams.get('login_token') || bootParams.get('magic_token') || '').trim();
 const emailParam = session.normalizeEmail(bootParams.get('email'));
@@ -58,7 +60,7 @@ const signinRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/signin',
   component: function SignInRoute() {
-    return <SignInApp initialLoginToken={loginToken} />;
+    return <SignInApp initialLoginToken={loginToken} initialEmail={emailParam} />;
   }
 });
 
@@ -95,8 +97,14 @@ declare module '@tanstack/react-router' {
 if (loginToken || emailParam) {
   const path = window.location.pathname;
   if (path.startsWith('/chat')) {
-    // Sign-in intents that land on /chat keep their existing flow.
-    window.location.href = session.signInUrl('/chat/');
+    // Sign-in intents that land on /chat hand off to the sign-in route
+    // WITH their credentials - signInUrl('/chat/') built a clean URL and
+    // silently dropped the token/email.
+    const target = new URL('/signin/', window.location.origin);
+    if (loginToken) target.searchParams.set('login_token', loginToken);
+    if (emailParam) target.searchParams.set('email', emailParam);
+    target.searchParams.set('return', '/chat/');
+    window.location.replace(target.toString());
   }
 }
 

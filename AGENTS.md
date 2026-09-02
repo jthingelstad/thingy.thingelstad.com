@@ -101,7 +101,7 @@ sed -n '1,220p' README.md
 sed -n '1,220p' AGENTS.md
 sed -n '1,220p' docs/ROADMAP.md
 sed -n '1,220p' web/vite.config.ts
-sed -n '1,220p' web/src/react/Chat2App.tsx
+sed -n '1,220p' web/src/react/ChatApp.tsx
 ```
 
 ## Common Commands
@@ -150,19 +150,23 @@ Key files:
 - `web/index.html`, `web/chat/index.html`, `web/signin/index.html`,
   `web/c/index.html`, `web/about/index.html`, `web/connect/index.html`:
   static route shells.
-- `web/src/pages/`: page entrypoints (`home`, `signin`, `share`, `about`,
-  `connect`) - vanilla TS boot modules; `signin` mounts the React
-  SignInApp.
-- `web/src/react/`: the React chat (`chat2.tsx` entry, `Chat2App.tsx`,
-  `thingy-runtime.ts` - the contract-4.x ChatModelAdapter plus
-  history/feedback adapters). One Vite pass builds everything
-  (`vite.config.ts`, helpers in `vite.shared-config.ts`).
+- `web/src/pages/`: static-page boot modules (`home`, `about`, `connect`)
+  - vanilla TS. The home boot also forwards `?login_token=` magic-link
+  landings to `/signin/`.
+- `web/src/app/main.tsx`: the SPA entry - TanStack Router serving
+  `/chat`, `/signin`, and `/c/<token>` from one bundle.
+- `web/src/react/`: the React app (`ChatApp.tsx`, `SignInApp.tsx`,
+  `ShareApp.tsx`, `thingy-runtime.ts` - the contract-4.x
+  ChatModelAdapter plus history/feedback adapters). One Vite pass builds
+  everything (`vite.config.ts`, helpers in `vite.shared-config.ts`).
 - `web/src/shared/`: browser-side app modules (`thingy-webmcp.ts` is the
   WebMCP registration module; kill switch `window.ThingyConfig.webmcp`).
 - `web/src/styles/`: `app.css` is the SPA's single style entry - it
-  imports Tailwind first, then the legacy content stylesheets inside
-  `@layer legacy` (declared before Tailwind's layers so utilities always
-  win). `thingy-base.css` owns the design tokens - the palette lives at
+  declares `@layer legacy` before Tailwind's layers (so utilities always
+  win), puts `thingy-base.css` in `layer(legacy)`, and the content
+  stylesheets (`answer.css`, `thingy-page.css`, `share.css`) in
+  `layer(components)` - above preflight, which would otherwise strip
+  link colors. `thingy-base.css` owns the design tokens - the palette lives at
   `--thingy-*` (NEVER name app tokens `--color-*`: Tailwind emits
   `--color-<name>` theme variables and the collision creates circular
   var() references that silently blank the theme). `answer.css` is the

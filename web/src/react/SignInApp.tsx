@@ -4,11 +4,17 @@ import { errorMessage } from '../shared/thingy-errors.ts';
 
 type SecondaryAction = '' | 'subscribe' | 'resend';
 
-export function SignInApp({ initialLoginToken = '' }: { initialLoginToken?: string }) {
+export function SignInApp({
+  initialLoginToken = '',
+  initialEmail = ''
+}: {
+  initialLoginToken?: string;
+  initialEmail?: string;
+}) {
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const loginToken = initialLoginToken;
   const returnTo = session.returnPath('/chat/');
-  const [email, setEmail] = useState(session.storedEmail());
+  const [email, setEmail] = useState(initialEmail || session.storedEmail());
   const [message, setMessage] = useState('');
   const [messageKind, setMessageKind] = useState('');
   const [secondary, setSecondary] = useState<SecondaryAction>('');

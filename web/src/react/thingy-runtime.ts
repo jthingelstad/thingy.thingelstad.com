@@ -123,7 +123,7 @@ export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdap
         // instead of leaving a dead composer (classic-chat behavior).
         if (!binding.guest && isAuthError(error)) {
           session.clearAuth();
-          window.location.href = session.signInUrl('/chat/');
+          window.location.href = session.signInUrl();
         }
         throw error;
       }
@@ -248,7 +248,10 @@ export function historyItemsFromStored(stored: StoredMessage[]) {
               status: { type: 'complete', reason: 'stop' },
               metadata: {
                 custom: {
-                  request_id: requestId,
+                  // Share payloads omit request_id; the synthetic row id
+                  // is for the tree only and must not reach feedback or
+                  // parent derivation as if it were real.
+                  request_id: message.request_id ? requestId : '',
                   citations: Array.isArray(message.citations) ? message.citations : []
                 }
               }

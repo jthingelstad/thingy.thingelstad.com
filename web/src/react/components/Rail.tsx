@@ -62,7 +62,7 @@ export function Rail({
   onToggleCollapsed: () => void;
   conversations: ConversationSummary[];
   activeId: string;
-  onSelect: (id: string) => void;
+  onSelect: (id: string, title?: string) => void;
   onNew: () => void;
   onShare: (id: string, shared: boolean) => void;
   onRename: (id: string, current: string) => void;
@@ -164,7 +164,7 @@ export function Rail({
                   <button
                     type="button"
                     className="block w-full truncate px-2.5 py-2 text-left font-sans text-[13.5px] text-ink"
-                    onClick={() => onSelect(match.conversation_id)}
+                    onClick={() => onSelect(match.conversation_id, match.title)}
                   >
                     <span className="block truncate">{match.title}</span>
                     <span className="mt-0.5 block truncate text-[11.5px] text-muted">{match.snippet}</span>
@@ -190,7 +190,7 @@ export function Rail({
                   <button
                     type="button"
                     className="thingy-aui-recent block w-full truncate px-2.5 py-2 text-left font-sans text-[13.5px] text-ink"
-                    onClick={() => onSelect(entry.id)}
+                    onClick={() => onSelect(entry.id, entry.title)}
                   >
                     <span className="flex items-center gap-1.5">
                       <span className="min-w-0 flex-1 truncate">{entry.title}</span>

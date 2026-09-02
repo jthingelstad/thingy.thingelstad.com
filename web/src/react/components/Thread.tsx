@@ -18,9 +18,25 @@ import { Icon } from './Icon.tsx';
 // never a static sampled list. Tapping one sends it as the first message.
 function SuggestionChips({ suggestions }: { suggestions: string[] }) {
   const aui = useAui();
-  if (!suggestions.length) return null;
+  if (!suggestions.length) {
+    // Hold the row's height while suggestions load so the centered empty
+    // state doesn't reflow and drop a chip under the pointer (observed
+    // mis-click). Same border/padding as real chips = same height.
+    return (
+      <div className="flex min-h-9 flex-wrap gap-2" aria-hidden="true">
+        {[0, 1, 2].map((slot) => (
+          <span
+            key={slot}
+            className="w-40 animate-pulse rounded-full border border-line-soft bg-surface-2 px-3.5 py-1.5 text-[13.5px] leading-snug text-transparent select-none"
+          >
+            &nbsp;
+          </span>
+        ))}
+      </div>
+    );
+  }
   return (
-    <div className="flex flex-wrap gap-2" aria-label="Suggested questions">
+    <div className="flex min-h-9 flex-wrap gap-2" aria-label="Suggested questions">
       {suggestions.map((suggestion) => (
         <button
           key={suggestion}
@@ -61,7 +77,7 @@ function Thread({
             <div className="thingy-aui-empty flex flex-col gap-4">
               <article className="librarian-message librarian-message-assistant">
                 <div className="librarian-answer-content">
-                  <p className="text-[17px] leading-relaxed text-ink">{welcome}</p>
+                  <p className="min-h-14 text-[17px] leading-relaxed text-ink">{welcome}</p>
                 </div>
               </article>
               <SuggestionChips suggestions={suggestions} />

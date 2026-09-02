@@ -178,7 +178,7 @@ export function ShareApp({ token = '' }: { token?: string }) {
                 <span>
                   You&rsquo;re reading a shared Thingy conversation — ask your own follow-up, no account needed.
                 </span>
-                <a className="font-bold text-accent-deep underline underline-offset-2" href={signInUrl('/chat/')}>
+                <a className="font-bold text-accent-deep underline underline-offset-2" href={signInUrl()}>
                   Sign in free for more
                 </a>
               </aside>
