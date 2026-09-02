@@ -8,6 +8,5 @@
 @import './tailwind.css';
 @import './thingy-base.css' layer(legacy);
 @import './answer.css' layer(legacy);
-@import './thingy-auth.css' layer(legacy);
 @import './thingy-page.css' layer(legacy);
 @import './share.css' layer(legacy);

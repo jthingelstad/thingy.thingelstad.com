@@ -155,22 +155,32 @@ export function SignInApp({ initialLoginToken = '' }: { initialLoginToken?: stri
   }
 
   return (
-    <main className="thingy-auth-page">
-      <div className="thingy-auth-card">
-        <span className="thingy-auth-mark" aria-hidden="true">
-          <img src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager" />
+    <main className="thingy-auth-page grid min-h-dvh place-items-center bg-bg p-5 font-sans text-ink">
+      <div className="flex w-[min(34rem,100%)] flex-col items-center gap-4 rounded-3xl border border-line bg-surface p-7 shadow-[0_24px_70px_-30px_rgb(14_43_38/0.35)] sm:flex-row sm:items-start sm:gap-6">
+        <span className="shrink-0" aria-hidden="true">
+          <img
+            className="size-20 rounded-2xl"
+            src="/img/thingy.png"
+            alt=""
+            width="1022"
+            height="1022"
+            loading="eager"
+          />
         </span>
-        <div className="thingy-auth-content">
-          <p className="thingy-auth-kicker">Thingy access</p>
-          <h1 className="thingy-auth-title">Sign in to Thingy</h1>
-          <p className="thingy-auth-copy">
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-bold tracking-[0.14em] text-accent-deep uppercase">Thingy access</p>
+          <h1 className="mt-0.5 text-[22px] leading-tight font-extrabold">Sign in to Thingy</h1>
+          <p className="mt-1.5 text-[14px] leading-relaxed text-ink-soft">
             Enter your email address and Thingy will send a private sign-in link. Weekly Thing readers can use Chat, and
             supporting members get the deeper features.
           </p>
-          <form className="thingy-signin-form" onSubmit={handleSubmit}>
-            <label htmlFor="thingy-signin-email">Email address</label>
-            <div className="thingy-signin-row">
+          <form className="thingy-signin-form mt-4" onSubmit={handleSubmit}>
+            <label className="text-[11px] font-bold tracking-wider text-muted uppercase" htmlFor="thingy-signin-email">
+              Email address
+            </label>
+            <div className="mt-1 flex gap-2">
               <input
+                className="w-full min-w-0 rounded-xl border border-line bg-bg px-3.5 py-2.5 text-[15px] text-ink outline-none placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent-soft"
                 id="thingy-signin-email"
                 name="email"
                 type="email"
@@ -181,19 +191,30 @@ export function SignInApp({ initialLoginToken = '' }: { initialLoginToken?: stri
                 value={email}
                 onChange={(event) => setEmail(event.currentTarget.value)}
               />
-              <button type="submit" disabled={busy}>
+              <button
+                type="submit"
+                className="shrink-0 rounded-xl bg-accent-deep px-4 py-2.5 text-[14px] font-bold text-bg hover:brightness-110 disabled:opacity-50"
+                disabled={busy}
+              >
                 Send Link
               </button>
             </div>
           </form>
-          <p className="thingy-signin-message" data-kind={messageKind} aria-live="polite">
+          <p
+            className={`mt-2.5 min-h-5 text-[13.5px] ${messageKind === 'error' ? 'text-error' : messageKind === 'success' ? 'text-accent-deep' : 'text-ink-soft'}`}
+            data-kind={messageKind}
+            aria-live="polite"
+          >
             {message}
           </p>
           {codeEntry ? (
-            <form className="thingy-signin-form thingy-signin-code" onSubmit={submitCode}>
-              <label htmlFor="thingy-signin-code">Sign-in code</label>
-              <div className="thingy-signin-row">
+            <form className="thingy-signin-form thingy-signin-code mt-3" onSubmit={submitCode}>
+              <label className="text-[11px] font-bold tracking-wider text-muted uppercase" htmlFor="thingy-signin-code">
+                Sign-in code
+              </label>
+              <div className="mt-1 flex gap-2">
                 <input
+                  className="w-full min-w-0 rounded-xl border border-line bg-bg px-3.5 py-2.5 font-mono text-[15px] tracking-[0.2em] text-ink outline-none placeholder:font-sans placeholder:tracking-normal placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent-soft"
                   id="thingy-signin-code"
                   name="one-time-code"
                   type="text"
@@ -205,20 +226,34 @@ export function SignInApp({ initialLoginToken = '' }: { initialLoginToken?: stri
                   value={code}
                   onChange={(event) => setCode(event.currentTarget.value)}
                 />
-                <button type="submit" disabled={busy || code.replace(/[^0-9]/g, '').length !== 6}>
+                <button
+                  type="submit"
+                  className="shrink-0 rounded-xl bg-accent-deep px-4 py-2.5 text-[14px] font-bold text-bg hover:brightness-110 disabled:opacity-50"
+                  disabled={busy || code.replace(/[^0-9]/g, '').length !== 6}
+                >
                   Sign In
                 </button>
               </div>
             </form>
           ) : null}
-          <div className="thingy-signin-secondary" hidden={!secondary}>
+          <div className="mt-2 flex gap-2" hidden={!secondary}>
             {secondary === 'subscribe' ? (
-              <button type="button" disabled={busy} onClick={() => void requestMagicLink('subscribe')}>
+              <button
+                type="button"
+                className="rounded-xl border border-line bg-surface px-3.5 py-2 text-[13.5px] font-bold text-ink hover:border-accent hover:bg-accent-soft disabled:opacity-50"
+                disabled={busy}
+                onClick={() => void requestMagicLink('subscribe')}
+              >
                 Add Me to The Weekly Thing
               </button>
             ) : null}
             {secondary === 'resend' ? (
-              <button type="button" disabled={busy} onClick={() => void requestMagicLink('resend_confirmation')}>
+              <button
+                type="button"
+                className="rounded-xl border border-line bg-surface px-3.5 py-2 text-[13.5px] font-bold text-ink hover:border-accent hover:bg-accent-soft disabled:opacity-50"
+                disabled={busy}
+                onClick={() => void requestMagicLink('resend_confirmation')}
+              >
                 Resend Confirmation
               </button>
             ) : null}

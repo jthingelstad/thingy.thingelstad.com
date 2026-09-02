@@ -49,9 +49,13 @@ it.) Casual schema changes break this repo. Version before changing.
 assistant-ui supplies the message lifecycle (streaming, stop, edit,
 regenerate, branching). There is deliberately NO Vercel AI SDK and NO
 Next.js - the Librarian Lambda is the agent runtime and the site stays
-static. Preact was fully removed 2026-09-02: the whole site is one React
-Vite build, and the migration/legacy redirect stubs (/chat-classic/,
-/chat2/, /dispatch/) are gone. Other surfaces are
+static. Preact was fully removed 2026-09-02, and on 2026-09-03 the app
+consolidated into ONE SPA (src/app/main.tsx, TanStack Router) serving
+/chat, /signin, and /c/<token> - all three S3 shells load the same
+module. Styling is Tailwind v4 on the Thingy tokens (namespace
+--thingy-* in thingy-base.css; app.css layers legacy content styles
+under the utilities). The marketing pages (/, /about/, /connect/) stay
+static HTML for SEO. Other surfaces are
 sign-in, account, and the public shared-conversation page (`/c/<token>`,
 one shell for every token; the CloudFront function rewrites the path and the
 page fetches `/api/share/<token>`), plus two static content pages: `/about/` (what
