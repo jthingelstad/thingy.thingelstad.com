@@ -17,10 +17,15 @@ export default defineConfig({
     rollupOptions: {
       input: {
         home: resolve(__dirname, 'index.html'),
-        chat: resolve(__dirname, 'chat/index.html'),
+        // The classic (Preact) chat, kept for rollback after the 2026-09-02
+        // assistant-ui cutover; remove once the React chat has settled.
+        chatClassic: resolve(__dirname, 'chat-classic/index.html'),
         // The Dispatch surface was removed in 2026-08; /dispatch/ is a static
         // redirect stub (no JS entry) kept so old links land on /chat/.
         dispatch: resolve(__dirname, 'dispatch/index.html'),
+        // /chat2/ was the assistant-ui preview route during the 2026-09-02
+        // migration; stub keeps those links landing on /chat/.
+        chat2: resolve(__dirname, 'chat2/index.html'),
         signin: resolve(__dirname, 'signin/index.html'),
         // Public shared-conversation page; every /c/<token> URL serves this
         // one shell (CloudFront function rewrite) and the page reads the

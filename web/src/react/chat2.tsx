@@ -9,7 +9,7 @@ import { bootWebMcp } from '../shared/thingy-webmcp.ts';
 import * as session from '../shared/thingy-session.ts';
 import { Chat2App, type Chat2Initial } from './Chat2App.tsx';
 
-registerClientErrorTracking('chat2');
+registerClientErrorTracking('chat');
 
 // URL params are read BEFORE loadTinylytics scrubs them (same rule the
 // page-entry-order test enforces for every chat entry).
@@ -24,7 +24,7 @@ const email = session.normalizeEmail(params.get('email'));
 
 if (loginToken || email) {
   // Sign-in intents keep their existing flow.
-  window.location.href = session.signInUrl('/chat2/');
+  window.location.href = session.signInUrl('/chat/');
 } else {
   const host = document.getElementById('thingy-react-root');
   if (host) createRoot(host).render(<Chat2App initial={initial} />);

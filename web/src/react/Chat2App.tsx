@@ -383,6 +383,7 @@ export function Chat2App({ initial }: { initial: Chat2Initial }) {
   const [threadEpoch, setThreadEpoch] = useState(0);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [guestRemaining, setGuestRemaining] = useState<number | null>(null);
+  const [mobileRailOpen, setMobileRailOpen] = useState(false);
   const bindingRef = useRef<ThingyThreadBinding | null>(null);
 
   const conversationKey = activeId || `new-${threadEpoch}`;
@@ -430,6 +431,7 @@ export function Chat2App({ initial }: { initial: Chat2Initial }) {
   function newConversation() {
     setActiveId('');
     setThreadEpoch((n) => n + 1);
+    setMobileRailOpen(false);
   }
 
   async function deleteConversation(id: string) {
@@ -495,7 +497,10 @@ export function Chat2App({ initial }: { initial: Chat2Initial }) {
   return (
     <section className="thingy-page">
       <h1 className="sr-only">Thingy chat</h1>
-      <div className={`thingy-app-shell${guest ? ' is-guest' : ''}`} id="thingy-app-shell">
+      <div
+        className={`thingy-app-shell${guest ? ' is-guest' : ''}${mobileRailOpen ? ' is-mobile-rail-open' : ''}`}
+        id="thingy-app-shell"
+      >
         {guest ? null : (
           <nav className="rail thingy-aui-rail" aria-label="Conversations">
             <div className="thingy-aui-rail-head">
@@ -509,7 +514,14 @@ export function Chat2App({ initial }: { initial: Chat2Initial }) {
               <ul className="thingy-aui-recents">
                 {conversations.map((entry) => (
                   <li key={entry.id} className={entry.id === activeId ? 'is-active' : ''}>
-                    <button type="button" className="thingy-aui-recent" onClick={() => setActiveId(entry.id)}>
+                    <button
+                      type="button"
+                      className="thingy-aui-recent"
+                      onClick={() => {
+                        setActiveId(entry.id);
+                        setMobileRailOpen(false);
+                      }}
+                    >
                       {entry.title}
                     </button>
                     <span className="thingy-aui-recent-actions">
@@ -543,12 +555,24 @@ export function Chat2App({ initial }: { initial: Chat2Initial }) {
               </ul>
             </div>
             <div className="thingy-aui-rail-foot">
-              <a href="/chat/">Classic chat</a>
+              <a href="/chat-classic/">Classic chat</a>
             </div>
           </nav>
         )}
+        {guest ? null : <div className="rail-scrim" aria-hidden="true" onClick={() => setMobileRailOpen(false)} />}
         <section className="thingy-conversation">
           <div className="mobile-chatbar thingy-aui-header">
+            {guest ? null : (
+              <button
+                type="button"
+                className="mobile-chatbar-circle"
+                aria-label={mobileRailOpen ? 'Hide conversations' : 'Show conversations'}
+                aria-expanded={mobileRailOpen}
+                onClick={() => setMobileRailOpen(!mobileRailOpen)}
+              >
+                <Icon name="panel-left" />
+              </button>
+            )}
             <div className="mobile-chatbar-title">
               <span>{conversations.find((c) => c.id === activeId)?.title || 'New chat'}</span>
             </div>
@@ -581,7 +605,7 @@ export function Chat2App({ initial }: { initial: Chat2Initial }) {
                     ? `Guest preview — ${guestRemaining} question${guestRemaining === 1 ? '' : 's'} left today.`
                     : 'Guest preview — ask a few questions, no account needed.'}
               </span>
-              <a href={session.signInUrl('/chat2/')}>Sign in free for more</a>
+              <a href={session.signInUrl('/chat/')}>Sign in free for more</a>
             </aside>
           ) : null}
           <ThreadHost

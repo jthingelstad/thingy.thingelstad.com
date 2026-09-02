@@ -155,14 +155,23 @@
   color: var(--bg);
 }
 
-/* Rail (React port keeps the visual language of the Preact rail) */
+/* Rail (React port keeps the visual language of the Preact rail).
+   Desktop shows it as the grid column; at phone widths the shared
+   responsive CSS turns .rail into the slide-over drawer, so display is
+   set only at desktop - never unconditionally (that would defeat the
+   phone drawer's display: none). */
 .thingy-aui-rail {
-  display: flex;
   flex-direction: column;
   min-height: 0;
   border-right: 1px solid var(--line);
   padding: 14px 10px;
   gap: 12px;
+}
+
+@media (width >= 641px) {
+  .thingy-aui-rail {
+    display: flex;
+  }
 }
 
 .thingy-aui-rail-head {

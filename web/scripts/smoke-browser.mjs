@@ -164,11 +164,11 @@ async function checkGuestPreview(browser) {
   await context.close();
 }
 
-async function checkChat2Guest(browser) {
+async function checkReactChatGuest(browser) {
   const context = await browser.newContext();
   const page = await context.newPage();
   const failures = collectUiFailures(page);
-  await page.goto(`${baseUrl}/chat2/`);
+  await page.goto(`${baseUrl}/chat/`);
   await page.waitForSelector('.thingy-guest-banner');
   await page.waitForSelector('.thingy-aui-input');
   assert.match(await page.locator('.thingy-guest-banner').textContent(), /Guest preview/);
@@ -176,8 +176,8 @@ async function checkChat2Guest(browser) {
     (await page.locator('.librarian-message-assistant').first().textContent()).includes("I'm Thingy"),
     'chat2 guest welcome renders'
   );
-  await assertAccessible(page, 'chat2 guest');
-  assertNoUiFailures(failures, 'chat2 guest');
+  await assertAccessible(page, 'react chat guest');
+  assertNoUiFailures(failures, 'react chat guest');
   await context.close();
 }
 
@@ -187,7 +187,7 @@ async function checkChat(browser) {
   const page = await context.newPage();
   const failures = collectUiFailures(page);
   const mocks = await routeMockApi(page, { holdWelcome: true });
-  await page.goto(`${baseUrl}/chat/`);
+  await page.goto(`${baseUrl}/chat-classic/`);
 
   // The route-level root owns the entire authenticated shell.
   await page.waitForSelector('.librarian-chat:not([hidden])');
@@ -264,7 +264,7 @@ async function checkMobileChat(browser) {
   const failures = collectUiFailures(page);
   await routeMockApi(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`${baseUrl}/chat/`);
+  await page.goto(`${baseUrl}/chat-classic/`);
   await page.waitForSelector('.mobile-chatbar');
   await page.waitForSelector('.librarian-chat:not([hidden])');
   await page.waitForSelector('.thingy-input');
@@ -319,7 +319,7 @@ async function main() {
     try {
       await checkSignInRedirect(browser);
       await checkGuestPreview(browser);
-      await checkChat2Guest(browser);
+      await checkReactChatGuest(browser);
       await checkChat(browser);
       await checkMobileChat(browser);
     } finally {

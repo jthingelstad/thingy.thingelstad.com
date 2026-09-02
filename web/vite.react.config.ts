@@ -21,7 +21,7 @@ export default defineConfig({
     assetsDir: 'r-assets',
     rollupOptions: {
       input: {
-        chat2: resolve(__dirname, 'chat2/index.html')
+        chat: resolve(__dirname, 'chat/index.html')
       }
     }
   }
