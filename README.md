@@ -120,7 +120,9 @@ Key web files:
 
 - `web/index.html`, `web/chat/index.html`, `web/signin/index.html`,
   `web/about/index.html`, `web/connect/index.html`: static route shells.
-- `web/src/pages/`: Vite entrypoints for each route.
+- `web/src/app/`: the SPA entry (main.tsx, TanStack Router) serving /chat, /signin, and /c/<token>.
+- `web/src/react/`: the React components (chat, sign-in, share).
+- `web/src/pages/`: boot scripts for the static marketing pages.
 - `web/src/shared/`: browser-side app modules.
 - `web/src/styles/`: shared styles imported by the page entrypoints.
 - `web/public/`: static files copied as-is to `_site`.

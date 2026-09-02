@@ -33,7 +33,7 @@
 .thingy-shared-cta-button,
 .thingy-page a.thingy-shared-cta-button {
   display: inline-block;
-  background: var(--thingy-accent);
+  background: var(--accent-deep);
   border-radius: 8px;
 
   /* Token pair keeps contrast in both themes: near-white on deep teal in

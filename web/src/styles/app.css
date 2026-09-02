@@ -7,6 +7,10 @@
 
 @import './tailwind.css';
 @import './thingy-base.css' layer(legacy);
-@import './answer.css' layer(legacy);
-@import './thingy-page.css' layer(legacy);
-@import './share.css' layer(legacy);
+
+/* Content styles (answer typography, page chrome, share page) go in the
+   COMPONENTS layer: above Tailwind's preflight (whose a{color:inherit}
+   would silently strip link colors) but below utilities. */
+@import './answer.css' layer(components);
+@import './thingy-page.css' layer(components);
+@import './share.css' layer(components);

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
 let chromium;
 let webkit;
@@ -181,6 +182,47 @@ async function checkReactChatGuest(browser) {
   await context.close();
 }
 
+async function checkSharePage(browser) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const failures = collectUiFailures(page);
+  // Production rewrites /c/* to the share shell at the edge; the preview
+  // server has no such rule, so serve the built shell ourselves.
+  const shareShell = await readFile(new URL('../_site/c/index.html', import.meta.url), 'utf8');
+  await page.route(`${baseUrl}/c/shr_smoketoken`, async (route) => {
+    await route.fulfill({ status: 200, contentType: 'text/html', body: shareShell });
+  });
+  await page.route(`${apiHost}/share/shr_smoketoken`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'x-librarian-contract-version': '4.5.0' },
+      body: JSON.stringify({
+        conversation: { title: 'Bison across the archive', shared_at: '2026-09-01T12:00:00Z' },
+        messages: [
+          { role: 'user', content: 'Tell me about bison.', request_id: 'r1' },
+          {
+            role: 'assistant',
+            content: 'Jamie wrote about bison in WT127.\n\n- prairie\n- badlands',
+            request_id: 'r1',
+            citations: [{ issue_number: 127, url: '/archive/127/', subject: 'Bison' }]
+          }
+        ]
+      })
+    });
+  });
+  await page.goto(`${baseUrl}/c/shr_smoketoken`);
+  await page.waitForSelector('.thingy-shared-messages');
+  assert.match(await page.locator('h1').first().textContent(), /Bison across the archive/);
+  assert.match(await page.locator('.librarian-message-user').textContent(), /Tell me about bison/);
+  const wtLink = page.locator('.librarian-answer-content a', { hasText: 'WT127' });
+  assert.equal(await wtLink.getAttribute('href'), 'https://weekly.thingelstad.com/archive/127/');
+  assert.ok(await page.locator('.thingy-shared-cta-button').isVisible(), 'share CTA renders');
+  await assertAccessible(page, 'share page');
+  assertNoUiFailures(failures, 'share page');
+  await context.close();
+}
+
 async function checkChat(browser) {
   const context = await browser.newContext();
   await seedSession(context);
@@ -262,6 +304,7 @@ async function main() {
       await checkSignInRedirect(browser);
       await checkGuestPreview(browser);
       await checkReactChatGuest(browser);
+      await checkSharePage(browser);
       await checkChat(browser);
       await checkMobileChat(browser);
     } finally {

@@ -159,16 +159,23 @@ Key files:
   (`vite.config.ts`, helpers in `vite.shared-config.ts`).
 - `web/src/shared/`: browser-side app modules (`thingy-webmcp.ts` is the
   WebMCP registration module; kill switch `window.ThingyConfig.webmcp`).
-- `web/src/styles/thingy.css`: stylesheet manifest imported by app page
-  entries. CSS convention: component selectors must be able to win -
-  page-level tag rules stay scoped to classless elements (see
-  `.thingy-page a:not([class])`); never style a bare tag inside a page
-  scope in a way a classed component would need to out-specify. In-app
+- `web/src/styles/`: `app.css` is the SPA's single style entry - it
+  imports Tailwind first, then the legacy content stylesheets inside
+  `@layer legacy` (declared before Tailwind's layers so utilities always
+  win). `thingy-base.css` owns the design tokens - the palette lives at
+  `--thingy-*` (NEVER name app tokens `--color-*`: Tailwind emits
+  `--color-<name>` theme variables and the collision creates circular
+  var() references that silently blank the theme). `answer.css` is the
+  one home for rendered-answer typography (chat + share page).
+  Components style with Tailwind utilities; semantic class names on
+  elements are TEST HOOKS for smoke/qa-real (e.g.
+  `.thingy-app-shell.is-mobile-rail-open` is asserted by
+  `qa-real-api.mjs`) - do not remove them as "dead". In-app
   confirmations and text inputs use `ThingyDialog` (`confirmDialog`/
   `promptDialog` in `stores/dialog-store.ts`) - never
-  `window.confirm`/`window.prompt`. Static content pages (`/about/`, `/connect/`) use
-  `thingy-page-entry.css` -> `thingy-page.css` on the same design tokens
-  (`thingy-base.css`; includes `--color-error`).
+  `window.confirm`/`window.prompt`. Static content pages (`/about/`,
+  `/connect/`) use `thingy-page-entry.css` -> `thingy-page.css` on the
+  same tokens.
 - `web/public/robots.txt`: `robots.txt`.
 - `web/public/sitemap.xml`: `sitemap.xml`.
 - `web/vite.config.ts`: multi-page build config and build-time public config
