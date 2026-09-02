@@ -621,3 +621,13 @@
   background: var(--surface);
   outline: none;
 }
+
+.thingy-aui-recent-snippet {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -271,6 +271,14 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
             onRename={(id, current) => void renameConversation(id, current)}
             onDelete={(id) => void deleteConversation(id)}
             filterInputRef={filterInputRef}
+            onSearch={async (query) => {
+              const data = await session.postJson('/conversations', { action: 'search', query }, session.authHeaders());
+              const matches = (data as { matches?: Array<{ conversation_id?: string; snippet?: string }> }).matches;
+              return (Array.isArray(matches) ? matches : []).map((match) => ({
+                conversation_id: String(match.conversation_id || ''),
+                snippet: String(match.snippet || '')
+              }));
+            }}
           />
         )}
         {guest ? null : <div className="rail-scrim" aria-hidden="true" onClick={() => setMobileRailOpen(false)} />}

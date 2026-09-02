@@ -1,4 +1,4 @@
-import { useMemo, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { AccountPanel } from '../AccountPanel.tsx';
 import { Icon } from './Icon.tsx';
 
@@ -48,7 +48,8 @@ export function Rail({
   onShare,
   onRename,
   onDelete,
-  filterInputRef
+  filterInputRef,
+  onSearch
 }: {
   collapsed: boolean;
   onToggleCollapsed: () => void;
@@ -60,15 +61,39 @@ export function Rail({
   onRename: (id: string, current: string) => void;
   onDelete: (id: string) => void;
   filterInputRef?: RefObject<HTMLInputElement | null>;
+  onSearch?: (query: string) => Promise<Array<{ conversation_id: string; snippet: string }>>;
 }) {
   const [filter, setFilter] = useState('');
+  // Full-content matches from the server (contract 4.5): debounced, and a
+  // sequence guard drops stale responses when the reader keeps typing.
+  const [contentMatches, setContentMatches] = useState<Map<string, string>>(new Map());
+  const searchSeq = useRef(0);
+  useEffect(() => {
+    const needle = filter.trim();
+    if (needle.length < 2 || !onSearch) {
+      setContentMatches(new Map());
+      return undefined;
+    }
+    const seq = ++searchSeq.current;
+    const timer = window.setTimeout(() => {
+      onSearch(needle)
+        .then((matches) => {
+          if (searchSeq.current !== seq) return;
+          setContentMatches(new Map(matches.map((match) => [match.conversation_id, match.snippet])));
+        })
+        .catch(() => {
+          /* title matches still apply */
+        });
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [filter, onSearch]);
   const groups = useMemo(() => {
     const needle = filter.trim().toLowerCase();
     const visible = needle
-      ? conversations.filter((entry) => entry.title.toLowerCase().includes(needle))
+      ? conversations.filter((entry) => entry.title.toLowerCase().includes(needle) || contentMatches.has(entry.id))
       : conversations;
     return timeGroups(visible);
-  }, [conversations, filter]);
+  }, [conversations, filter, contentMatches]);
   return (
     <nav className="rail thingy-aui-rail" aria-label="Conversations">
       <div className="thingy-aui-rail-head">
@@ -113,6 +138,9 @@ export function Rail({
                       <span className="thingy-aui-shared-dot" title="Shared" aria-label="Shared">
                         <Icon name="share" />
                       </span>
+                    ) : null}
+                    {filter.trim() && contentMatches.has(entry.id) ? (
+                      <span className="thingy-aui-recent-snippet">{contentMatches.get(entry.id)}</span>
                     ) : null}
                   </button>
                   <span className="thingy-aui-recent-actions">
