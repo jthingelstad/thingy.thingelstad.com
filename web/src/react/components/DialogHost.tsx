@@ -34,7 +34,7 @@ export function DialogHost() {
   if (!dialog) return null;
   const { request } = dialog;
   const isPrompt = request.kind === 'prompt';
-  const settle = (v: boolean | string | null) => settleDialog(v);
+  const settle = (v: boolean | string | null | 'alt') => settleDialog(v);
   const cancel = () => settle(isPrompt ? null : false);
   return (
     <Dialog.Root open onOpenChange={(open) => (open ? undefined : cancel())}>
@@ -82,7 +82,16 @@ export function DialogHost() {
                 )}
               </form>
             ) : null}
-            <div className="mt-4 flex justify-end gap-2">
+            <div className="mt-4 flex items-center justify-end gap-2">
+              {request.altLabel ? (
+                <button
+                  type="button"
+                  className="mr-auto rounded-lg px-2 py-2 text-sm font-bold text-error hover:bg-error/10"
+                  onClick={() => settle('alt')}
+                >
+                  {request.altLabel}
+                </button>
+              ) : null}
               {request.hideCancel ? null : (
                 <button
                   type="button"

@@ -10,6 +10,9 @@ interface DialogBase {
   cancelLabel?: string;
   danger?: boolean;
   hideCancel?: boolean;
+  // Optional third action rendered as a destructive text button; a
+  // confirm dialog then resolves 'alt' when it is chosen.
+  altLabel?: string;
 }
 
 interface ConfirmRequest extends DialogBase {
@@ -30,7 +33,7 @@ interface ActiveDialog {
   request: DialogRequest;
   // Monotonic id so the host can reset its input state per dialog.
   id: number;
-  resolve: (value: boolean | string | null) => void;
+  resolve: (value: boolean | string | null | 'alt') => void;
 }
 
 // Minimal framework-free store with the {value, subscribe} shape the React
@@ -61,14 +64,14 @@ function cancelledValue(request: DialogRequest) {
 }
 
 function open(request: DialogRequest) {
-  return new Promise<boolean | string | null>((resolve) => {
+  return new Promise<boolean | string | null | 'alt'>((resolve) => {
     const previous = activeDialog.value;
     if (previous) previous.resolve(cancelledValue(previous.request));
     activeDialog.value = { request, id: nextDialogId++, resolve };
   });
 }
 
-function settleDialog(value: boolean | string | null) {
+function settleDialog(value: boolean | string | null | 'alt') {
   const current = activeDialog.value;
   if (!current) return;
   activeDialog.value = null;
@@ -81,8 +84,9 @@ function cancelDialog() {
   settleDialog(cancelledValue(current.request));
 }
 
-async function confirmDialog(request: Omit<ConfirmRequest, 'kind'>) {
-  return (await open({ kind: 'confirm', ...request })) === true;
+async function confirmDialog(request: Omit<ConfirmRequest, 'kind'>): Promise<boolean | 'alt'> {
+  const value = await open({ kind: 'confirm', ...request });
+  return value === 'alt' ? 'alt' : value === true;
 }
 
 async function promptDialog(request: Omit<PromptRequest, 'kind'>) {

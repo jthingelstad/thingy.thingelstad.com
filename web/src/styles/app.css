@@ -20,3 +20,16 @@
 [data-readonly] [data-rw-action] {
   display: none;
 }
+
+/* App-shell scroll discipline: when the chat shell is mounted, the
+   DOCUMENT must never scroll - only the thread viewport and the rail do.
+   Safari otherwise shows a window scrollbar alongside the inner one
+   (Jamie's double-scrollbar report). Screen only: print needs the page
+   to flow. */
+@media screen {
+  html:has(.thingy-app-shell),
+  html:has(.thingy-app-shell) body {
+    height: 100%;
+    overflow: hidden;
+  }
+}

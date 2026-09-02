@@ -159,6 +159,40 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
     if (title) setKnownTitle({ id, title });
   }
 
+  const headerTitle =
+    conversations.find((entry) => entry.id === activeId)?.title ||
+    (knownTitle?.id === activeId ? knownTitle.title : '') ||
+    'New chat';
+
+  // Permalinks: the URL always names the open conversation
+  // (/chat/?conversation=<id>), so reload and copy-link both work, and
+  // back/forward walk the conversations you visited. Guests have no
+  // server-side conversations to link to.
+  useEffect(() => {
+    if (guest) return;
+    const wanted = activeId ? `/chat/?conversation=${encodeURIComponent(activeId)}` : '/chat/';
+    const current = `${window.location.pathname}${window.location.search}`;
+    if (current !== wanted) window.history.pushState({ thingyConversation: activeId }, '', wanted);
+  }, [activeId, guest]);
+
+  useEffect(() => {
+    document.title = activeId && headerTitle !== 'New chat' ? `${headerTitle} — Thingy` : 'Chat — Thingy';
+  }, [activeId, headerTitle]);
+
+  useEffect(() => {
+    if (guest) return undefined;
+    function onPopState() {
+      const id = new URLSearchParams(window.location.search).get('conversation') || '';
+      setActiveId(id);
+      setMountedId(id);
+      if (!id) setThreadEpoch((n) => n + 1);
+    }
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+    // Bound once; setters are stable.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function deleteConversation(id: string) {
     const ok = await confirmDialog({
       title: 'Delete this conversation?',
@@ -188,9 +222,10 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
     const confirmed = await confirmDialog(
       shared
         ? {
-            title: 'Refresh the share link?',
-            body: 'The link stays the same and picks up the latest messages.',
-            confirmLabel: 'Refresh link'
+            title: 'This conversation is shared',
+            body: 'Anyone with the link can read it. Refreshing keeps the same link and picks up the latest messages; stopping makes the link dead immediately.',
+            confirmLabel: 'Refresh & copy link',
+            altLabel: 'Stop sharing'
           }
         : {
             title: 'Share this conversation?',
@@ -199,6 +234,28 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
           }
     );
     if (!confirmed) return;
+    if (confirmed === 'alt') {
+      try {
+        await session.postJson('/conversations', { action: 'unshare', conversation_id: id }, session.authHeaders());
+      } catch (error) {
+        await confirmDialog({
+          title: 'Could not stop sharing',
+          body: errorMessage(error, 'Thingy could not revoke the link. Please try again.'),
+          confirmLabel: 'OK',
+          hideCancel: true
+        });
+        return;
+      }
+      trackEvent('librarian.share_link_revoke');
+      invalidateConversations();
+      await confirmDialog({
+        title: 'Sharing stopped',
+        body: 'The link is dead. Anyone who opens it now sees "no longer available."',
+        confirmLabel: 'Done',
+        hideCancel: true
+      });
+      return;
+    }
     let url = '';
     try {
       const data = await session.postJson(
@@ -379,11 +436,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                 </Tip>
               ) : null}
               <HeaderTitle
-                title={
-                  conversations.find((entry) => entry.id === activeId)?.title ||
-                  (knownTitle?.id === activeId ? knownTitle.title : '') ||
-                  'New chat'
-                }
+                title={headerTitle}
                 canRename={Boolean(activeId)}
                 onRename={async (title) => {
                   renameMutation.mutate({ id: activeId, title });

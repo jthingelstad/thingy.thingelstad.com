@@ -223,6 +223,12 @@
 }
 
 .librarian-answer-content img {
-  max-width: 100%;
+  /* Inline archive photos are illustrations, not the content - cap them
+     well under the column width (full-bleed read as oversized; Jamie's
+     sixth-review feedback). Click-through still opens the original. */
+  max-width: min(100%, 420px);
+  max-height: 340px;
+  width: auto;
+  height: auto;
   border-radius: 8px;
 }
