@@ -16,6 +16,9 @@ export function useAgentWelcome(guest: boolean, seeded: boolean) {
   // retrieves real archive passages and grounds each suggestion in one.
   // Never a static question list - Jamie's product rule.
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  // Seeded prompts skip the welcome request entirely - the chip
+  // skeletons must not pulse for a request that will never run (R3-03).
+  const [suggestionsPending, setSuggestionsPending] = useState(!seeded);
   useEffect(() => {
     if (seeded) return undefined;
     const controller = new AbortController();
@@ -61,11 +64,13 @@ export function useAgentWelcome(guest: boolean, seeded: boolean) {
         trackEvent('librarian.welcome_success', guest ? 'guest' : 'reader');
       } catch {
         trackEvent('librarian.welcome_error', 'client');
+      } finally {
+        setSuggestionsPending(false);
       }
     })();
     return () => controller.abort();
     // One welcome per page load.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  return { text: welcomeText, suggestions };
+  return { text: welcomeText, suggestions, suggestionsPending };
 }

@@ -16,7 +16,7 @@ import { Icon } from './Icon.tsx';
 // Corpus-grounded follow-up chips from the welcome agent (contract 4.4).
 // Each suggestion is grounded in retrieved archive passages server-side -
 // never a static sampled list. Tapping one sends it as the first message.
-function SuggestionChips({ suggestions }: { suggestions: string[] }) {
+function SuggestionChips({ suggestions, pending = false }: { suggestions: string[]; pending?: boolean }) {
   const aui = useAui();
   // DETERMINISTIC GEOMETRY: three stacked single-line rows whether the
   // chips are skeletons or real. Wrapped pill rows re-broke the mis-click
@@ -27,6 +27,9 @@ function SuggestionChips({ suggestions }: { suggestions: string[] }) {
   const CHIP_ROW =
     'block w-full max-w-xl truncate rounded-xl border px-3.5 py-1.5 text-left text-[13.5px] leading-snug';
   if (!suggestions.length) {
+    // Skeletons only while a welcome request is actually in flight; a
+    // seeded prompt never fetches suggestions (R3-03).
+    if (!pending) return null;
     return (
       <div className="grid gap-2" aria-hidden="true">
         {[0, 1, 2].map((slot) => (
@@ -86,6 +89,7 @@ function Thread({
   guest,
   welcome,
   suggestions,
+  suggestionsPending,
   readOnly,
   composerLocked,
   draftKey,
@@ -94,6 +98,7 @@ function Thread({
   guest: boolean;
   welcome: string;
   suggestions: string[];
+  suggestionsPending?: boolean;
   readOnly?: boolean;
   composerLocked?: boolean;
   draftKey?: string;
@@ -115,7 +120,7 @@ function Thread({
                     <p className="min-h-28 text-[17px] leading-relaxed text-ink">{welcome}</p>
                   </div>
                 </article>
-                <SuggestionChips suggestions={suggestions} />
+                <SuggestionChips suggestions={suggestions} pending={suggestionsPending} />
               </div>
             ) : null}
           </ThreadPrimitive.Empty>
@@ -156,6 +161,7 @@ export function ThreadHost({
   guest,
   welcome,
   suggestions,
+  suggestionsPending,
   initialPrompt,
   sharedMessages,
   readOnly,
@@ -166,6 +172,7 @@ export function ThreadHost({
   guest: boolean;
   welcome: string;
   suggestions: string[];
+  suggestionsPending?: boolean;
   initialPrompt?: string;
   // A shared-conversation transcript preloaded into the thread (share
   // continuation): rendered like history, forked on the first message.
@@ -256,6 +263,7 @@ export function ThreadHost({
         guest={guest}
         welcome={welcome}
         suggestions={suggestions}
+        suggestionsPending={suggestionsPending}
         readOnly={readOnly}
         composerLocked={composerLocked}
         draftKey={draftKey}
