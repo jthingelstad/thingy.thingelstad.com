@@ -197,6 +197,7 @@
     grid-template-columns: 1fr;
     justify-items: center;
     text-align: center;
+    min-height: auto;
   }
 
   .thingy-home-guest-note {
@@ -254,10 +255,6 @@
 
   .thingy-home-grid {
     grid-template-columns: 1fr;
-  }
-
-  .thingy-home-hero {
-    min-height: auto;
   }
 
   .thingy-home-image img {
