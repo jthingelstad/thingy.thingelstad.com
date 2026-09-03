@@ -50,10 +50,7 @@ export function SignInApp({
     async function bootstrap() {
       // The Tinylytics embed deliberately skips /signin (privacy: magic
       // tokens ride the URL), so this event is the page's only visit signal.
-      trackEvent(
-        'librarian.signin_visit',
-        loginToken ? 'magic_link' : session.sessionActive() ? 'active' : 'form'
-      );
+      trackEvent('librarian.signin_visit', loginToken ? 'magic_link' : session.sessionActive() ? 'active' : 'form');
       if (session.sessionActive() && !loginToken) {
         setMessage('You are already signed in.');
         setMessageKind('success');
