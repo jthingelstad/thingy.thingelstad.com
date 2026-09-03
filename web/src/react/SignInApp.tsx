@@ -55,7 +55,7 @@ export function SignInApp({
       // tokens ride the URL), so this event is the page's only visit signal.
       trackEvent('librarian.signin_visit', loginToken ? 'magic_link' : session.sessionActive() ? 'active' : 'form');
       if (session.sessionActive() && !loginToken) {
-        setMessage('You are already signed in.');
+        setMessage("You're already in.");
         setMessageKind('success');
         window.location.replace(destinationPath());
         return;
@@ -97,7 +97,7 @@ export function SignInApp({
     }
     setBusy(true);
     setSecondary('');
-    setMessage(action === 'subscribe' ? 'Adding you to The Weekly Thing...' : 'Checking your access...');
+    setMessage(action === 'subscribe' ? 'Adding you to The Weekly Thing...' : 'Checking the subscriber list...');
     setMessageKind('pending');
     try {
       const data = await session.postJson(
@@ -113,8 +113,8 @@ export function SignInApp({
         trackEvent('librarian.signin_request', 'ok');
         setMessage(
           standalone
-            ? 'Check your email and enter the six-digit code below. (The emailed link opens in your browser, not this app.)'
-            : 'Check your email - enter the sign-in code below, or use the link.'
+            ? 'Check your inbox - Thingy just wrote to you. Enter the six-digit code below (the emailed link opens in your browser, not this app).'
+            : 'Check your inbox - Thingy just wrote to you. Enter the six-digit code below, or use the link.'
         );
         setMessageKind('success');
         setCodeEntry(true);
@@ -192,7 +192,7 @@ export function SignInApp({
           />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-bold tracking-[0.14em] text-accent-deep uppercase">Thingy access</p>
+          <p className="text-[11px] font-bold tracking-[0.14em] text-accent-deep uppercase">Come on in</p>
           <h1 className="mt-0.5 text-[22px] leading-tight font-extrabold">Sign in to Thingy</h1>
           <p className="mt-1.5 text-[14px] leading-relaxed text-ink-soft">
             {standalone
@@ -221,7 +221,7 @@ export function SignInApp({
                 className="shrink-0 rounded-xl bg-accent-deep px-4 py-2.5 text-[14px] font-bold text-bg hover:brightness-110 disabled:opacity-50"
                 disabled={busy}
               >
-                Send Link
+                Email Me a Code
               </button>
             </div>
           </form>

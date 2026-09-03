@@ -69,12 +69,12 @@ test('a failed share fetch shows the unavailable state', async () => {
     vi.fn(async () => new Response('{}', { status: 404 }))
   );
   render(<ShareApp token="shr_gonetoken" />);
-  await screen.findByText(/no longer available/);
+  await screen.findByText(/has been closed up/);
 });
 
 test('an invalid token never fetches', async () => {
   render(<ShareApp token="not a token!" />);
-  await screen.findByText(/no longer available/);
+  await screen.findByText(/has been closed up/);
   expect(fetch).not.toHaveBeenCalled();
 });
 
@@ -102,7 +102,7 @@ test('a signed-in fork shows the saved-to-your-chats banner', async () => {
   render(<MockedShareApp token="shr_forktoken" />);
   await screen.findByRole('heading', { name: 'Bison across the archive' });
   await user.click(screen.getByRole('button', { name: 'simulate fork' }));
-  await screen.findByText(/Saved to your chats/);
+  await screen.findByText(/Tucked into your chats/);
   const open = screen.getByRole('link', { name: 'Open in Thingy' });
   expect(open.getAttribute('href')).toBe('/chat/?conversation=conv-forked');
   vi.doUnmock('../src/react/components/Thread.tsx');

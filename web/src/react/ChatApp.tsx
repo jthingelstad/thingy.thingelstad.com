@@ -280,7 +280,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
       invalidateConversations();
       await confirmDialog({
         title: 'Sharing stopped',
-        body: 'The link is dead. Anyone who opens it now sees "no longer available."',
+        body: 'The link is dead. Anyone who opens it now sees "closed up."',
         confirmLabel: 'Done',
         hideCancel: true
       });

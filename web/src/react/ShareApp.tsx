@@ -50,7 +50,7 @@ function Unavailable({ signedIn }: { signedIn: boolean }) {
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-10">
       <div className="thingy-shared-header">
-        <h1 className="text-[22px] font-extrabold">This shared conversation is no longer available.</h1>
+        <h1 className="text-[22px] font-extrabold">This shared conversation has been closed up.</h1>
         <p className="mt-1.5 text-[14.5px] text-ink-soft">
           The link may have been turned off by the person who shared it, or it may have expired.
         </p>
@@ -222,7 +222,7 @@ export function ShareApp({ token = '' }: { token?: string }) {
               </aside>
             ) : forkedId && signedIn ? (
               <aside className={BANNER}>
-                <span>Saved to your chats as a new conversation.</span>
+                <span>Tucked into your chats as a new conversation.</span>
                 <a
                   className="font-bold text-accent-deep underline underline-offset-2"
                   href={`/chat/?conversation=${encodeURIComponent(forkedId)}`}

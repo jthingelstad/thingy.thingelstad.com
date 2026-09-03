@@ -30,7 +30,7 @@ test('rejects an invalid email locally without calling the server', async () => 
   // regex - exercising the local check (a fully invalid string is blocked
   // by the browser before our handler runs).
   await user.type(screen.getByLabelText('Email address'), 'a@b');
-  await user.click(screen.getByRole('button', { name: 'Send Link' }));
+  await user.click(screen.getByRole('button', { name: 'Email Me a Code' }));
   await screen.findByText('Enter a valid email address.');
   expect(postJson).not.toHaveBeenCalled();
 });
@@ -40,8 +40,8 @@ test('magic_link_sent reveals the six-digit code entry', async () => {
   postJson.mockResolvedValueOnce({ status: 'magic_link_sent' });
   render(<SignInApp />);
   await user.type(screen.getByLabelText('Email address'), 'reader@example.com');
-  await user.click(screen.getByRole('button', { name: 'Send Link' }));
-  await screen.findByText(/enter the sign-in code below/);
+  await user.click(screen.getByRole('button', { name: 'Email Me a Code' }));
+  await screen.findByText(/Enter the six-digit code below/);
   const codeInput = await screen.findByLabelText('Sign-in code');
   // The Sign In button stays disabled until six digits are present.
   const signIn = screen.getByRole('button', { name: 'Sign In' });
@@ -55,7 +55,7 @@ test('not_found offers the subscribe path', async () => {
   postJson.mockResolvedValueOnce({ status: 'not_found' });
   render(<SignInApp />);
   await user.type(screen.getByLabelText('Email address'), 'new@example.com');
-  await user.click(screen.getByRole('button', { name: 'Send Link' }));
+  await user.click(screen.getByRole('button', { name: 'Email Me a Code' }));
   await screen.findByRole('button', { name: 'Add Me to The Weekly Thing' });
 });
 
@@ -64,7 +64,7 @@ test('unconfirmed offers resend confirmation', async () => {
   postJson.mockResolvedValueOnce({ status: 'unconfirmed' });
   render(<SignInApp />);
   await user.type(screen.getByLabelText('Email address'), 'pending@example.com');
-  await user.click(screen.getByRole('button', { name: 'Send Link' }));
+  await user.click(screen.getByRole('button', { name: 'Email Me a Code' }));
   await screen.findByRole('button', { name: 'Resend Confirmation' });
 });
 
@@ -73,6 +73,6 @@ test('a server error surfaces as a readable message', async () => {
   postJson.mockRejectedValueOnce(new Error('Thingy is unavailable.'));
   render(<SignInApp />);
   await user.type(screen.getByLabelText('Email address'), 'reader@example.com');
-  await user.click(screen.getByRole('button', { name: 'Send Link' }));
+  await user.click(screen.getByRole('button', { name: 'Email Me a Code' }));
   await screen.findByText('Thingy is unavailable.');
 });

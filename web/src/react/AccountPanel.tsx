@@ -44,7 +44,7 @@ function formatDurationParts(milliseconds: number) {
 function formatActiveSpan(startValue: unknown, endValue: unknown) {
   const start = new Date(String(startValue || '').trim());
   const end = new Date(String(endValue || '').trim());
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'Not enough activity yet';
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'Just getting started';
   return formatDurationParts(Math.max(0, end.getTime() - start.getTime()));
 }
 
@@ -53,11 +53,11 @@ function formatProfileActivity(accountOverview: LibrarianAccountOverview = {}, p
   const conversationCount = profileNumber(accountOverview.conversation_count);
   const conversationTurns = profileNumber(accountOverview.conversation_turn_count);
   const first = totalTurns
-    ? `${formatProfileCount(totalTurns, 'total Thingy turn')} recorded.`
-    : 'No Thingy turns have been recorded yet.';
+    ? `You and Thingy have traded ${formatProfileCount(totalTurns, 'turn')}.`
+    : 'No turns together yet.';
   const second = conversationCount
-    ? `${formatProfileCount(conversationCount, 'retained conversation')} with ${formatProfileCount(conversationTurns, 'retained turn')}.`
-    : 'No retained conversations yet.';
+    ? `${formatProfileCount(conversationCount, 'saved conversation')} holding ${formatProfileCount(conversationTurns, 'turn')}.`
+    : 'No saved conversations yet.';
   return `${first} ${second}`;
 }
 
@@ -76,8 +76,8 @@ function formatDailyQuota(accountOverview: LibrarianAccountOverview = {}) {
   const turns = Number(quota.turns_today || 0);
   const tokens = Number(quota.tokens_today || 0);
   if (quota.unlimited) {
-    if (!turns) return 'No usage yet today — no limit (owner account)';
-    return `${turns} chat turn${turns === 1 ? '' : 's'} · ${formatTokensUsed(tokens)} today — no limit (owner account)`;
+    if (!turns) return 'Quiet so far today - and no limits on the owner account.';
+    return `${turns} chat turn${turns === 1 ? '' : 's'} · ${formatTokensUsed(tokens)} today. No limits on the owner account.`;
   }
   const used = Number(quota.chat_used || 0);
   const max = Number(quota.chat_max || 0);
