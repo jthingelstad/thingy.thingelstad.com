@@ -115,9 +115,22 @@ function Thread({
           <ThreadPrimitive.Empty>
             {welcome ? (
               <div className="thingy-aui-empty flex flex-col gap-4">
+                {/* Claude-style empty state: the mark above the greeting.
+                    Decorative - the greeting itself is the content. */}
+                <img
+                  className="mx-auto size-24 select-none sm:size-28"
+                  src="/img/thingy.png"
+                  alt=""
+                  width="1022"
+                  height="1022"
+                  loading="eager"
+                  draggable={false}
+                />
                 <article className="librarian-message librarian-message-assistant">
                   <div className="librarian-answer-content">
-                    <p className="min-h-28 text-[17px] leading-relaxed text-ink">{welcome}</p>
+                    {/* No min-height reservation: the greeting is composed
+                        client-side at mount and never swapped (4.10). */}
+                    <p className="text-center text-[17px] leading-relaxed text-ink">{welcome}</p>
                   </div>
                 </article>
                 <SuggestionChips suggestions={suggestions} pending={suggestionsPending} />

@@ -177,13 +177,15 @@ async function routeMockApi(page, { holdWelcome = false } = {}) {
 
   await page.route(`${streamHost}/welcome`, async (route) => {
     await welcomeGate;
-    const personalizedWelcome =
-      'Hi. I am Thingy. Your recent threads have explored reader control, durable archives, and the independent web. ' +
-      'There are several useful directions to continue from here, including how those ideas changed over time and where they connect across sources. ' +
-      'You can also start somewhere completely different. Ask something specific, compare two ideas, or invite Thingy to find a surprising thread.';
+    // Contract 4.10: /welcome carries no greeting prose - chips plus the
+    // greeting_lines pool the client caches for its NEXT open.
+    const suggestionsEvent = {
+      suggestions: ['Trace the smoke-test thread from WT200'],
+      greeting_lines: ['There is a smoke-test thread from WT200 I can trace.']
+    };
     await route.fulfill({
       contentType: 'text/event-stream; charset=utf-8',
-      body: `event: answer_delta\ndata: ${JSON.stringify({ delta: personalizedWelcome })}\n\nevent: done\ndata: {"request_id":"smoke"}\n\n`
+      body: `event: suggestions\ndata: ${JSON.stringify(suggestionsEvent)}\n\nevent: done\ndata: {"request_id":"smoke"}\n\n`
     });
   });
 
@@ -358,10 +360,13 @@ async function checkChat(browser) {
   await page.waitForSelector('.thingy-aui-rail');
   await page.waitForSelector('.thingy-aui-newchat');
 
-  // The static welcome renders immediately; personalization is async and
-  // must not lock the composer.
+  // The greeting is composed client-side (4.10): time-aware salutation,
+  // rendered immediately - nothing async may gate it or the composer.
   await page.waitForSelector('.librarian-message-assistant');
-  assert.match(await page.locator('.librarian-message-assistant').first().textContent(), /Hi\. I'm Thingy/);
+  assert.match(
+    await page.locator('.librarian-message-assistant').first().textContent(),
+    /Good (morning|afternoon|evening)/
+  );
 
   // The counter stays hidden until the reader nears the 1200 cap.
   await page.waitForSelector('#librarian-question-count .composer-count', { state: 'hidden' });
@@ -371,9 +376,21 @@ async function checkChat(browser) {
   await page.waitForSelector('#librarian-question-count .composer-count', { state: 'hidden' });
   const sendButton = page.locator('button.composer-send').first();
   assert.equal(await sendButton.isEnabled(), true, 'welcome personalization does not disable the composer');
+  const greetingBefore = await page.locator('.librarian-message-assistant').first().textContent();
   mocks.releaseWelcome();
-  await page.waitForFunction(() =>
-    document.querySelector('.librarian-message-assistant')?.textContent?.includes('Hi. I am Thingy.')
+  // 4.10: the welcome response populates chips and caches greeting_lines
+  // for the next open - it must NEVER swap the already-shown greeting.
+  await page.waitForSelector('.thingy-aui-suggestion');
+  assert.match(await page.locator('.thingy-aui-suggestion').first().textContent(), /smoke-test thread/);
+  assert.equal(
+    await page.locator('.librarian-message-assistant').first().textContent(),
+    greetingBefore,
+    'the greeting must not change when the welcome response arrives'
+  );
+  assert.match(
+    await page.evaluate(() => window.localStorage.getItem('thingy_greeting_pool') || ''),
+    /smoke-test thread/,
+    'greeting_lines cache primes the next open'
   );
 
   // One full mocked streamed turn: answer text, WT citation autolink,
