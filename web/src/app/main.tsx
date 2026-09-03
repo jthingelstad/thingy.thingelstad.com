@@ -35,7 +35,13 @@ const LazyChatApp = lazyRouteComponent(() => import('../react/ChatApp.tsx'), 'Ch
 const LazyShareApp = lazyRouteComponent(() => import('../react/ShareApp.tsx'), 'ShareApp');
 
 initTheme();
-registerClientErrorTracking('chat');
+registerClientErrorTracking(
+  window.location.pathname.startsWith('/signin')
+    ? 'signin'
+    : window.location.pathname.startsWith('/c/')
+      ? 'share'
+      : 'chat'
+);
 
 // URL params are read (in boot.ts and here) BEFORE loadTinylytics scrubs
 // them from the address bar.

@@ -12,6 +12,7 @@ import { postJsonStream, read } from '../shared/thingy-stream.ts';
 import { AGENT_RESPONSE_TIMEOUT_MS } from '../shared/thingy-timeouts.ts';
 import { isAuthError } from '../shared/thingy-url.ts';
 import * as session from '../shared/thingy-session.ts';
+import { trackEvent } from '../shared/thingy-analytics.ts';
 
 // Mutable per-page binding shared between the adapter, the history adapter,
 // and the app shell (rail refreshes, guest meter, active conversation).
@@ -103,9 +104,24 @@ export function deriveParentRequestId(messages: readonly { role: string; metadat
   return String(((parentAssistant?.metadata?.custom || {}) as { request_id?: string }).request_id || '');
 }
 
+// Client-side answer outcomes (lost in the assistant-ui cutover): the
+// citations-contract incident dropped SSE tails for every client while
+// the server logged success and the client emitted nothing. Values are
+// coarse classes - never reader text.
+function classifyAnswerError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error || '');
+  if (/malformed stream/i.test(message)) return 'malformed_stream';
+  if (/stopped responding/i.test(message)) return 'stalled_stream';
+  if (/did not return an answer/i.test(message)) return 'empty_answer';
+  if (/guest questions|quota|limit/i.test(message)) return 'quota';
+  if (/took too long/i.test(message)) return 'timeout';
+  return error instanceof Error ? error.constructor.name : 'unknown';
+}
+
 export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdapter {
   return {
     async *run({ messages, abortSignal }) {
+      const lane = binding.guest ? 'guest' : 'reader';
       const lastUser = [...messages].reverse().find((message) => message.role === 'user');
       const question = lastUser ? messageText(lastUser) : '';
       const parentRequestId = deriveParentRequestId(messages);
@@ -224,10 +240,22 @@ export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdap
         // the run (generator finally runs on .return() too).
         liveActivityStatus.set('');
       }
-      if (streamErrorMessage) throw new Error(streamErrorMessage);
-      if (readError) throw readError instanceof Error ? readError : new Error('Thingy is unavailable.');
-      if (!state.text.trim()) throw new Error('Thingy did not return an answer. Please try again.');
+      if (streamErrorMessage || readError || !state.text.trim()) {
+        const failure = streamErrorMessage
+          ? new Error(streamErrorMessage)
+          : readError instanceof Error
+            ? readError
+            : !state.text.trim()
+              ? new Error('Thingy did not return an answer. Please try again.')
+              : new Error('Thingy is unavailable.');
+        trackEvent(
+          abortSignal.aborted ? 'librarian.answer_stop' : 'librarian.answer_error',
+          abortSignal.aborted ? lane : `${lane}.${classifyAnswerError(failure)}`
+        );
+        throw failure;
+      }
 
+      trackEvent('librarian.answer_success', lane);
       binding.onTurnRecorded?.();
       yield {
         content: assistantParts(state),
