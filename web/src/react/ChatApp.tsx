@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { confirmDialog, promptDialog } from '../shared/stores/dialog-store.ts';
-import { trackEvent } from '../shared/thingy-analytics.ts';
+import { runningStandalone, trackEvent } from '../shared/thingy-analytics.ts';
 import { errorMessage } from '../shared/thingy-errors.ts';
 import * as session from '../shared/thingy-session.ts';
 import { type ThingyThreadBinding } from './thingy-runtime.ts';
@@ -102,7 +102,9 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
   useEffect(() => {
     // Event name predates the chat2->chat rename; kept for Tinylytics
     // continuity.
-    trackEvent('librarian.chat2_visit', guest ? 'guest' : 'reader');
+    // .standalone marks visits from the installed app (PWA) - the only
+    // signal that add-to-home-screen is actually being used.
+    trackEvent('librarian.chat2_visit', `${guest ? 'guest' : 'reader'}${runningStandalone() ? '.standalone' : ''}`);
     // Boot effect: runs once per page load by design.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, []);

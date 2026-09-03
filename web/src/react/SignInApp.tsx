@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import * as session from '../shared/thingy-session.ts';
 import { errorMessage } from '../shared/thingy-errors.ts';
-import { trackEvent } from '../shared/thingy-analytics.ts';
+import { runningStandalone, trackEvent } from '../shared/thingy-analytics.ts';
 
 type SecondaryAction = '' | 'subscribe' | 'resend';
 
@@ -22,6 +22,9 @@ export function SignInApp({
   const [busy, setBusy] = useState(false);
   const [codeEntry, setCodeEntry] = useState(false);
   const [code, setCode] = useState('');
+  // Installed app: the emailed magic link opens the browser's separate
+  // cookie jar, so the code is the path that signs THIS context in.
+  const standalone = useMemo(() => runningStandalone(), []);
 
   function destinationPath() {
     if (!returnTo || returnTo === '/signin/' || returnTo.startsWith('/signin/?')) return '/chat/';
@@ -108,7 +111,11 @@ export function SignInApp({
       }
       if (data.status === 'magic_link_sent') {
         trackEvent('librarian.signin_request', 'ok');
-        setMessage('Check your email - enter the sign-in code below, or use the link.');
+        setMessage(
+          standalone
+            ? 'Check your email and enter the six-digit code below. (The emailed link opens in your browser, not this app.)'
+            : 'Check your email - enter the sign-in code below, or use the link.'
+        );
         setMessageKind('success');
         setCodeEntry(true);
         setCode('');
@@ -188,8 +195,9 @@ export function SignInApp({
           <p className="text-[11px] font-bold tracking-[0.14em] text-accent-deep uppercase">Thingy access</p>
           <h1 className="mt-0.5 text-[22px] leading-tight font-extrabold">Sign in to Thingy</h1>
           <p className="mt-1.5 text-[14px] leading-relaxed text-ink-soft">
-            Enter your email address and Thingy will send a private sign-in link. Weekly Thing readers can use Chat, and
-            supporting members get the deeper features.
+            {standalone
+              ? 'Enter your email address and Thingy will email you a six-digit sign-in code. Weekly Thing readers can use Chat, and supporting members get the deeper features.'
+              : 'Enter your email address and Thingy will send a private sign-in link. Weekly Thing readers can use Chat, and supporting members get the deeper features.'}
           </p>
           <form className="thingy-signin-form mt-4" onSubmit={handleSubmit}>
             <label className="text-[11px] font-bold tracking-wider text-muted uppercase" htmlFor="thingy-signin-email">
@@ -240,6 +248,7 @@ export function SignInApp({
                   pattern="[0-9]*"
                   maxLength={6}
                   placeholder="123456"
+                  autoFocus
                   value={code}
                   onChange={(event) => setCode(event.currentTarget.value)}
                 />

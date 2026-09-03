@@ -266,7 +266,8 @@ Current Tinylytics usage:
   guest banners), `librarian.share_cta`
 - programmatic events posted straight to the collector
   (`src/shared/thingy-analytics.ts` `trackEvent`), all `librarian.*`:
-  - visits: `chat2_visit` (value `guest`/`reader`; name predates the
+  - visits: `chat2_visit` (value `guest`/`reader`, with `.standalone`
+    appended when running as the installed PWA; name predates the
     chat2→chat rename, kept for continuity), `signin_visit`
     (`magic_link`/`form`/`active`)
   - sign-in funnel: `signin_request` (`ok`/`error`), `signin_success`

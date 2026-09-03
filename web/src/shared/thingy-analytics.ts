@@ -36,6 +36,22 @@ function trackEvent(name: string, value = '') {
   }
 }
 
+// True when running as an installed app (add-to-home-screen). iOS exposes
+// navigator.standalone; everything else reports the display-mode the
+// manifest requested. Sign-in copy and visit values branch on this: the
+// emailed magic link opens the BROWSER's cookie jar, not the installed
+// app's, so standalone users must be steered to the six-digit code.
+function runningStandalone() {
+  try {
+    return (
+      window.matchMedia?.('(display-mode: standalone)').matches === true ||
+      (navigator as { standalone?: boolean }).standalone === true
+    );
+  } catch (_error) {
+    return false;
+  }
+}
+
 // The app has no console logging and several fire-and-forget void promises;
 // without this, a render crash or rejected background promise vanishes
 // entirely. Only the error's constructor name is reported - never message
@@ -51,4 +67,4 @@ function registerClientErrorTracking(surface: string) {
   });
 }
 
-export { registerClientErrorTracking, trackEvent };
+export { registerClientErrorTracking, runningStandalone, trackEvent };
