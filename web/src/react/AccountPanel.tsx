@@ -61,18 +61,33 @@ function formatProfileActivity(accountOverview: LibrarianAccountOverview = {}, p
   return `${first} ${second}`;
 }
 
+function formatTokensUsed(count: number) {
+  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M tokens`;
+  if (count >= 10_000) return `${Math.round(count / 1000)}k tokens`;
+  if (count >= 1_000) return `${(count / 1000).toFixed(1)}k tokens`;
+  return `${count} tokens`;
+}
+
 function formatDailyQuota(accountOverview: LibrarianAccountOverview = {}) {
   const quota = accountOverview.quota;
   if (!quota) return '';
-  if (quota.unlimited) return 'Unlimited (owner account)';
+  // Informational usage (contract 4.9) — counted for every account
+  // including the owner; the enforcement quota stays turn-based.
+  const turns = Number(quota.turns_today || 0);
+  const tokens = Number(quota.tokens_today || 0);
+  if (quota.unlimited) {
+    if (!turns) return 'No usage yet today — no limit (owner account)';
+    return `${turns} chat turn${turns === 1 ? '' : 's'} · ${formatTokensUsed(tokens)} today — no limit (owner account)`;
+  }
   const used = Number(quota.chat_used || 0);
   const max = Number(quota.chat_max || 0);
   if (!max) return '';
   const parts = [`${used} of ${max} chat turns`];
+  if (tokens > 0) parts.push(formatTokensUsed(tokens));
   const mcpUsed = Number(quota.mcp_used || 0);
   const mcpMax = Number(quota.mcp_max || 0);
   if (mcpUsed > 0 && mcpMax > 0) parts.push(`${mcpUsed} of ${mcpMax} MCP tool calls`);
-  return `${parts.join(' and ')} used today. Resets at midnight UTC.`;
+  return `${parts.join(' · ')} used today. Resets at midnight UTC.`;
 }
 
 function formatChatModel(accountOverview: LibrarianAccountOverview = {}, supporting = false) {

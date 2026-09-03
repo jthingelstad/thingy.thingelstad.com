@@ -144,6 +144,8 @@ export interface LibrarianQuotaOverview {
   chat_max?: number | null;
   mcp_used?: number;
   mcp_max?: number | null;
+  turns_today?: number;
+  tokens_today?: number;
   [key: string]: unknown;
 }
 
@@ -244,12 +246,12 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = '68d795911c956b19a1196c50b8f4370dd38bbbadb5431bd9cff4875a9181504f';
+export const LIBRARIAN_CONTRACT_SHA256 = '65c780441c87ce61b7ef097fe72a16a27b71f3b249cbf9da74e9f3705b7507e0';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '4.8.0',
+  version: '4.9.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
@@ -578,6 +580,12 @@ export const LIBRARIAN_CONTRACT = {
               type: 'null'
             }
           ]
+        },
+        turns_today: {
+          type: 'number'
+        },
+        tokens_today: {
+          type: 'number'
         }
       },
       additionalProperties: true
