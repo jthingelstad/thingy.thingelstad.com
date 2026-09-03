@@ -257,8 +257,9 @@ Current Tinylytics usage:
   tokens ride that URL; `librarian.signin_*` events are that page's only
   signal) (2026-09-01; previously homepage-only, which silenced all app
   events)
-- `events`, `beacon`, `hits`, `countries`, `kudos=🤖`, Webmention endpoint
-- homepage footer hit/country display and kudos button
+- `events`, `beacon`, `hits`, `countries`, Webmention endpoint (kudos
+  removed at Jamie's request 2026-09-03)
+- homepage footer hit/country display
 - declarative `data-tinylytics-event` hooks (the embed's click delegation
   handles React-rendered elements): `home.start_chat`, `network.return`,
   `librarian.source_click` (inline WT autolinks and the source cards,

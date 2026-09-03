@@ -115,21 +115,6 @@
   font-size: 13px;
 }
 
-.thingy-home-meta .tinylytics_kudos {
-  appearance: none;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface);
-  font-size: 15px;
-  line-height: 1;
-  padding: 6px 10px;
-  cursor: pointer;
-}
-
-.thingy-home-meta .tinylytics_kudos:hover {
-  border-color: var(--accent-deep);
-}
-
 .thingy-home-hits:empty {
   display: none;
 }
@@ -200,6 +185,12 @@
     min-height: auto;
   }
 
+  /* The hero's justify-items only centers grid children; the CTA is a
+     flex item inside .thingy-home-actions and needs its own centering. */
+  .thingy-home-actions {
+    justify-content: center;
+  }
+
   .thingy-home-guest-note {
     flex-basis: 100%;
     margin: 2px 0 0;
@@ -232,21 +223,6 @@
     margin-left: auto;
     color: var(--ink-soft);
     font-size: 13px;
-  }
-
-  .thingy-home-meta .tinylytics_kudos {
-    appearance: none;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: var(--surface);
-    font-size: 15px;
-    line-height: 1;
-    padding: 6px 10px;
-    cursor: pointer;
-  }
-
-  .thingy-home-meta .tinylytics_kudos:hover {
-    border-color: var(--accent-deep);
   }
 
   .thingy-home-hits:empty {
