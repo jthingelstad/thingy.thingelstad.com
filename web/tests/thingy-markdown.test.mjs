@@ -66,6 +66,9 @@ test('WT references inside code are left alone', () => {
 test('images render lazily from the archive properties only', () => {
   const html = render('![photo](https://www.thingelstad.com/uploads/p.jpg)');
   assert.match(html, /<img[^>]*loading="lazy"/);
+  // The micro.blog CDN hosts most pre-2023 photos - blocking it dropped
+  // real archive images (Iceland report, 2026-09-03).
+  assert.match(render('![church](https://cdn.uploads.micro.blog/x/p.jpg)'), /<img[^>]*loading="lazy"/);
   // Non-property hosts are a zero-click exfiltration channel (an injected
   // answer's image URL auto-fetches for every viewer) - blocked, with the
   // alt text kept so content is not silently lost (audit W1).

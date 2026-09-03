@@ -99,6 +99,17 @@ export function thingyUrlTransform(url: string) {
 // exfiltrate via image URLs to attacker hosts (audit W1). Only the
 // archive's own properties may serve inline images; links stay broad
 // because they require a click.
+// The archive's real image hosts, from a corpus-wide inventory
+// (2026-09-03): thingelstad.com domains (~7,000), the micro.blog CDN
+// (~1,600 - most pre-2023 photos), and Buttondown's asset hosts (~140).
+// The first allowlist stopped at *.thingelstad.com and silently dropped
+// the micro.blog-hosted photos (Jamie's Iceland report).
+const IMAGE_HOSTS = new Set([
+  'cdn.uploads.micro.blog',
+  'assets.buttondown.email',
+  'buttondown-attachments.s3.us-west-2.amazonaws.com'
+]);
+
 function allowedImageSrc(src: unknown): string | undefined {
   const value = typeof src === 'string' ? src : '';
   if (!value) return undefined;
@@ -107,7 +118,7 @@ function allowedImageSrc(src: unknown): string | undefined {
     const url = new URL(value);
     if (url.protocol !== 'https:') return undefined;
     const host = url.hostname.toLowerCase();
-    if (host === 'thingelstad.com' || host.endsWith('.thingelstad.com')) return value;
+    if (host === 'thingelstad.com' || host.endsWith('.thingelstad.com') || IMAGE_HOSTS.has(host)) return value;
   } catch {
     return undefined;
   }
