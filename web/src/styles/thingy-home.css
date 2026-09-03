@@ -189,7 +189,16 @@
 }
 
 @media (width <= 560px) {
-  .thingy-home-hero,
+  /* The hero's two columns (robot | copy) collapse to one. A past edit
+     fused ".thingy-home-hero," onto the guest-note TEXT rule below, so
+     the collapse rule vanished and phones got the desktop grid crushed
+     into 390px (2026-09-03 report). */
+  .thingy-home-hero {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
   .thingy-home-guest-note {
     flex-basis: 100%;
     margin: 2px 0 0;

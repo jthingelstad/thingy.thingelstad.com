@@ -422,6 +422,29 @@ async function checkChat(browser) {
   await context.close();
 }
 
+async function checkMobileHome(browser) {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  const failures = collectUiFailures(page);
+  await page.goto(`${baseUrl}/`);
+  await page.waitForSelector('.thingy-home-hero');
+  const widths = await page.evaluate(() => ({
+    doc: document.documentElement.scrollWidth,
+    viewport: window.innerWidth
+  }));
+  assert.ok(
+    widths.doc <= widths.viewport + 1,
+    `home page must not overflow on mobile (${widths.doc} > ${widths.viewport})`
+  );
+  const heroColumns = await page.evaluate(
+    () => getComputedStyle(document.querySelector('.thingy-home-hero')).gridTemplateColumns.split(' ').length
+  );
+  assert.equal(heroColumns, 1, 'the hero collapses to one column at phone width');
+  await assertAccessible(page, 'mobile home');
+  assertNoUiFailures(failures, 'mobile home');
+  await context.close();
+}
+
 async function checkMobileChat(browser) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   await seedSession(context);
@@ -459,6 +482,7 @@ async function main() {
     try {
       await checkSignInRedirect(browser);
       await checkGuestPreview(browser);
+      await checkMobileHome(browser);
       await checkReactChatGuest(browser);
       await checkSharePage(browser);
       await checkChat(browser);
