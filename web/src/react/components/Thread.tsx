@@ -27,7 +27,7 @@ function SuggestionChips({ suggestions, pending = false }: { suggestions: string
   // chips all occupy exactly the same three rows. Pills are content-width
   // but each sits centered on its own row.
   const CHIP =
-    'inline-block max-w-full truncate rounded-full border px-4 py-1.5 text-center text-[13.5px] leading-snug';
+    'inline-block max-w-full truncate rounded-full border px-4 py-1.5 text-center text-[14.5px] leading-snug';
   if (!suggestions.length) {
     // Skeletons only while a welcome request is actually in flight; a
     // seeded prompt never fetches suggestions (R3-03).
@@ -145,7 +145,7 @@ function Thread({
                     {welcome}
                   </p>
                   {welcomeSubtext ? (
-                    <p className="text-[14.5px] leading-relaxed text-ink-soft">{welcomeSubtext}</p>
+                    <p className="text-[15.5px] leading-relaxed text-ink-soft">{welcomeSubtext}</p>
                   ) : null}
                 </div>
                 <SuggestionChips suggestions={suggestions} pending={suggestionsPending} />

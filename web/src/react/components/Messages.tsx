@@ -299,7 +299,7 @@ export function UserMessage() {
   );
   return (
     <MessagePrimitive.Root className="librarian-message librarian-message-user group flex w-full flex-col items-end py-3">
-      <div className="max-w-[78%] rounded-3xl rounded-br-lg bg-ink px-4.5 py-2.5 text-[15px] leading-relaxed break-words whitespace-pre-wrap text-bg">
+      <div className="max-w-[78%] rounded-3xl rounded-br-lg bg-ink px-4.5 py-2.5 text-[16px] leading-relaxed break-words whitespace-pre-wrap text-bg sm:text-[15.5px]">
         <MessagePrimitive.Parts />
       </div>
       <div className={`${ACTIONS_ROW} justify-end`}>

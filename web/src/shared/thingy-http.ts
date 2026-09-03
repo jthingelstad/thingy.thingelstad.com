@@ -26,7 +26,7 @@ async function postJsonRequest(options: ThingyRequestOptions = {}): Promise<Thin
     })
     .catch((error: unknown) => {
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error(options.abortMessage || 'Thingy took too long to respond. Please try again.');
+        throw new Error(options.abortMessage || 'Thingy took too long on that one. Try again.');
       }
       throw error;
     })

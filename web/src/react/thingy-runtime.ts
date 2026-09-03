@@ -137,7 +137,7 @@ export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdap
           path: '/chat',
           controller,
           timeoutMs: AGENT_RESPONSE_TIMEOUT_MS,
-          abortMessage: 'Thingy spent too long in the archive. Please try again with a narrower angle.',
+          abortMessage: 'Thingy got lost in the stacks on that one. Try a narrower angle.',
           headers: session.authHeaders(),
           payload: {
             message: question,
@@ -230,7 +230,7 @@ export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdap
           } else if (eventName === 'citations') {
             state.citations = Array.isArray(data.citations) ? (data.citations as ThingyCitation[]) : [];
           } else if (eventName === 'error') {
-            streamErrorMessage = String(data.error || 'Thingy is unavailable.');
+            streamErrorMessage = String(data.error || "Thingy isn't answering right now. Try again in a minute.");
             // Guest quota rejections carry guest_remaining: 0 so the
             // composer locks instead of inviting a doomed retry (QA F04).
             if (typeof data.guest_remaining === 'number') binding.onGuestRemaining?.(data.guest_remaining);
@@ -248,8 +248,8 @@ export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdap
           : readError instanceof Error
             ? readError
             : !state.text.trim()
-              ? new Error('Thingy did not return an answer. Please try again.')
-              : new Error('Thingy is unavailable.');
+              ? new Error("Thingy came back without an answer. Ask again - that usually isn't a twice problem.")
+              : new Error("Thingy isn't answering right now. Try again in a minute.");
         trackEvent(
           abortSignal.aborted ? 'librarian.answer_stop' : 'librarian.answer_error',
           abortSignal.aborted ? lane : `${lane}.${classifyAnswerError(failure)}`

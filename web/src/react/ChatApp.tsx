@@ -519,7 +519,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
             ) : null}
             {guest ? (
               <aside
-                className="thingy-guest-banner mx-auto mt-3 flex w-[min(48rem,calc(100%-2rem))] flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/40 bg-accent-soft px-4 py-2.5 text-[13.5px] text-ink"
+                className="thingy-guest-banner mx-auto mt-3 flex w-[min(48rem,calc(100%-2rem))] flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/40 bg-accent-soft px-4 py-2.5 text-[14px] text-ink"
                 aria-label="Guest preview"
               >
                 <span>

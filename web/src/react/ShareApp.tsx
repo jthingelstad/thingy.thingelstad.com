@@ -175,7 +175,7 @@ export function ShareApp({ token = '' }: { token?: string }) {
   );
 
   const BANNER =
-    'mx-auto mt-1 flex w-[min(48rem,calc(100%-2rem))] flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/40 bg-accent-soft px-4 py-2.5 text-[13.5px]';
+    'mx-auto mt-1 flex w-[min(48rem,calc(100%-2rem))] flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/40 bg-accent-soft px-4 py-2.5 text-[14px]';
 
   return (
     <TipProvider>

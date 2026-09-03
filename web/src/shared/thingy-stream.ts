@@ -23,7 +23,7 @@ function parseBlock(block: unknown): { eventName: string; data: ThingyStreamData
   try {
     return { eventName, data: validateStreamData(eventName, JSON.parse(raw)) };
   } catch (error) {
-    const streamError = new Error('Thingy sent a malformed stream event. Please try again.');
+    const streamError = new Error('Something got garbled on the way from the archive. Ask again - it usually clears.');
     streamError.cause = error;
     streamError.raw = raw;
     throw streamError;
@@ -31,7 +31,7 @@ function parseBlock(block: unknown): { eventName: string; data: ThingyStreamData
 }
 
 async function read(response: Response, onEvent: (eventName: string, data: ThingyStreamData) => void | Promise<void>) {
-  if (!response || !response.body) throw new Error('Thingy did not return a stream.');
+  if (!response || !response.body) throw new Error('The archive line went quiet. Ask again.');
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -53,7 +53,7 @@ async function read(response: Response, onEvent: (eventName: string, data: Thing
         // Reject BEFORE cancelling: cancel() resolves the pending read()
         // with done:true, and if that settles first the race ends cleanly
         // instead of surfacing the timeout.
-        reject(new Error('Thingy stopped responding mid-answer. Please try again.'));
+        reject(new Error('Thingy went quiet mid-answer. Ask again - it usually clears.'));
         reader.cancel().catch(() => {});
       }, STREAM_IDLE_TIMEOUT_MS);
     });
@@ -108,7 +108,7 @@ async function postJsonStream(options: ThingyRequestOptions = {}): Promise<Respo
   })
     .catch((error: unknown) => {
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error(options.abortMessage || 'Thingy took too long to respond. Please try again.');
+        throw new Error(options.abortMessage || 'Thingy took too long on that one. Try again.');
       }
       throw error;
     })
@@ -119,7 +119,7 @@ async function postJsonStream(options: ThingyRequestOptions = {}): Promise<Respo
   if (!response.ok || !response.body) {
     const requestId = response.headers.get('x-request-id') || '';
     const data = looseApiError(await response.json().catch(() => ({})));
-    const message = data.error || 'Thingy is unavailable.';
+    const message = data.error || "Thingy isn't answering right now. Try again in a minute.";
     const error = new Error(requestId ? `${message} Reference: ${requestId}` : message);
     error.requestId = requestId;
     error.status = response.status;
@@ -130,7 +130,8 @@ async function postJsonStream(options: ThingyRequestOptions = {}): Promise<Respo
   }
   if (/application\/json/i.test(response.headers.get('content-type') || '')) {
     const data = looseApiError(await response.json().catch(() => ({})));
-    const message = data.errorMessage || data.error || data.message || 'Thingy returned an unexpected stream response.';
+    const message =
+      data.errorMessage || data.error || data.message || 'The archive sent back something unexpected. Ask again.';
     const error = new Error(message);
     error.data = data;
     throw error;

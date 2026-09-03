@@ -4,10 +4,22 @@
 
 .librarian-answer-content {
   font-family: var(--sans);
-  font-size: 15.5px;
+
+  /* Friendly-robot scale (2026-09-03): chat body reads at chat-app sizes,
+     not journal-PDF sizes - 16px desktop, 17px on phones. Metadata
+     (receipts, badges, source cards) deliberately stays small: big prose
+     over quiet footnotes is the companion feel. */
+  font-size: 16px;
   line-height: 1.65;
   color: var(--ink);
   overflow-wrap: break-word;
+}
+
+@media (width <= 640px) {
+  .librarian-answer-content {
+    font-size: 17px;
+    line-height: 1.6;
+  }
 }
 
 .librarian-answer-content > :first-child {

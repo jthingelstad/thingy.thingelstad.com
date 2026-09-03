@@ -88,7 +88,7 @@ test('read surfaces the idle-timeout error when a stream goes silent mid-answer'
   };
   await assert.rejects(
     read(new Response(silentBody), (eventName, data) => events.push([eventName, data])),
-    /stopped responding mid-answer/
+    /went quiet mid-answer/
   );
   assert.deepEqual(events, [['meta', { contract_version: '4.0.0' }]]);
 });
