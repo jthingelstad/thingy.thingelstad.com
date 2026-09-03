@@ -163,6 +163,7 @@ export function ThreadHost({
   suggestions,
   suggestionsPending,
   initialPrompt,
+  initialPromptAutoSend,
   sharedMessages,
   readOnly,
   composerLocked,
@@ -174,6 +175,7 @@ export function ThreadHost({
   suggestions: string[];
   suggestionsPending?: boolean;
   initialPrompt?: string;
+  initialPromptAutoSend?: boolean;
   // A shared-conversation transcript preloaded into the thread (share
   // continuation): rendered like history, forked on the first message.
   sharedMessages?: Array<{ role?: string; content?: string; citations?: unknown }>;
@@ -243,11 +245,12 @@ export function ThreadHost({
     // Deferred a tick so the runtime finishes mounting before the seeded
     // prompt (archive links, homepage example chips) is applied.
     const timer = window.setTimeout(() => {
-      if (guest) {
-        // Guests only PREFILL: the blog's explore links auto-submitted
-        // for every JS-executing crawler walking twenty years of posts -
-        // 100 model calls on 2026-09-02 with zero humans involved. A
-        // human presses send; a crawler never does.
+      if (guest || !initialPromptAutoSend) {
+        // Guests only PREFILL (the blog's explore links auto-submitted
+        // for every JS-executing crawler walking twenty years of posts),
+        // and signed-in readers auto-send only when the visit came from
+        // the network's own properties - an arbitrary page linking
+        // ?prompt= must not spend quota or forge a turn (audit W3).
         runtime.thread.composer.setText(initialPrompt);
         return;
       }

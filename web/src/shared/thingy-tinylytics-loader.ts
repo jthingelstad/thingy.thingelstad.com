@@ -15,6 +15,9 @@ export function loadTinylytics() {
 
   if (!tinylyticsSiteId) return;
   if (['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)) return;
+  // The sign-in page handles one-time login values; keep third-party
+  // script off it entirely (audit W2). The URL scrub above still ran.
+  if (window.location.pathname.startsWith('/signin')) return;
 
   const script = document.createElement('script');
   script.defer = true;

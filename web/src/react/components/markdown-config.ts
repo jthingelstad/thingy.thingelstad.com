@@ -94,9 +94,32 @@ export function thingyUrlTransform(url: string) {
   return safe || '';
 }
 
+// Images auto-fetch for every viewer with zero clicks - including every
+// visitor to a shared conversation - so a prompt-injected answer could
+// exfiltrate via image URLs to attacker hosts (audit W1). Only the
+// archive's own properties may serve inline images; links stay broad
+// because they require a click.
+function allowedImageSrc(src: unknown): string | undefined {
+  const value = typeof src === 'string' ? src : '';
+  if (!value) return undefined;
+  if (value.startsWith('/') && !value.startsWith('//')) return value;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:') return undefined;
+    const host = url.hostname.toLowerCase();
+    if (host === 'thingelstad.com' || host.endsWith('.thingelstad.com')) return value;
+  } catch {
+    return undefined;
+  }
+  return undefined;
+}
+
 export const BASE_COMPONENTS: Components = {
-  img: ({ src, alt }) =>
-    createElement('img', { src: typeof src === 'string' ? src : undefined, alt: alt || '', loading: 'lazy' }),
+  img: ({ src, alt }) => {
+    const safeSrc = allowedImageSrc(src);
+    if (!safeSrc) return createElement('span', {}, alt || '');
+    return createElement('img', { src: safeSrc, alt: alt || '', loading: 'lazy' });
+  },
   a: ({ href, title, children, ...rest }) =>
     createElement('a', { href, title, target: '_blank', rel: 'noopener', ...rest }, children)
 };

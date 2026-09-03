@@ -24,6 +24,9 @@ export interface ChatInitial {
   // Deep link (?conversation=<id>): open this conversation on load -
   // used by the share page's "open the original / open in Thingy".
   conversationId?: string;
+  // Seeded prompts auto-send only for visits from the network's own
+  // properties; otherwise they prefill (audit W3).
+  promptAutoSend?: boolean;
 }
 
 export function ChatApp({ initial }: { initial: ChatInitial }) {
@@ -532,6 +535,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
               suggestions={mountedId ? [] : suggestions}
               suggestionsPending={mountedId ? false : suggestionsPending}
               initialPrompt={activeId || threadEpoch > 0 ? undefined : initial.prompt}
+              initialPromptAutoSend={initial.promptAutoSend}
               composerLocked={guest && guestRemaining === 0}
               draftKey={guest ? 'guest' : activeId || 'new'}
             />

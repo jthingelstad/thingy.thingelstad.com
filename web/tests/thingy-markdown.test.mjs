@@ -63,7 +63,13 @@ test('WT references inside code are left alone', () => {
   assert.doesNotMatch(html, /<a[^>]*>WT127/);
 });
 
-test('images render lazily', () => {
-  const html = render('![photo](https://example.com/p.jpg)');
+test('images render lazily from the archive properties only', () => {
+  const html = render('![photo](https://www.thingelstad.com/uploads/p.jpg)');
   assert.match(html, /<img[^>]*loading="lazy"/);
+  // Non-property hosts are a zero-click exfiltration channel (an injected
+  // answer's image URL auto-fetches for every viewer) - blocked, with the
+  // alt text kept so content is not silently lost (audit W1).
+  const blocked = render('![offsite photo](https://evil.example.com/p.jpg)');
+  assert.ok(!blocked.includes('<img'), 'offsite images do not render');
+  assert.ok(blocked.includes('offsite photo'), 'alt text survives as prose');
 });

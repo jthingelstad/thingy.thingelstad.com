@@ -259,7 +259,10 @@ function relativeUrl(value: unknown, defaultPath = '/'): URL {
 }
 
 function pathFromUrl(url: URL): string {
-  return `${url.pathname}${url.search}${url.hash}`;
+  // new URL('/..//evil.com', origin).pathname is '//evil.com' - collapse
+  // leading slashes so the result can never be protocol-relative
+  // (audit W5; today every consumer re-guards, keep it structurally safe).
+  return `${url.pathname.replace(/^\/{2,}/, '/')}${url.search}${url.hash}`;
 }
 
 function stashPrivateReturnParams(url: URL) {

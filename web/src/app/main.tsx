@@ -40,8 +40,26 @@ registerClientErrorTracking('chat');
 // URL params are read (in boot.ts and here) BEFORE loadTinylytics scrubs
 // them from the address bar.
 const explore = composeExplorePrompt(bootParams.get('explore'), bootParams.get('issue'));
+// A seeded prompt AUTO-SENDS only when the visit came from one of the
+// network's own properties (or in-site navigation) - any page on the web
+// can link ?prompt=<attacker text>, and auto-submitting it would spend
+// the reader's quota and plant attacker words as their own turn (audit
+// W3). Everyone else still gets the composer prefilled.
+const referrerHost = (() => {
+  try {
+    return document.referrer ? new URL(document.referrer).hostname.toLowerCase() : '';
+  } catch {
+    return '';
+  }
+})();
+const promptAutoSend =
+  referrerHost === window.location.hostname ||
+  referrerHost === 'thingelstad.com' ||
+  referrerHost.endsWith('.thingelstad.com');
+
 const chatInitial: ChatInitial = {
   prompt: (String(bootParams.get('prompt') || '').trim() || explore.prompt).slice(0, 1200),
+  promptAutoSend,
   from: resolveFromValue(bootParams.get('from') || explore.sourceUrl || null),
   // Guests never adopt a deep-linked conversation id - it would ride
   // guest requests as someone else's conversation_id.
