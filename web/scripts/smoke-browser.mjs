@@ -267,8 +267,8 @@ async function checkReactChatGuest(browser) {
   await page.waitForSelector('.thingy-aui-input');
   assert.match(await page.locator('.thingy-guest-banner').textContent(), /Guest preview/);
   assert.ok(
-    (await page.locator('.librarian-message-assistant').first().textContent()).includes("I'm Thingy"),
-    'react chat guest welcome renders'
+    (await page.locator('.thingy-aui-greeting').textContent()).includes("I'm Thingy"),
+    'react chat guest greeting renders'
   );
   await assertAccessible(page, 'react chat guest');
   assertNoUiFailures(failures, 'react chat guest');
@@ -360,12 +360,13 @@ async function checkChat(browser) {
   await page.waitForSelector('.thingy-aui-rail');
   await page.waitForSelector('.thingy-aui-newchat');
 
-  // The greeting is composed client-side (4.10): time-aware salutation,
-  // rendered immediately - nothing async may gate it or the composer.
-  await page.waitForSelector('.librarian-message-assistant');
-  assert.match(
-    await page.locator('.librarian-message-assistant').first().textContent(),
-    /Good (morning|afternoon|evening)/
+  // The greeting is composed client-side (4.10): one short display line
+  // (salutation phrase or archive tease), rendered immediately - nothing
+  // async may gate it or the composer.
+  await page.waitForSelector('.thingy-aui-greeting');
+  assert.ok(
+    (await page.locator('.thingy-aui-greeting').textContent()).trim().length > 0,
+    'the display greeting renders instantly'
   );
 
   // The counter stays hidden until the reader nears the 1200 cap.
@@ -376,14 +377,14 @@ async function checkChat(browser) {
   await page.waitForSelector('#librarian-question-count .composer-count', { state: 'hidden' });
   const sendButton = page.locator('button.composer-send').first();
   assert.equal(await sendButton.isEnabled(), true, 'welcome personalization does not disable the composer');
-  const greetingBefore = await page.locator('.librarian-message-assistant').first().textContent();
+  const greetingBefore = await page.locator('.thingy-aui-greeting').textContent();
   mocks.releaseWelcome();
   // 4.10: the welcome response populates chips and caches greeting_lines
   // for the next open - it must NEVER swap the already-shown greeting.
   await page.waitForSelector('.thingy-aui-suggestion');
   assert.match(await page.locator('.thingy-aui-suggestion').first().textContent(), /smoke-test thread/);
   assert.equal(
-    await page.locator('.librarian-message-assistant').first().textContent(),
+    await page.locator('.thingy-aui-greeting').textContent(),
     greetingBefore,
     'the greeting must not change when the welcome response arrives'
   );

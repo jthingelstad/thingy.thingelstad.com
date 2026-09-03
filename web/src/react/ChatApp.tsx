@@ -352,7 +352,12 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
     };
   }
 
-  const { text: welcome, suggestions, suggestionsPending } = useAgentWelcome(guest, Boolean(initial.prompt));
+  const {
+    text: welcome,
+    subtext: welcomeSubtext,
+    suggestions,
+    suggestionsPending
+  } = useAgentWelcome(guest, Boolean(initial.prompt));
   const [railCollapsed, setRailCollapsed] = useState(() => {
     try {
       return window.localStorage.getItem('thingyRailCollapsed') === '1';
@@ -538,6 +543,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
               binding={binding}
               guest={guest}
               welcome={mountedId ? '' : welcome}
+              welcomeSubtext={mountedId ? '' : welcomeSubtext}
               suggestions={mountedId ? [] : suggestions}
               suggestionsPending={mountedId ? false : suggestionsPending}
               initialPrompt={activeId || threadEpoch > 0 ? undefined : initial.prompt}

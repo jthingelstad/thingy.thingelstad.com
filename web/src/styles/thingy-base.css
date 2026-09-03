@@ -331,3 +331,27 @@ th {
   font-weight: 500;
   margin: 0 0 var(--space-sm);
 }
+
+/* One-time entrance for the new-chat robot mark (4.10 empty state):
+   a small settle-in beat, then still. */
+.thingy-empty-pop {
+  animation: thingy-empty-pop 0.45s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+}
+
+@keyframes thingy-empty-pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thingy-empty-pop {
+    animation: none;
+  }
+}

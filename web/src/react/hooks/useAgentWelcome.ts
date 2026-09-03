@@ -6,26 +6,36 @@ import { trackEvent } from '../../shared/thingy-analytics.ts';
 import * as session from '../../shared/thingy-session.ts';
 
 // Contract 4.10: the greeting is composed HERE, instantly, and never
-// swapped once shown - a time-aware salutation plus one archive-flavored
-// line. The server's greeting_lines (grounded in real corpus passages)
-// arrive with the suggestions event and are cached for the NEXT open, so
-// every open after the first draws from Thingy-native material at zero
-// latency. These built-ins only cover the very first open on a device -
-// keep them timeless (no counts that will drift stale).
+// swapped once shown. ONE short display line - either a time-aware
+// salutation phrase or an archive tease from the server's greeting_lines
+// pool (grounded lines cached from the PREVIOUS /welcome response), like
+// a librarian who was mid-thought when the reader walked in. These
+// built-in teases only cover a device's very first open - keep them
+// timeless (no counts that will drift stale).
 const FALLBACK_LINES = [
-  "There's a quarter century of writing in here - ask me to pull on any thread.",
-  'Newsletter, blog, and podcast - I can trace an idea across all three.',
-  'Ask me to compare eras - the archive reaches back to 2000.',
-  "I can connect what Jamie wrote years apart - name a topic and I'll trace it."
+  'A quarter century of writing is in here somewhere.',
+  'I can trace one idea across the newsletter, the blog, and the podcast.',
+  'The archive reaches back to 2000. Name a year.',
+  'Jamie keeps writing about the same things - the fun part is finding out when.'
 ];
 
 const GREETING_POOL_KEY = 'thingy_greeting_pool';
 
-function salutation() {
+function pick<T>(list: T[]): T {
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function salutationPhrase(name: string) {
   const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return 'Good morning';
-  if (hour >= 12 && hour < 18) return 'Good afternoon';
-  return 'Good evening';
+  const timed = hour >= 5 && hour < 12 ? 'Morning' : hour >= 12 && hour < 18 ? 'Afternoon' : 'Evening';
+  const named = name ? `, ${name}` : '';
+  return pick([
+    `${timed}${named}.`,
+    `${timed}${named}. What shall we dig up?`,
+    `Where to${named}?`,
+    `Let's pull a thread${named}.`,
+    `Something on your mind${named}?`
+  ]);
 }
 
 function cachedGreetingLines(): string[] {
@@ -45,25 +55,25 @@ function cacheGreetingLines(lines: string[]) {
   }
 }
 
-function composeGreeting(guest: boolean) {
+function composeGreeting(guest: boolean): { text: string; subtext: string } {
   const pool = cachedGreetingLines();
-  const line = (pool.length ? pool : FALLBACK_LINES)[
-    Math.floor(Math.random() * (pool.length ? pool.length : FALLBACK_LINES.length))
-  ];
+  const tease = pick(pool.length ? pool : FALLBACK_LINES);
   if (guest) {
-    // Identity plus one archive hook. Guest mechanics (question allowance,
-    // sign-in pitch) are the guest BANNER's job - repeating them here read
-    // as a wall of terms on what should be an invitation.
-    return `${salutation()} - I'm Thingy, Jamie Thingelstad's archive agent. ${line}`;
+    // Identity as the display line, one archive tease muted below. Guest
+    // mechanics (question allowance, sign-in pitch) are the guest BANNER's
+    // job - repeating them here read as a wall of terms.
+    return { text: "Hey - I'm Thingy.", subtext: tease };
   }
   const name = String(session.storedProfile().preferred_name || '').trim();
-  return `${salutation()}${name ? `, ${name}` : ''}. ${line}`;
+  // Half the opens are a warm salutation, half are Thingy holding up
+  // something it found. One line either way, never both.
+  return { text: pool.length && Math.random() < 0.5 ? tease : salutationPhrase(name), subtext: '' };
 }
 
 export function useAgentWelcome(guest: boolean, seeded: boolean) {
   // Composed once per mount; deliberately never replaced by server text -
   // the old swap-when-done behavior is exactly the latency Jamie saw.
-  const welcomeText = useMemo(() => composeGreeting(guest), [guest]);
+  const greeting = useMemo(() => composeGreeting(guest), [guest]);
   // Corpus-grounded follow-up chips (contract 4.4): the welcome set
   // retrieves real archive passages and grounds each suggestion in one.
   // Never a static question list - Jamie's product rule.
@@ -92,7 +102,7 @@ export function useAgentWelcome(guest: boolean, seeded: boolean) {
               list
                 .map((entry) => String(entry || '').trim())
                 .filter(Boolean)
-                .slice(0, 3)
+                .slice(0, 6)
             );
             const lines = Array.isArray((data as { greeting_lines?: unknown[] }).greeting_lines)
               ? ((data as { greeting_lines: unknown[] }).greeting_lines as unknown[])
@@ -113,5 +123,5 @@ export function useAgentWelcome(guest: boolean, seeded: boolean) {
     // One welcome per page load.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  return { text: welcomeText, suggestions, suggestionsPending };
+  return { text: greeting.text, subtext: greeting.subtext, suggestions, suggestionsPending };
 }

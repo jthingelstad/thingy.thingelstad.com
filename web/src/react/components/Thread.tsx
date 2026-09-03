@@ -16,41 +16,42 @@ import { Icon } from './Icon.tsx';
 // Corpus-grounded follow-up chips from the welcome agent (contract 4.4).
 // Each suggestion is grounded in retrieved archive passages server-side -
 // never a static sampled list. Tapping one sends it as the first message.
+// The pool holds up to 6 (4.10); three show at a time as centered
+// content-width pills - invitations, not a task list - and the shuffle
+// control rotates the rest in.
 function SuggestionChips({ suggestions, pending = false }: { suggestions: string[]; pending?: boolean }) {
   const aui = useAui();
-  // DETERMINISTIC GEOMETRY: three stacked single-line rows whether the
-  // chips are skeletons or real. Wrapped pill rows re-broke the mis-click
-  // fix in live QA - long questions wrapped to a second row the skeleton
-  // never reserved, and the extra row landed under the pointer. One
-  // truncated line per chip means loading and loaded states occupy
-  // exactly the same box.
-  const CHIP_ROW =
-    'block w-full max-w-xl truncate rounded-xl border px-3.5 py-1.5 text-left text-[13.5px] leading-snug';
+  const [offset, setOffset] = useState(0);
+  // DETERMINISTIC GEOMETRY (mis-click fix, live QA): one truncated
+  // single-line row per chip, so skeletons, shuffled sets, and loaded
+  // chips all occupy exactly the same three rows. Pills are content-width
+  // but each sits centered on its own row.
+  const CHIP =
+    'inline-block max-w-full truncate rounded-full border px-4 py-1.5 text-center text-[13.5px] leading-snug';
   if (!suggestions.length) {
     // Skeletons only while a welcome request is actually in flight; a
     // seeded prompt never fetches suggestions (R3-03).
     if (!pending) return null;
     return (
-      <div className="grid gap-2" aria-hidden="true">
-        {[0, 1, 2].map((slot) => (
-          <span
-            key={slot}
-            className={`${CHIP_ROW} animate-pulse border-line-soft bg-surface-2 text-transparent select-none`}
-          >
+      <div className="flex flex-col items-center gap-2" aria-hidden="true">
+        {['w-64', 'w-52', 'w-72'].map((width) => (
+          <span key={width} className={`${CHIP} ${width} animate-pulse border-line-soft bg-surface-2 select-none`}>
             &nbsp;
           </span>
         ))}
       </div>
     );
   }
+  const visible = [0, 1, 2].map((slot) => suggestions[(offset + slot) % suggestions.length]).filter(Boolean);
+  const shuffleable = suggestions.length > 3;
   return (
-    <div className="grid gap-2" aria-label="Suggested questions">
-      {suggestions.slice(0, 3).map((suggestion, index) => (
+    <div className="flex flex-col items-center gap-2" aria-label="Suggested questions">
+      {visible.map((suggestion, index) => (
         <button
           key={suggestion}
           type="button"
           title={suggestion}
-          className={`thingy-aui-suggestion ${CHIP_ROW} border-line bg-surface text-ink transition-colors hover:border-accent hover:bg-accent-soft`}
+          className={`thingy-aui-suggestion ${CHIP} border-line-soft bg-surface text-ink-soft transition-colors hover:border-accent hover:bg-accent-soft hover:text-ink`}
           onClick={() => {
             trackEvent('librarian.welcome_suggestion', String(index + 1));
             aui.composer.setText(suggestion);
@@ -60,6 +61,16 @@ function SuggestionChips({ suggestions, pending = false }: { suggestions: string
           {suggestion}
         </button>
       ))}
+      {shuffleable ? (
+        <button
+          type="button"
+          className="thingy-aui-shuffle mt-0.5 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] text-muted transition-colors hover:bg-surface-2 hover:text-ink-soft [&_svg]:size-3.5"
+          onClick={() => setOffset((value) => (value + 3) % suggestions.length)}
+        >
+          <Icon name="rotate-ccw" />
+          Different ideas
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -88,6 +99,7 @@ function StreamingAnnouncer() {
 function Thread({
   guest,
   welcome,
+  welcomeSubtext = '',
   suggestions,
   suggestionsPending,
   readOnly,
@@ -97,6 +109,7 @@ function Thread({
 }: {
   guest: boolean;
   welcome: string;
+  welcomeSubtext?: string;
   suggestions: string[];
   suggestionsPending?: boolean;
   readOnly?: boolean;
@@ -114,11 +127,12 @@ function Thread({
         <div className="librarian-messages mx-auto w-full max-w-3xl px-4 pt-6 pb-2">
           <ThreadPrimitive.Empty>
             {welcome ? (
-              <div className="thingy-aui-empty flex flex-col gap-4">
-                {/* Claude-style empty state: the mark above the greeting.
-                    Decorative - the greeting itself is the content. */}
+              <div className="thingy-aui-empty flex flex-col gap-5 pt-6 sm:pt-10">
+                {/* Claude-style empty state: the mark, one short display
+                    line, chips as invitations. Composed client-side at
+                    mount and never swapped (4.10). */}
                 <img
-                  className="mx-auto size-24 select-none sm:size-28"
+                  className="thingy-empty-pop mx-auto size-28 select-none sm:size-32"
                   src="/img/thingy.png"
                   alt=""
                   width="1022"
@@ -126,13 +140,14 @@ function Thread({
                   loading="eager"
                   draggable={false}
                 />
-                <article className="librarian-message librarian-message-assistant">
-                  <div className="librarian-answer-content">
-                    {/* No min-height reservation: the greeting is composed
-                        client-side at mount and never swapped (4.10). */}
-                    <p className="text-center text-[17px] leading-relaxed text-ink">{welcome}</p>
-                  </div>
-                </article>
+                <div className="thingy-aui-greeting flex flex-col gap-1.5 text-center">
+                  <p className="text-[26px] leading-snug font-extrabold tracking-tight text-balance text-ink sm:text-[30px]">
+                    {welcome}
+                  </p>
+                  {welcomeSubtext ? (
+                    <p className="text-[14.5px] leading-relaxed text-ink-soft">{welcomeSubtext}</p>
+                  ) : null}
+                </div>
                 <SuggestionChips suggestions={suggestions} pending={suggestionsPending} />
               </div>
             ) : null}
@@ -173,6 +188,7 @@ export function ThreadHost({
   binding,
   guest,
   welcome,
+  welcomeSubtext = '',
   suggestions,
   suggestionsPending,
   initialPrompt,
@@ -185,6 +201,7 @@ export function ThreadHost({
   binding: ThingyThreadBinding;
   guest: boolean;
   welcome: string;
+  welcomeSubtext?: string;
   suggestions: string[];
   suggestionsPending?: boolean;
   initialPrompt?: string;
@@ -279,6 +296,7 @@ export function ThreadHost({
       <Thread
         guest={guest}
         welcome={welcome}
+        welcomeSubtext={welcomeSubtext}
         suggestions={suggestions}
         suggestionsPending={suggestionsPending}
         readOnly={readOnly}
