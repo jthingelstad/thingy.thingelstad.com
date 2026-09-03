@@ -182,6 +182,15 @@ Key files:
   same tokens.
 - `web/public/robots.txt`: `robots.txt`.
 - `web/public/sitemap.xml`: `sitemap.xml`.
+- `web/public/manifest.webmanifest` + `web/public/img/icons/`: PWA
+  install config (add-to-home-screen). `start_url` is `/chat/`, scope
+  `/`, standalone display; icons are the Thingy robot composited onto
+  `--thingy-accent-soft` (regenerate from `public/img/thingy.png` with
+  sharp if the artwork changes; maskable variant keeps the robot inside
+  the central 80% safe zone). Every shell links the manifest,
+  apple-touch-icon, and light/dark `theme-color`. No service worker -
+  deliberate: the app is a thin client over live APIs and stale-asset
+  caching bugs outweigh offline value.
 - `web/vite.config.ts`: multi-page build config and build-time public config
   injection for Librarian API URLs, network links, and Tinylytics ID.
 
