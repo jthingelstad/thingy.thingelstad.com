@@ -161,6 +161,8 @@ function SourcesFooter() {
             target="_blank"
             rel="noopener"
             title={label || badge}
+            data-tinylytics-event="librarian.source_click"
+            data-tinylytics-event-value={badge}
           >
             {card}
           </a>

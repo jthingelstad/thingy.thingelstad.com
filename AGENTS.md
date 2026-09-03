@@ -244,27 +244,46 @@ Thingy has its own Tinylytics site ID in `web/vite.config.ts`, overridable with
 
 Current Tinylytics usage:
 
-- minified embed script, loaded on every page (2026-09-01; previously
-  homepage-only, which silenced all app events)
-- `events`
-- `beacon`
-- `hits`
-- `countries`
-- `kudos=🤖`
-- Webmention endpoint
-- public footer hit/country display
-- homepage kudos button
-- declarative `data-tinylytics-event` hooks for prompts, source links, and
-  network navigation
-- programmatic app events posted straight to the collector
-  (`src/shared/thingy-analytics.ts`): auth/session, answer
-  success/error/stop, feedback, shares, conversations, share links
-  (`librarian.share_link_create`/`_revoke` in chat;
-  `librarian.share_view`/`share_cta` on the public page), guest lane
-  (`librarian.guest_visit`, `guest_answer`, `guest_signin_click`), plus
-  `librarian.client_error` (global error/unhandledrejection handlers on
-  chat and sign-in) and `librarian.webmcp_*` (registration and
-  unreachable-tool counters)
+- minified embed script, loaded on every page except `/signin/` (magic
+  tokens ride that URL; `librarian.signin_*` events are that page's only
+  signal) (2026-09-01; previously homepage-only, which silenced all app
+  events)
+- `events`, `beacon`, `hits`, `countries`, `kudos=🤖`, Webmention endpoint
+- homepage footer hit/country display and kudos button
+- declarative `data-tinylytics-event` hooks (the embed's click delegation
+  handles React-rendered elements): `home.start_chat`, `network.return`,
+  `librarian.source_click` (inline WT autolinks and the source cards,
+  value = `WT<N>`/`Blog`/`Podcast`), `librarian.guest_signin_click` (both
+  guest banners), `librarian.share_cta`
+- programmatic events posted straight to the collector
+  (`src/shared/thingy-analytics.ts` `trackEvent`), all `librarian.*`:
+  - visits: `chat2_visit` (value `guest`/`reader`; name predates the
+    chat2→chat rename, kept for continuity), `signin_visit`
+    (`magic_link`/`form`/`active`)
+  - sign-in funnel: `signin_request` (`ok`/`error`), `signin_success`
+    (`magic_link`/`code`/`direct`), `signin_error`
+  - welcome: `welcome_success`/`welcome_error`, `welcome_suggestion`
+    (value = chip ordinal)
+  - answers: `answer_success`/`answer_error`/`answer_stop` (value leads
+    with the lane: `guest`/`reader`/`share_guest`/`share_reader`;
+    errors append a class, e.g. `reader.malformed_stream`)
+  - conversations: `conversation_create`
+  - feedback: `feedback_submit` (`up`/`down`, fired only after a
+    successful POST), `feedback_comment`, `feedback_error`
+  - shares: `share_link_create`/`share_link_revoke` in chat;
+    `share_view` (`signed_in`/`signed_out`/`gone`/`error`) on `/c/`
+  - message actions: `prompt_copy`, `share_copy`, `share_native`,
+    `answer_share_native`
+  - voice: `voice_input_start`, `voice_input_error`
+  - WebMCP: `webmcp_register` (value `native|polyfill.N.of.M` - fires on
+    every signed-in chat load, NOT a usage signal), `webmcp_call`
+    (value = tool name; the real usage signal), `webmcp_error`
+  - `client_error` (global error/unhandledrejection handlers, value
+    `<surface>.<ErrorCtor>`)
+- the auth Lambda's magic-link emails carry a 1x1 pixel that lands as a
+  page hit at path `/email/thingy/login` (open counts only, no
+  per-recipient identifier; `THINGY_TINYLYTICS_EMAIL_SITE_UID` can point
+  it at a separate site)
 
 Event values never carry reader text - error events report only status
 classes and error constructor names.

@@ -45,14 +45,14 @@ function SuggestionChips({ suggestions, pending = false }: { suggestions: string
   }
   return (
     <div className="grid gap-2" aria-label="Suggested questions">
-      {suggestions.slice(0, 3).map((suggestion) => (
+      {suggestions.slice(0, 3).map((suggestion, index) => (
         <button
           key={suggestion}
           type="button"
           title={suggestion}
           className={`thingy-aui-suggestion ${CHIP_ROW} border-line bg-surface text-ink transition-colors hover:border-accent hover:bg-accent-soft`}
           onClick={() => {
-            trackEvent('librarian.welcome_suggestion');
+            trackEvent('librarian.welcome_suggestion', String(index + 1));
             aui.composer.setText(suggestion);
             aui.composer.send();
           }}
@@ -224,7 +224,8 @@ export function ThreadHost({
           maxLength: 1000,
           confirmLabel: 'Send feedback'
         });
-        trackEvent('librarian.feedback_submit', 'down');
+        // The adapter tracks feedback_submit after a successful POST; a
+        // canceled dialog must not count (it used to fire even on cancel).
         return value;
       }),
     []

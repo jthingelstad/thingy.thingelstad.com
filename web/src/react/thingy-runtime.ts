@@ -121,7 +121,9 @@ function classifyAnswerError(error: unknown): string {
 export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdapter {
   return {
     async *run({ messages, abortSignal }) {
-      const lane = binding.guest ? 'guest' : 'reader';
+      // share_* lanes distinguish turns continuing a shared conversation
+      // (the /c/<token> funnel's final step) from ordinary /chat turns.
+      const lane = `${binding.shareToken ? 'share_' : ''}${binding.guest ? 'guest' : 'reader'}`;
       const lastUser = [...messages].reverse().find((message) => message.role === 'user');
       const question = lastUser ? messageText(lastUser) : '';
       const parentRequestId = deriveParentRequestId(messages);
@@ -381,18 +383,25 @@ export function createThingyFeedbackAdapter(
         let comment = '';
         if (feedback.type === 'negative') {
           const value = await onNegative(requestId);
-          if (value === null) return;
+          if (value === null) return; // dialog canceled: no POST, no event
           comment = value.trim().slice(0, 1000);
         }
-        await fetch(`${librarianStreamUrl()}/feedback`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json', ...session.authHeaders() },
-          body: JSON.stringify({
-            request_id: requestId,
-            reaction: feedback.type === 'positive' ? 'up' : 'down',
-            comment
-          })
-        }).catch(() => {});
+        const reaction = feedback.type === 'positive' ? 'up' : 'down';
+        try {
+          const response = await fetch(`${librarianStreamUrl()}/feedback`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', ...session.authHeaders() },
+            body: JSON.stringify({ request_id: requestId, reaction, comment })
+          });
+          if (!response.ok) {
+            trackEvent('librarian.feedback_error', `status.${response.status}`);
+            return;
+          }
+          trackEvent('librarian.feedback_submit', reaction);
+          if (comment) trackEvent('librarian.feedback_comment', reaction);
+        } catch (_error) {
+          trackEvent('librarian.feedback_error', 'network');
+        }
       })();
     }
   };

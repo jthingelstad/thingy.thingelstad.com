@@ -25,6 +25,7 @@ interface WebMcpRuntimeOptions {
   modelContext: ModelContextLike;
   fetchImpl?: typeof fetch;
   isSignedIn?: () => boolean;
+  flavor?: 'native' | 'polyfill';
 }
 
 function textResult(text: string, isError = false): WebMcpContent {
@@ -63,6 +64,9 @@ export function createWebMcpRuntime(options: WebMcpRuntimeOptions) {
       }
       const content = Array.isArray(data.content) ? (data.content as WebMcpContent['content']) : null;
       if (!content) return textResult('The archive returned an unexpected response.', true);
+      // Registration happens on every signed-in load; this is the event
+      // that measures an agent actually using the tools.
+      trackEvent('librarian.webmcp_call', name);
       return { content, isError: Boolean(data.is_error) };
     } catch (error) {
       trackEvent('librarian.webmcp_error', 'unreachable');
@@ -94,7 +98,10 @@ export function createWebMcpRuntime(options: WebMcpRuntimeOptions) {
       );
       const settled = await Promise.allSettled(registrations);
       const registered = settled.filter((entry) => entry.status === 'fulfilled').length;
-      trackEvent('librarian.webmcp_register', `${registered}.of.${tools.length}`);
+      // Value leads with the API flavor: "native" means the browser itself
+      // ships modelContext; "polyfill" fires on every signed-in load and
+      // says nothing about agent presence (webmcp_call measures usage).
+      trackEvent('librarian.webmcp_register', `${options.flavor || 'polyfill'}.${registered}.of.${tools.length}`);
       return registered;
     })().finally(() => {
       registering = null;
@@ -117,9 +124,9 @@ export function createWebMcpRuntime(options: WebMcpRuntimeOptions) {
   return { callTool, register, sync, unregister, isRegistered: () => Boolean(controller) };
 }
 
-async function resolveModelContext(): Promise<ModelContextLike | null> {
+async function resolveModelContext(): Promise<{ context: ModelContextLike; flavor: 'native' | 'polyfill' } | null> {
   const native = document.modelContext ?? navigator.modelContext;
-  if (native) return native;
+  if (native) return { context: native, flavor: 'native' };
   try {
     // Bundled polyfill: installs document.modelContext so the WebMCP Bridge
     // extension (and other polyfill-aware consumers) can see the tools in
@@ -127,7 +134,7 @@ async function resolveModelContext(): Promise<ModelContextLike | null> {
     // agent in play never parse it.
     const { initializeWebMCPPolyfill } = await import('@mcp-b/webmcp-polyfill');
     initializeWebMCPPolyfill();
-    return document.modelContext ?? null;
+    return document.modelContext ? { context: document.modelContext, flavor: 'polyfill' } : null;
   } catch (error) {
     return null;
   }
@@ -138,9 +145,9 @@ async function resolveModelContext(): Promise<ModelContextLike | null> {
 export async function bootWebMcp() {
   try {
     if (window.ThingyConfig?.webmcp === 'off') return;
-    const modelContext = await resolveModelContext();
-    if (!modelContext) return;
-    const runtime = createWebMcpRuntime({ modelContext });
+    const resolved = await resolveModelContext();
+    if (!resolved) return;
+    const runtime = createWebMcpRuntime({ modelContext: resolved.context, flavor: resolved.flavor });
     window.addEventListener('storage', (event) => {
       if (event.key === null || event.key === signedInHintKey) void runtime.sync();
     });

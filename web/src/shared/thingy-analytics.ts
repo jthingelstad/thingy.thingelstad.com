@@ -36,16 +36,6 @@ function trackEvent(name: string, value = '') {
   }
 }
 
-function createTinylyticsTracker(options: { enabled?: boolean } = {}) {
-  const enabled = options.enabled !== false;
-  return {
-    flush: () => {},
-    track: (name: string, value?: string) => {
-      if (enabled) trackEvent(name, value);
-    }
-  };
-}
-
 // The app has no console logging and several fire-and-forget void promises;
 // without this, a render crash or rejected background promise vanishes
 // entirely. Only the error's constructor name is reported - never message
@@ -61,4 +51,4 @@ function registerClientErrorTracking(surface: string) {
   });
 }
 
-export { createTinylyticsTracker, registerClientErrorTracking, trackEvent };
+export { registerClientErrorTracking, trackEvent };

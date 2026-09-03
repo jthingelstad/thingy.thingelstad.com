@@ -84,6 +84,9 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
       conversationId: mountedId,
       guest,
       onConversationId: (id) => {
+        // A binding without a conversationId is a fresh thread, so the
+        // server assigning one means a conversation was just created.
+        if (!mountedId && id) trackEvent('librarian.conversation_create');
         setActiveId(id);
         invalidateConversations();
       },
@@ -522,6 +525,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                 <a
                   className="font-bold text-accent-deep underline underline-offset-2"
                   href={session.signInUrl('/chat/')}
+                  data-tinylytics-event="librarian.guest_signin_click"
                 >
                   Sign in free for more
                 </a>

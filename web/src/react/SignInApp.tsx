@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import * as session from '../shared/thingy-session.ts';
 import { errorMessage } from '../shared/thingy-errors.ts';
+import { trackEvent } from '../shared/thingy-analytics.ts';
 
 type SecondaryAction = '' | 'subscribe' | 'resend';
 
@@ -27,7 +28,10 @@ export function SignInApp({
     return session.restorePendingReturnParams(returnTo);
   }
 
-  function finish(data: ThingyAuthData, address: unknown) {
+  function finish(data: ThingyAuthData, address: unknown, method: string) {
+    // sendBeacon is queued across the navigation, so this lands despite the
+    // immediate redirect.
+    trackEvent('librarian.signin_success', method);
     session.persistAuth(data, session.normalizeEmail(address));
     window.location.replace(destinationPath());
   }
@@ -44,6 +48,12 @@ export function SignInApp({
 
   useEffect(() => {
     async function bootstrap() {
+      // The Tinylytics embed deliberately skips /signin (privacy: magic
+      // tokens ride the URL), so this event is the page's only visit signal.
+      trackEvent(
+        'librarian.signin_visit',
+        loginToken ? 'magic_link' : session.sessionActive() ? 'active' : 'form'
+      );
       if (session.sessionActive() && !loginToken) {
         setMessage('You are already signed in.');
         setMessageKind('success');
@@ -62,9 +72,10 @@ export function SignInApp({
         );
         if (!data.token) throw new Error(data.message || 'That sign-in link did not return a session.');
         scrubMagicTokenParams();
-        finish(data, data.email);
+        finish(data, data.email, 'magic_link');
       } catch (error) {
         scrubMagicTokenParams();
+        trackEvent('librarian.signin_error', 'magic_link');
         setMessage(errorMessage(error, 'That sign-in link did not work.'));
         setMessageKind('error');
         session.clearAuth();
@@ -95,10 +106,11 @@ export function SignInApp({
         {}
       );
       if (data.token) {
-        finish(data, address);
+        finish(data, address, 'direct');
         return;
       }
       if (data.status === 'magic_link_sent') {
+        trackEvent('librarian.signin_request', 'ok');
         setMessage('Check your email - enter the sign-in code below, or use the link.');
         setMessageKind('success');
         setCodeEntry(true);
@@ -120,6 +132,7 @@ export function SignInApp({
         setMessageKind('notice');
       }
     } catch (error) {
+      trackEvent('librarian.signin_request', 'error');
       setMessage(errorMessage(error, 'Sign-in is unavailable right now.'));
       setMessageKind('error');
     } finally {
@@ -150,8 +163,9 @@ export function SignInApp({
         {}
       );
       if (!data.token) throw new Error(data.message || 'That code did not return a session.');
-      finish(data, data.email || email);
+      finish(data, data.email || email, 'code');
     } catch (error) {
+      trackEvent('librarian.signin_error', 'code');
       setMessage(errorMessage(error, 'That code did not work. Check the newest email or request a fresh link.'));
       setMessageKind('error');
       setCode('');

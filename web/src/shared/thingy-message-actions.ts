@@ -1,15 +1,4 @@
-interface FeedbackInput {
-  requestId: string;
-  reaction: string;
-  comment: string;
-}
-
-interface FeedbackResult {
-  reaction?: string;
-}
-
 interface ChatMessageActionOptions {
-  submitFeedback?: (input: FeedbackInput) => Promise<FeedbackResult>;
   track?: (name: string, value?: string) => void;
   promptShareUrl?: (prompt: string) => string;
   promptShareTitle?: string;
@@ -119,22 +108,9 @@ async function copyRichHtmlToClipboard(html: unknown, text: unknown) {
 }
 
 function createChatMessageActions(options: ChatMessageActionOptions = {}) {
-  const submitFeedback: (input: FeedbackInput) => Promise<FeedbackResult> =
-    options.submitFeedback || (async () => ({}));
   const track = options.track || (() => {});
   const promptShareUrl = options.promptShareUrl || buildSharePromptUrl;
   const promptShareTitle = String(options.promptShareTitle || 'Ask Thingy');
-  async function saveFeedback(requestId: string, reaction: string, comment = '') {
-    try {
-      const data = await submitFeedback({ requestId, reaction, comment });
-      track('librarian.feedback_submit', data.reaction || reaction);
-      if (comment) track('librarian.feedback_comment', reaction);
-      return data;
-    } catch (error) {
-      track('librarian.feedback_error', error instanceof Error && error.requestId ? 'server' : 'client');
-      throw error;
-    }
-  }
 
   async function copyAnswerRichText(messageElement: HTMLElement) {
     const payload = answerClipboardPayload(messageElement);
@@ -194,7 +170,6 @@ function createChatMessageActions(options: ChatMessageActionOptions = {}) {
   return {
     copyAnswerRichText,
     copyPrompt,
-    saveFeedback,
     shareAnswer,
     sharePrompt
   };
