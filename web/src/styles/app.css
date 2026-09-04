@@ -21,14 +21,17 @@
   display: none;
 }
 
-/* App-shell scroll discipline: when the chat shell is mounted, the
-   DOCUMENT must never scroll - only the thread viewport and the rail do.
-   Safari otherwise shows a window scrollbar alongside the inner one
-   (Jamie's double-scrollbar report). Screen only: print needs the page
-   to flow. */
+/* App-shell scroll discipline: when the chat shell OR the shared-
+   conversation shell is mounted, the DOCUMENT must never scroll - only
+   the thread viewport and the rail do. Safari otherwise shows a window
+   scrollbar alongside the inner one (Jamie's double-scrollbar report,
+   which recurred on /c/ 2026-09-04 because this rule only knew the chat
+   shell). Screen only: print needs the page to flow. */
 @media screen {
   html:has(.thingy-app-shell),
-  html:has(.thingy-app-shell) body {
+  html:has(.thingy-app-shell) body,
+  html:has(.thingy-share-shell),
+  html:has(.thingy-share-shell) body {
     height: 100%;
     overflow: hidden;
   }

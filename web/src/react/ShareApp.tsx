@@ -190,7 +190,7 @@ export function ShareApp({ token = '' }: { token?: string }) {
           <a href="/connect/">Connect</a>
         </nav>
       </header>
-      <main className="flex h-[calc(100dvh-57px)] flex-col bg-bg font-sans text-ink">
+      <main className="thingy-share-shell flex h-[calc(100dvh-57px)] flex-col bg-bg font-sans text-ink">
         {status === 'gone' ? (
           <Unavailable signedIn={signedIn} />
         ) : status === 'error' ? (
