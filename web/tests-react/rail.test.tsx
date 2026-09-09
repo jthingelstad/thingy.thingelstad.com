@@ -13,7 +13,11 @@ function iso(daysAgo: number) {
   return new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
 }
 
-function renderRail(conversations: ConversationSummary[], onSearch?: (q: string) => Promise<never[]>) {
+function renderRail(
+  conversations: ConversationSummary[],
+  onSearch?: (q: string) => Promise<never[]>,
+  overrides: Partial<Parameters<typeof Rail>[0]> = {}
+) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
@@ -29,6 +33,7 @@ function renderRail(conversations: ConversationSummary[], onSearch?: (q: string)
           onRename={noop}
           onDelete={noop}
           onSearch={onSearch}
+          {...overrides}
         />
       </TipProvider>
     </QueryClientProvider>
@@ -71,4 +76,20 @@ test('no matches shows the empty label', async () => {
   renderRail([{ id: 'a', title: 'Ethereum history', updated_at: iso(0) }]);
   await user.type(screen.getByRole('searchbox'), 'zzz');
   await screen.findByText('No matching chats');
+});
+
+test('a failed list offers recovery instead of saying the archive is empty', async () => {
+  const retry = vi.fn();
+  renderRail([], undefined, { error: new Error('offline'), onRetry: retry });
+  expect(screen.getByRole('alert')).toBeTruthy();
+  expect(screen.queryByText('No conversations yet.')).toBeNull();
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Try again' }));
+  expect(retry).toHaveBeenCalledOnce();
+});
+
+test('a failed rail search does not claim there are no matching chats', async () => {
+  renderRail([{ id: 'a', title: 'Existing chat' }], vi.fn().mockRejectedValue(new Error('offline')));
+  await userEvent.setup().type(screen.getByRole('searchbox'), 'bison');
+  await screen.findByRole('alert');
+  expect(screen.queryByText('No matching chats')).toBeNull();
 });

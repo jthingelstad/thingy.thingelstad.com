@@ -53,3 +53,68 @@ test('returnPath rejects external and protocol-relative return targets', async (
   installWindow('http://localhost:8080/signin/?return=%2F%2Fevil.example%2F');
   assert.equal(session.returnPath('/chat/'), '/chat/');
 });
+
+function legacyToken(secondsFromNow) {
+  return `${Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + secondsFromNow })).toString('base64url')}.test-signature`;
+}
+
+test('fresh sign-in removes a stale Bearer token that would override the new cookie', async () => {
+  const win = installWindow();
+  const session = await import('../src/shared/thingy-session.ts');
+  for (const lifetime of [-3600, 3600]) {
+    win.localStorage.setItem(session.storageKey, legacyToken(lifetime));
+    session.persistAuth({ token: 'new-session-response', profile: {} }, 'reader@example.com');
+    assert.equal(session.sessionActive(), true);
+    assert.equal(win.localStorage.getItem(session.storageKey), null);
+    assert.deepEqual(session.authHeaders(), {});
+  }
+});
+
+test('expired legacy credentials are never attached to requests', async () => {
+  const win = installWindow();
+  const session = await import('../src/shared/thingy-session.ts');
+  win.localStorage.setItem(session.storageKey, legacyToken(-3600));
+  assert.deepEqual(session.authHeaders(), {});
+  assert.equal(win.localStorage.getItem(session.storageKey), null);
+  const valid = legacyToken(3600);
+  win.localStorage.setItem(session.storageKey, valid);
+  assert.deepEqual(session.authHeaders(), { authorization: `Bearer ${valid}` });
+});
+
+test('conversation requests migrate the session before reading authorization headers', async () => {
+  const win = installWindow();
+  win.ThingyConfig = { librarianApiUrl: '/api' };
+  global.document = { querySelector: () => null };
+  const session = await import('../src/shared/thingy-session.ts?migration');
+  win.localStorage.setItem(session.storageKey, legacyToken(3600));
+  const calls = [];
+  win.fetch = async (url, options) => {
+    calls.push({ url, headers: options.headers, body: JSON.parse(options.body) });
+    return new Response(
+      JSON.stringify(
+        url.endsWith('/auth') ? { token: 'migrated', authenticated: true } : { conversations: [], total: 0 }
+      )
+    );
+  };
+  await session.postSessionJson('/conversations', { action: 'list' });
+  assert.equal(calls[0].body.action, 'refresh_session');
+  assert.ok(calls[0].headers.authorization);
+  assert.equal(calls[1].url, '/api/conversations');
+  assert.equal(calls[1].headers.authorization, undefined);
+});
+
+test('a rejected cookie session prevents a signed-in history request', async () => {
+  const win = installWindow();
+  win.ThingyConfig = { librarianApiUrl: '/api' };
+  global.document = { querySelector: () => null };
+  const session = await import('../src/shared/thingy-session.ts?rejected');
+  win.localStorage.setItem(session.signedInHintKey, '1');
+  const calls = [];
+  win.fetch = async (url) => {
+    calls.push(url);
+    return new Response(JSON.stringify({ authenticated: false }));
+  };
+  await assert.rejects(session.postSessionJson('/conversations', { action: 'list' }), { status: 401 });
+  assert.deepEqual(calls, ['/api/auth']);
+  assert.equal(session.sessionActive(), false);
+});

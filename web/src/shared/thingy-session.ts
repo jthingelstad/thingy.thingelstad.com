@@ -68,6 +68,10 @@ function legacyTokenExpired(value?: string, skewSeconds = 60): boolean {
 // on every same-origin request.
 function authHeaders(): Record<string, string> {
   const legacy = token();
+  if (legacy && legacyTokenExpired(legacy)) {
+    window.localStorage.removeItem(storageKey);
+    return {};
+  }
   return legacy ? { authorization: `Bearer ${legacy}` } : {};
 }
 
@@ -167,6 +171,20 @@ async function ensureSession() {
   return false;
 }
 
+async function requireSession() {
+  if (await ensureSession()) return;
+  const error = new Error('Sign in again to load your saved chats.');
+  error.status = 401;
+  throw error;
+}
+
+// Read headers AFTER confirmation: migrating a legacy session replaces
+// its Bearer credential with a cookie during ensureSession().
+async function postSessionJson(path: string, payload: unknown): Promise<ThingyApiResponse> {
+  await requireSession();
+  return postJson(path, payload, authHeaders());
+}
+
 function normalizeModes(modes: unknown): ThingyMode[] {
   return Array.isArray(modes)
     ? modes.filter((mode): mode is ThingyMode => Boolean(mode && typeof mode === 'object' && 'id' in mode))
@@ -212,6 +230,10 @@ function updateStoredProfile(patch: Partial<LibrarianProfile> = {}): LibrarianPr
 // deliberately NOT stored (cookie-era clients never persist a credential).
 function persistAuth(data: ThingyAuthData, email: string): LibrarianProfile | null {
   if (!data) return null;
+  // A fresh cookie supersedes every legacy credential, including an
+  // expired token left behind when the reader signs in again. Otherwise
+  // that stale Bearer header wins over the valid cookie on the server.
+  window.localStorage.removeItem(storageKey);
   window.localStorage.setItem(signedInHintKey, '1');
   sessionConfirmedAt = Date.now();
   return mergeProfile(data, email);
@@ -333,8 +355,10 @@ export {
   sessionActive,
   authHeaders,
   postJson,
+  postSessionJson,
   refreshAuth,
   ensureSession,
+  requireSession,
   mergeProfile,
   updateStoredProfile,
   persistAuth,

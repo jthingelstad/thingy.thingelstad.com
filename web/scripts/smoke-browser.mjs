@@ -62,6 +62,7 @@ async function routeMockApi(page, { holdWelcome = false } = {}) {
       contentType: 'application/json',
       body: JSON.stringify({
         token: fakeToken(),
+        authenticated: true,
         email: 'thingy@thingelstad.com',
         status: 'premium',
         supporting_member: true,
@@ -491,6 +492,63 @@ async function checkMobileChat(browser) {
   await context.close();
 }
 
+async function checkSessionRecovery(browser, browserName) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  await context.addInitScript(() => {
+    if (!window.location.pathname.startsWith('/signin')) return;
+    const expired = btoa(JSON.stringify({ exp: 1 })) + '.expired';
+    window.localStorage.setItem('weeklyThingLibrarianToken', expired);
+  });
+  const page = await context.newPage();
+  const failures = collectUiFailures(page);
+  await routeMockApi(page);
+  await page.route(`${apiHost}/auth`, async (route) => {
+    const { action } = JSON.parse(route.request().postData() || '{}');
+    if (action === 'verify_code' || action === 'session') return route.fallback();
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ status: 'magic_link_sent' }) });
+  });
+  const historyHeaders = [];
+  let rejectHistory = false;
+  await page.route(`${apiHost}/conversations`, async (route) => {
+    historyHeaders.push(route.request().headers());
+    if (!rejectHistory) return route.fallback();
+    await route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'History unavailable' })
+    });
+  });
+  await page.goto(`${baseUrl}/signin/`);
+  await page.getByLabel('Email address').fill('thingy@thingelstad.com');
+  await page.getByRole('button', { name: 'Email Me a Code' }).click();
+  await page.getByLabel('Sign-in code').fill('123456');
+  await page.getByRole('button', { name: 'Sign In', exact: true }).click();
+  await page.waitForURL('**/chat/');
+  await page.locator('.thingy-aui-recent').first().waitFor();
+  assert.ok(historyHeaders.length > 0, 'history loads after signing in');
+  assert.ok(
+    historyHeaders.every((headers) => !headers.authorization),
+    'fresh sign-in never resends the expired Bearer'
+  );
+  assert.equal(await page.evaluate(() => localStorage.getItem('weeklyThingLibrarianToken')), null);
+
+  rejectHistory = true;
+  await page.reload();
+  const rail = page.locator('.thingy-aui-rail');
+  await rail.getByRole('alert').waitFor();
+  assert.equal(await rail.getByText('No conversations yet.').count(), 0);
+  await page.screenshot({ path: `/tmp/thingy-history-error-${browserName}.png` });
+  rejectHistory = false;
+  await rail.getByRole('button', { name: 'Try again' }).click();
+  await rail.locator('.thingy-aui-recent').first().waitFor();
+  await page.screenshot({ path: `/tmp/thingy-history-recovered-${browserName}.png` });
+  assertNoUiFailures(
+    failures.filter((message) => !message.includes('503')),
+    'session recovery'
+  );
+  await context.close();
+}
+
 async function main() {
   for (const [name, browserType] of [
     ['Chromium', chromium],
@@ -505,6 +563,7 @@ async function main() {
       await checkSharePage(browser);
       await checkChat(browser);
       await checkMobileChat(browser);
+      await checkSessionRecovery(browser, name);
     } finally {
       await browser.close();
     }

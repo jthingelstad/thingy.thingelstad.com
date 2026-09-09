@@ -132,6 +132,7 @@ export function createThingyAdapter(binding: ThingyThreadBinding): ChatModelAdap
 
       let response: Response;
       try {
+        if (!binding.guest) await session.requireSession();
         response = await postJsonStream({
           baseUrl: librarianStreamUrl(),
           path: '/chat',
@@ -355,11 +356,10 @@ export function createThingyHistoryAdapter(binding: ThingyThreadBinding): Thread
   return {
     async load() {
       if (!binding.conversationId || binding.guest) return { messages: [] };
-      const data = await session.postJson(
-        '/conversations',
-        { action: 'get', conversation_id: binding.conversationId },
-        session.authHeaders()
-      );
+      const data = await session.postSessionJson('/conversations', {
+        action: 'get',
+        conversation_id: binding.conversationId
+      });
       const stored = Array.isArray(data.messages) ? (data.messages as StoredMessage[]) : [];
       const title = String((data.conversation as { title?: string } | undefined)?.title || '').trim();
       if (title) binding.onConversationTitle?.(binding.conversationId, title);

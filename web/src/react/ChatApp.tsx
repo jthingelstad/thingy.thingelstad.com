@@ -53,11 +53,11 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
   // that used to call refreshConversations() invalidates instead.
   const queryClient = useQueryClient();
   type ConversationPage = { conversations: ConversationSummary[]; total: number };
-  const { data: conversationData } = useQuery({
+  const conversationQuery = useQuery({
     queryKey: ['conversations'],
     enabled: !guest,
     queryFn: async (): Promise<ConversationPage> => {
-      const data = await session.postJson('/conversations', { action: 'list' }, session.authHeaders());
+      const data = await session.postSessionJson('/conversations', { action: 'list' });
       const list = Array.isArray(data.conversations) ? data.conversations : [];
       return {
         conversations: list.map((entry) => ({
@@ -70,6 +70,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
       };
     }
   });
+  const conversationData = conversationQuery.data;
   const conversations = conversationData?.conversations ?? [];
   const conversationTotal = conversationData?.total ?? 0;
   const invalidateConversations = () => {
@@ -114,11 +115,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
       // The rail cache only holds the recent window; the header falls
       // back to knownTitle for deep-history conversations.
       setKnownTitle({ id, title });
-      return session.postJson(
-        '/conversations',
-        { action: 'rename', conversation_id: id, title },
-        session.authHeaders()
-      );
+      return session.postSessionJson('/conversations', { action: 'rename', conversation_id: id, title });
     },
     onMutate: async ({ id, title }) => {
       await queryClient.cancelQueries({ queryKey: ['conversations'] });
@@ -141,7 +138,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) =>
-      session.postJson('/conversations', { action: 'delete', conversation_id: id }, session.authHeaders()),
+      session.postSessionJson('/conversations', { action: 'delete', conversation_id: id }),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['conversations'] });
       const previous = queryClient.getQueryData<ConversationPage>(['conversations']);
@@ -266,7 +263,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
     if (!confirmed) return;
     if (confirmed === 'alt') {
       try {
-        await session.postJson('/conversations', { action: 'unshare', conversation_id: id }, session.authHeaders());
+        await session.postSessionJson('/conversations', { action: 'unshare', conversation_id: id });
       } catch (error) {
         await confirmDialog({
           title: 'Could not stop sharing',
@@ -288,11 +285,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
     }
     let url = '';
     try {
-      const data = await session.postJson(
-        '/conversations',
-        { action: 'share', conversation_id: id },
-        session.authHeaders()
-      );
+      const data = await session.postSessionJson('/conversations', { action: 'share', conversation_id: id });
       url = String((data.share as { url?: string } | undefined)?.url || '');
       if (!url) throw new Error('The share response carried no link.');
     } catch (error) {
@@ -326,7 +319,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
   }
 
   async function searchConversations(query: string): Promise<HistoryMatch[]> {
-    const data = await session.postJson('/conversations', { action: 'search', query }, session.authHeaders());
+    const data = await session.postSessionJson('/conversations', { action: 'search', query });
     const matches = (
       data as { matches?: Array<{ conversation_id?: string; snippet?: string; title?: string; updated_at?: string }> }
     ).matches;
@@ -339,7 +332,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
   }
 
   async function listConversationPage(offset: number) {
-    const data = await session.postJson('/conversations', { action: 'list', offset, limit: 50 }, session.authHeaders());
+    const data = await session.postSessionJson('/conversations', { action: 'list', offset, limit: 50 });
     const list = Array.isArray(data.conversations) ? data.conversations : [];
     return {
       conversations: list.map((entry) => ({
@@ -426,6 +419,9 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                     setRailCollapsed(true);
                   }}
                   conversations={conversations}
+                  loading={conversationQuery.isPending}
+                  error={conversationQuery.error}
+                  onRetry={() => void conversationQuery.refetch()}
                   activeId={activeId}
                   onSelect={selectConversation}
                   onNew={newConversation}

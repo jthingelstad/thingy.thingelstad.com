@@ -86,6 +86,7 @@ export function useAgentWelcome(guest: boolean, seeded: boolean) {
     const controller = new AbortController();
     void (async () => {
       try {
+        if (!guest) await session.requireSession();
         const response = await postJsonStream({
           baseUrl: librarianStreamUrl(),
           path: '/welcome',

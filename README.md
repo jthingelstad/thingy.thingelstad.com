@@ -203,3 +203,10 @@ browser URL after the app has read them:
 
 This keeps Tinylytics page URLs clean and avoids recording typed emails or
 prompts in analytics.
+
+### Session recovery
+
+A successful sign-in replaces any legacy browser token with the session cookie.
+Saved-history requests and signed-in messages confirm (and, when needed, refresh)
+the session before sending. History and search show a sign-in or retry action
+when they fail, rather than presenting a failed request as an empty archive.

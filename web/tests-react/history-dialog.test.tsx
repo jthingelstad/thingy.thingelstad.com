@@ -79,3 +79,31 @@ test('selecting a row reports id and title', async () => {
   await user.click(screen.getByText('First page chat'));
   expect(onSelect).toHaveBeenCalledWith('a', 'First page chat');
 });
+
+test('failed history is an error with retry, never an empty archive', async () => {
+  const user = userEvent.setup();
+  const listPage = vi
+    .fn()
+    .mockRejectedValueOnce(new Error('offline'))
+    .mockResolvedValueOnce({
+      conversations: [entry('restored', 'Recovered chat')],
+      total: 1
+    });
+  renderDialog({ listPage });
+  await screen.findByRole('alert');
+  expect(screen.queryByText('No conversations yet.')).toBeNull();
+  await user.click(screen.getByRole('button', { name: 'Try again' }));
+  await screen.findByText('Recovered chat');
+  expect(screen.queryByRole('alert')).toBeNull();
+});
+
+test('rejected search shows sign-in recovery instead of no matches', async () => {
+  const user = userEvent.setup();
+  const error = Object.assign(new Error('unauthorized'), { status: 401 });
+  renderDialog({ search: vi.fn().mockRejectedValue(error) });
+  await screen.findByText('First page chat');
+  await user.type(screen.getByRole('searchbox'), 'bison');
+  await screen.findByText('Sign in again to load your saved chats.');
+  expect(screen.getByRole('link', { name: 'Sign in' })).toBeTruthy();
+  expect(screen.queryByText('No conversations match.')).toBeNull();
+});

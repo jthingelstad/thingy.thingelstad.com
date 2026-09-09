@@ -3,6 +3,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { AccountPanel } from '../AccountPanel.tsx';
 import { Icon } from './Icon.tsx';
 import { Tip } from './Tip.tsx';
+import { HistoryStatus } from './HistoryStatus.tsx';
 
 export interface ConversationSummary {
   id: string;
@@ -47,6 +48,9 @@ export function Rail({
   collapsed,
   onToggleCollapsed,
   conversations,
+  loading = false,
+  error = null,
+  onRetry = () => {},
   activeId,
   onSelect,
   onNew,
@@ -61,6 +65,9 @@ export function Rail({
   collapsed: boolean;
   onToggleCollapsed: () => void;
   conversations: ConversationSummary[];
+  loading?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
   activeId: string;
   onSelect: (id: string, title?: string) => void;
   onNew: () => void;
@@ -81,12 +88,16 @@ export function Rail({
     const timer = window.setTimeout(() => setNeedle(filter.trim()), 300);
     return () => window.clearTimeout(timer);
   }, [filter]);
-  const { data: searchMatches = [] } = useQuery({
+  const searchQuery = useQuery({
     queryKey: ['conversation-search', needle],
     enabled: needle.length >= 2 && Boolean(onSearch),
     placeholderData: keepPreviousData,
     queryFn: () => onSearch!(needle)
   });
+  const { data: searchMatches = [] } = searchQuery;
+  const searching = filter.trim().length >= 2 && Boolean(onSearch);
+  const searchPending = searching && (needle !== filter.trim() || searchQuery.isPending);
+  const historyError = error || (searching ? searchQuery.error : null);
   const contentMatches = useMemo(() => {
     if (filter.trim().length < 2) return new Map<string, string>();
     return new Map(searchMatches.map((match) => [match.conversation_id, match.snippet]));
@@ -148,9 +159,15 @@ export function Rail({
             />
           </div>
         ) : null}
-        {groups.length === 0 ? (
+        {historyError ? (
+          <HistoryStatus error={historyError} retry={error ? onRetry : () => void searchQuery.refetch()} />
+        ) : loading || searchPending ? (
+          <p role="status" className="px-2 pt-2 font-sans text-xs text-muted">
+            Loading chats…
+          </p>
+        ) : groups.length === 0 && historyMatches.length === 0 ? (
           <p className="px-2 pt-2 font-sans text-xs font-semibold tracking-wide text-muted uppercase">
-            No matching chats
+            {filter.trim() ? 'No matching chats' : 'No conversations yet.'}
           </p>
         ) : null}
         {historyMatches.length ? (
