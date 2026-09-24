@@ -45,6 +45,7 @@ export async function main() {
     }),
     RoleARN: roleArn,
     Tags: [
+      { Key: "Application", Value: "Thingelstad" },
       { Key: "Project", Value: "thingy" },
       { Key: "Environment", Value: "production" },
       { Key: "ManagedBy", Value: "cloudformation" },
