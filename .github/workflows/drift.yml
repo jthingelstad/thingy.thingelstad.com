@@ -2,7 +2,7 @@
 # never block a deploy: the vendored Librarian contract vs upstream main, and
 # npm advisories. A failure opens (or comments on) a "Drift check failing"
 # issue so it surfaces in Jamie's notifications instead of dying as a red
-# scheduled run nobody is watching.
+# scheduled run nobody is watching. The next passing run closes it.
 name: Drift checks
 
 # The failure step below files an issue; the repo's default workflow
@@ -54,3 +54,14 @@ jobs:
           else
             gh issue create --title "Drift check failing" --body "$body"
           fi
+
+      - name: Close the drift issue once the check passes again
+        if: success()
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          for number in $(gh issue list --state open --search 'Drift check failing in:title' --json number,title --jq '.[] | select(.title == "Drift check failing") | .number'); do
+            gh issue close "$number" --comment "Drift check passing again (run $run_url)"
+          done
