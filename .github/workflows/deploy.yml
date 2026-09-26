@@ -84,7 +84,7 @@ jobs:
           curl -fsS http://localhost:8080/chat/ > /dev/null
           THINGY_SMOKE_URL=http://localhost:8080 npm run smoke
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: web-site
           path: web/_site
