@@ -75,7 +75,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
     }
   });
   // The page mounts signed-in from the local hint, but the server session
-  // can be gone (the 9-day cookie lapsed between visits, or it was
+  // can be gone (the 30-day cookie lapsed between visits, or it was
   // revoked). Rendering on regardless left a half-signed-in shell: the
   // rail said "sign in again" while the account menu still named the
   // reader. Same handling as a 401 on send: forget the local session and

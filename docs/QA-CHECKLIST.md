@@ -54,7 +54,7 @@ npm run qa:real -- --cleanup-only
   (the field offers macOS/iOS code autofill).
 - Confirm successful auth lands on `/chat/` and removes `login_token`.
 - Reuse the same code; it should fail.
-- Sessions are 9 days, sliding: any page visit while signed in re-confirms
+- Sessions are 30 days, sliding (90-day cap): any page visit while signed in re-confirms
   the HttpOnly session cookie server-side. Confirm a visit to `/` while
   signed in does not sign you out.
 - Log out; privileged UI should clear.

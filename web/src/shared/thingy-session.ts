@@ -246,7 +246,7 @@ function clearAuth() {
   };
   try {
     // Best-effort server-side cookie clear that survives the sign-out
-    // navigation. Failure is harmless: the 9-day TTL bounds the cookie.
+    // navigation. Failure is harmless: the 30-day TTL bounds the cookie.
     void window.fetch(`${apiUrl()}/auth`, {
       method: 'POST',
       keepalive: true,

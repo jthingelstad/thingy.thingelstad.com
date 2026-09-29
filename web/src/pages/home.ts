@@ -15,7 +15,7 @@ if (magicToken) {
 
 loadTinylytics();
 
-// Any visit slides the 9-day session window, not just /chat/ - a signed-in
+// Any visit slides the 30-day session window, not just /chat/ - a signed-in
 // reader landing on the home page stays signed in.
 if (sessionActive()) {
   void refreshAuth();

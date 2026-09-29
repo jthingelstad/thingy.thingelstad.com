@@ -549,7 +549,7 @@ async function checkSessionRecovery(browser, browserName) {
   await context.close();
 }
 
-// The cookie lapsed between visits (9-day TTL) while localStorage still
+// The cookie lapsed between visits (30-day TTL) while localStorage still
 // holds the signed-in hint and profile. The chat must not render a
 // half-signed-in shell (rail: "sign in again", account menu: the reader);
 // it hands off to sign-in with the email prefilled and a return path.
