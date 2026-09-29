@@ -549,6 +549,44 @@ async function checkSessionRecovery(browser, browserName) {
   await context.close();
 }
 
+// The cookie lapsed between visits (9-day TTL) while localStorage still
+// holds the signed-in hint and profile. The chat must not render a
+// half-signed-in shell (rail: "sign in again", account menu: the reader);
+// it hands off to sign-in with the email prefilled and a return path.
+async function checkExpiredSession(browser) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  await context.addInitScript(() => {
+    if (!window.location.pathname.startsWith('/chat')) return;
+    window.localStorage.setItem('thingySignedIn', '1');
+    window.localStorage.setItem('thingyUserEmail', 'thingy@thingelstad.com');
+    window.localStorage.setItem(
+      'thingyUserProfile',
+      JSON.stringify({ preferred_name: 'Smoke', status: 'premium', supporting_member: true })
+    );
+  });
+  const page = await context.newPage();
+  await routeMockApi(page);
+  let historyRequests = 0;
+  await page.route(`${apiHost}/auth`, async (route) => {
+    const { action } = JSON.parse(route.request().postData() || '{}');
+    const body = action === 'sign_out' ? { status: 'signed_out' } : { authenticated: false };
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) });
+  });
+  await page.route(`${apiHost}/conversations`, async (route) => {
+    historyRequests += 1;
+    await route.fallback();
+  });
+  await page.goto(`${baseUrl}/chat/?conversation=conv-smoke`);
+  await page.waitForURL('**/signin/**');
+  const target = new URL(page.url());
+  assert.equal(target.searchParams.get('return'), '/chat/?conversation=conv-smoke');
+  assert.equal(await page.getByLabel('Email address').inputValue(), 'thingy@thingelstad.com');
+  assert.equal(await page.evaluate(() => localStorage.getItem('thingySignedIn')), null);
+  assert.equal(await page.evaluate(() => localStorage.getItem('thingyUserProfile')), null);
+  assert.equal(historyRequests, 0, 'a dead session never reaches the history endpoint');
+  await context.close();
+}
+
 async function main() {
   for (const [name, browserType] of [
     ['Chromium', chromium],
@@ -564,6 +602,7 @@ async function main() {
       await checkChat(browser);
       await checkMobileChat(browser);
       await checkSessionRecovery(browser, name);
+      await checkExpiredSession(browser);
     } finally {
       await browser.close();
     }

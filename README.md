@@ -210,3 +210,9 @@ A successful sign-in replaces any legacy browser token with the session cookie.
 Saved-history requests and signed-in messages confirm (and, when needed, refresh)
 the session before sending. History and search show a sign-in or retry action
 when they fail, rather than presenting a failed request as an empty archive.
+
+When the chat opens on a session the server no longer honors (the 9-day
+cookie lapsed between visits, or it was revoked), the page forgets its local
+signed-in state and hands off to sign-in, returning to the same conversation
+with the email prefilled. It never renders the rail as signed out while the
+account menu still names the reader.

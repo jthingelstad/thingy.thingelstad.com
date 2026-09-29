@@ -8,6 +8,7 @@ import { confirmDialog, promptDialog } from '../shared/stores/dialog-store.ts';
 import { runningStandalone, trackEvent } from '../shared/thingy-analytics.ts';
 import { errorMessage } from '../shared/thingy-errors.ts';
 import * as session from '../shared/thingy-session.ts';
+import { isAuthError } from '../shared/thingy-url.ts';
 import { type ThingyThreadBinding } from './thingy-runtime.ts';
 import { useAgentWelcome } from './hooks/useAgentWelcome.ts';
 import { Icon } from './components/Icon.tsx';
@@ -56,6 +57,9 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
   const conversationQuery = useQuery({
     queryKey: ['conversations'],
     enabled: !guest,
+    // A dead session does not revive on retry; fail fast so the reader
+    // reaches sign-in without a second probe and its backoff.
+    retry: (failureCount, error) => !isAuthError(error) && failureCount < 1,
     queryFn: async (): Promise<ConversationPage> => {
       const data = await session.postSessionJson('/conversations', { action: 'list' });
       const list = Array.isArray(data.conversations) ? data.conversations : [];
@@ -70,6 +74,18 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
       };
     }
   });
+  // The page mounts signed-in from the local hint, but the server session
+  // can be gone (the 9-day cookie lapsed between visits, or it was
+  // revoked). Rendering on regardless left a half-signed-in shell: the
+  // rail said "sign in again" while the account menu still named the
+  // reader. Same handling as a 401 on send: forget the local session and
+  // sign in again, returning to this URL. The stored email is kept, so
+  // the sign-in form comes prefilled.
+  useEffect(() => {
+    if (guest || !isAuthError(conversationQuery.error)) return;
+    session.clearAuth();
+    window.location.replace(session.signInUrl());
+  }, [guest, conversationQuery.error]);
   const conversationData = conversationQuery.data;
   const conversations = conversationData?.conversations ?? [];
   const conversationTotal = conversationData?.total ?? 0;
