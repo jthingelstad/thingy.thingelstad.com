@@ -11,7 +11,7 @@ registry, served to third-party AI clients over OAuth 2.1).
 | --- | --- | --- |
 | Thingy web | Readers and Jamie | Sign-in, chat, conversations, account, feedback, and the About/Connect content pages |
 | Librarian MCP | Claude, ChatGPT, and other MCP clients | The archive tool registry over OAuth 2.1, with per-user quotas |
-| WebMCP page tools | Agents in the reader's browser | The 16 archive-read tools, registered with the browser's model context while signed in; calls proxy same-origin to the Librarian `/tools` door on their own quota pool |
+| WebMCP page tools | Agents in the reader's browser | The archive-read tools (every Librarian tool but the live-web ones), registered with the browser's model context while signed in; calls proxy same-origin to the Librarian `/tools` door on their own quota pool |
 | Librarian API | Thingy web and approved internal clients | Critical retrieval, conversation, and streaming services |
 | Source sites | Readers | Canonical published Weekly Thing and personal-site content |
 

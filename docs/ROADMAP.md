@@ -118,7 +118,7 @@ product direction.
   HttpOnly cookie: the page holds no credential, sliding happens server-side,
   and CSRF is covered by SameSite=Lax plus the contract header plus the
   distribution's origin marker. Bearer remains the non-browser path.
-- WebMCP (beta): while signed in, the chat page registers the 16 archive-read
+- WebMCP (beta): while signed in, the chat page registers the archive-read
   tools with the browser's model context (native `document.modelContext` or
   the bundled polyfill), proxying calls to the Librarian's `/tools` door with
   its own quota pool. Kill switch: `window.ThingyConfig.webmcp='off'`.
