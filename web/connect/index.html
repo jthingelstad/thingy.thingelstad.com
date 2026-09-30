@@ -6,11 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Connect your AI to Thingy</title>
-  <meta name="description" content="Use Jamie Thingelstad's archive from Claude, Codex, or any MCP client.">
+  <meta name="description" content="Bring Jamie Thingelstad's archive into Claude, ChatGPT, Claude Code or any MCP client.">
   <link rel="canonical" href="https://thingy.thingelstad.com/connect/">
   <meta name="robots" content="index, follow">
   <meta property="og:title" content="Connect your AI to Thingy">
-  <meta property="og:description" content="Use Jamie Thingelstad's archive from Claude, Codex, or any MCP client.">
+  <meta property="og:description" content="Bring Jamie Thingelstad's archive into Claude, ChatGPT, Claude Code or any MCP client.">
   <meta property="og:url" content="https://thingy.thingelstad.com/connect/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Thingy">
@@ -18,14 +18,14 @@
   <meta property="og:image:alt" content="Thingy, Jamie Thingelstad's archive agent">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Connect your AI to Thingy">
-  <meta name="twitter:description" content="Use Jamie Thingelstad's archive from Claude, Codex, or any MCP client.">
+  <meta name="twitter:description" content="Bring Jamie Thingelstad's archive into Claude, ChatGPT, Claude Code or any MCP client.">
   <meta name="twitter:image" content="https://thingy.thingelstad.com/img/thingy.png">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "TechArticle",
     "headline": "Connect your AI to Thingy",
-    "description": "How to use Jamie Thingelstad's public archive from Claude, Codex, or any MCP client via the Librarian MCP server.",
+    "description": "How to use Jamie Thingelstad's public archive from Claude, ChatGPT, Claude Code or any MCP client through the Librarian MCP server.",
     "url": "https://thingy.thingelstad.com/connect/",
     "author": { "@type": "Person", "name": "Jamie Thingelstad", "url": "https://www.thingelstad.com/" },
     "about": {
@@ -57,50 +57,59 @@
   <main class="thingy-page">
     <img class="mark" src="/img/thingy.png" alt="" width="1022" height="1022">
     <h1>Connect your AI to Thingy</h1>
-    <p class="lede">Jamie Thingelstad&rsquo;s archive &mdash; The Weekly Thing, the blog, and Another Thing &mdash; is available to Claude, ChatGPT, Codex, and any MCP client. Weekly Thing subscribers sign in with their email, no passwords.</p>
+    <p class="lede">Bring Jamie Thingelstad&rsquo;s whole archive into Claude, ChatGPT or Claude Code. Your AI gets the same tools Thingy uses: it can search, read, count and trace across twenty-five years of writing, and link you to every source it uses. Weekly Thing subscribers sign in with their email; there is no password.</p>
+
+    <h2>What your AI can read</h2>
+    <div class="stats">
+      <div class="stat"><b>352</b><span>Weekly Thing issues since 2017</span></div>
+      <div class="stat"><b>10,442</b><span>blog posts since 2000</span></div>
+      <div class="stat"><b>36,430</b><span>links Jamie shared</span></div>
+      <div class="stat"><b>14,277</b><span>photos, searchable by what they show</span></div>
+    </div>
+    <p>Plus the Another Thing podcast with its transcripts, and every Currently entry: what Jamie was reading, watching, playing and building, week by week. It is Jamie&rsquo;s published writing only; nothing private is in it.</p>
+
+    <h2>Five things to ask</h2>
+    <ol>
+      <li><strong>&ldquo;What did Jamie publish on this day in past years?&rdquo;</strong> The archive&rsquo;s on this day, across the newsletter, the blog and the podcast, newest year first.</li>
+      <li><strong>&ldquo;How has Jamie&rsquo;s thinking about RSS changed since 2017?&rdquo;</strong> A dated account in Jamie&rsquo;s own words, from the first mention to the latest.</li>
+      <li><strong>&ldquo;Has Jamie ever linked to this?&rdquo;</strong> Paste a URL or name a site: every time it appeared, and what Jamie said about it.</li>
+      <li><strong>&ldquo;Show me photos of bike rides along Minnehaha Creek.&rdquo;</strong> Photos found by what they show, linked to the post or issue they appeared in.</li>
+      <li><strong>&ldquo;What books was Jamie reading in 2024?&rdquo;</strong> Straight from the Currently section of every issue that year.</li>
+    </ol>
+    <p>Clients that support MCP prompts also offer ready-made asks: a year in review, a reading path through a theme, and a research brief on a person or product.</p>
 
     <h2>Claude (claude.ai or the apps)</h2>
     <div class="card">
       <p>Settings &rarr; Connectors &rarr; <strong>Add custom connector</strong>, then paste:</p>
       <pre>https://librarian.thingelstad.com/mcp</pre>
-      <p>Claude walks you through sign-in: enter your Weekly Thing email, type the six-digit code from the email (your Mac or iPhone will offer it automatically), and approve access.</p>
+      <p>Claude walks you through sign-in: enter your Weekly Thing email, type the six-digit code from the email (your Mac or iPhone will offer it automatically), and approve access. If you added the connector before, disconnect and reconnect it once so Claude picks up the current tools.</p>
+    </div>
+
+    <h2>ChatGPT</h2>
+    <div class="card">
+      <p>Custom MCP connectors need <strong>Developer mode</strong> (Plus, Pro, Business or Enterprise, on the web): Settings &rarr; Apps &rarr; Advanced settings &rarr; enable <strong>Developer mode</strong>. Then add a connector and paste:</p>
+      <pre>https://librarian.thingelstad.com/mcp</pre>
+      <p>ChatGPT walks through the same email and six-digit-code sign-in.</p>
     </div>
 
     <h2>Claude Code</h2>
     <div class="card">
       <pre>claude mcp add --transport http librarian https://librarian.thingelstad.com/mcp</pre>
-      <p>Then <code>/mcp</code> inside Claude Code to authenticate.</p>
-    </div>
-
-    <h2>ChatGPT</h2>
-    <div class="card">
-      <p>Custom MCP connectors require <strong>Developer mode</strong> (Plus, Pro, Business, or Enterprise, on the web app): Settings &rarr; Apps &rarr; Advanced settings &rarr; enable <strong>Developer mode</strong>. Then add a connector and paste:</p>
-      <pre>https://librarian.thingelstad.com/mcp</pre>
-      <p>ChatGPT walks through the same email + six-digit-code sign-in.</p>
+      <p>Then run <code>/mcp</code> inside Claude Code to sign in.</p>
     </div>
 
     <h2>Any other MCP client</h2>
     <div class="card">
-      <p>The endpoint speaks MCP streamable HTTP with OAuth 2.1 discovery &mdash; point your client at the URL above and it finds the sign-in flow on its own.</p>
+      <p>The endpoint speaks MCP streamable HTTP with OAuth 2.1 discovery. Point your client at the URL above and it finds the sign-in flow on its own.</p>
     </div>
 
     <h2>Agents in your browser (WebMCP, beta)</h2>
     <div class="card">
-      <p>While you are signed in on the <a href="/chat/">Thingy chat page</a>, the page also registers its archive tools with your browser&rsquo;s model context (the emerging <a href="https://webmachinelearning.github.io/webmcp/">WebMCP</a> standard). An agent operating in your browser &mdash; Gemini in Chrome, or a desktop MCP client connected through a WebMCP bridge extension &mdash; can then search the archive directly using your session, no connector setup at all. The tools appear when you sign in and vanish when you sign out; they are read-only and share nothing beyond what the chat itself can see.</p>
+      <p>While you are signed in on the <a href="/chat/">Thingy chat page</a>, the page also registers its archive tools with your browser&rsquo;s model context (the emerging <a href="https://webmachinelearning.github.io/webmcp/">WebMCP</a> standard). An agent working in your browser, such as Gemini in Chrome or a desktop MCP client connected through a WebMCP bridge extension, can then search the archive with your session and no connector setup. The tools appear when you sign in and go away when you sign out; they only read, and they see nothing the chat itself cannot.</p>
     </div>
 
-    <h2>What your AI can do</h2>
-    <ul>
-      <li><strong>Search the archive</strong> semantically and by exact phrase, then read full sources with citations.</li>
-      <li><strong>Topic history</strong> &mdash; trace how an idea, person, or product evolved across twenty-five years, with evidence for every match.</li>
-      <li><strong>Search photos</strong> &mdash; nearly 14,000 indexed images from the blog and newsletter.</li>
-      <li><strong>Find quotes, check claims, follow links</strong> &mdash; verify against the archive, explore what Jamie referenced, surface hidden gems.</li>
-      <li><strong>Reading, playing &amp; watching</strong> &mdash; the newsletter&rsquo;s Currently entries, queryable by year.</li>
-      <li><strong>Reach the live web</strong> &mdash; fetch a page a post links to, even one published minutes ago.</li>
-    </ul>
-
     <h2>Fair use</h2>
-    <p>Every reader gets a daily pool of tool calls (double for <a href="https://weekly.thingelstad.com/members/">Supporting Members</a>), separate from the Thingy chat budget. The archive is Jamie&rsquo;s public writing; personal data stays out by construction.</p>
+    <p>Each reader can make 500 tool calls a day (1,000 for <a href="https://weekly.thingelstad.com/members/">Supporting Members</a>) and up to 300 an hour. That budget is separate from Thingy&rsquo;s own chat. A busy research session uses a few dozen calls.</p>
 
     <footer>
       <a href="/">Thingy home</a> &middot; <a href="/chat/">Open chat</a>
