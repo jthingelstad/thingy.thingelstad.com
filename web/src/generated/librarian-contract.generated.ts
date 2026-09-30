@@ -128,6 +128,29 @@ export interface LibrarianArchiveItem {
   [key: string]: unknown;
 }
 
+export interface LibrarianRetrievePassage {
+  id?: string;
+  issue_number?: string | number;
+  source_kind: string;
+  label: string;
+  subject?: string;
+  publish_date?: string;
+  issue_year?: string | number;
+  section?: string;
+  age?: string;
+  score?: number;
+  reason?: string;
+  url?: string;
+  transcript_url?: string;
+  audio_url?: string;
+  episode_number?: string | number;
+  show?: string;
+  topics?: Array<unknown>;
+  also_in_issues?: Array<unknown>;
+  text: string;
+  [key: string]: unknown;
+}
+
 export interface LibrarianCitation {
   issue_number?: string | number | null;
   url?: string;
@@ -246,12 +269,12 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = 'f378652f2817086a93c2fae1698e88fee38c771d978283237f93da75face2b80';
+export const LIBRARIAN_CONTRACT_SHA256 = 'c1229fb31843d61b7bdc1013c6d4c247c55d489ec2dc9ac65f54d6b99a5f5b8e';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '4.10.0',
+  version: '4.11.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
@@ -513,6 +536,91 @@ export const LIBRARIAN_CONTRACT = {
           type: 'string'
         }
       },
+      additionalProperties: true
+    },
+    retrievePassage: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string'
+        },
+        issue_number: {
+          anyOf: [
+            {
+              type: 'string'
+            },
+            {
+              type: 'number'
+            }
+          ]
+        },
+        source_kind: {
+          type: 'string'
+        },
+        label: {
+          type: 'string'
+        },
+        subject: {
+          type: 'string'
+        },
+        publish_date: {
+          type: 'string'
+        },
+        issue_year: {
+          anyOf: [
+            {
+              type: 'string'
+            },
+            {
+              type: 'number'
+            }
+          ]
+        },
+        section: {
+          type: 'string'
+        },
+        age: {
+          type: 'string'
+        },
+        score: {
+          type: 'number'
+        },
+        reason: {
+          type: 'string'
+        },
+        url: {
+          type: 'string'
+        },
+        transcript_url: {
+          type: 'string'
+        },
+        audio_url: {
+          type: 'string'
+        },
+        episode_number: {
+          anyOf: [
+            {
+              type: 'string'
+            },
+            {
+              type: 'number'
+            }
+          ]
+        },
+        show: {
+          type: 'string'
+        },
+        topics: {
+          type: 'array'
+        },
+        also_in_issues: {
+          type: 'array'
+        },
+        text: {
+          type: 'string'
+        }
+      },
+      required: ['source_kind', 'label', 'text'],
       additionalProperties: true
     },
     citation: {
@@ -1083,9 +1191,34 @@ export const LIBRARIAN_CONTRACT = {
               },
               section: {
                 type: 'string'
+              },
+              sourceKinds: {
+                type: 'array'
+              },
+              excludeSourceKinds: {
+                type: 'array'
+              },
+              excludeIssues: {
+                type: 'array'
+              },
+              before: {
+                type: 'string'
+              },
+              issueNumber: {
+                anyOf: [
+                  {
+                    type: 'string'
+                  },
+                  {
+                    type: 'number'
+                  }
+                ]
               }
             },
             additionalProperties: true
+          },
+          caller: {
+            type: 'string'
           },
           retrieve_secret: {
             type: 'string'
@@ -1103,7 +1236,7 @@ export const LIBRARIAN_CONTRACT = {
           passages: {
             type: 'array',
             items: {
-              $ref: '#/$defs/archiveItem'
+              $ref: '#/$defs/retrievePassage'
             }
           },
           embedding_model: {
