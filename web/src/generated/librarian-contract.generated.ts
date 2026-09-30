@@ -147,6 +147,9 @@ export interface LibrarianRetrievePassage {
   show?: string;
   topics?: Array<unknown>;
   also_in_issues?: Array<unknown>;
+  section_family?: string;
+  content_kind?: string;
+  voice?: Array<unknown>;
   text: string;
   [key: string]: unknown;
 }
@@ -269,12 +272,12 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = 'c1229fb31843d61b7bdc1013c6d4c247c55d489ec2dc9ac65f54d6b99a5f5b8e';
+export const LIBRARIAN_CONTRACT_SHA256 = 'c3b742117c5845e35291e7fa3ef7ca882c5edf1593c2f20c3e5c989a5f8131cd';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '4.11.0',
+  version: '4.12.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
@@ -614,6 +617,15 @@ export const LIBRARIAN_CONTRACT = {
           type: 'array'
         },
         also_in_issues: {
+          type: 'array'
+        },
+        section_family: {
+          type: 'string'
+        },
+        content_kind: {
+          type: 'string'
+        },
+        voice: {
           type: 'array'
         },
         text: {
@@ -1213,6 +1225,49 @@ export const LIBRARIAN_CONTRACT = {
                     type: 'number'
                   }
                 ]
+              },
+              sectionFamily: {
+                anyOf: [
+                  {
+                    type: 'string'
+                  },
+                  {
+                    type: 'array'
+                  }
+                ]
+              },
+              contentKind: {
+                anyOf: [
+                  {
+                    type: 'string'
+                  },
+                  {
+                    type: 'array'
+                  }
+                ]
+              },
+              voice: {
+                anyOf: [
+                  {
+                    type: 'string'
+                  },
+                  {
+                    type: 'array'
+                  }
+                ]
+              },
+              calendar: {
+                type: 'object',
+                properties: {
+                  date: {
+                    type: 'string'
+                  },
+                  window_days: {
+                    type: 'number'
+                  }
+                },
+                required: ['date'],
+                additionalProperties: true
               }
             },
             additionalProperties: true
