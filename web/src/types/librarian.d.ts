@@ -6,6 +6,8 @@
 
 type LibrarianProfile = import('../generated/librarian-contract.generated.ts').LibrarianProfile;
 type LibrarianAccountOverview = import('../generated/librarian-contract.generated.ts').LibrarianAccountOverview;
+type LibrarianMcpConnection = import('../generated/librarian-contract.generated.ts').LibrarianMcpConnection;
+type LibrarianMcpLogEntry = import('../generated/librarian-contract.generated.ts').LibrarianMcpLogEntry;
 type ThingyMode = import('../generated/librarian-contract.generated.ts').LibrarianMode;
 type ThingyArchiveItem = import('../generated/librarian-contract.generated.ts').LibrarianArchiveItem;
 type ThingyCitation = import('../generated/librarian-contract.generated.ts').LibrarianCitation;

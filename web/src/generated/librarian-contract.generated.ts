@@ -195,6 +195,35 @@ export interface LibrarianAccountOverview {
   [key: string]: unknown;
 }
 
+export interface LibrarianMcpConnection {
+  id: string;
+  client_id: string;
+  client_name: string;
+  connected_at: string;
+  last_authorized_at?: string;
+  last_used_at?: string;
+  call_count?: number;
+  expires_at?: string;
+  [key: string]: unknown;
+}
+
+export interface LibrarianMcpLogEntry {
+  request_id: string;
+  created_at: string;
+  tool_name: string;
+  status: string;
+  duration_ms?: number;
+  result_chars?: number;
+  response_truncated?: boolean;
+  surface: string;
+  client_id?: string;
+  client_name?: string;
+  connection_id?: string;
+  arguments?: Record<string, unknown>;
+  server_version?: string;
+  [key: string]: unknown;
+}
+
 export interface LibrarianApiResponse {
   token?: string;
   email?: string;
@@ -272,12 +301,12 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = 'c3b742117c5845e35291e7fa3ef7ca882c5edf1593c2f20c3e5c989a5f8131cd';
+export const LIBRARIAN_CONTRACT_SHA256 = '9c30d830bb7b998e44ef8a09a91c157012fef6a4e11f2f0e99fc09fc1140152a';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '4.12.0',
+  version: '4.13.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
@@ -759,6 +788,85 @@ export const LIBRARIAN_CONTRACT = {
       },
       additionalProperties: true
     },
+    mcpConnection: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string'
+        },
+        client_id: {
+          type: 'string'
+        },
+        client_name: {
+          type: 'string'
+        },
+        connected_at: {
+          type: 'string'
+        },
+        last_authorized_at: {
+          type: 'string'
+        },
+        last_used_at: {
+          type: 'string'
+        },
+        call_count: {
+          type: 'number'
+        },
+        expires_at: {
+          type: 'string'
+        }
+      },
+      required: ['id', 'client_id', 'client_name', 'connected_at'],
+      additionalProperties: true
+    },
+    mcpLogEntry: {
+      type: 'object',
+      properties: {
+        request_id: {
+          type: 'string'
+        },
+        created_at: {
+          type: 'string'
+        },
+        tool_name: {
+          type: 'string'
+        },
+        status: {
+          type: 'string'
+        },
+        duration_ms: {
+          type: 'number'
+        },
+        result_chars: {
+          type: 'number'
+        },
+        response_truncated: {
+          type: 'boolean'
+        },
+        surface: {
+          type: 'string'
+        },
+        client_id: {
+          type: 'string'
+        },
+        client_name: {
+          type: 'string'
+        },
+        connection_id: {
+          type: 'string'
+        },
+        arguments: {
+          type: 'object',
+          properties: {},
+          additionalProperties: true
+        },
+        server_version: {
+          type: 'string'
+        }
+      },
+      required: ['request_id', 'created_at', 'tool_name', 'status', 'surface'],
+      additionalProperties: true
+    },
     apiResponse: {
       type: 'object',
       properties: {
@@ -1143,7 +1251,59 @@ export const LIBRARIAN_CONTRACT = {
       schema: {
         $ref: '#/$defs/apiResponse'
       },
-      actions: {}
+      actions: {
+        mcp_connections: {
+          type: 'object',
+          properties: {
+            connections: {
+              type: 'array',
+              items: {
+                $ref: '#/$defs/mcpConnection'
+              }
+            },
+            retention_days: {
+              type: 'number'
+            }
+          },
+          required: ['connections'],
+          additionalProperties: true
+        },
+        mcp_disconnect: {
+          type: 'object',
+          properties: {
+            ok: {
+              type: 'boolean'
+            },
+            connections: {
+              type: 'array',
+              items: {
+                $ref: '#/$defs/mcpConnection'
+              }
+            }
+          },
+          required: ['ok'],
+          additionalProperties: true
+        },
+        mcp_log: {
+          type: 'object',
+          properties: {
+            entries: {
+              type: 'array',
+              items: {
+                $ref: '#/$defs/mcpLogEntry'
+              }
+            },
+            next_cursor: {
+              type: 'string'
+            },
+            retention_days: {
+              type: 'number'
+            }
+          },
+          required: ['entries'],
+          additionalProperties: true
+        }
+      }
     },
     '/chat': {
       actions: {},

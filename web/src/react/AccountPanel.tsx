@@ -4,6 +4,7 @@ import { hasSupportingAccess, savePreferredName } from '../shared/thingy-account
 import { errorMessage } from '../shared/thingy-errors.ts';
 import * as Popover from '@radix-ui/react-popover';
 import { Icon } from './components/Icon.tsx';
+import { McpConnectionsSection, McpLogDialog } from './McpConnections.tsx';
 import { confirmDialog } from '../shared/stores/dialog-store.ts';
 import * as session from '../shared/thingy-session.ts';
 import { setTheme, storedTheme, type ThingyTheme } from '../shared/thingy-theme.ts';
@@ -120,23 +121,29 @@ function ProfileModal({
   const [accountOverview, setAccountOverview] = useState<LibrarianAccountOverview>({});
   const [busyAction, setBusyAction] = useState('');
   const [profileError, setProfileError] = useState('');
+  // Non-null while the MCP request log is open over the profile.
+  const [logConnections, setLogConnections] = useState<LibrarianMcpConnection[] | null>(null);
 
   useEffect(() => {
     if (!open) return undefined;
     function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose();
+      if (event.key !== 'Escape') return;
+      // Escape closes the request log first, then the profile.
+      if (logConnections) setLogConnections(null);
+      else onClose();
     }
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
     // Escape handling only while open.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, logConnections]);
 
   useEffect(() => {
     if (!open) return;
     setViewProfile(profile || {});
     setAccountOverview({});
     setProfileError('');
+    setLogConnections(null);
     void (async () => {
       setBusyAction('load');
       try {
@@ -242,6 +249,7 @@ function ProfileModal({
               </Fragment>
             ))}
           </dl>
+          <McpConnectionsSection disabled={Boolean(busyAction)} onOpenLog={setLogConnections} />
           <section
             className="mt-5 rounded-xl border border-error/35 bg-error/6 p-3.5"
             aria-label="Delete Thingy Profile"
@@ -261,6 +269,7 @@ function ProfileModal({
           </section>
         </div>
       </section>
+      {logConnections ? <McpLogDialog connections={logConnections} onClose={() => setLogConnections(null)} /> : null}
     </div>
   );
 }

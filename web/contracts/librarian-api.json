@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://thingy.thingelstad.com/contracts/librarian-api.json",
   "title": "Thingy Librarian API Contract",
-  "version": "4.12.0",
+  "version": "4.13.0",
   "compatibility": "breaking",
   "$defs": {
     "mode": {
@@ -499,6 +499,96 @@
       },
       "additionalProperties": true
     },
+    "mcpConnection": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "client_id": {
+          "type": "string"
+        },
+        "client_name": {
+          "type": "string"
+        },
+        "connected_at": {
+          "type": "string"
+        },
+        "last_authorized_at": {
+          "type": "string"
+        },
+        "last_used_at": {
+          "type": "string"
+        },
+        "call_count": {
+          "type": "number"
+        },
+        "expires_at": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "client_id",
+        "client_name",
+        "connected_at"
+      ],
+      "additionalProperties": true
+    },
+    "mcpLogEntry": {
+      "type": "object",
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "tool_name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "duration_ms": {
+          "type": "number"
+        },
+        "result_chars": {
+          "type": "number"
+        },
+        "response_truncated": {
+          "type": "boolean"
+        },
+        "surface": {
+          "type": "string"
+        },
+        "client_id": {
+          "type": "string"
+        },
+        "client_name": {
+          "type": "string"
+        },
+        "connection_id": {
+          "type": "string"
+        },
+        "arguments": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": true
+        },
+        "server_version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "created_at",
+        "tool_name",
+        "status",
+        "surface"
+      ],
+      "additionalProperties": true
+    },
     "apiResponse": {
       "type": "object",
       "properties": {
@@ -903,7 +993,65 @@
       "schema": {
         "$ref": "#/$defs/apiResponse"
       },
-      "actions": {}
+      "actions": {
+        "mcp_connections": {
+          "type": "object",
+          "properties": {
+            "connections": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/mcpConnection"
+              }
+            },
+            "retention_days": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "connections"
+          ],
+          "additionalProperties": true
+        },
+        "mcp_disconnect": {
+          "type": "object",
+          "properties": {
+            "ok": {
+              "type": "boolean"
+            },
+            "connections": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/mcpConnection"
+              }
+            }
+          },
+          "required": [
+            "ok"
+          ],
+          "additionalProperties": true
+        },
+        "mcp_log": {
+          "type": "object",
+          "properties": {
+            "entries": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/mcpLogEntry"
+              }
+            },
+            "next_cursor": {
+              "type": "string"
+            },
+            "retention_days": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "entries"
+          ],
+          "additionalProperties": true
+        }
+      }
     },
     "/chat": {
       "actions": {},
