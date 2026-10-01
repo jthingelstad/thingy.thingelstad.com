@@ -1,11 +1,15 @@
 // The reader's MCP connections and request log (Librarian contract 4.13.0,
-// /memory actions mcp_connections, mcp_disconnect, mcp_log). The account
-// panel renders these; the formatting lives here so it can be unit-tested.
+// /memory actions mcp_connections, mcp_disconnect, mcp_log), and the apps
+// they set up by hand (4.15.0: mcp_clients, mcp_register_client,
+// mcp_delete_client). The account panel renders these; the formatting lives
+// here so it can be unit-tested.
 // Each call takes the session module as an argument (as savePreferredName
 // does) so node:test can drive it with a fake.
 type Session = Pick<typeof import('./thingy-session.ts'), 'postJson' | 'authHeaders'>;
 type McpConnection = LibrarianMcpConnection;
 type McpLogEntry = LibrarianMcpLogEntry;
+type McpRegisteredClient = LibrarianMcpRegisteredClient;
+type McpClientSettings = LibrarianMcpClientSettings;
 
 export interface McpLogPage {
   entries: McpLogEntry[];
@@ -33,6 +37,66 @@ export async function disconnectMcpConnection(session: Session, connectionId: st
     session.authHeaders()
   );
   return (data.connections as McpConnection[] | undefined) || [];
+}
+
+// Apps that ask for a client ID instead of registering themselves.
+export async function fetchMcpClients(session: Session): Promise<McpRegisteredClient[]> {
+  const data = await session.postJson('/memory', { action: 'mcp_clients' }, session.authHeaders());
+  return (data.clients as McpRegisteredClient[] | undefined) || [];
+}
+
+export async function registerMcpClient(
+  session: Session,
+  { name, callbackUrl }: { name: string; callbackUrl: string }
+): Promise<{ client: McpRegisteredClient; clients: McpRegisteredClient[] }> {
+  const data = await session.postJson(
+    '/memory',
+    { action: 'mcp_register_client', client_name: name.trim(), redirect_uri: callbackUrl.trim() },
+    session.authHeaders()
+  );
+  const client = data.client as McpRegisteredClient;
+  return { client, clients: (data.clients as McpRegisteredClient[] | undefined) || [client] };
+}
+
+export async function deleteMcpClient(
+  session: Session,
+  clientId: string
+): Promise<{ clients: McpRegisteredClient[]; connections: McpConnection[] }> {
+  const data = await session.postJson(
+    '/memory',
+    { action: 'mcp_delete_client', client_id: clientId },
+    session.authHeaders()
+  );
+  return {
+    clients: (data.clients as McpRegisteredClient[] | undefined) || [],
+    connections: (data.connections as McpConnection[] | undefined) || []
+  };
+}
+
+export interface ClientSettingRow {
+  label: string;
+  value: string;
+  // Copyable rows hold a value to paste; the rest are instructions.
+  copy: boolean;
+}
+
+/** The values an app's authorization form asks for, in the order forms ask. */
+export function clientSettingRows(settings: McpClientSettings): ClientSettingRow[] {
+  return [
+    { label: 'Client ID', value: settings.client_id, copy: true },
+    { label: 'Client secret', value: 'Leave blank', copy: false },
+    { label: 'Authorization URL', value: settings.authorization_url, copy: true },
+    { label: 'Token (exchange) URL', value: settings.token_url, copy: true },
+    { label: 'Scope', value: settings.scope, copy: true },
+    { label: 'PKCE (code challenge)', value: settings.pkce ? 'On (S256)' : 'Off', copy: false },
+    { label: 'MCP server URL', value: settings.mcp_url, copy: true }
+  ];
+}
+
+export function clientStatus(client: Pick<McpRegisteredClient, 'connection_count'>) {
+  const count = Number(client.connection_count || 0);
+  if (!count) return 'Not connected yet';
+  return `${count} live connection${count === 1 ? '' : 's'}`;
 }
 
 export async function fetchMcpLog(

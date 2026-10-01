@@ -207,6 +207,28 @@ export interface LibrarianMcpConnection {
   [key: string]: unknown;
 }
 
+export interface LibrarianMcpClientSettings {
+  client_id: string;
+  client_secret?: string;
+  authorization_url: string;
+  token_url: string;
+  mcp_url: string;
+  scope: string;
+  pkce: boolean;
+  [key: string]: unknown;
+}
+
+export interface LibrarianMcpRegisteredClient {
+  client_id: string;
+  client_name: string;
+  redirect_uri: string;
+  created_at?: string;
+  expires_at?: string;
+  connection_count?: number;
+  settings: LibrarianMcpClientSettings;
+  [key: string]: unknown;
+}
+
 export interface LibrarianMcpLogEntry {
   request_id: string;
   created_at: string;
@@ -301,12 +323,12 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = '8204c559086ae547f9fa5bd9d6e8eae2ca82214a19a4c15a329d6913611a5656';
+export const LIBRARIAN_CONTRACT_SHA256 = '13f66951eb3ceac4ea63a28085748b4d58f2a0be6989e536d839d2757c46be07';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '4.14.0',
+  version: '4.15.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
@@ -819,6 +841,62 @@ export const LIBRARIAN_CONTRACT = {
       required: ['id', 'client_id', 'client_name', 'connected_at'],
       additionalProperties: true
     },
+    mcpClientSettings: {
+      type: 'object',
+      properties: {
+        client_id: {
+          type: 'string'
+        },
+        client_secret: {
+          type: 'string'
+        },
+        authorization_url: {
+          type: 'string'
+        },
+        token_url: {
+          type: 'string'
+        },
+        mcp_url: {
+          type: 'string'
+        },
+        scope: {
+          type: 'string'
+        },
+        pkce: {
+          type: 'boolean'
+        }
+      },
+      required: ['client_id', 'authorization_url', 'token_url', 'mcp_url', 'scope', 'pkce'],
+      additionalProperties: true
+    },
+    mcpRegisteredClient: {
+      type: 'object',
+      properties: {
+        client_id: {
+          type: 'string'
+        },
+        client_name: {
+          type: 'string'
+        },
+        redirect_uri: {
+          type: 'string'
+        },
+        created_at: {
+          type: 'string'
+        },
+        expires_at: {
+          type: 'string'
+        },
+        connection_count: {
+          type: 'number'
+        },
+        settings: {
+          $ref: '#/$defs/mcpClientSettings'
+        }
+      },
+      required: ['client_id', 'client_name', 'redirect_uri', 'settings'],
+      additionalProperties: true
+    },
     mcpLogEntry: {
       type: 'object',
       properties: {
@@ -1273,6 +1351,60 @@ export const LIBRARIAN_CONTRACT = {
           properties: {
             ok: {
               type: 'boolean'
+            },
+            connections: {
+              type: 'array',
+              items: {
+                $ref: '#/$defs/mcpConnection'
+              }
+            }
+          },
+          required: ['ok'],
+          additionalProperties: true
+        },
+        mcp_clients: {
+          type: 'object',
+          properties: {
+            clients: {
+              type: 'array',
+              items: {
+                $ref: '#/$defs/mcpRegisteredClient'
+              }
+            },
+            max_clients: {
+              type: 'number'
+            }
+          },
+          required: ['clients'],
+          additionalProperties: true
+        },
+        mcp_register_client: {
+          type: 'object',
+          properties: {
+            client: {
+              $ref: '#/$defs/mcpRegisteredClient'
+            },
+            clients: {
+              type: 'array',
+              items: {
+                $ref: '#/$defs/mcpRegisteredClient'
+              }
+            }
+          },
+          required: ['client'],
+          additionalProperties: true
+        },
+        mcp_delete_client: {
+          type: 'object',
+          properties: {
+            ok: {
+              type: 'boolean'
+            },
+            clients: {
+              type: 'array',
+              items: {
+                $ref: '#/$defs/mcpRegisteredClient'
+              }
             },
             connections: {
               type: 'array',

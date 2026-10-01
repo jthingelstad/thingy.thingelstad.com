@@ -3,15 +3,20 @@ import test from 'node:test';
 
 import {
   WEB_SURFACE_FILTER,
+  clientSettingRows,
+  clientStatus,
   connectionLabel,
   connectionSummary,
+  deleteMcpClient,
   disconnectMcpConnection,
+  fetchMcpClients,
   fetchMcpConnections,
   fetchMcpLog,
   formatArguments,
   formatResultSize,
   formatWhen,
-  logEntryConnectionLabel
+  logEntryConnectionLabel,
+  registerMcpClient
 } from '../src/shared/thingy-mcp-account.ts';
 
 function fakeSession(response) {
@@ -107,4 +112,50 @@ test('formatResultSize abbreviates thousands', () => {
   assert.equal(formatResultSize(812), '812 chars');
   assert.equal(formatResultSize(4210), '4.2k chars');
   assert.equal(formatResultSize(38000), '38k chars');
+});
+
+test('apps that ask for a client ID: list, register (trimmed) and delete go to /memory', async () => {
+  const listed = fakeSession({ clients: [{ client_id: 'c1', client_name: 'App' }], max_clients: 10 });
+  assert.deepEqual(await fetchMcpClients(listed), [{ client_id: 'c1', client_name: 'App' }]);
+  assert.deepEqual(listed.calls[0].payload, { action: 'mcp_clients' });
+
+  const created = fakeSession({ client: { client_id: 'c2' } });
+  const result = await registerMcpClient(created, { name: '  My agent ', callbackUrl: ' https://a.example/cb ' });
+  assert.deepEqual(created.calls[0].payload, {
+    action: 'mcp_register_client',
+    client_name: 'My agent',
+    redirect_uri: 'https://a.example/cb'
+  });
+  assert.deepEqual(result.clients, [{ client_id: 'c2' }], 'falls back to the new client alone');
+
+  const deleted = fakeSession({ ok: true, clients: [], connections: [] });
+  assert.deepEqual(await deleteMcpClient(deleted, 'c2'), { clients: [], connections: [] });
+  assert.deepEqual(deleted.calls[0].payload, { action: 'mcp_delete_client', client_id: 'c2' });
+});
+
+test('client settings rows: copyable values, a blank secret, PKCE on', () => {
+  const rows = clientSettingRows({
+    client_id: 'c1',
+    client_secret: '',
+    authorization_url: 'https://l.example/authorize',
+    token_url: 'https://l.example/token',
+    mcp_url: 'https://l.example/mcp',
+    scope: 'archive:read',
+    pkce: true
+  });
+  assert.deepEqual(
+    rows.map((row) => [row.label, row.value, row.copy]),
+    [
+      ['Client ID', 'c1', true],
+      ['Client secret', 'Leave blank', false],
+      ['Authorization URL', 'https://l.example/authorize', true],
+      ['Token (exchange) URL', 'https://l.example/token', true],
+      ['Scope', 'archive:read', true],
+      ['PKCE (code challenge)', 'On (S256)', false],
+      ['MCP server URL', 'https://l.example/mcp', true]
+    ]
+  );
+  assert.equal(clientStatus({ connection_count: 0 }), 'Not connected yet');
+  assert.equal(clientStatus({ connection_count: 1 }), '1 live connection');
+  assert.equal(clientStatus({ connection_count: 2 }), '2 live connections');
 });

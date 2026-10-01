@@ -1,17 +1,27 @@
 // Profile > MCP connections, and the MCP request log dialog it opens.
 // A connection is one OAuth grant from an MCP client (Claude, ChatGPT, ...);
-// disconnecting revokes its tokens on the Librarian immediately.
-import { useEffect, useState } from 'react';
+// disconnecting revokes its tokens on the Librarian immediately. Apps that
+// ask for a client ID instead of registering themselves are set up here too
+// (Librarian 4.15.0): the reader pastes the app's callback URL and copies
+// back the values its authorization form asks for. Deliberately generic -
+// no per-app presets.
+import { useEffect, useId, useState } from 'react';
+import type { FormEvent } from 'react';
 import { Icon } from './components/Icon.tsx';
 import { confirmDialog } from '../shared/stores/dialog-store.ts';
 import { errorMessage } from '../shared/thingy-errors.ts';
 import {
   WEB_SURFACE_FILTER,
+  clientSettingRows,
+  clientStatus,
   connectionLabel,
   connectionSummary,
+  deleteMcpClient,
   disconnectMcpConnection,
+  fetchMcpClients,
   fetchMcpConnections,
   fetchMcpLog,
+  registerMcpClient,
   formatArguments,
   formatLogTime,
   formatResultSize,
@@ -108,6 +118,7 @@ export function McpConnectionsSection({
           ))}
         </ul>
       ) : null}
+      <McpAppsBlock disabled={disabled} onConnectionsChanged={setConnections} />
       <button
         type="button"
         className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[13px] font-bold hover:bg-surface-2 [&_svg]:size-4"
@@ -117,6 +128,231 @@ export function McpConnectionsSection({
         View MCP request log
       </button>
     </section>
+  );
+}
+
+function McpAppsBlock({
+  disabled,
+  onConnectionsChanged
+}: {
+  disabled: boolean;
+  onConnectionsChanged: (connections: LibrarianMcpConnection[]) => void;
+}) {
+  const [clients, setClients] = useState<LibrarianMcpRegisteredClient[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [callbackUrl, setCallbackUrl] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [busyId, setBusyId] = useState('');
+  const [openId, setOpenId] = useState('');
+  const [error, setError] = useState('');
+  const nameId = useId();
+  const callbackId = useId();
+
+  useEffect(() => {
+    let live = true;
+    void (async () => {
+      try {
+        const list = await fetchMcpClients(session);
+        if (live) setClients(list);
+      } catch (loadError) {
+        if (live) setError(errorMessage(loadError, 'Thingy could not load your apps right now.'));
+      } finally {
+        if (live) setLoaded(true);
+      }
+    })();
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  async function handleCreate(event: FormEvent) {
+    event.preventDefault();
+    setSaving(true);
+    setError('');
+    try {
+      const result = await registerMcpClient(session, { name, callbackUrl });
+      setClients(result.clients);
+      setOpenId(result.client.client_id);
+      setFormOpen(false);
+      setName('');
+      setCallbackUrl('');
+    } catch (createError) {
+      setError(errorMessage(createError, 'Thingy could not set up that app right now.'));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete(client: LibrarianMcpRegisteredClient) {
+    const label = client.client_name || 'this app';
+    const confirmed = await confirmDialog({
+      title: `Delete ${label}?`,
+      body: `Its client ID stops working and any connection made with it is disconnected right away. To use ${label} again you would set it up again and paste the new client ID into it.`,
+      confirmLabel: 'Delete',
+      danger: true
+    });
+    if (!confirmed) return;
+    setBusyId(client.client_id);
+    setError('');
+    try {
+      const result = await deleteMcpClient(session, client.client_id);
+      setClients(result.clients);
+      onConnectionsChanged(result.connections);
+    } catch (deleteError) {
+      setError(errorMessage(deleteError, 'Thingy could not delete that app right now.'));
+    } finally {
+      setBusyId('');
+    }
+  }
+
+  return (
+    <div className="thingy-mcp-apps mt-4 border-t border-line pt-3">
+      <h4 className="text-[13px] font-extrabold">Apps that ask for a client ID</h4>
+      <p className="mt-0.5 text-[12.5px] text-ink-soft">
+        Some apps don&apos;t sign up on their own. They show you a callback (redirect) URL and ask for a client ID. Set
+        one up here, then copy the values into the app.
+      </p>
+      {error ? <p className="mt-2 text-[13px] text-error">{error}</p> : null}
+      {clients.length ? (
+        <ul className="mt-2.5 grid gap-2">
+          {clients.map((client) => (
+            <li key={client.client_id} className="thingy-mcp-app rounded-lg bg-surface-2 px-3 py-2">
+              <div className="flex items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[14px] font-bold">{client.client_name}</div>
+                  <div className="text-[12px] text-muted">{clientStatus(client)}</div>
+                </div>
+                <button
+                  type="button"
+                  className="shrink-0 rounded-lg border border-line px-2.5 py-1 text-[12.5px] font-bold hover:bg-surface"
+                  aria-expanded={openId === client.client_id}
+                  onClick={() => setOpenId(openId === client.client_id ? '' : client.client_id)}
+                >
+                  {openId === client.client_id ? 'Hide settings' : 'Settings'}
+                </button>
+                <button
+                  type="button"
+                  className="shrink-0 rounded-lg border border-error/40 px-2.5 py-1 text-[12.5px] font-bold text-error hover:bg-error/8 disabled:opacity-50"
+                  disabled={disabled || Boolean(busyId)}
+                  onClick={() => void handleDelete(client)}
+                >
+                  {busyId === client.client_id ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+              {openId === client.client_id ? <McpClientSettingsCard client={client} /> : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {formOpen ? (
+        <form
+          className="thingy-mcp-app-form mt-2.5 grid gap-2 rounded-lg border border-line p-3"
+          onSubmit={handleCreate}
+        >
+          <label className="grid gap-1 text-[12.5px] font-bold" htmlFor={nameId}>
+            App name
+            <input
+              id={nameId}
+              className="rounded-lg border border-line bg-bg px-2 py-1.5 text-[13px] font-normal text-ink"
+              value={name}
+              maxLength={100}
+              required
+              autoComplete="off"
+              onChange={(event) => setName(event.target.value)}
+            />
+          </label>
+          <label className="grid gap-1 text-[12.5px] font-bold" htmlFor={callbackId}>
+            Callback URL from the app
+            <input
+              id={callbackId}
+              className="rounded-lg border border-line bg-bg px-2 py-1.5 font-mono text-[12.5px] font-normal text-ink"
+              type="url"
+              value={callbackUrl}
+              required
+              placeholder="https://"
+              autoComplete="off"
+              spellCheck={false}
+              onChange={(event) => setCallbackUrl(event.target.value)}
+            />
+          </label>
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              className="rounded-lg bg-accent-deep px-3 py-1.5 text-[13px] font-bold text-bg hover:brightness-110 disabled:opacity-50"
+              disabled={disabled || saving}
+            >
+              {saving ? 'Creating...' : 'Create client ID'}
+            </button>
+            <button
+              type="button"
+              className="rounded-lg border border-line px-3 py-1.5 text-[13px] font-bold hover:bg-surface-2"
+              onClick={() => setFormOpen(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : loaded ? (
+        <button
+          type="button"
+          className="mt-2.5 rounded-lg border border-line px-3 py-1.5 text-[13px] font-bold hover:bg-surface-2 disabled:opacity-50"
+          disabled={disabled}
+          onClick={() => {
+            setError('');
+            setFormOpen(true);
+          }}
+        >
+          Set up an app
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function McpClientSettingsCard({ client }: { client: LibrarianMcpRegisteredClient }) {
+  const [copied, setCopied] = useState('');
+
+  async function copy(label: string, value: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(label);
+    } catch {
+      // The value is on screen and selectable; nothing else to do.
+    }
+  }
+
+  return (
+    <div className="thingy-mcp-app-settings mt-2 rounded-lg border border-line bg-surface p-2.5">
+      <p className="mb-2 text-[12px] text-ink-soft">
+        Enter these in the app&apos;s authorization settings. Then start the sign-in from the app: you confirm your
+        email with a code, approve it, and it shows up under your connections.
+      </p>
+      <dl className="grid gap-2">
+        {clientSettingRows(client.settings).map((row) => (
+          <div key={row.label}>
+            <dt className="text-[11.5px] font-bold text-muted">{row.label}</dt>
+            <dd className="flex items-center gap-1.5">
+              <span className={`min-w-0 flex-1 text-[12.5px] break-all ${row.copy ? 'font-mono select-all' : ''}`}>
+                {row.value}
+              </span>
+              {row.copy ? (
+                <button
+                  type="button"
+                  className="grid size-7 shrink-0 place-items-center rounded-md text-muted hover:bg-surface-2 hover:text-ink [&_svg]:size-3.5"
+                  aria-label={`Copy ${row.label}`}
+                  onClick={() => void copy(row.label, row.value)}
+                >
+                  <Icon name={copied === row.label ? 'check' : 'copy'} />
+                </button>
+              ) : null}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-2 text-[11.5px] text-muted">Callback URL: {client.redirect_uri}</p>
+    </div>
   );
 }
 

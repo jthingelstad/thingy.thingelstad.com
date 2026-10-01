@@ -77,7 +77,12 @@ dialog also lists the reader's MCP connections (one per OAuth grant; Disconnect
 revokes it on the Librarian at once) and opens their MCP request log (WebMCP
 and `/mcp` calls, filterable by connection, kept for the Librarian's audit
 retention) - `src/react/McpConnections.tsx` over the `/memory` actions
-`mcp_connections`, `mcp_disconnect` and `mcp_log` (contract 4.13.0). (The Dispatch surface and its `/dispatch/` route were removed in
+`mcp_connections`, `mcp_disconnect` and `mcp_log` (contract 4.13.0). Its
+"Apps that ask for a client ID" block (contract 4.15.0: `mcp_clients`,
+`mcp_register_client`, `mcp_delete_client`) sets up a client for an app that
+does no dynamic registration (AWS DevOps Agent's 3LO form): a name and the
+app's callback URL in, every form value out with copy buttons. Jamie wants it
+generic - no per-app presets. (The Dispatch surface and its `/dispatch/` route were removed in
 2026-08/2026-09. The answer text-to-speech button was removed in
 2026-08 - do not reintroduce browser speechSynthesis.)
 

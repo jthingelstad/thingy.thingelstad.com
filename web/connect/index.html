@@ -106,6 +106,11 @@
       <p>The endpoint speaks MCP streamable HTTP with OAuth 2.1 discovery. Point your client at the URL above and it finds the sign-in flow on its own. The <a href="/connect/reference/#connecting">reference</a> walks through the flow step by step.</p>
     </div>
 
+    <h2>Apps that ask for a client ID</h2>
+    <div class="card">
+      <p>Some apps don&rsquo;t sign up on their own. Instead they show a callback (redirect) URL and ask you for a client ID, an authorization URL and a token URL. Sign in to Thingy, open your profile, and under <strong>MCP connections</strong> choose <strong>Set up an app</strong>. Paste the app&rsquo;s callback URL there, and Thingy gives you every value to copy back: the client ID, the two URLs, the scope (<code>archive:read</code>), and the MCP server URL. Leave the client secret blank and turn PKCE (code challenge) on. A client ID you set up works only for your own account, and deleting it disconnects the app.</p>
+    </div>
+
     <h2>Agents in your browser (WebMCP, beta)</h2>
     <div class="card">
       <p>While you are signed in on the <a href="/chat/">Thingy chat page</a>, the page also registers its archive tools with your browser&rsquo;s model context (the emerging <a href="https://webmachinelearning.github.io/webmcp/">WebMCP</a> standard). An agent working in your browser, such as Gemini in Chrome or a desktop MCP client connected through a WebMCP bridge extension, can then search the archive with your session and no connector setup. The tools appear when you sign in and go away when you sign out; they only read, and they see nothing the chat itself cannot.</p>
