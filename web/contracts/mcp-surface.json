@@ -5,8 +5,8 @@
   "server": {
     "name": "librarian",
     "title": "The Librarian - Jamie Thingelstad's archive",
-    "version": "2.3.0",
-    "version_format": "2.3.0+tools.<fingerprint>: the fingerprint hashes every packaged prompt file, the tool specs included, so it changes whenever the declared tools do",
+    "version": "2.4.0",
+    "version_format": "2.4.0+tools.<fingerprint>: the fingerprint hashes every packaged prompt file, the tool specs included, so it changes whenever the declared tools do",
     "website_url": "https://thingy.thingelstad.com/",
     "icons": [
       {
@@ -33,7 +33,7 @@
       "resources": {},
       "prompts": {}
     },
-    "instructions": "Tools for exploring Jamie Thingelstad's public archive: The Weekly Thing newsletter, the thingelstad.com blog, and the Another Thing podcast. Start broad with search_archive, then deepen with get_source; use archive_lens for how-things-changed-over-time questions, compare_eras for then-versus-now, on_this_day for this date in every year (this one included), list_topics for the topic catalogue, latest_content for freshness, and corpus_stats for what the archive contains. voice: \"jamie\" (search_archive, quote_search, find_evidence, compare_eras and archive_lens) keeps only Jamie's own words, never passages Jamie quoted. year is shorthand for year_range [year, year]. When a result is cut, its truncated block says what was left out and how to get the rest. Sources have one id everywhere (wt-351, blog-<microblog id>, ep-<n>); pass it back to get_source or source_neighborhood. Cite each source as a markdown link to its url: [WT351](url) for a Weekly Thing issue, the title for a blog post or episode. Photos: media_search finds them; view_photo shows up to 3 inline and gives you vision over them. Resources: librarian://wt/{n} and librarian://blog/{id} attach one source as markdown; topic, year and on-this-day templates too. Prompts (thinking_over_time, year_in_review, reading_path, this_week_in_past_years, research_brief) set out the call sequence for the big asks. The tool schemas evolve; serverInfo.version changes whenever they do - if it differs from your cached value, re-fetch tools/list before relying on cached parameter schemas."
+    "instructions": "Tools for exploring Jamie Thingelstad's public archive: The Weekly Thing newsletter, the thingelstad.com blog, and the Another Thing podcast. Start broad with search_archive, then deepen with get_source; use archive_lens for how-things-changed-over-time questions, compare_eras for then-versus-now, on_this_day for this date in every year (this one included), list_topics for the topic catalogue, latest_content for freshness, and corpus_stats for what the archive contains. voice: \"jamie\" (search_archive, quote_search, find_evidence, compare_eras and archive_lens) keeps only Jamie's own words, never passages Jamie quoted. year is shorthand for year_range [year, year]. When a result is cut, its truncated block says what was left out and how to get the rest. Sources have one id everywhere (wt-351, blog-<microblog id>, page-<page id>, ep-<n>); pass it back to get_source or source_neighborhood. Cite each source as a markdown link to its url: [WT351](url) for a Weekly Thing issue, the title for a blog post, page or episode. Pages (About, Lists, Collections, Open Loop) are undated: date-anchored tools leave them out, and updated is their last edit. Photos: media_search finds them; view_photo shows up to 3 inline and gives you vision over them. Resources: librarian://wt/{n}, librarian://blog/{id} and librarian://page/{id} attach one source as markdown; topic, year and on-this-day templates too. Prompts (thinking_over_time, year_in_review, reading_path, this_week_in_past_years, research_brief) set out the call sequence for the big asks. The tool schemas evolve; serverInfo.version changes whenever they do - if it differs from your cached value, re-fetch tools/list before relying on cached parameter schemas."
   },
   "doors": {
     "mcp": {
@@ -456,7 +456,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "The source id other tools return: wt-351, blog-<microblog id>, ep-<n>. WT351, a bare issue number or the source's url also work."
+            "description": "The source id other tools return: wt-351, blog-<microblog id>, page-<page id>, ep-<n>. WT351, a bare issue number or the source's url also work."
           },
           "section": {
             "type": "string",
@@ -535,7 +535,7 @@
           "server_version"
         ]
       },
-      "chat_description": "Fetch full context for one known archive source in the active scope: a Weekly Thing issue, blog post/micropost, or podcast episode. Use after search_archive, list_content, archive_lens, archive_gems, find_links or source_neighborhood identifies a specific source worth reading more deeply. Identify it by id as other tools emit it (wt-351, blog-<microblog id>, ep-<n>; WT351, a bare issue number or the source's url also work). Optional section narrows the returned text; format outline skips the body and links, text skips the links. body is the source's full text and sections lists its section names and word counts; a body longer than one result is cut and named in truncated, whose next_offset reads the rest; section reads one section or heading (an exact name wins), and a name that matches nothing is an error listing available_sections. A Weekly Thing issue with an audio edition carries audio_url, audio_duration_seconds and audio_chapters [{start, title}]; with section, section_audio {url, start, chapter} starts that section's chapter. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
+      "chat_description": "Fetch full context for one known archive source in the active scope: a Weekly Thing issue, blog post/micropost, thingelstad.com page, or podcast episode. Use after search_archive, list_content, archive_lens, archive_gems, find_links or source_neighborhood identifies a specific source worth reading more deeply. Identify it by id as other tools emit it (wt-351, blog-<microblog id>, page-<page id>, ep-<n>; WT351, a bare issue number or the source's url also work). Optional section narrows the returned text; format outline skips the body and links, text skips the links. body is the source's full text and sections lists its section names and word counts; a body longer than one result is cut and named in truncated, whose next_offset reads the rest; section reads one section or heading (an exact name wins), and a name that matches nothing is an error listing available_sections. A Weekly Thing issue with an audio edition carries audio_url, audio_duration_seconds and audio_chapters [{start, title}]; with section, section_audio {url, start, chapter} starts that section's chapter. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
       "doors": {
         "mcp": true,
         "webmcp": true,
@@ -747,7 +747,7 @@
           "server_version"
         ]
       },
-      "chat_description": "List source-level metadata across the active scope: Weekly Thing issues, blog posts/microposts, and podcast episodes. Use for counts and deterministic listings by source_kind, year_range (or year), topic, linked domain, link_kind, link_category, target_resolved, has_also_in_issues, also_in_issue, or has_audio. Prefer this over semantic search for inventory questions like posts by year, which sources mention a domain, which blog posts crossed into Weekly Thing, or which issues have an audio edition. A Weekly Thing result with an audio edition carries audio_url and audio_duration_seconds. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer. Matching is whole-token/phrase based (see match_mode); match_reasons name the exact span found.",
+      "chat_description": "List source-level metadata across the active scope: Weekly Thing issues, blog posts/microposts/pages, and podcast episodes. Use for counts and deterministic listings by source_kind, year_range (or year), topic, linked domain, link_kind, link_category, target_resolved, has_also_in_issues, also_in_issue, or has_audio. Prefer this over semantic search for inventory questions like posts by year, which sources mention a domain, which blog posts crossed into Weekly Thing, or which issues have an audio edition. A Weekly Thing result with an audio edition carries audio_url and audio_duration_seconds. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer. Matching is whole-token/phrase based (see match_mode); match_reasons name the exact span found.",
       "paged_list": "results",
       "doors": {
         "mcp": true,
@@ -770,7 +770,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "Only the links in one source (wt-274, blog-<microblog id>, ep-<n>), in the order the source carries them; page with offset."
+            "description": "Only the links in one source (wt-274, blog-<microblog id>, page-<page id>, ep-<n>), in the order the source carries them; page with offset."
           },
           "domain": {
             "type": "string",
@@ -1912,7 +1912,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "The source id other tools return: wt-351, blog-<microblog id>, ep-<n>. WT351, a bare issue number or the source's url also work."
+            "description": "The source id other tools return: wt-351, blog-<microblog id>, page-<page id>, ep-<n>. WT351, a bare issue number or the source's url also work."
           },
           "limit": {
             "type": "integer",
@@ -2007,7 +2007,7 @@
           "server_version"
         ]
       },
-      "chat_description": "Explore what connects to one known archive source. Given a source id (wt-351, blog-<microblog id>, ep-<n>, as other tools emit it), return outgoing links, incoming links when known (outgoing_count and incoming_count say how many there are; up to 30 of each are listed; find_links with id pages through every link in a source, and find_links with url lists every link to it; each link names its source id) (an entry with link_category cross_source links Jamie's corpora to each other; cross_source_count totals them), similar issues by meaning, and related sources by shared domains/text signals. Use for connected-archive questions like \"what else is near this?\", \"where did this link lead?\", \"did this blog post connect to Weekly Thing?\", or to build rabbit-hole style follow-ups. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
+      "chat_description": "Explore what connects to one known archive source. Given a source id (wt-351, blog-<microblog id>, page-<page id>, ep-<n>, as other tools emit it), return outgoing links, incoming links when known (outgoing_count and incoming_count say how many there are; up to 30 of each are listed; find_links with id pages through every link in a source, and find_links with url lists every link to it; each link names its source id) (an entry with link_category cross_source links Jamie's corpora to each other; cross_source_count totals them), similar issues by meaning, and related sources by shared domains/text signals. Use for connected-archive questions like \"what else is near this?\", \"where did this link lead?\", \"did this blog post connect to Weekly Thing?\", or to build rabbit-hole style follow-ups. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
       "doors": {
         "mcp": true,
         "webmcp": true,
@@ -3119,6 +3119,13 @@
         "mimeType": "text/markdown"
       },
       {
+        "uriTemplate": "librarian://page/{id}",
+        "name": "page",
+        "title": "Page",
+        "description": "One thingelstad.com page (About, Resume, a list, a collection, an Open Loop episode) by its page id, the number in page-<id>, e.g. librarian://page/57851.",
+        "mimeType": "text/markdown"
+      },
+      {
         "uriTemplate": "librarian://topic/{slug}",
         "name": "topic",
         "title": "Topic",
@@ -3293,7 +3300,7 @@
         "when": "resources/read with a URI no template matches",
         "http_status": 200,
         "code": -32602,
-        "message": "Unknown resource URI; this server serves librarian://wt/{n}, librarian://blog/{id}, librarian://topic/{slug}, librarian://year/{yyyy}, librarian://on-this-day/{mm-dd}."
+        "message": "Unknown resource URI; this server serves librarian://wt/{n}, librarian://blog/{id}, librarian://page/{id}, librarian://topic/{slug}, librarian://year/{yyyy}, librarian://on-this-day/{mm-dd}."
       },
       {
         "key": "unknown_method",
