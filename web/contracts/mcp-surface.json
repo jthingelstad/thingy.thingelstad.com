@@ -693,6 +693,10 @@
           "total_count": {
             "type": "integer"
           },
+          "undated_count": {
+            "type": "integer",
+            "description": "Sources (list_content) or links (find_links) on undated thingelstad.com pages: in total_count, in no year."
+          },
           "counts_by_year": {
             "type": "array",
             "description": "[{<key>, count}]"
@@ -747,7 +751,7 @@
           "server_version"
         ]
       },
-      "chat_description": "List source-level metadata across the active scope: Weekly Thing issues, blog posts/microposts/pages, and podcast episodes. Use for counts and deterministic listings by source_kind, year_range (or year), topic, linked domain, link_kind, link_category, target_resolved, has_also_in_issues, also_in_issue, or has_audio. Prefer this over semantic search for inventory questions like posts by year, which sources mention a domain, which blog posts crossed into Weekly Thing, or which issues have an audio edition. A Weekly Thing result with an audio edition carries audio_url and audio_duration_seconds. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer. Matching is whole-token/phrase based (see match_mode); match_reasons name the exact span found.",
+      "chat_description": "List source-level metadata across the active scope: Weekly Thing issues, blog posts/microposts/pages, and podcast episodes. Use for counts and deterministic listings by source_kind, year_range (or year), topic, linked domain, link_kind, link_category, target_resolved, has_also_in_issues, also_in_issue, or has_audio. Prefer this over semantic search for inventory questions like posts by year, which sources mention a domain, which blog posts crossed into Weekly Thing, or which issues have an audio edition. A Weekly Thing result with an audio edition carries audio_url and audio_duration_seconds. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer. Matching is whole-token/phrase based (see match_mode); match_reasons name the exact span found. Undated thingelstad.com pages list after every dated source; undated_count says how many are in total_count but in no year.",
       "paged_list": "results",
       "doors": {
         "mcp": true,
@@ -902,6 +906,10 @@
           "total_count": {
             "type": "integer"
           },
+          "undated_count": {
+            "type": "integer",
+            "description": "Sources (list_content) or links (find_links) on undated thingelstad.com pages: in total_count, in no year."
+          },
           "top_domains": {
             "type": "array",
             "description": "[{domain, count}]: the 20 most linked headline domains of the matched links; truncated.omitted.top_domains counts the rest."
@@ -968,7 +976,7 @@
           "server_version"
         ]
       },
-      "chat_description": "Query link metadata in the active source scope by source (id: every link in one issue, post or episode), domain, topic, source_kind, link_kind, link_category, target_resolved, and year range. source_kind can be \"weekly_thing\", \"blog\", or \"podcast\" and lets you isolate one corpus even when the active scope is all. link_kind can be \"external\" or \"internal\". link_category includes \"external\", \"cross_source\", \"resolved_post\", \"collection_page\", \"upload_asset\", \"malformed_internal\", \"internal_unresolved\", and \"internal_site\". cross_source means a link between Jamie-owned corpora such as blog to Weekly Thing or podcast to blog. target_resolved applies to links to Jamie's own sites only: true keeps those that resolved to a known post or issue, false those that did not; an external link matches neither. Does not fetch linked pages. Call with url to ask \"has Jamie linked this before\" (matched however the link was spelled: scheme, www, trailing slash, fragment and tracking parameters such as utm_*, ref, fbclid and smid ignored). link_role narrows Weekly Thing links: headline (the pick a link section is built from), commentary (a link inside what Jamie wrote about it) or journal (a link in the Journal). Call with domain for domain history (the domain and its subdomains); call without filters for top external domains, ranked by editorial picks (Weekly Thing headline links; source_kind blog ranks blog links) (the 20 most linked; truncated.omitted.top_domains counts the rest, and top_references pages through them all). year_range is [start_year, end_year]; year is one year. Results are newest first (sort: \"oldest\" reverses); page with offset, and truncated.next_offset names the next page. Each result's id is its source, for get_source. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer. Matching is whole-token/phrase based (see match_mode); match_reasons name the exact span found.",
+      "chat_description": "Query link metadata in the active source scope by source (id: every link in one issue, post, page or episode), domain, topic, source_kind, link_kind, link_category, target_resolved, and year range. source_kind can be \"weekly_thing\", \"blog\", or \"podcast\" and lets you isolate one corpus even when the active scope is all. link_kind can be \"external\" or \"internal\". link_category includes \"external\", \"cross_source\", \"resolved_post\", \"collection_page\", \"upload_asset\", \"malformed_internal\", \"internal_unresolved\", and \"internal_site\". cross_source means a link between Jamie-owned corpora such as blog to Weekly Thing or podcast to blog. target_resolved applies to links to Jamie's own sites only: true keeps those that resolved to a known post or issue, false those that did not; an external link matches neither. Does not fetch linked pages. Call with url to ask \"has Jamie linked this before\" (matched however the link was spelled: scheme, www, trailing slash, fragment and tracking parameters such as utm_*, ref, fbclid and smid ignored). link_role narrows Weekly Thing links: headline (the pick a link section is built from), commentary (a link inside what Jamie wrote about it) or journal (a link in the Journal). Call with domain for domain history (the domain and its subdomains); call without filters for top external domains, ranked by editorial picks (Weekly Thing headline links; source_kind blog ranks blog links) (the 20 most linked; truncated.omitted.top_domains counts the rest, and top_references pages through them all). year_range is [start_year, end_year]; year is one year. Results are newest first (sort: \"oldest\" reverses); page with offset, and truncated.next_offset names the next page. Each result's id is its source, for get_source. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer. Matching is whole-token/phrase based (see match_mode); match_reasons name the exact span found. Links on undated thingelstad.com pages sort last; undated_count says how many are in total_count but in no year.",
       "paged_list": "results",
       "doors": {
         "mcp": true,
@@ -1048,7 +1056,7 @@
           },
           "sources": {
             "type": "array",
-            "description": "One entry per source kind: item_count, chunk_count, link_count, domain_count, counts_by_year (oldest first), yearly_signals (newest first), top_domains; for the blog, issues_referenced_count and also_in_issue_counts; for the Weekly Thing, audio_editions {count, total_seconds, first, last}; oldest and newest are sources (by the day the year filter reads). On each source, date is the Chicago day it was published (Jamie publishes in Central time); publish_date is the corpus value as stored: a UTC timestamp for an issue, the permalink day for a blog post, the day for an episode."
+            "description": "One entry per source kind: item_count, chunk_count, link_count, domain_count, counts_by_year (oldest first), yearly_signals (newest first), top_domains; for the blog, post_count and page_count (undated pages, in item_count and in no year), issues_referenced_count and also_in_issue_counts; for the Weekly Thing, audio_editions {count, total_seconds, first, last}; oldest and newest are sources (by the day the year filter reads). On each source, date is the Chicago day it was published (Jamie publishes in Central time); publish_date is the corpus value as stored: a UTC timestamp for an issue, the permalink day for a blog post, the day for an episode."
           },
           "truncated": {
             "type": "object",
@@ -1091,7 +1099,7 @@
           "server_version"
         ]
       },
-      "chat_description": "Return deterministic inventory statistics for the active source scope: item counts, chunk counts (dated passages; undated_chunk_count holds FAQ answers and site pages), link counts, newest/oldest item, generated_at, counts_by_year (oldest first), year_count_summary, yearly_signals for the newest limit years, each with its top five subject/title terms, five distinctive chunk-text terms, three most linked domains (the same link measure as top_domains), section counts and one sample source id, the limit most linked external domains (domain_count says of how many; headline picks and blog links, www merged), link kind/category counts, blog also_in_issues cross-reference counts (the limit issues most carried; issues_referenced_count says of how many), and for the Weekly Thing audio_editions {count, total_seconds, first, last} (issues with a spoken audio edition). Optional source_kind isolates \"weekly_thing\", \"blog\", or \"podcast\". Use for corpus inventory, freshness, latest indexed date, per-year content breakdowns, year-by-year theme signals, cross-source coverage, and aggregate-domain questions before searching semantically. Pass year_range for earlier years, or a higher limit for more years, domains and issues; truncated counts every list it cut, and top_references pages through every domain.",
+      "chat_description": "Return deterministic inventory statistics for the active source scope: item counts (the blog's are posts plus undated pages; post_count and page_count split them), chunk counts (dated passages; undated_chunk_count holds FAQ answers and site pages), link counts, newest/oldest item, generated_at, counts_by_year (oldest first), year_count_summary, yearly_signals for the newest limit years, each with its top five subject/title terms, five distinctive chunk-text terms, three most linked domains (the same link measure as top_domains), section counts and one sample source id, the limit most linked external domains (domain_count says of how many; headline picks and blog links, www merged), link kind/category counts, blog also_in_issues cross-reference counts (the limit issues most carried; issues_referenced_count says of how many), and for the Weekly Thing audio_editions {count, total_seconds, first, last} (issues with a spoken audio edition). Optional source_kind isolates \"weekly_thing\", \"blog\", or \"podcast\". Use for corpus inventory, freshness, latest indexed date, per-year content breakdowns, year-by-year theme signals, cross-source coverage, and aggregate-domain questions before searching semantically. Pass year_range for earlier years, or a higher limit for more years, domains and issues; truncated counts every list it cut, and top_references pages through every domain.",
       "doors": {
         "mcp": true,
         "webmcp": true,
