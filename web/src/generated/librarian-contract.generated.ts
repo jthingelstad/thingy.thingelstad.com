@@ -147,6 +147,7 @@ export interface LibrarianRetrievePassage {
   show?: string;
   topics?: Array<unknown>;
   also_in_issues?: Array<unknown>;
+  linked_from_issues?: Array<unknown>;
   section_family?: string;
   content_kind?: string;
   voice?: Array<unknown>;
@@ -323,12 +324,12 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = '13f66951eb3ceac4ea63a28085748b4d58f2a0be6989e536d839d2757c46be07';
+export const LIBRARIAN_CONTRACT_SHA256 = 'a17c263aafc826886d6b25f70a1d390f42faeec8f4f7412a4a14d31778178add';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '4.15.0',
+  version: '4.16.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
@@ -668,6 +669,9 @@ export const LIBRARIAN_CONTRACT = {
           type: 'array'
         },
         also_in_issues: {
+          type: 'array'
+        },
+        linked_from_issues: {
           type: 'array'
         },
         section_family: {
