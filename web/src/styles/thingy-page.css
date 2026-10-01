@@ -191,11 +191,362 @@
   color: var(--thingy-accent);
 }
 
-.thingy-page-nav nav a[aria-current='page'] {
+.thingy-page-nav nav a[aria-current='page'],
+.thingy-page-nav nav a[aria-current='location'] {
   color: var(--thingy-accent);
   font-weight: 600;
 }
 
 .thingy-page-nav ~ .thingy-page {
   padding-top: 2rem;
+}
+
+/* The MCP reference (/connect/reference/): wider measure for parameter
+   tables, which scroll inside their own box on narrow screens so the page
+   itself never scrolls sideways. Body markup is generated at build time
+   (vite.mcp-reference.ts). */
+.thingy-page.is-reference,
+.thingy-page-nav.is-reference {
+  max-width: 58rem;
+}
+
+.thingy-page.is-reference h1 {
+  margin-top: 0.4rem;
+}
+
+.thingy-page .crumbs {
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--thingy-text-muted);
+  margin: 0;
+}
+
+.thingy-page .ref-meta {
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--thingy-text-muted);
+  margin: -1.4rem 0 2rem;
+}
+
+.thingy-page .muted {
+  color: var(--thingy-text-muted);
+}
+
+.thingy-page .table-scroll {
+  overflow-x: auto;
+  margin: 0.5rem 0 0.8rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.thingy-page .table-scroll table {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.thingy-page .table-scroll th {
+  white-space: nowrap;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--thingy-text-muted);
+}
+
+.thingy-page .table-scroll td {
+  vertical-align: top;
+}
+
+.thingy-page table.params {
+  min-width: 40rem;
+}
+
+.thingy-page table.params td:first-child,
+.thingy-page table.params td:nth-child(2) {
+  white-space: nowrap;
+}
+
+.thingy-page table.params td:first-child code,
+.thingy-page table.params td:nth-child(2) code {
+  overflow-wrap: normal;
+}
+
+.thingy-page table.params td:nth-child(3) {
+  min-width: 9rem;
+}
+
+.thingy-page .req {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--thingy-accent);
+}
+
+.thingy-page .ref-toc {
+  background: var(--thingy-surface);
+  border: 1px solid var(--thingy-border);
+  border-radius: 12px;
+  padding: 0.6rem 1.2rem 0.8rem;
+  margin: 0 0 1rem;
+}
+
+.thingy-page .ref-toc h2 {
+  font-size: 1rem;
+  margin: 0.6rem 0 0.4rem;
+}
+
+.thingy-page .ref-toc ol {
+  padding-left: 1.2rem;
+  margin: 0;
+}
+
+.thingy-page .ref-toc .toc-groups {
+  columns: 2 14rem;
+  column-gap: 1.5rem;
+  margin: 0.3rem 0;
+}
+
+.thingy-page .ref-toc .toc-groups > li {
+  break-inside: avoid;
+}
+
+.thingy-page .ref-toc .toc-groups ul {
+  padding-left: 1rem;
+  font-size: 0.9rem;
+}
+
+.thingy-page .ref-toc li {
+  margin-bottom: 0.15rem;
+}
+
+.thingy-page .group-title {
+  font-size: 1.35rem;
+  margin-top: 2.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--thingy-border);
+}
+
+.thingy-page .tool {
+  background: var(--thingy-surface);
+  border: 1px solid var(--thingy-border);
+  border-radius: 12px;
+  padding: 0.2rem 1.2rem 0.8rem;
+  margin: 1rem 0;
+  scroll-margin-top: 1rem;
+}
+
+.thingy-page .tool h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.6rem;
+  font-size: 1.12rem;
+}
+
+.thingy-page .tool h4 {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--thingy-text-muted);
+  margin: 1rem 0 0.3rem;
+}
+
+.thingy-page .tool .anchor {
+  color: var(--thingy-text);
+  text-decoration: none;
+}
+
+.thingy-page .tool .anchor:hover {
+  color: var(--thingy-accent);
+}
+
+.thingy-page .tool-name {
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.thingy-page .badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 0.6rem;
+}
+
+.thingy-page .badge {
+  font-size: 0.74rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--thingy-border);
+  color: var(--thingy-text-soft);
+  white-space: nowrap;
+}
+
+.thingy-page .badge.is-door {
+  background: var(--thingy-accent-soft);
+  border-color: transparent;
+  color: var(--thingy-text);
+}
+
+.thingy-page .badge.is-warn {
+  border-color: var(--thingy-accent);
+  color: var(--thingy-accent);
+}
+
+.thingy-page .note {
+  font-size: 0.9rem;
+  border-left: 3px solid var(--thingy-accent);
+  padding-left: 0.7rem;
+  color: var(--thingy-text-soft);
+}
+
+.thingy-page .fields {
+  font-size: 0.93rem;
+}
+
+.thingy-page .fields .type {
+  color: var(--thingy-text-muted);
+  font-size: 0.85em;
+}
+
+.thingy-page details {
+  margin: 0.6rem 0;
+}
+
+.thingy-page summary {
+  cursor: pointer;
+  color: var(--thingy-accent);
+  font-size: 0.92rem;
+}
+
+.thingy-page details pre {
+  max-height: 32rem;
+  overflow: auto;
+  font-size: 0.8rem;
+}
+
+.thingy-page details blockquote,
+.thingy-page section > blockquote {
+  margin: 0.6rem 0;
+  padding: 0.2rem 0 0.2rem 0.9rem;
+  border-left: 3px solid var(--thingy-border);
+  color: var(--thingy-text-soft);
+  font-size: 0.93rem;
+}
+
+.thingy-page section > pre {
+  font-size: 0.82rem;
+}
+
+.thingy-page section[id] {
+  scroll-margin-top: 1rem;
+}
+
+/* The one-registry-three-doors figure: three door cards over a column of
+   steps down to the corpus. Collapses to one column on phones. */
+.thingy-page .doors-figure {
+  margin: 1.4rem 0;
+  display: grid;
+  gap: 0;
+  justify-items: center;
+}
+
+.thingy-page .doors-figure .doors {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.7rem;
+  width: 100%;
+}
+
+.thingy-page .doors-figure .door,
+.thingy-page .doors-figure .flow-step {
+  background: var(--thingy-surface);
+  border: 1px solid var(--thingy-border);
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  text-align: center;
+  font-size: 0.86rem;
+  color: var(--thingy-text-soft);
+}
+
+.thingy-page .doors-figure .door b,
+.thingy-page .doors-figure .flow-step b {
+  display: block;
+  color: var(--thingy-text);
+  font-size: 0.98rem;
+}
+
+.thingy-page .doors-figure .door span,
+.thingy-page .doors-figure .flow-step span {
+  display: block;
+}
+
+.thingy-page .doors-figure .flow-step {
+  width: min(100%, 34rem);
+  position: relative;
+  margin-top: 1.6rem;
+}
+
+.thingy-page .doors-figure .flow-step::before {
+  content: '\2193';
+  position: absolute;
+  top: -1.45rem;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--thingy-accent);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.thingy-page .doors-figure .flow-step.is-core {
+  background: var(--thingy-accent-soft);
+  border-color: var(--thingy-accent);
+}
+
+.thingy-page .doors-figure figcaption {
+  margin-top: 0.8rem;
+  font-size: 0.86rem;
+  color: var(--thingy-text-muted);
+  text-align: center;
+}
+
+@media (width <= 40rem) {
+  .thingy-page .doors-figure .doors {
+    grid-template-columns: 1fr;
+  }
+
+  /* Parameter tables stack into one block per parameter on phones: four
+     columns cannot share 360px without crushing the descriptions. */
+  .thingy-page table.params {
+    min-width: 0;
+  }
+
+  .thingy-page table.params thead {
+    display: none;
+  }
+
+  .thingy-page table.params tr {
+    display: block;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--thingy-border);
+  }
+
+  .thingy-page table.params td {
+    display: block;
+    border: 0;
+    padding: 0.1rem 0;
+    white-space: normal;
+  }
+
+  .thingy-page table.params td:first-child,
+  .thingy-page table.params td:nth-child(2) {
+    display: inline-block;
+    margin-right: 0.5rem;
+  }
+
+  .thingy-page table.params td:nth-child(3) {
+    font-size: 0.85rem;
+    color: var(--thingy-text-muted);
+  }
+
+  .thingy-page .tool {
+    padding: 0.2rem 0.8rem 0.6rem;
+  }
 }

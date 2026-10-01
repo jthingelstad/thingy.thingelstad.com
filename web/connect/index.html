@@ -58,6 +58,9 @@
     <img class="mark" src="/img/thingy.png" alt="" width="1022" height="1022">
     <h1>Connect your AI to Thingy</h1>
     <p class="lede">Bring Jamie Thingelstad&rsquo;s whole archive into Claude, ChatGPT or Claude Code. Your AI gets the same tools Thingy uses: it can search, read, count and trace across twenty-five years of writing, and link you to every source it uses. Weekly Thing subscribers sign in with their email; there is no password.</p>
+    <div class="card">
+      <p><strong>Building with it, or curious how it works?</strong> The <a href="/connect/reference/">Librarian MCP reference</a> documents every tool with its parameters and results, the OAuth flow, budgets and protocol conventions, generated from the server&rsquo;s own declarations.</p>
+    </div>
 
     <h2>What your AI can read</h2>
     <div class="stats">
@@ -100,7 +103,7 @@
 
     <h2>Any other MCP client</h2>
     <div class="card">
-      <p>The endpoint speaks MCP streamable HTTP with OAuth 2.1 discovery. Point your client at the URL above and it finds the sign-in flow on its own.</p>
+      <p>The endpoint speaks MCP streamable HTTP with OAuth 2.1 discovery. Point your client at the URL above and it finds the sign-in flow on its own. The <a href="/connect/reference/#connecting">reference</a> walks through the flow step by step.</p>
     </div>
 
     <h2>Agents in your browser (WebMCP, beta)</h2>
@@ -112,7 +115,7 @@
     <p>Each reader can make 500 tool calls a day (1,000 for <a href="https://weekly.thingelstad.com/members/">Supporting Members</a>) and up to 300 an hour. That budget is separate from Thingy&rsquo;s own chat. A busy research session uses a few dozen calls.</p>
 
     <footer>
-      <a href="/">Thingy home</a> &middot; <a href="/chat/">Open chat</a>
+      <a href="/">Thingy home</a> &middot; <a href="/chat/">Open chat</a> &middot; <a href="/connect/reference/">MCP reference</a>
     </footer>
   </main>
   <script type="module" src="/src/pages/connect.ts"></script>

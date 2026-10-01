@@ -61,7 +61,8 @@ one shell for every token; the CloudFront function rewrites the path and the
 page fetches `/api/share/<token>`), plus two static content pages: `/about/` (what
 Thingy is, the archive inventory, architecture, and the AGENT-TEAM) and
 `/connect/` (how to add the Librarian MCP server to Claude, ChatGPT, Claude
-Code, or any MCP client). The app handles auth UI, streams `/chat` SSE from
+Code, or any MCP client), with the technical MCP reference beneath it at
+`/connect/reference/`. The app handles auth UI, streams `/chat` SSE from
 the Librarian Lambda, renders citations and inline photo thumbnails,
 collects feedback, and runs browser-only UX. Visitors without a session get
 the guest preview lane (2026-09): the composer works, history stays
@@ -71,7 +72,12 @@ guest caps (3/visitor/day, 100/day global fail-closed breaker, kill switch
 sign-in. An explicit `email` URL param still routes to sign-in. While signed in, the chat page
 also registers the archive tools with the browser's model context (WebMCP,
 `web/src/shared/thingy-webmcp.ts`, proxying to `/api/tools`). It has no
-server of its own - static hosting only. (The Dispatch surface and its `/dispatch/` route were removed in
+server of its own - static hosting only. The account menu's Profile
+dialog also lists the reader's MCP connections (one per OAuth grant; Disconnect
+revokes it on the Librarian at once) and opens their MCP request log (WebMCP
+and `/mcp` calls, filterable by connection, kept for the Librarian's audit
+retention) - `src/react/McpConnections.tsx` over the `/memory` actions
+`mcp_connections`, `mcp_disconnect` and `mcp_log` (contract 4.13.0). (The Dispatch surface and its `/dispatch/` route were removed in
 2026-08/2026-09. The answer text-to-speech button was removed in
 2026-08 - do not reintroduce browser speechSynthesis.)
 
@@ -148,9 +154,10 @@ THINGY_SMOKE_URL=http://localhost:8080 npm run smoke
 Key files:
 
 - `web/index.html`, `web/chat/index.html`, `web/signin/index.html`,
-  `web/c/index.html`, `web/about/index.html`, `web/connect/index.html`:
-  static route shells.
-- `web/src/pages/`: static-page boot modules (`home`, `about`, `connect`)
+  `web/c/index.html`, `web/about/index.html`, `web/connect/index.html`,
+  `web/connect/reference/index.html`: static route shells.
+- `web/src/pages/`: static-page boot modules (`home`, `about`, `connect`,
+  `reference`)
   - vanilla TS. The home boot also forwards `?login_token=` magic-link
   landings to `/signin/`.
 - `web/src/app/main.tsx`: the SPA entry - TanStack Router serving
@@ -178,10 +185,20 @@ Key files:
   confirmations and text inputs use `ThingyDialog` (`confirmDialog`/
   `promptDialog` in `stores/dialog-store.ts`) - never
   `window.confirm`/`window.prompt`. Static content pages (`/about/`,
-  `/connect/`) use `thingy-page-entry.css` -> `thingy-page.css` on the
+  `/connect/`, `/connect/reference/`) use `thingy-page-entry.css` -> `thingy-page.css` on the
   same tokens.
 - `web/public/robots.txt`: `robots.txt`.
 - `web/public/sitemap.xml`: `sitemap.xml`.
+- `web/vite.mcp-reference.ts`: renders `/connect/reference/` at build time
+  from the vendored `web/contracts/mcp-surface.json` (the Librarian's
+  exported MCP surface: tools exactly as `tools/list` declares them, doors,
+  resources, prompts, errors, budgets, OAuth). The page shell holds a
+  `<!--mcp-reference-->` marker that the plugin replaces with real static
+  HTML; the plugin refuses a checksum mismatch. Refresh with
+  `npm run mcp-surface:sync` (`-- --local` for the sibling checkout);
+  `npm run mcp-surface:check` runs in the daily drift workflow. Never
+  hand-edit the tool text on the page - change the Librarian's declarations
+  and re-export.
 - `web/public/manifest.webmanifest` + `web/public/img/icons/`: PWA
   install config (add-to-home-screen). `start_url` is `/chat/`, scope
   `/`, standalone display; icons are the Thingy robot composited onto
@@ -304,7 +321,7 @@ on localhost, and both honor the `tinylytics_ignore` opt-out.
 
 ## SEO / Crawlers
 
-The public pages - `/`, `/about/`, `/connect/` - are indexable; the chat and
+The public pages - `/`, `/about/`, `/connect/`, `/connect/reference/` - are indexable; the chat and
 sign-in app shells and the shared-conversation page (`/c/<token>` - reader
 content, never indexed) are `noindex, follow` (no crawlable content, and crawl
 equity should concentrate on the real pages).
@@ -312,10 +329,13 @@ equity should concentrate on the real pages).
 Current files:
 
 - `web/public/robots.txt` allows crawling and points to the sitemap.
-- `web/public/sitemap.xml` lists `/`, `/about/`, and `/connect/`.
+- `web/public/sitemap.xml` lists `/`, `/about/`, `/connect/`, and
+  `/connect/reference/`.
 - The route HTML files set canonical, Open Graph, Twitter, robots, and sitemap
   tags. Structured data: home carries WebSite/WebApplication/Person JSON-LD,
-  `/about/` an AboutPage, `/connect/` a TechArticle about the MCP server.
+  `/about/` an AboutPage, `/connect/` a TechArticle about the MCP server,
+  `/connect/reference/` a TechArticle whose `softwareVersion` is the
+  vendored server version.
 
 Query-param app states should canonicalize to `/`, not become separate indexed
 pages.

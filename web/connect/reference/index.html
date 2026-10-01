@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://tinylytics.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.thingelstad.com https://tinylytics.app; connect-src 'self' https://fonts.googleapis.com https://tinylytics.app">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Librarian MCP reference - Thingy</title>
+  <meta name="description" content="Technical reference for the Librarian MCP server behind Thingy: every tool with its parameters and results, OAuth 2.1, budgets, protocol conventions, resources and prompts.">
+  <link rel="canonical" href="https://thingy.thingelstad.com/connect/reference/">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Librarian MCP reference">
+  <meta property="og:description" content="How the MCP server that powers Thingy works: one tool registry, three doors, and every tool documented from the server's own declarations.">
+  <meta property="og:url" content="https://thingy.thingelstad.com/connect/reference/">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Thingy">
+  <meta property="og:image" content="https://thingy.thingelstad.com/img/thingy.png">
+  <meta property="og:image:alt" content="Thingy, Jamie Thingelstad's archive agent">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Librarian MCP reference">
+  <meta name="twitter:description" content="How the MCP server that powers Thingy works: one tool registry, three doors, and every tool documented from the server's own declarations.">
+  <meta name="twitter:image" content="https://thingy.thingelstad.com/img/thingy.png">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Librarian MCP reference",
+    "description": "Technical reference for the Librarian MCP server behind Thingy: tools, parameters, results, OAuth 2.1, budgets, protocol conventions, resources and prompts.",
+    "url": "https://thingy.thingelstad.com/connect/reference/",
+    "proficiencyLevel": "Expert",
+    "isPartOf": { "@type": "WebSite", "url": "https://thingy.thingelstad.com/" },
+    "author": { "@type": "Person", "name": "Jamie Thingelstad", "url": "https://www.thingelstad.com/" },
+    "about": {
+      "@type": "SoftwareApplication",
+      "name": "The Librarian MCP server",
+      "softwareVersion": "__MCP_SERVER_VERSION__",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "url": "https://librarian.thingelstad.com/mcp"
+    }
+  }
+  </script>
+  <link rel="icon" href="/img/thingy.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/img/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="Thingy">
+  <meta name="theme-color" content="#f6f8f5" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#101716" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+  <header class="thingy-page-nav is-reference">
+    <a class="brand" href="/"><img src="/img/thingy.png" alt="">Thingy</a>
+    <nav>
+      <a href="/chat/">Chat</a>
+      <a href="/about/">About</a>
+      <a href="/connect/" aria-current="location">Connect</a>
+    </nav>
+  </header>
+  <main class="thingy-page is-reference">
+    <p class="crumbs"><a href="/connect/">Connect your AI</a> &rsaquo; Reference</p>
+    <h1>Librarian MCP reference</h1>
+    <p class="lede">The MCP server behind Thingy, documented from its own declarations: how one tool registry serves Thingy&rsquo;s chat, your AI and agents in your browser, and every tool with its parameters and results.</p>
+<!--mcp-reference-->
+    <footer>
+      <a href="/">Thingy home</a> &middot; <a href="/connect/">Connect your AI</a> &middot; <a href="/about/">About Thingy</a> &middot; <a href="https://github.com/jthingelstad/librarian-thing">Source</a>
+    </footer>
+  </main>
+  <script type="module" src="/src/pages/reference.ts"></script>
+</body>
+</html>

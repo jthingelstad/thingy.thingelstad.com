@@ -9,7 +9,8 @@ thread so visitors can ask follow-ups in place), and two static
 content pages - `/about/` (what Thingy is, the archive inventory, and how it
 works) and `/connect/` (adding the Librarian MCP server at
 `librarian.thingelstad.com/mcp` to Claude, ChatGPT, Claude Code, or any MCP
-client). While signed in, the chat page also registers the archive tools
+client), with a technical reference for every MCP tool at
+`/connect/reference/`. While signed in, the chat page also registers the archive tools
 with the browser's model context (WebMCP, beta). The backend - retrieval,
 auth, conversations, MCP - lives in the `librarian-thing` repo.
 
@@ -132,7 +133,8 @@ the same values from the Librarian stack outputs (`librarian-thing`).
 Key web files:
 
 - `web/index.html`, `web/chat/index.html`, `web/signin/index.html`,
-  `web/about/index.html`, `web/connect/index.html`: static route shells.
+  `web/about/index.html`, `web/connect/index.html`,
+  `web/connect/reference/index.html`: static route shells.
 - `web/src/app/`: the SPA entry (main.tsx, TanStack Router) serving /chat, /signin, and /c/<token>.
 - `web/src/react/`: the React components (chat, sign-in, share).
 - `web/src/pages/`: boot scripts for the static marketing pages.
@@ -140,6 +142,8 @@ Key web files:
 - `web/src/styles/`: shared styles imported by the page entrypoints.
 - `web/public/`: static files copied as-is to `_site`.
 - `web/vite.config.ts`: build-time config injection and multi-page inputs.
+- `web/vite.mcp-reference.ts`: renders `/connect/reference/` at build time from the
+  vendored MCP surface (`web/contracts/mcp-surface.json`).
 
 ### Librarian contract
 
@@ -165,6 +169,23 @@ the vendored artifact, and the generated client; the scheduled drift workflow
 (`.github/workflows/drift.yml`) runs it daily against upstream `main`, and the AWS deploy
 gate runs `contract:generate:check` inside `npm run verify` before building. The Librarian's
 contract test also verifies its generated checksum.
+
+### Librarian MCP surface
+
+`librarian-thing` also exports its MCP surface (`apps/librarian/contracts/mcp-surface.json`
+plus `.sha256`): the tools exactly as `tools/list` declares them, which doors offer each,
+resources, prompts, error codes, budgets, and OAuth facts. Thingy vendors it as
+`web/contracts/mcp-surface.json`, and the build renders it into static HTML at
+`/connect/reference/`, so the page cannot drift from the server's declarations.
+
+```sh
+cd web
+npm run mcp-surface:sync              # from librarian-thing main
+npm run mcp-surface:sync -- --local   # from the sibling checkout
+npm run mcp-surface:check             # fail if the vendored copy is stale
+```
+
+The drift workflow runs `mcp-surface:check` daily against upstream `main`.
 
 ## Tinylytics
 

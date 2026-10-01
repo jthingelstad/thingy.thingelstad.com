@@ -1,11 +1,12 @@
 // Single-pass build for the whole site: the React chat app plus the
-// page-entry routes (home, sign-in, share, about, connect). Preact was
+// page-entry routes (home, sign-in, share, about, connect, the MCP reference). Preact was
 // removed 2026-09-02 when Thingy committed fully to React + assistant-ui.
 import react from '@vitejs/plugin-react-swc';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 import { resolve } from 'node:path';
 import { SITE, htmlConfigPlugin, librarianProxy } from './vite.shared-config.ts';
+import { mcpReferencePlugin } from './vite.mcp-reference.ts';
 
 export default defineConfig({
   publicDir: 'public',
@@ -14,7 +15,7 @@ export default defineConfig({
   define: {
     __THINGY_TINYLYTICS_ID__: JSON.stringify(SITE.tinylyticsId)
   },
-  plugins: [react(), tailwindcss(), htmlConfigPlugin()],
+  plugins: [react(), tailwindcss(), htmlConfigPlugin(), mcpReferencePlugin(__dirname)],
   build: {
     outDir: '_site',
     emptyOutDir: true,
@@ -28,6 +29,9 @@ export default defineConfig({
         // token from the path.
         share: resolve(__dirname, 'c/index.html'),
         connect: resolve(__dirname, 'connect/index.html'),
+        // Rendered at build time from contracts/mcp-surface.json
+        // (vite.mcp-reference.ts).
+        reference: resolve(__dirname, 'connect/reference/index.html'),
         about: resolve(__dirname, 'about/index.html')
       }
     }

@@ -13,6 +13,8 @@
     "contract:generate:check": "node scripts/generate-contract-client.mjs --check",
     "contract:sync": "node scripts/sync-contract.mjs",
     "contract:check": "node scripts/sync-contract.mjs --check",
+    "mcp-surface:sync": "node scripts/sync-mcp-surface.mjs",
+    "mcp-surface:check": "node scripts/sync-mcp-surface.mjs --check",
     "serve": "vite --host 0.0.0.0",
     "clean": "rm -rf _site",
     "format": "prettier --write \"src/**/*.{ts,tsx}\" \"tests/**/*.mjs\" \"scripts/**/*.mjs\" \"*.{ts,json}\"",
