@@ -109,6 +109,7 @@ export interface McpSurface {
     sign_in: string;
     lifetimes_seconds: Record<string, number>;
     refresh_rotation: string;
+    client_authentication: string;
     rate_limits: Record<string, number>;
   };
 }
@@ -418,7 +419,7 @@ function connecting(surface: McpSurface) {
     <ol>
       <li>A request without a token answers <code>401</code> with <code>WWW-Authenticate: Bearer resource_metadata="${escapeHtml(oauth.protected_resource_metadata)}"</code>.</li>
       <li>The protected resource metadata (RFC 9728) names the authorization server, <code>${escapeHtml(oauth.issuer)}</code>, whose metadata (RFC 8414) is at <code>${escapeHtml(oauth.authorization_server_metadata)}</code>.</li>
-      <li>The client registers itself at <code>${escapeHtml(oauth.metadata.registration_endpoint)}</code> (dynamic client registration, RFC 7591). Clients are public: token endpoint auth ${oauth.metadata.token_endpoint_auth_methods_supported.map(code).join(', ')}, no client secret.</li>
+      <li>The client registers itself at <code>${escapeHtml(oauth.metadata.registration_endpoint)}</code> (dynamic client registration, RFC 7591). ${escapeHtml(oauth.client_authentication)}</li>
       <li>The client opens <code>${escapeHtml(oauth.metadata.authorization_endpoint)}</code> with PKCE (${oauth.metadata.code_challenge_methods_supported.map(code).join(', ')} only). ${escapeHtml(oauth.sign_in)} Then the reader approves the ${oauth.metadata.scopes_supported.map(code).join(', ')} scope, and the redirect carries the RFC 9207 <code>iss</code> parameter.</li>
       <li>The client trades the code at <code>${escapeHtml(oauth.metadata.token_endpoint)}</code> (grants ${oauth.metadata.grant_types_supported.map(code).join(', ')}) and sends the access token as <code>Authorization: Bearer</code> on every <code>/mcp</code> request.</li>
     </ol>
@@ -427,13 +428,18 @@ function connecting(surface: McpSurface) {
       <tbody>
         <tr><td>Access token</td><td>${duration(life.access_token)}</td></tr>
         <tr><td>Refresh token</td><td>${duration(life.refresh_token)}, rotated on every use</td></tr>
-        <tr><td>Refresh token family</td><td>${duration(life.refresh_family_max)} from first consent, then sign in again</td></tr>
+        <tr><td>Connection (refresh token family)</td><td>Until ${duration(life.connection_idle)} pass without a refresh; no fixed maximum</td></tr>
+        <tr><td>Membership re-check</td><td>Every ${duration(life.membership_recheck)}, at the next refresh</td></tr>
         <tr><td>Authorization code</td><td>${duration(life.authorization_code)}</td></tr>
         <tr><td>Sign-in in progress</td><td>${duration(life.pending_authorization)}</td></tr>
         <tr><td>Registered client</td><td>${duration(life.registered_client)}</td></tr>
       </tbody>
     </table></div>
-    <p>${escapeHtml(oauth.refresh_rotation.replace('refresh_family_max', duration(life.refresh_family_max)))} Tokens are stored only as hashes.</p>
+    <p>${escapeHtml(
+      oauth.refresh_rotation
+        .replace('connection_idle', duration(life.connection_idle))
+        .replace('membership_recheck', duration(life.membership_recheck))
+    )} Tokens are stored only as hashes.</p>
     <h3 id="connections">Connections and the request log</h3>
     <p>Each approved client is one <em>connection</em>: one refresh token family, named by the client's registered name. Signed in to Thingy, <b>Profile &gt; MCP connections</b> lists them with when each was connected and last used. <b>Disconnect</b> revokes the family, and the access token stops working on its next request rather than when it expires. Every tool call through <code>/mcp</code> or the WebMCP page tools is recorded against the reader with the connection that made it, its arguments, status, duration and result size; <b>View MCP request log</b> shows the reader's own calls for as long as they are kept.</p>
     <h3 id="quotas">Budgets and rate limits</h3>

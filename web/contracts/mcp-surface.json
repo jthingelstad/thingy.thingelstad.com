@@ -3542,12 +3542,14 @@
     "lifetimes_seconds": {
       "access_token": 3600,
       "refresh_token": 2592000,
-      "refresh_family_max": 7776000,
+      "connection_idle": 2592000,
+      "membership_recheck": 777600,
       "authorization_code": 300,
       "pending_authorization": 600,
       "registered_client": 31536000
     },
-    "refresh_rotation": "Refresh tokens rotate on every use; replaying a rotated token revokes the whole token family. A family lives at most refresh_family_max from first consent, then the client authorizes again.",
+    "refresh_rotation": "Refresh tokens rotate on every use; replaying a rotated token revokes the whole token family. A connection lasts as long as the client keeps refreshing: connection_idle without a refresh ends it. There is no fixed maximum. Every membership_recheck the refresh asks Buttondown again about the email the reader signed in with; a lapsed subscription ends the connection, and if Buttondown cannot answer, the refresh goes ahead and asks again next time.",
+    "client_authentication": "Clients are public, so there is no client secret. The token endpoint takes client_id in the form body, or as HTTP Basic with an empty secret. The offline_access scope is accepted and ignored, because every grant gets a refresh token anyway.",
     "token_prefixes": {
       "access_token": "lat_",
       "refresh_token": "lrt_",

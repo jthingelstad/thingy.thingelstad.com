@@ -301,12 +301,12 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = '9c30d830bb7b998e44ef8a09a91c157012fef6a4e11f2f0e99fc09fc1140152a';
+export const LIBRARIAN_CONTRACT_SHA256 = '8204c559086ae547f9fa5bd9d6e8eae2ca82214a19a4c15a329d6913611a5656';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '4.13.0',
+  version: '4.14.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
