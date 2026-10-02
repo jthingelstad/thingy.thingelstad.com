@@ -49,7 +49,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Figtree:wght@400..800&family=JetBrains+Mono:wght@400..700&family=Source+Sans+3:wght@400;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Figtree:wght@400..800&family=JetBrains+Mono:wght@400..700&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,opsz,wght@1,8..60,600&display=swap"
     />
 
     <link rel="preconnect" href="https://tinylytics.app" />
@@ -93,73 +93,221 @@
       }
     </script>
   </head>
-  <body>
-    <main id="main-content">
-      <section class="thingy-home">
-        <div class="thingy-home-hero">
-          <div class="thingy-home-image">
-            <img src="/img/thingy.png" alt="Thingy" width="1022" height="1022" loading="eager" />
+  <body class="thingy-static thingy-home-page">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <!--sites-strip-->
+    <header class="thingy-page-nav is-site">
+      <a class="brand" href="/" aria-current="page">
+        <svg class="thingy-face thingy-face-animated" width="44" height="35" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-ink)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><g fill="none" stroke="var(--thingy-mint)" stroke-width="4" stroke-linecap="round"><g class="thingy-face-blink"><path d="M27 42a9 9 0 0 1 18 0" /><path d="M71 42a9 9 0 0 1 18 0" /></g><path d="M45 50q13 14 26 0" /></g></svg>
+        <span class="thingy-wordmark">Thingy</span>
+      </a>
+      <nav aria-label="Main">
+        <a href="/chat/">Chat</a>
+        <a href="/connect/">Connect your AI</a>
+        <a href="/about/">About</a>
+      </nav>
+      <a class="thingy-signin" href="/signin/">Sign in</a>
+    </header>
+
+    <main id="main-content" class="thingy-home">
+      <section class="thingy-home-hero thingy-wrap" aria-labelledby="home-title">
+        <div class="thingy-home-copy">
+          <!-- Human-facing copy says sidekick; meta/JSON-LD deliberately
+               keeps "archive agent" (the descriptive term searchers use). -->
+          <p class="thingy-kicker eyebrow">
+            <span class="thingy-kicker-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+            Jamie Thingelstad&rsquo;s publishing sidekick
+          </p>
+          <p class="thingy-nametag" aria-hidden="true"><span>Hello, my name is</span><span>Thingy</span></p>
+          <h1 id="home-title" class="thingy-h1">Meet Thingy<span class="dot">.</span></h1>
+          <p class="thingy-lede thingy-home-lede">
+            Thingy is the librarian for Jamie&rsquo;s public archive &mdash; 350 newsletter issues, ten thousand blog
+            posts back to 2000, photos, links, and the podcast. Ask it anything and it answers with citations back to
+            <span class="thingy-mark">the original writing</span>.
+          </p>
+          <div class="thingy-cta-row thingy-home-actions">
+            <a class="thingy-btn thingy-btn-primary primary" href="/chat/" data-tinylytics-event="home.start_chat"
+              >Start Chatting
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg
+            ></a>
+            <a class="thingy-btn thingy-btn-secondary" href="/connect/">Connect your AI</a>
           </div>
-          <div class="thingy-home-copy">
-            <!-- Human-facing copy says sidekick; meta/JSON-LD deliberately
-                 keeps "archive agent" (the descriptive term searchers use). -->
-            <p class="eyebrow">Jamie Thingelstad&rsquo;s publishing sidekick</p>
-            <h1>Meet Thingy.</h1>
-            <p class="thingy-home-lede">
-              Thingy is the librarian for Jamie&rsquo;s public archive &mdash; 350 newsletter issues, ten thousand blog
-              posts back to 2000, photos, links, and the podcast. Ask it anything and it answers with citations back to
-              the original writing.
-            </p>
-            <div class="thingy-home-actions">
-              <a class="primary" href="/chat/" data-tinylytics-event="home.start_chat">Start Chatting</a>
-              <p class="thingy-home-guest-note">
-                No account needed &mdash; ask a few questions free.
-                <a class="thingy-home-textlink" href="https://weekly.thingelstad.com/">Weekly Thing</a> readers sign in for saved conversations and
-                more.
-              </p>
-            </div>
-          </div>
+          <p class="thingy-home-guest-note">
+            No account needed &mdash; ask a few questions free.
+            <a href="https://weekly.thingelstad.com/">Weekly Thing</a> readers sign in for saved conversations and more.
+          </p>
         </div>
 
-        <div class="thingy-home-grid" aria-label="Thingy surfaces">
-          <article>
-            <h2>Chat</h2>
-            <p>
-              Ask questions across Jamie&rsquo;s archive, pull on threads, and use Thingy as a guide through years of
-              published ideas.
-            </p>
-            <a href="/chat/">Open Chat</a>
-          </article>
-          <article>
-            <h2>Connect your AI</h2>
-            <p>
-              Bring the archive into Claude, ChatGPT, or any MCP client &mdash; the same tools Thingy uses, in your own
-              assistant.
-            </p>
-            <a href="/connect/">Connect an assistant</a>
-          </article>
-          <article>
-            <h2>About Thingy</h2>
-            <p>
-              What the archive holds &mdash; 25 years of writing, photos, and links &mdash; and how an open-source AI
-              librarian answers from it.
-            </p>
-            <a href="/about/">About Thingy</a>
-          </article>
-        </div>
-
-        <div class="thingy-home-network" aria-label="Jamie Thingelstad sites">
-          <a href="https://www.thingelstad.com/">thingelstad.com</a>
-          <a href="https://weekly.thingelstad.com/">Weekly Thing</a>
-          <a href="https://another.thingelstad.com/">Another Thing</a>
-          <span class="thingy-home-meta">
-            <span class="thingy-home-hits"
-              ><span class="tinylytics_hits"></span> <span class="tinylytics_countries"></span
-            ></span>
-          </span>
+        <div class="thingy-home-stage">
+          <div class="thingy-polka-disc" aria-hidden="true"></div>
+          <button type="button" class="thingy-home-hi" aria-label="Say hi to Thingy">
+            <img class="thingy-mascot" src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager" />
+          </button>
+          <p class="thingy-bubble thingy-home-bubble" aria-live="polite">
+            Ask me about coffee, kubb, or 25 years of links.
+          </p>
+          <span class="thingy-home-chip is-weekly" aria-hidden="true"><span class="thingy-w-disc"></span>281</span>
+          <span class="thingy-home-chip is-another" aria-hidden="true"
+            ><span class="thingy-another-dots"></span>Another Thing</span
+          >
+          <p class="thingy-home-psst" aria-hidden="true">psst: tap Thingy</p>
         </div>
       </section>
-      <script type="module" src="/src/pages/home.ts"></script>
+
+      <section class="thingy-wrap thingy-home-asks" aria-labelledby="asks-title">
+        <h2 id="asks-title" class="thingy-kicker">Try asking</h2>
+        <ul class="thingy-asks">
+          <li>
+            <a class="thingy-ask" href="/chat/?prompt=How%20does%20Jamie%20make%20his%20morning%20coffee%3F"
+              >How does Jamie make his morning coffee?</a
+            >
+          </li>
+          <li>
+            <a class="thingy-ask" href="/chat/?prompt=What%20has%20Jamie%20written%20about%20kubb%3F"
+              >What has Jamie written about kubb?</a
+            >
+          </li>
+          <li>
+            <a
+              class="thingy-ask"
+              href="/chat/?prompt=What%20was%20The%20Weekly%20Thing%20like%20in%20its%20first%20year%3F"
+              >What was The Weekly Thing like in its first year?</a
+            >
+          </li>
+        </ul>
+      </section>
+
+      <section class="thingy-wrap thingy-section" aria-labelledby="catalog-title">
+        <div class="thingy-section-head">
+          <h2 id="catalog-title" class="thingy-h2">The card catalog</h2>
+        </div>
+        <ul class="thingy-pockets">
+          <li class="thingy-pocket">
+            <span class="thingy-pocket-label">The Weekly Thing</span>
+            <span class="thingy-pocket-number is-weekly">{{archive.weekly.issues}}</span>
+            <span class="thingy-pocket-text">newsletter issues since {{archive.weekly.since}}</span>
+          </li>
+          <li class="thingy-pocket">
+            <span class="thingy-pocket-label">thingelstad.com</span>
+            <span class="thingy-pocket-number is-blog">{{archive.blog.posts}}</span>
+            <span class="thingy-pocket-text">blog posts, back to {{archive.blog.since}}</span>
+          </li>
+          <li class="thingy-pocket">
+            <span class="thingy-pocket-label">Another Thing</span>
+            <span class="thingy-pocket-number is-another is-word">Podcast</span>
+            <span class="thingy-pocket-text">episodes with transcripts</span>
+          </li>
+          <li class="thingy-pocket">
+            <span class="thingy-pocket-label">Photos</span>
+            <span class="thingy-pocket-number">{{archive.photos}}</span>
+            <span class="thingy-pocket-text">photos, searchable by what they show</span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="thingy-wrap thingy-section thingy-home-grid" aria-label="Thingy surfaces">
+        <article class="thingy-navy-card thingy-surface is-chat">
+          <span class="thingy-icon-tile is-tangerine" aria-hidden="true"
+            ><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z" /></svg
+          ></span>
+          <h2 class="thingy-h2">Chat</h2>
+          <p>
+            Ask questions across Jamie&rsquo;s archive, pull on threads, and use Thingy as a guide through years of
+            published ideas.
+          </p>
+          <div class="thingy-surface-foot">
+            <a class="thingy-btn thingy-btn-primary thingy-btn-on-navy" href="/chat/">Open Chat</a>
+          </div>
+        </article>
+        <article class="thingy-paper-card thingy-surface">
+          <span class="thingy-icon-tile is-mint" aria-hidden="true"
+            ><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M9 7V3" /><path d="M15 7V3" /><path d="M6 7h12v4a6 6 0 0 1-12 0Z" /><path d="M12 17v4" /></svg
+          ></span>
+          <h2 class="thingy-h2">Connect your AI</h2>
+          <p>
+            Bring the archive into Claude, ChatGPT, or any MCP client &mdash; the same tools Thingy uses, in your own
+            assistant.
+          </p>
+          <div class="thingy-surface-foot">
+            <a class="thingy-arrow-link" href="/connect/">Connect an assistant&nbsp;&rarr;</a>
+          </div>
+        </article>
+        <article class="thingy-paper-card thingy-surface">
+          <span class="thingy-icon-tile" aria-hidden="true"
+            ><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2Z" /><path d="M4 19a2 2 0 0 0 2 2h13" /><path d="M9 8h6" /></svg
+          ></span>
+          <h2 class="thingy-h2">About Thingy</h2>
+          <p>
+            What the archive holds &mdash; {{archive.years}} years of writing, photos, and links &mdash; and how an
+            open-source AI librarian answers from it.
+          </p>
+          <div class="thingy-surface-foot">
+            <a class="thingy-arrow-link" href="/about/">About Thingy&nbsp;&rarr;</a>
+          </div>
+        </article>
+      </section>
+
+      <section class="thingy-wrap thingy-section thingy-home-network" aria-labelledby="family-title">
+        <div class="thingy-section-head is-row">
+          <h2 id="family-title" class="thingy-h2">The family</h2>
+          <p class="thingy-kicker">Thingy reads all three</p>
+        </div>
+        <ul class="thingy-family">
+          <li>
+            <a class="thingy-family-tile" href="https://weekly.thingelstad.com/">
+              <span class="thingy-family-face is-weekly" aria-hidden="true"><span class="thingy-family-w">W</span></span>
+              <span class="thingy-family-name">Weekly Thing</span>
+              <span class="thingy-family-meta">Newsletter &middot; since {{archive.weekly.since}}</span>
+            </a>
+          </li>
+          <li>
+            <a class="thingy-family-tile" href="https://another.thingelstad.com/">
+              <span class="thingy-family-face is-another" aria-hidden="true"
+                ><span class="thingy-family-dots"><span></span><span></span><span></span></span
+                ><span class="thingy-family-cover">Another<br />Thing</span></span
+              >
+              <span class="thingy-family-name">Another Thing</span>
+              <span class="thingy-family-meta">Podcast</span>
+            </a>
+          </li>
+          <li>
+            <a class="thingy-family-tile" href="https://www.thingelstad.com/">
+              <span class="thingy-family-face is-blog" aria-hidden="true"
+                ><span class="thingy-family-url">thingelstad.com</span
+                ><span class="thingy-family-lines"><span></span><span></span><span></span><span></span></span
+                ><span class="thingy-family-year">2000&rarr;</span></span
+              >
+              <span class="thingy-family-name">thingelstad.com</span>
+              <span class="thingy-family-meta">Blog &middot; since {{archive.blog.since}}</span>
+            </a>
+          </li>
+          <li>
+            <a class="thingy-family-tile" href="/" aria-current="page">
+              <span class="thingy-family-face is-thingy" aria-hidden="true"><svg class="thingy-face thingy-face-animated" width="44" height="35" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-ink)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><g fill="none" stroke="var(--thingy-mint)" stroke-width="4" stroke-linecap="round"><g class="thingy-face-blink"><path d="M27 42a9 9 0 0 1 18 0" /><path d="M71 42a9 9 0 0 1 18 0" /></g><path d="M45 50q13 14 26 0" /></g></svg></span>
+              <span class="thingy-family-name">Thingy</span>
+              <span class="thingy-family-meta">The librarian &middot; you are here</span>
+            </a>
+          </li>
+        </ul>
+      </section>
     </main>
+
+    <footer class="thingy-site-footer">
+      <div class="thingy-wrap">
+        <p class="thingy-footer-meta thingy-home-meta">
+          <span class="thingy-home-hits"
+            ><span class="tinylytics_hits"></span> <span class="tinylytics_countries"></span
+          ></span>
+        </p>
+        <nav aria-label="Footer">
+          <ul>
+            <li><a href="/about/">About</a></li>
+            <li><a href="/connect/">Connect</a></li>
+            <li><a href="/signin/">Sign in</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
+    <script type="module" src="/src/pages/home.ts"></script>
   </body>
 </html>

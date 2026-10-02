@@ -1,0 +1,525 @@
+/* About (/about/), Felt & Tangerine: the About board. Shared chrome and
+   the page hero are in thingy-static.css. */
+
+/* In a nutshell: one paper card, heading beside the body. */
+.thingy-nutshell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  padding: clamp(24px, 3vw, 40px);
+}
+
+.thingy-nutshell .thingy-section-head {
+  flex: 1 1 260px;
+  margin: 0;
+}
+
+.thingy-nutshell-body {
+  display: flex;
+  flex: 2 1 460px;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  color: var(--thingy-body);
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+/* Six pockets: three across on desktop. */
+.thingy-pockets.is-six {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+}
+
+/* Source cards: a 150px band in the source's colour over a dl. */
+.thingy-sources {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 24px;
+  margin: 40px 0 28px;
+}
+
+.thingy-source {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 22px;
+  background: var(--thingy-paper);
+  box-shadow: var(--thingy-shadow-card);
+}
+
+.thingy-source-band {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 150px;
+  padding: 20px 24px;
+  border-bottom: 2px solid var(--thingy-ink);
+}
+
+.thingy-source-band.is-weekly {
+  align-items: center;
+  justify-content: center;
+  background: var(--thingy-weekly);
+}
+
+.thingy-source-band.is-weekly::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1px solid #a9c7f2;
+  border-radius: 12px;
+}
+
+.thingy-source-band.is-weekly .thingy-family-w {
+  width: 92px;
+  font-size: 60px;
+}
+
+.thingy-source-band.is-blog {
+  background: var(--thingy-clay);
+}
+
+.thingy-source-band-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.thingy-source-band.is-blog .thingy-family-url {
+  color: #fff;
+}
+
+.thingy-source-band.is-blog .thingy-family-lines {
+  width: 40%;
+  gap: 6px;
+}
+
+.thingy-source-band.is-blog .thingy-family-lines > span {
+  height: 6px;
+  background: #e39a79;
+}
+
+.thingy-source-band.is-blog .thingy-family-year {
+  color: #fff;
+  font-size: 48px;
+}
+
+.thingy-source-band.is-another {
+  background: var(--thingy-another);
+}
+
+.thingy-source-band.is-another .thingy-family-cover {
+  font-size: 34px;
+}
+
+.thingy-source-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 22px 24px 26px;
+}
+
+.thingy-source-body .thingy-kicker {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+}
+
+.thingy-source-body h3 {
+  margin-bottom: 10px;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.thingy-source-body dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.thingy-source-body dt {
+  padding-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--thingy-meta);
+}
+
+.thingy-source-body dd {
+  margin: 0;
+  color: var(--thingy-ink);
+}
+
+/* How it works: the two pieces, then the pipeline. */
+.thingy-pieces {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: 24px;
+}
+
+.thingy-piece {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px;
+}
+
+.thingy-piece-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.thingy-piece-head .thingy-kicker {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+}
+
+.thingy-navy-card .thingy-piece-head .thingy-kicker {
+  color: #c2c9d8;
+}
+
+.thingy-piece p {
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--thingy-body);
+}
+
+.thingy-piece strong {
+  font-size: 20px;
+}
+
+.thingy-navy-card.thingy-piece p {
+  color: #d7dce6;
+}
+
+.thingy-pipeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 32px 0;
+  padding: 26px 24px;
+  border: 2px dashed var(--thingy-rule);
+  border-radius: 20px;
+  background: var(--thingy-toy-cream);
+}
+
+.thingy-pipeline .thingy-kicker {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+}
+
+.thingy-pipeline-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+}
+
+.thingy-pipeline .pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 999px;
+  background: var(--thingy-paper);
+  color: var(--thingy-ink);
+  font: 600 15px var(--font-mono);
+  white-space: nowrap;
+  box-shadow: 0 3px 0 var(--thingy-ink);
+}
+
+.thingy-pipeline .pill.is-flat {
+  box-shadow: none;
+}
+
+.thingy-pipeline .pill.is-navy {
+  background: var(--thingy-ink);
+  color: var(--thingy-cream);
+}
+
+.thingy-pipeline .pill.is-rrf {
+  background: var(--thingy-weekly-tint);
+  color: var(--thingy-weekly-deep);
+}
+
+.thingy-pipeline .pill.is-brass {
+  background: var(--thingy-brass);
+  box-shadow: none;
+}
+
+.thingy-pipeline .pill.is-answer {
+  background: var(--thingy-tangerine);
+  color: var(--thingy-on-tangerine);
+}
+
+.thingy-pipeline .arr,
+.thingy-pipeline .op,
+.thingy-pipeline .bracket {
+  font: 600 20px var(--font-mono);
+  color: var(--thingy-ink);
+}
+
+.thingy-pipeline .op {
+  color: var(--thingy-clay);
+}
+
+.thingy-pipeline .bracket {
+  font-size: 28px;
+}
+
+.thingy-pipeline-loop {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 2px dashed var(--thingy-ink);
+  border-radius: 18px;
+  background: var(--thingy-paper);
+}
+
+.thingy-two-up {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: 32px;
+  margin-bottom: 40px;
+  color: var(--thingy-body);
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.thingy-two-up strong {
+  color: var(--thingy-ink);
+}
+
+/* Trust aside: highlighter ground, ink text; links are deep clay
+   (#8A3410 on #FFF3A8 is 7.3:1). */
+.thingy-trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  padding: clamp(24px, 3vw, 36px);
+  border: 2px solid var(--thingy-ink);
+  border-radius: 24px;
+  background: var(--thingy-highlighter);
+  box-shadow: var(--thingy-shadow-modal);
+}
+
+.thingy-trust-head {
+  display: flex;
+  flex: 1 1 240px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.thingy-trust-head .thingy-kicker {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--thingy-ink);
+}
+
+.thingy-trust h3 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 800;
+  font-stretch: 112%;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.thingy-trust > p {
+  flex: 2 1 460px;
+  min-width: 0;
+  color: var(--thingy-ink);
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.thingy-trust a {
+  color: var(--thingy-clay-hover);
+  font-weight: 700;
+}
+
+/* Staff badges: a brass clip over a navy header with the face. */
+.thingy-staff-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 28px;
+  margin-bottom: 28px;
+  padding-top: 18px;
+}
+
+.thingy-staff {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 22px;
+  background: var(--thingy-paper);
+  box-shadow: var(--thingy-shadow-card);
+}
+
+.thingy-staff-clip {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 32px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 9px;
+  background: var(--thingy-brass);
+  transform: translateX(-50%);
+}
+
+.thingy-staff-clip::after {
+  content: '';
+  width: 30px;
+  height: 8px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 4px;
+  background: var(--thingy-cream);
+}
+
+.thingy-staff-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 22px 18px;
+  border-radius: 20px 20px 0 0;
+  background: var(--thingy-ink);
+  color: #c2c9d8;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+}
+
+.thingy-staff-body {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  gap: 12px;
+  padding: 22px 22px 24px;
+}
+
+.thingy-staff-body h3 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 800;
+  font-stretch: 112%;
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.thingy-staff-body p {
+  color: var(--thingy-body);
+  font-size: 17px;
+}
+
+.thingy-staff-body p:not(.thingy-staff-foot) {
+  flex-grow: 1;
+}
+
+.thingy-staff-foot {
+  padding-top: 14px;
+  border-top: 2px dashed var(--thingy-rule);
+}
+
+.thingy-cadence {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 999px;
+  background: var(--thingy-brass);
+  color: var(--thingy-ink);
+  font: 600 13px var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.thingy-note p {
+  flex: 1 1 18rem;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.thingy-note {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  max-width: 56rem;
+}
+
+/* Library rules. */
+.thingy-rules {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 24px;
+}
+
+.thingy-rule-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 24px 24px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 18px;
+  background: var(--thingy-paper);
+  box-shadow: 0 5px 0 var(--thingy-ink);
+}
+
+.thingy-rule-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--thingy-ink);
+}
+
+.thingy-rule-head .thingy-kicker {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+}
+
+.thingy-rule-card p {
+  color: var(--thingy-ink);
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+@media (width <= 40rem) {
+  .thingy-pockets.is-six {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .thingy-nutshell-body,
+  .thingy-two-up,
+  .thingy-prose {
+    font-size: 17px;
+  }
+
+  .thingy-piece {
+    padding: 22px;
+  }
+
+  .thingy-pipeline {
+    padding: 20px 16px;
+  }
+
+  .thingy-pipeline-loop {
+    padding: 8px 10px;
+  }
+}

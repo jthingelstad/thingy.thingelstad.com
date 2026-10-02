@@ -45,84 +45,364 @@
   <meta name="theme-color" content="#f6eedc">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Figtree:wght@400..800&family=JetBrains+Mono:wght@400..700&family=Source+Sans+3:wght@400;600&display=swap">
 </head>
-<body>
-  <header class="thingy-page-nav">
-    <a class="brand" href="/"><img src="/img/thingy.png" alt="">Thingy</a>
-    <nav>
-      <a href="/chat/">Chat</a>
-      <a href="/about/">About</a>
-      <a href="/connect/" aria-current="page">Connect</a>
-    </nav>
-  </header>
-  <main class="thingy-page">
-    <img class="mark" src="/img/thingy.png" alt="" width="1022" height="1022">
-    <h1>Connect your AI to Thingy</h1>
-    <p class="lede">Bring Jamie Thingelstad&rsquo;s whole archive into Claude, ChatGPT or Claude Code. Your AI gets the same tools Thingy uses: it can search, read, count and trace across twenty-five years of writing, and link you to every source it uses. Weekly Thing subscribers sign in with their email; there is no password.</p>
-    <div class="card">
-      <p><strong>Building with it, or curious how it works?</strong> The <a href="/connect/reference/">Librarian MCP reference</a> documents every tool with its parameters and results, the OAuth flow, budgets and protocol conventions, generated from the server&rsquo;s own declarations.</p>
-    </div>
+  <body class="thingy-static thingy-connect-page">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <!--sites-strip-->
+    <header class="thingy-page-nav is-site">
+      <a class="brand" href="/">
+        <svg class="thingy-face thingy-face-animated" width="44" height="35" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-ink)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><g fill="none" stroke="var(--thingy-mint)" stroke-width="4" stroke-linecap="round"><g class="thingy-face-blink"><path d="M27 42a9 9 0 0 1 18 0" /><path d="M71 42a9 9 0 0 1 18 0" /></g><path d="M45 50q13 14 26 0" /></g></svg>
+        <span class="thingy-wordmark">Thingy</span>
+      </a>
+      <nav aria-label="Main">
+        <a href="/chat/">Chat</a>
+        <a href="/connect/" aria-current="page">Connect your AI</a>
+        <a href="/about/">About</a>
+      </nav>
+      <a class="thingy-signin" href="/signin/">Sign in</a>
+    </header>
 
-    <h2>What your AI can read</h2>
-    <div class="stats">
-      <div class="stat"><b>352</b><span>Weekly Thing issues since 2017</span></div>
-      <div class="stat"><b>10,444</b><span>blog posts since 2000</span></div>
-      <div class="stat"><b>38,925</b><span>links Jamie shared</span></div>
-      <div class="stat"><b>15,038</b><span>photos, searchable by what they show</span></div>
-    </div>
-    <p>Plus the audio editions of the newsletter, the Another Thing podcast with its transcripts, and every Currently entry: what Jamie was reading, watching, playing and building, week by week. It is Jamie&rsquo;s published writing only; nothing private is in it.</p>
+    <main id="main-content" class="thingy-connect">
+      <section class="thingy-wrap thingy-page-hero" aria-labelledby="connect-title">
+        <div class="thingy-page-hero-copy">
+          <p class="thingy-kicker">
+            <span class="thingy-kicker-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+            The Librarian MCP server
+          </p>
+          <h1 id="connect-title" class="thingy-h1">Connect your AI to Thingy</h1>
+          <p class="thingy-lede">
+            Bring Jamie Thingelstad&rsquo;s whole archive into Claude, ChatGPT or Claude Code. Your AI gets the same
+            tools Thingy uses: it can search, read, count and trace across twenty-five years of writing, and link you to
+            every source it uses. Weekly Thing subscribers sign in with their email; there is no password.
+          </p>
+        </div>
+        <div class="thingy-plug-art" aria-hidden="true">
+          <div class="thingy-plug-disc"></div>
+          <div class="thingy-plug-cord"></div>
+          <img class="thingy-mascot" src="/img/thingy.png" alt="" width="1022" height="1022" />
+          <div class="thingy-plug-body"><span class="prong is-top"></span><span class="prong is-bottom"></span><span class="tail"></span></div>
+          <div class="thingy-plug-socket"><span class="slots"><span></span><span></span></span><span class="ground"></span></div>
+          <p class="thingy-bubble thingy-plug-bubble">Plug me in!</p>
+        </div>
+      </section>
 
-    <h2>Five things to ask</h2>
-    <ol>
-      <li><strong>&ldquo;What did Jamie publish on this day in past years?&rdquo;</strong> The archive&rsquo;s on this day, across the newsletter, the blog and the podcast, newest year first.</li>
-      <li><strong>&ldquo;How has Jamie&rsquo;s thinking about RSS changed since 2017?&rdquo;</strong> A dated account in Jamie&rsquo;s own words, from the first mention to the latest.</li>
-      <li><strong>&ldquo;Has Jamie ever linked to this?&rdquo;</strong> Paste a URL or name a site: every time it appeared, and what Jamie said about it.</li>
-      <li><strong>&ldquo;Show me photos of bike rides along Minnehaha Creek.&rdquo;</strong> Photos found by what they show, linked to the post or issue they appeared in.</li>
-      <li><strong>&ldquo;What books was Jamie reading in 2024?&rdquo;</strong> Straight from the Currently section of every issue that year.</li>
-    </ol>
-    <p>Clients that support MCP prompts also offer ready-made asks: a year in review, a reading path through a theme, and a research brief on a person or product.</p>
+      <section class="thingy-wrap thingy-section is-tight" aria-label="MCP reference">
+        <div class="thingy-paper-card thingy-refcard card">
+          <span class="thingy-icon-tile is-cobalt" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2Z" /><path d="M4 19a2 2 0 0 0 2 2h13" /><path d="m9 9 2 2-2 2" /><path d="M13 13h3" /></svg></span>
+          <p>
+            <strong>Building with it, or curious how it works?</strong> The
+            <a href="/connect/reference/">Librarian MCP reference</a> documents every tool with its parameters and
+            results, the OAuth flow, budgets and protocol conventions, generated from the server&rsquo;s own
+            declarations.
+          </p>
+          <a class="thingy-round-link" href="/connect/reference/" aria-label="Librarian MCP reference"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg></a>
+        </div>
+      </section>
 
-    <h2>Claude (claude.ai or the apps)</h2>
-    <div class="card">
-      <p>Settings &rarr; Connectors &rarr; <strong>Add custom connector</strong>, then paste:</p>
-      <pre>https://librarian.thingelstad.com/mcp</pre>
-      <p>Claude walks you through sign-in: enter your Weekly Thing email, type the six-digit code from the email (your Mac or iPhone will offer it automatically), and approve access. If you added the connector before, disconnect and reconnect it once so Claude picks up the current tools.</p>
-    </div>
+      <section class="thingy-wrap thingy-section" aria-labelledby="read-title">
+        <div class="thingy-section-head">
+          <p class="thingy-kicker">The card catalog</p>
+          <h2 id="read-title" class="thingy-h2">What your AI can read</h2>
+        </div>
+        <ul class="thingy-pockets stats">
+          <li class="thingy-pocket">
+            <span class="thingy-pocket-label">The Weekly Thing</span>
+            <span class="thingy-pocket-number is-weekly">{{archive.weekly.issues}}</span>
+            <span class="thingy-pocket-text">Weekly Thing issues since {{archive.weekly.since}}</span>
+          </li>
+          <li class="thingy-pocket">
+            <span class="thingy-pocket-label">thingelstad.com</span>
+            <span class="thingy-pocket-number is-blog">{{archive.blog.posts}}</span>
+            <span class="thingy-pocket-text">blog posts since {{archive.blog.since}}</span>
+          </li>
+          <li class="thingy-pocket">
+            <span class="thingy-pocket-label">Links</span>
+            <span class="thingy-pocket-number">{{archive.links_total}}</span>
+            <span class="thingy-pocket-text">links Jamie shared</span>
+          </li>
+          <li class="thingy-pocket">
+            <span class="thingy-pocket-label">Photos</span>
+            <span class="thingy-pocket-number is-another">{{archive.photos}}</span>
+            <span class="thingy-pocket-text">photos, searchable by what they show</span>
+          </li>
+        </ul>
+        <p class="thingy-prose thingy-after-pockets">
+          Plus the audio editions of the newsletter, the Another Thing podcast with its transcripts, and every Currently
+          entry: what Jamie was reading, watching, playing and building, week by week. It is Jamie&rsquo;s published
+          writing only; nothing private is in it.
+        </p>
+      </section>
 
-    <h2>ChatGPT</h2>
-    <div class="card">
-      <p>Custom MCP connectors need <strong>Developer mode</strong> (Plus, Pro, Business or Enterprise, on the web): Settings &rarr; Apps &rarr; Advanced settings &rarr; enable <strong>Developer mode</strong>. Then add a connector and paste:</p>
-      <pre>https://librarian.thingelstad.com/mcp</pre>
-      <p>ChatGPT walks through the same email and six-digit-code sign-in.</p>
-    </div>
+      <section class="thingy-wrap thingy-section" aria-labelledby="ask-title">
+        <div class="thingy-section-head">
+          <p class="thingy-kicker">Try these in your AI</p>
+          <h2 id="ask-title" class="thingy-h2">Five things to ask</h2>
+        </div>
+        <ol class="thingy-index-cards">
+          <li class="thingy-index-card">
+            <div class="thingy-index-card-head" aria-hidden="true">
+              <span class="thingy-step-num">1</span><span class="thingy-kicker">Card 01</span>
+            </div>
+            <p><strong>&ldquo;What did Jamie publish on this day in past years?&rdquo;</strong> The archive&rsquo;s on this day, across the newsletter, the blog and the podcast, newest year first.</p>
+          </li>
+          <li class="thingy-index-card">
+            <div class="thingy-index-card-head" aria-hidden="true">
+              <span class="thingy-step-num">2</span><span class="thingy-kicker">Card 02</span>
+            </div>
+            <p><strong>&ldquo;How has Jamie&rsquo;s thinking about RSS changed since 2017?&rdquo;</strong> A dated account in Jamie&rsquo;s own words, from the first mention to the latest.</p>
+          </li>
+          <li class="thingy-index-card">
+            <div class="thingy-index-card-head" aria-hidden="true">
+              <span class="thingy-step-num">3</span><span class="thingy-kicker">Card 03</span>
+            </div>
+            <p><strong>&ldquo;Has Jamie ever linked to this?&rdquo;</strong> Paste a URL or name a site: every time it appeared, and what Jamie said about it.</p>
+          </li>
+          <li class="thingy-index-card">
+            <div class="thingy-index-card-head" aria-hidden="true">
+              <span class="thingy-step-num">4</span><span class="thingy-kicker">Card 04</span>
+            </div>
+            <p><strong>&ldquo;Show me photos of bike rides along Minnehaha Creek.&rdquo;</strong> Photos found by what they show, linked to the post or issue they appeared in.</p>
+          </li>
+          <li class="thingy-index-card">
+            <div class="thingy-index-card-head" aria-hidden="true">
+              <span class="thingy-step-num">5</span><span class="thingy-kicker">Card 05</span>
+            </div>
+            <p><strong>&ldquo;What books was Jamie reading in 2024?&rdquo;</strong> Straight from the Currently section of every issue that year.</p>
+          </li>
+        </ol>
+        <div class="thingy-note">
+          <span class="thingy-icon-tile is-small" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M8 6h12" /><path d="M8 12h12" /><path d="M8 18h12" /><path d="M4 6h.01" /><path d="M4 12h.01" /><path d="M4 18h.01" /></svg></span>
+          <div>
+            <p class="thingy-kicker">MCP prompts</p>
+            <p>
+              Clients that support MCP prompts also offer ready-made asks: a year in review, a reading path through a
+              theme, and a research brief on a person or product.
+            </p>
+          </div>
+        </div>
+      </section>
 
-    <h2>Claude Code</h2>
-    <div class="card">
-      <pre>claude mcp add --transport http librarian https://librarian.thingelstad.com/mcp</pre>
-      <p>Then run <code>/mcp</code> inside Claude Code to sign in.</p>
-    </div>
+      <section id="clients" class="thingy-wrap thingy-section thingy-clients" aria-label="Connect a client">
+        <p class="thingy-kicker">Pick your client</p>
+        <section class="thingy-client" aria-labelledby="client-claude">
+          <div class="thingy-client-head">
+            <span class="thingy-icon-tile is-client" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z" /></svg></span>
+            <h2 id="client-claude" class="thingy-h2">Claude (claude.ai or the apps)</h2>
+          </div>
+          <ol class="thingy-steps">
+            <li>
+              <span class="thingy-step-num" aria-hidden="true">1</span>
+              <div class="thingy-step-body">
+                <p>Settings &rarr; Connectors &rarr; <strong>Add custom connector</strong>, then paste:</p>
+              <div class="thingy-ticket">
+                <div class="thingy-ticket-main">
+                  <span class="thingy-ticket-label">MCP URL</span>
+                  <code>https://librarian.thingelstad.com/mcp</code>
+                </div>
+                <div class="thingy-ticket-stub" hidden>
+                  <button type="button" class="thingy-copy-btn" data-copy-what="the MCP URL">
+                    <span class="thingy-copy-label">Copy</span><span class="sr-only"> the MCP URL</span>
+                  </button>
+                </div>
+              </div>
+              </div>
+            </li>
+            <li>
+              <span class="thingy-step-num" aria-hidden="true">2</span>
+              <div class="thingy-step-body">
+                <p>Claude walks you through sign-in: enter your Weekly Thing email, type the six-digit code from the email (your Mac or iPhone will offer it automatically), and approve access.</p>
+              </div>
+            </li>
+            <li>
+              <span class="thingy-step-num" aria-hidden="true">3</span>
+              <div class="thingy-step-body">
+                <p>If you added the connector before, disconnect and reconnect it once so Claude picks up the current tools.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+        <section class="thingy-client" aria-labelledby="client-chatgpt">
+          <div class="thingy-client-head">
+            <span class="thingy-icon-tile is-client" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M3 9h18" /><path d="M7 6.5h.01" /><path d="M10 6.5h.01" /></svg></span>
+            <h2 id="client-chatgpt" class="thingy-h2">ChatGPT</h2>
+          </div>
+          <ol class="thingy-steps">
+            <li>
+              <span class="thingy-step-num" aria-hidden="true">1</span>
+              <div class="thingy-step-body">
+                <p>Custom MCP connectors need <strong>Developer mode</strong> (Plus, Pro, Business or Enterprise, on the web): Settings &rarr; Apps &rarr; Advanced settings &rarr; enable <strong>Developer mode</strong>.</p>
+              </div>
+            </li>
+            <li>
+              <span class="thingy-step-num" aria-hidden="true">2</span>
+              <div class="thingy-step-body">
+                <p>Then add a connector and paste:</p>
+              <div class="thingy-ticket">
+                <div class="thingy-ticket-main">
+                  <span class="thingy-ticket-label">MCP URL</span>
+                  <code>https://librarian.thingelstad.com/mcp</code>
+                </div>
+                <div class="thingy-ticket-stub" hidden>
+                  <button type="button" class="thingy-copy-btn" data-copy-what="the MCP URL">
+                    <span class="thingy-copy-label">Copy</span><span class="sr-only"> the MCP URL</span>
+                  </button>
+                </div>
+              </div>
+              </div>
+            </li>
+            <li>
+              <span class="thingy-step-num" aria-hidden="true">3</span>
+              <div class="thingy-step-body">
+                <p>ChatGPT walks through the same email and six-digit-code sign-in.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+        <section class="thingy-client" aria-labelledby="client-code">
+          <div class="thingy-client-head">
+            <span class="thingy-icon-tile is-client" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="m5 8 4 4-4 4" /><path d="M12 17h7" /></svg></span>
+            <h2 id="client-code" class="thingy-h2">Claude Code</h2>
+          </div>
+          <ol class="thingy-steps">
+            <li>
+              <span class="thingy-step-num" aria-hidden="true">1</span>
+              <div class="thingy-step-body">
+                <div class="thingy-ticket">
+                <div class="thingy-ticket-main">
+                  <span class="thingy-ticket-label">Terminal</span>
+                  <code>claude mcp add --transport http librarian https://librarian.thingelstad.com/mcp</code>
+                </div>
+                <div class="thingy-ticket-stub" hidden>
+                  <button type="button" class="thingy-copy-btn" data-copy-what="the command">
+                    <span class="thingy-copy-label">Copy</span><span class="sr-only"> the command</span>
+                  </button>
+                </div>
+              </div>
+              </div>
+            </li>
+            <li>
+              <span class="thingy-step-num" aria-hidden="true">2</span>
+              <div class="thingy-step-body">
+                <p>Then run <code>/mcp</code> inside Claude Code to sign in.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+        <section class="thingy-client" aria-labelledby="client-other">
+          <div class="thingy-client-head">
+            <span class="thingy-icon-tile is-client" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M9 7V3" /><path d="M15 7V3" /><path d="M6 7h12v4a6 6 0 0 1-12 0Z" /><path d="M12 17v4" /></svg></span>
+            <h2 id="client-other" class="thingy-h2">Any other MCP client</h2>
+          </div>
+          <div class="thingy-ticket">
+                <div class="thingy-ticket-main">
+                  <span class="thingy-ticket-label">MCP URL</span>
+                  <code>https://librarian.thingelstad.com/mcp</code>
+                </div>
+                <div class="thingy-ticket-stub" hidden>
+                  <button type="button" class="thingy-copy-btn" data-copy-what="the MCP URL">
+                    <span class="thingy-copy-label">Copy</span><span class="sr-only"> the MCP URL</span>
+                  </button>
+                </div>
+              </div>
+          <ol class="thingy-steps">
+            <li>
+              <span class="thingy-step-num" aria-hidden="true">1</span>
+              <div class="thingy-step-body">
+                <p>The endpoint speaks MCP streamable HTTP with OAuth 2.1 discovery.</p>
+              </div>
+            </li>
+            <li>
+              <span class="thingy-step-num" aria-hidden="true">2</span>
+              <div class="thingy-step-body">
+                <p>Point your client at the URL above and it finds the sign-in flow on its own.</p>
+              </div>
+            </li>
+            <li>
+              <span class="thingy-step-num" aria-hidden="true">3</span>
+              <div class="thingy-step-body">
+                <p>The <a href="/connect/reference/#connecting">reference</a> walks through the flow step by step.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+        <section class="thingy-client" aria-labelledby="client-clientid">
+          <div class="thingy-client-head">
+            <span class="thingy-icon-tile is-client" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="8" cy="15" r="4" /><path d="m10.8 12.2 8.2-8.2" /><path d="m16 7 3 3" /><path d="m14 9 2 2" /></svg></span>
+            <h2 id="client-clientid" class="thingy-h2">Apps that ask for a client ID</h2>
+          </div>
+          <p class="thingy-client-text">
+            Some apps don&rsquo;t sign up on their own. Instead they show a callback (redirect) URL and ask you for a
+            client ID, an authorization URL and a token URL. Sign in to Thingy, open your profile, and under
+            <strong>MCP connections</strong> choose <strong>Set up an app</strong>. Paste the app&rsquo;s callback URL
+            there, and Thingy gives you every value to copy back: the client ID, the two URLs, the scope
+            (<code>archive:read</code>), and the MCP server URL. Leave the client secret blank and turn PKCE (code
+            challenge) on. A client ID you set up works only for your own account, and deleting it disconnects the app.
+          </p>
+        </section>
+        <p class="sr-only" role="status" id="thingy-copy-status"></p>
+      </section>
 
-    <h2>Any other MCP client</h2>
-    <div class="card">
-      <p>The endpoint speaks MCP streamable HTTP with OAuth 2.1 discovery. Point your client at the URL above and it finds the sign-in flow on its own. The <a href="/connect/reference/#connecting">reference</a> walks through the flow step by step.</p>
-    </div>
+      <section class="thingy-wrap thingy-section" aria-labelledby="webmcp-title">
+        <div class="thingy-navy-card thingy-webmcp">
+          <div class="thingy-webmcp-head">
+            <svg class="thingy-face thingy-face-animated" width="64" height="51" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-ink)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><g fill="none" stroke="var(--thingy-mint)" stroke-width="4" stroke-linecap="round"><g class="thingy-face-blink"><path d="M27 42a9 9 0 0 1 18 0" /><path d="M71 42a9 9 0 0 1 18 0" /></g><path d="M45 50q13 14 26 0" /></g></svg>
+            <h2 id="webmcp-title" class="thingy-h2">Agents in your browser (WebMCP, beta)</h2>
+            <span class="thingy-beta"><span aria-hidden="true"></span>beta</span>
+          </div>
+          <p>
+            While you are signed in on the <a href="/chat/">Thingy chat page</a>, the page also registers its archive
+            tools with your browser&rsquo;s model context (the emerging
+            <a href="https://webmachinelearning.github.io/webmcp/">WebMCP</a> standard). An agent working in your
+            browser, such as Gemini in Chrome or a desktop MCP client connected through a WebMCP bridge extension, can
+            then search the archive with your session and no connector setup. The tools appear when you sign in and go
+            away when you sign out; they only read, and they see nothing the chat itself cannot.
+          </p>
+        </div>
+      </section>
 
-    <h2>Apps that ask for a client ID</h2>
-    <div class="card">
-      <p>Some apps don&rsquo;t sign up on their own. Instead they show a callback (redirect) URL and ask you for a client ID, an authorization URL and a token URL. Sign in to Thingy, open your profile, and under <strong>MCP connections</strong> choose <strong>Set up an app</strong>. Paste the app&rsquo;s callback URL there, and Thingy gives you every value to copy back: the client ID, the two URLs, the scope (<code>archive:read</code>), and the MCP server URL. Leave the client secret blank and turn PKCE (code challenge) on. A client ID you set up works only for your own account, and deleting it disconnects the app.</p>
-    </div>
+      <section class="thingy-wrap thingy-section thingy-fair" aria-labelledby="fair-title">
+        <div class="thingy-section-head">
+          <p class="thingy-kicker">House rules</p>
+          <h2 id="fair-title" class="thingy-h2">Fair use</h2>
+          <p>
+            Each reader can make 500 tool calls a day (1,000 for
+            <a href="https://weekly.thingelstad.com/members/">Supporting Members</a>) and up to 300 an hour. That
+            budget is separate from Thingy&rsquo;s own chat. A busy research session uses a few dozen calls.
+          </p>
+        </div>
+        <div class="thingy-paper-card thingy-bars" aria-hidden="true">
+          <span class="thingy-kicker">Tool calls</span>
+          <div class="thingy-bar">
+            <div class="thingy-bar-label"><span>Each reader</span><span>500 a day</span></div>
+            <div class="thingy-bar-track"><div class="thingy-bar-fill is-reader"></div></div>
+          </div>
+          <div class="thingy-bar">
+            <div class="thingy-bar-label"><span>Supporting Members</span><span>1,000 a day</span></div>
+            <div class="thingy-bar-track"><div class="thingy-bar-fill is-member"></div></div>
+          </div>
+          <div class="thingy-bar-scale"><span>0</span><span>500</span><span>1,000</span></div>
+          <div class="thingy-bar is-hourly">
+            <div class="thingy-bar-label"><span>Any hour</span><span>up to 300 an hour</span></div>
+            <div class="thingy-bar-track"><div class="thingy-bar-fill is-hour"></div></div>
+          </div>
+        </div>
+      </section>
+    </main>
 
-    <h2>Agents in your browser (WebMCP, beta)</h2>
-    <div class="card">
-      <p>While you are signed in on the <a href="/chat/">Thingy chat page</a>, the page also registers its archive tools with your browser&rsquo;s model context (the emerging <a href="https://webmachinelearning.github.io/webmcp/">WebMCP</a> standard). An agent working in your browser, such as Gemini in Chrome or a desktop MCP client connected through a WebMCP bridge extension, can then search the archive with your session and no connector setup. The tools appear when you sign in and go away when you sign out; they only read, and they see nothing the chat itself cannot.</p>
-    </div>
-
-    <h2>Fair use</h2>
-    <p>Each reader can make 500 tool calls a day (1,000 for <a href="https://weekly.thingelstad.com/members/">Supporting Members</a>) and up to 300 an hour. That budget is separate from Thingy&rsquo;s own chat. A busy research session uses a few dozen calls.</p>
-
-    <footer>
-      <a href="/">Thingy home</a> &middot; <a href="/chat/">Open chat</a> &middot; <a href="/connect/reference/">MCP reference</a>
+    <footer class="thingy-site-footer">
+      <div class="thingy-wrap">
+        <p class="thingy-footer-meta">
+          <span class="tinylytics_hits"></span> <span class="tinylytics_countries"></span>
+        </p>
+        <nav aria-label="Footer">
+          <ul>
+            <li><a href="/">Thingy home</a></li>
+            <li><a href="/chat/">Open chat</a></li>
+            <li><a href="/about/">About</a></li>
+            <li><a href="/connect/reference/">MCP reference</a></li>
+          </ul>
+        </nav>
+      </div>
     </footer>
-  </main>
-  <script type="module" src="/src/pages/connect.ts"></script>
-</body>
+    <script type="module" src="/src/pages/connect.ts"></script>
+  </body>
 </html>

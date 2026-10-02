@@ -1,239 +1,397 @@
-/* Public landing page. */
-.thingy-home {
-  width: min(100% - 32px, var(--container-wide));
-  margin: 0 auto;
-  padding: clamp(32px, 7vw, 80px) 0 48px;
-}
+/* Public landing page (/), Felt & Tangerine: the Main and PhoneHome
+   boards. Shared chrome (strip, header, footer, name tag, pocket cards,
+   ask chips) is in thingy-static.css. .thingy-home-hero is the smoke
+   test's hook: it must collapse to one grid column at phone width. */
 
 .thingy-home-hero {
-  min-height: min(68dvh, 680px);
   display: grid;
-  grid-template-columns: minmax(180px, 320px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  gap: clamp(28px, 6vw, 72px);
+  gap: 40px;
+  padding-top: 24px;
+  padding-bottom: 56px;
 }
 
-.thingy-home-image img {
-  width: min(100%, 320px);
-  height: auto;
-  display: block;
-  filter: drop-shadow(0 28px 46px rgb(23 33 31 / 18%));
+@media (width >= 60rem) {
+  .thingy-home-hero {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  }
 }
 
 .thingy-home-copy {
-  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 26px;
 }
 
-.thingy-home-copy h1 {
-  margin: 0;
-  font-size: clamp(46px, 9vw, 108px);
-  line-height: 0.92;
+.thingy-home-copy .thingy-nametag > span:last-child {
+  text-transform: uppercase;
 }
 
 .thingy-home-lede {
-  max-width: 660px;
-  margin: 22px 0 0;
-  color: var(--ink-soft);
-  font-size: clamp(18px, 2.1vw, 25px);
-  line-height: 1.38;
-}
-
-.thingy-home-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 28px;
-}
-
-.thingy-home-actions a,
-.thingy-home-grid a {
-  min-height: 42px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--ink);
-  font-weight: 850;
-  text-decoration: none;
-}
-
-.thingy-home-actions a.primary {
-  min-height: 48px;
-  padding: 0 22px;
-  font-size: 17px;
-  border-color: var(--accent-deep);
-  background: var(--accent-deep);
-  color: var(--bg);
-}
-
-.thingy-home-actions a:hover,
-.thingy-home-grid a:hover {
-  border-color: var(--accent-deep);
-  color: var(--accent-deep);
-}
-
-.thingy-home-actions a.primary:hover {
-  background: var(--accent-deep);
-  color: var(--bg);
-  filter: brightness(1.08);
+  max-width: 34rem;
 }
 
 .thingy-home-guest-note {
-  flex-basis: 100%;
-  margin: 2px 0 0;
-  color: var(--ink-soft);
-  font-size: 14.5px;
-  line-height: 1.5;
+  font-size: 15px;
+  color: var(--thingy-body);
 }
 
-.thingy-home-actions a.thingy-home-textlink {
-  display: inline;
-  min-height: 0;
+/* The mascot stage: polka disc, the say-hi button, the speech bubble and
+   two floating source chips. Percentages keep it whole from 320px up. */
+.thingy-home-stage {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 560 / 620;
+  margin: 0 auto;
+}
+
+.thingy-home-stage .thingy-polka-disc {
+  position: absolute;
+  top: 52%;
+  left: 50%;
+  width: min(86%, 400px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+}
+
+.thingy-home-hi {
+  position: absolute;
+  top: 0;
+  left: 7%;
+  width: 86%;
+  aspect-ratio: 1;
   padding: 0;
   border: 0;
-  border-radius: 0;
-  background: none;
-  color: inherit;
-  font-weight: 650;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
 }
 
-.thingy-home-actions a.thingy-home-textlink:hover {
-  color: var(--accent-deep);
+.thingy-home-hi:focus-visible {
+  outline-offset: -6px;
 }
 
-.thingy-home-meta {
+/* The tap hop, CSS only: pressing lifts Thingy, releasing drops him
+   back with a bounce. home.ts adds .is-hopping for a full hop on any
+   activation (keyboard included). Off under reduced motion. */
+.thingy-home-hi img {
+  width: 100%;
+  height: auto;
+  transition: transform 0.45s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+.thingy-home-hi:active img {
+  transform: translateY(-18px) rotate(-2deg);
+  transition-duration: 0.12s;
+}
+
+.thingy-home-hi.is-hopping img {
+  animation: thingy-hop 0.65s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+@keyframes thingy-hop {
+  0% {
+    transform: translateY(0);
+  }
+
+  35% {
+    transform: translateY(-28px) rotate(-2deg);
+  }
+
+  70% {
+    transform: translateY(4px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.thingy-home-bubble {
+  position: absolute;
+  top: 4%;
+  right: 2%;
+  pointer-events: none;
+}
+
+.thingy-home-chip {
+  position: absolute;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  margin-left: auto;
-  color: var(--ink-soft);
+  gap: 8px;
+  padding: 6px 12px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 10px;
+  box-shadow: 3px 3px 0 var(--thingy-ink);
+  color: #fff;
+  font-family: var(--font-mono);
   font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
 }
 
-.thingy-home-hits:empty {
-  display: none;
+.thingy-home-chip.is-weekly {
+  bottom: 16%;
+  left: 1%;
+  padding-left: 6px;
+  background: var(--thingy-weekly);
+  transform: rotate(-6deg);
 }
 
+.thingy-home-chip.is-another {
+  right: 2%;
+  bottom: 9%;
+  background: var(--thingy-another);
+  transform: rotate(5deg);
+}
+
+.thingy-home-chip .thingy-w-disc {
+  font-size: 15px;
+}
+
+.thingy-home-psst {
+  position: absolute;
+  right: 0;
+  bottom: -4px;
+  left: 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--thingy-meta);
+  pointer-events: none;
+}
+
+/* Try asking. */
+.thingy-home-asks {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+  padding-bottom: 64px;
+}
+
+/* Surfaces: Chat on navy, Connect and About on paper. */
 .thingy-home-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 24px;
 }
 
-.thingy-home-grid article {
-  display: grid;
-  align-content: start;
-  gap: 10px;
-  padding: 20px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
-  box-shadow: var(--shadow-subtle);
-}
-
-.thingy-home-grid h2 {
-  margin: 0;
-  font-size: 22px;
-}
-
-.thingy-home-grid p {
-  margin: 0;
-  color: var(--ink-soft);
-  line-height: 1.48;
-}
-
-.thingy-home-grid a {
-  width: fit-content;
-  margin-top: 4px;
-}
-
-.thingy-home-network {
+.thingy-surface {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 22px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line-soft);
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px;
 }
 
-.thingy-home-network a {
-  color: var(--ink-soft);
-  font-size: 14px;
-  font-weight: 800;
+.thingy-surface .thingy-h2 {
+  font-size: 30px;
+}
+
+.thingy-surface p {
+  flex-grow: 1;
+  color: var(--thingy-body);
+  font-size: 17px;
+}
+
+.thingy-surface.is-chat p {
+  color: #d7dce6;
+}
+
+.thingy-surface-foot {
+  padding-top: 18px;
+  border-top: 2px dashed var(--thingy-rule);
+}
+
+.thingy-surface.is-chat .thingy-surface-foot {
+  border-top-color: #56627e;
+}
+
+/* On navy the ink border and shadow vanish: the CTA takes a cream
+   border and a deeper shadow. */
+.thingy-btn-on-navy {
+  border-color: var(--thingy-cream);
+  box-shadow: 0 4px 0 #0b1017;
+}
+
+.thingy-btn-on-navy:hover:not(:disabled) {
+  box-shadow: 0 6px 0 #0b1017;
+}
+
+.thingy-btn-on-navy:active:not(:disabled) {
+  box-shadow: 0 1px 0 #0b1017;
+}
+
+/* The family: one tile per site Thingy reads, plus Thingy itself. */
+.thingy-section-head.is-row {
+  flex-flow: row wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.thingy-family {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 24px;
+}
+
+.thingy-family-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--thingy-ink);
   text-decoration: none;
 }
 
-.thingy-home-network a:hover {
-  color: var(--accent-deep);
+.thingy-family-tile:hover {
+  color: var(--thingy-ink);
 }
 
-@media (width <= 560px) {
-  /* The hero's two columns (robot | copy) collapse to one. A past edit
-     fused ".thingy-home-hero," onto the guest-note TEXT rule below, so
-     the collapse rule vanished and phones got the desktop grid crushed
-     into 390px (2026-09-03 report). */
+.thingy-family-face {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  aspect-ratio: 1;
+  margin-bottom: 10px;
+  padding: 22px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 18px;
+  box-shadow: 0 5px 0 var(--thingy-ink);
+  overflow: hidden;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.thingy-family-tile:hover .thingy-family-face {
+  transform: translateY(-3px) rotate(-1deg);
+  box-shadow: 0 8px 0 var(--thingy-ink);
+}
+
+.thingy-family-name {
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.thingy-family-meta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--thingy-meta);
+}
+
+.thingy-family-face.is-weekly {
+  align-items: center;
+  justify-content: center;
+  background: var(--thingy-weekly);
+}
+
+.thingy-family-face.is-weekly::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1px solid #a9c7f2;
+  border-radius: 9px;
+}
+
+.thingy-family-face.is-another {
+  background: var(--thingy-another);
+}
+
+.thingy-family-face.is-blog {
+  background: var(--thingy-paper);
+}
+
+.thingy-family-face.is-thingy {
+  align-items: center;
+  justify-content: center;
+  background-color: var(--thingy-tangerine);
+  background-image: radial-gradient(var(--thingy-polka) 2px, transparent 2.4px);
+  background-size: 16px 16px;
+}
+
+.thingy-family-face.is-thingy svg {
+  width: 52%;
+  height: auto;
+}
+
+@media (width <= 40rem) {
   .thingy-home-hero {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    text-align: center;
-    min-height: auto;
+    gap: 24px;
+    padding-top: 18px;
+    padding-bottom: 32px;
   }
 
-  /* The hero's justify-items only centers grid children; the CTA is a
-     flex item inside .thingy-home-actions and needs its own centering. */
-  .thingy-home-actions {
-    justify-content: center;
+  .thingy-home-copy {
+    gap: 22px;
   }
 
-  .thingy-home-guest-note {
-    flex-basis: 100%;
-    margin: 2px 0 0;
-    color: var(--ink-soft);
-    font-size: 14.5px;
-    line-height: 1.5;
+  .thingy-home-copy .thingy-kicker {
+    font-size: 12px;
+    letter-spacing: 0.14em;
   }
 
-  .thingy-home-actions a.thingy-home-textlink {
-    display: inline;
-    min-height: 0;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: none;
-    color: inherit;
-    font-weight: 650;
-    text-decoration: underline;
-    text-underline-offset: 2px;
+  .thingy-home-copy .thingy-cta-row {
+    align-self: stretch;
   }
 
-  .thingy-home-actions a.thingy-home-textlink:hover {
-    color: var(--accent-deep);
+  .thingy-bubble.thingy-home-bubble {
+    max-width: 168px;
+    padding: 10px 14px;
+    font-size: 14px;
   }
 
-  .thingy-home-meta {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    margin-left: auto;
-    color: var(--ink-soft);
-    font-size: 13px;
+  .thingy-home-asks {
+    padding-bottom: 44px;
   }
 
-  .thingy-home-hits:empty {
-    display: none;
+  .thingy-surface {
+    padding: 22px;
   }
 
-  .thingy-home-grid {
-    grid-template-columns: 1fr;
+  .thingy-family {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
   }
 
-  .thingy-home-image img {
-    width: min(70vw, 220px);
+  .thingy-family-face {
+    padding: 14px;
+  }
+
+  .thingy-family-dots {
+    gap: 6px;
+  }
+
+  .thingy-family-dots > span {
+    width: 14px;
+    height: 14px;
+  }
+
+  .thingy-family-url {
+    font-size: 12px;
+  }
+
+  .thingy-family-lines {
+    gap: 6px;
+  }
+
+  .thingy-family-name {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thingy-home-hi img,
+  .thingy-home-hi:active img,
+  .thingy-home-hi.is-hopping img,
+  .thingy-family-face,
+  .thingy-family-tile:hover .thingy-family-face {
+    transform: none;
+    transition: none;
+    animation: none;
   }
 }

@@ -196,9 +196,31 @@ Key files:
   `qa-real-api.mjs`) - do not remove them as "dead". In-app
   confirmations and text inputs use `ThingyDialog` (`confirmDialog`/
   `promptDialog` in `stores/dialog-store.ts`) - never
-  `window.confirm`/`window.prompt`. Static content pages (`/about/`,
-  `/connect/`, `/connect/reference/`) use `thingy-page-entry.css` -> `thingy-page.css` on the
-  same tokens.
+  `window.confirm`/`window.prompt`. Static pages (`/`, `/about/`,
+  `/connect/`, `/connect/reference/`) are plain CSS on the same tokens,
+  no Tailwind: `thingy-home-entry.css` (home) and `thingy-page-entry.css`
+  (the rest) import `thingy-base.css`, `thingy-page.css` (the shared
+  `.thingy-page-nav` header, also used by the share page, plus the
+  reference prose), `thingy-static.css` (the `body.thingy-static` chrome:
+  sites strip, `.is-site` header, navy footer, name tag, pocket cards, ask
+  chips, icon tiles), then the page sheet (`thingy-home.css`,
+  `thingy-about.css`, `thingy-connect.css`) and `thingy-components.css`.
+  Small page behaviours live in `web/src/shared/`: `thingy-say-hi.ts`
+  (home mascot hop and bubble) and `thingy-copy-buttons.ts` (Connect's
+  Copy buttons - progressive enhancement: the stubs stay `hidden` without
+  JS or the clipboard API, and copies are announced through
+  `#thingy-copy-status`).
+- `web/vite.page-data.ts`: build-time data for `/`, `/about/` and
+  `/connect/`. It replaces a `<!--sites-strip-->` marker with the Jamie's
+  sites strip from `web/contracts/sites.json` (entries with
+  `in_publishing_system: true`; Thingy is current), a vendored copy of the
+  domain's `shared/sites.json` - refresh with `npm run sites:sync`, check
+  with `npm run sites:check`. It also renders `{{archive.<path>}}` tokens
+  from `web/content/archive-stats.json`, the ONE source for every archive
+  count the static pages quote (issues, posts, links, photos); update its
+  numbers and `as_of` from the Librarian's `corpus_stats` rather than
+  editing page copy. An unknown or leftover token fails the build.
+  `tests/page-data.test.mjs` pins both.
 - `web/public/robots.txt`: `robots.txt`.
 - `web/public/sitemap.xml`: `sitemap.xml`.
 - `web/vite.mcp-reference.ts`: renders `/connect/reference/` at build time
@@ -214,9 +236,11 @@ Key files:
 - `web/public/manifest.webmanifest` + `web/public/img/icons/`: PWA
   install config (add-to-home-screen). `start_url` is `/chat/`, scope
   `/`, standalone display; icons are the Thingy robot composited onto
-  the pre-2026-10 mint tint (regenerate from `public/img/thingy.png` with
-  sharp onto the Felt & Tangerine palette when the artwork changes;
-  maskable variant keeps the robot inside the central 80% safe zone).
+  the cream ground `#F6EEDC` (regenerated 2026-10-01 from
+  `public/img/thingy.png` with sharp: trimmed to the robot, 84% of the
+  canvas height on the any-purpose icons; the maskable variant keeps every
+  opaque pixel inside the central 80% safe circle). Regenerate the same
+  way when the artwork changes.
   Every shell links the manifest, apple-touch-icon, and ONE `theme-color`
   (cream `#f6eedc`, matching the manifest) - there is no dark variant
   (`tests/one-look.test.mjs` guards this). No service worker -

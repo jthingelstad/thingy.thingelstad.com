@@ -1,0 +1,821 @@
+/* Felt & Tangerine chrome for the static pages (/, /about/, /connect/,
+   /connect/reference/): the Jamie's-sites strip, the site header, the navy
+   footer and the toy pieces the pages share (name tag, pocket cards, ask
+   chips, icon tiles, dashed notes). Scoped under body.thingy-static so none
+   of it reaches the SPA. Semantic class names are test hooks. */
+
+.thingy-static {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  line-height: 1.55;
+  overflow-x: clip;
+}
+
+/* width: in the column flex body an auto-margined main (the reference)
+   would otherwise size to its widest code line. */
+.thingy-static main {
+  flex: 1 0 auto;
+  width: 100%;
+}
+
+/* The SPA's focus ring lives in tailwind.css; the static pages carry
+   their own cobalt ring (5.0:1 on cream, 5.3:1 on paper). */
+.thingy-static :focus-visible {
+  outline: 3px solid var(--thingy-focus);
+  outline-offset: 3px;
+}
+
+/* Resets at element weight, so any class rule (and the reference's
+   .thingy-page prose) wins over them. */
+:where(.thingy-static) h1,
+:where(.thingy-static) h2,
+:where(.thingy-static) h3,
+:where(.thingy-static) h4 {
+  margin: 0;
+  color: var(--thingy-ink);
+}
+
+:where(.thingy-static) p {
+  margin: 0;
+}
+
+:where(.thingy-static) ul,
+:where(.thingy-static) ol {
+  list-style: none;
+}
+
+/* Links in prose: clay text on cream is 5.4:1 (the base a rule); the
+   hover is the deeper clay. Zero specificity, so every component link
+   rule (header, strip, footer) wins without a fight. */
+:where(.thingy-static a:not([class])) {
+  font-weight: 600;
+}
+
+.thingy-wrap {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+/* Display type: Archivo italic 800, wide. */
+.thingy-h1,
+.thingy-h2,
+.thingy-wordmark,
+.thingy-pocket-number {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: var(--thingy-display-weight);
+  font-stretch: var(--thingy-display-stretch);
+  letter-spacing: var(--thingy-display-tracking);
+}
+
+.thingy-h1 {
+  font-size: clamp(46px, 7.2vw, 100px);
+  line-height: 0.95;
+}
+
+.thingy-h1 .dot {
+  color: var(--thingy-tangerine);
+}
+
+.thingy-h2 {
+  font-size: clamp(32px, 4vw, 42px);
+  line-height: 1.05;
+}
+
+.thingy-lede {
+  max-width: 34rem;
+  font-size: clamp(18px, 1.6vw, 20px);
+  line-height: 1.55;
+  color: var(--thingy-body);
+}
+
+.thingy-mark {
+  background: var(--thingy-highlighter);
+  padding: 0 3px;
+  border-radius: 3px;
+}
+
+/* Mono eyebrows: #3D526B on cream is 7.2:1. */
+.thingy-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--thingy-meta);
+}
+
+.thingy-kicker-dots {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.thingy-kicker-dots > span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--thingy-another-dot);
+}
+
+.thingy-kicker-dots > span:last-child {
+  background: var(--thingy-another-red);
+}
+
+/* A section heading: mono eyebrow over a display H2. */
+.thingy-section {
+  padding-bottom: 72px;
+}
+
+.thingy-section-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.thingy-section-head .thingy-kicker {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+}
+
+.thingy-section-head > p:not(.thingy-kicker) {
+  max-width: 44rem;
+  color: var(--thingy-body);
+  font-size: 17px;
+}
+
+/* ---- Jamie's sites strip (Notebook look, rendered at build time by
+   vite.page-data.ts). Links are 13px Source Sans 3 text, about 20px tall
+   with their padding: the one deliberate exception to the 44px rule, as
+   on the blog. #595955 on #F4F4F1 is 6.6:1. ---- */
+.thingy-sites-strip {
+  background: #f4f4f1;
+  border-bottom: 1px solid #e6e6e2;
+  font-family: var(--font-sites);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.thingy-sites-strip ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 8px 32px;
+  list-style: none;
+}
+
+.thingy-sites-strip a {
+  display: inline-block;
+  padding: 1px 0;
+  color: #595955;
+  text-decoration: none;
+}
+
+.thingy-sites-strip a:hover {
+  color: var(--thingy-clay);
+}
+
+.thingy-sites-strip a[aria-current] {
+  color: #191919;
+  font-weight: 600;
+}
+
+/* ---- Site header (static pages): face + wordmark, nav, Sign in pill.
+   The compact .thingy-page-nav base (share page) lives in
+   thingy-page.css; .is-site is the full board header. ---- */
+.thingy-page-nav.is-site {
+  max-width: 1200px;
+  height: auto;
+  padding: 24px 32px;
+  border-bottom: 0;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.thingy-page-nav.is-site .brand {
+  gap: 12px;
+}
+
+.thingy-page-nav.is-site .thingy-wordmark {
+  font-size: 27px;
+  letter-spacing: -0.01em;
+}
+
+.thingy-page-nav.is-site nav {
+  gap: 4px 12px;
+  flex-wrap: wrap;
+}
+
+.thingy-page-nav.is-site nav a {
+  padding: 0 8px;
+}
+
+.thingy-page-nav .thingy-signin {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-left: 8px;
+  padding: 0 20px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 999px;
+  background: var(--thingy-paper);
+  color: var(--thingy-ink);
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: var(--thingy-shadow-button);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.thingy-page-nav .thingy-signin:hover {
+  color: var(--thingy-ink);
+  transform: translateY(-2px);
+  box-shadow: var(--thingy-shadow-button-lift);
+}
+
+.thingy-page-nav .thingy-signin:active {
+  transform: translateY(3px);
+  box-shadow: var(--thingy-shadow-button-press);
+}
+
+/* ---- Navy footer: cream on navy 13.0:1, the hits meta #C2C9D8 8.6:1,
+   link hover #FFB98F 8.9:1. ---- */
+.thingy-site-footer {
+  margin-top: auto;
+  background: var(--thingy-ink);
+  color: var(--thingy-cream);
+  border-top: 4px solid var(--thingy-tangerine);
+}
+
+.thingy-site-footer .thingy-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.thingy-site-footer .thingy-footer-meta {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: #c2c9d8;
+}
+
+.thingy-site-footer nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+}
+
+.thingy-site-footer nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 8px;
+  color: var(--thingy-cream);
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.thingy-site-footer nav a:hover {
+  color: var(--thingy-oops);
+  text-decoration: underline;
+}
+
+.thingy-site-footer :focus-visible {
+  outline-color: var(--thingy-rail-focus);
+}
+
+/* ---- Name tag: "Hello, my name is" (navy on tangerine 5.2:1). ---- */
+.thingy-nametag {
+  display: inline-flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 12px;
+  background: var(--thingy-paper);
+  box-shadow: 4px 4px 0 var(--thingy-ink);
+  transform: rotate(-3deg);
+}
+
+.thingy-nametag > span:first-child {
+  padding: 6px 18px;
+  background: var(--thingy-tangerine);
+  color: var(--thingy-on-tangerine);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.thingy-nametag > span:last-child {
+  padding: 6px 18px 8px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 800;
+  font-stretch: 112%;
+  font-size: 24px;
+  letter-spacing: 0.04em;
+}
+
+/* ---- Big polka disc behind the mascot. ---- */
+.thingy-polka-disc {
+  border: 3px solid var(--thingy-ink);
+  border-radius: 50%;
+  background-color: var(--thingy-tangerine);
+  background-image: radial-gradient(var(--thingy-polka) 2px, transparent 2.4px);
+  background-size: 16px 16px;
+  box-shadow: 8px 8px 0 var(--thingy-ink);
+}
+
+/* ---- Speech bubble. ---- */
+.thingy-bubble {
+  max-width: 220px;
+  padding: 14px 18px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 20px 20px 20px 6px;
+  background: var(--thingy-paper);
+  box-shadow: 4px 4px 0 var(--thingy-ink);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.35;
+  transform: rotate(4deg);
+}
+
+/* ---- Ask chips: real /chat/?prompt= links, 48px tall. ---- */
+.thingy-asks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.thingy-ask {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 8px 20px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 999px;
+  background: var(--thingy-paper);
+  color: var(--thingy-ink);
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.3;
+  text-decoration: none;
+}
+
+.thingy-ask:hover {
+  border-color: var(--thingy-tangerine);
+  background: #ffe6d3;
+  color: var(--thingy-ink);
+}
+
+/* ---- Pocket cards: the card-catalog stat tiles. ---- */
+.thingy-pockets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 20px;
+}
+
+.thingy-pocket {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 16px;
+  background: var(--thingy-toy-cream);
+  box-shadow: var(--thingy-shadow-card);
+  text-align: center;
+}
+
+.thingy-pocket-label {
+  align-self: stretch;
+  padding: 10px 12px;
+  border: 2px solid var(--thingy-brass);
+  border-radius: 6px;
+  background: var(--thingy-paper);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Numbers in source colours: cobalt 3.8:1 and slate 7.2:1 on toy cream
+   at 36-54px bold (large text only); clay is the deep #8A3410 (6.4:1). */
+.thingy-pocket-number {
+  font-size: 54px;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.thingy-pocket-number.is-weekly {
+  color: var(--thingy-weekly);
+}
+
+.thingy-pocket-number.is-blog {
+  color: var(--thingy-clay-hover);
+}
+
+.thingy-pocket-number.is-another {
+  color: var(--thingy-another);
+}
+
+.thingy-pocket-number.is-word {
+  font-size: clamp(34px, 3.4vw, 44px);
+  line-height: 1.23;
+}
+
+.thingy-pocket-text {
+  font-size: 15px;
+  color: var(--thingy-body);
+}
+
+.thingy-pocket::after {
+  content: '';
+  width: 64px;
+  height: 14px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 999px;
+  background: var(--thingy-brass);
+}
+
+/* ---- Cards and tiles. ---- */
+.thingy-paper-card {
+  border: 2px solid var(--thingy-ink);
+  border-radius: 24px;
+  background: var(--thingy-paper);
+  box-shadow: var(--thingy-shadow-card);
+}
+
+.thingy-navy-card {
+  border: 2px solid var(--thingy-ink);
+  border-radius: 24px;
+  background: var(--thingy-ink);
+  color: var(--thingy-cream);
+  box-shadow: 0 6px 0 #10171f;
+}
+
+.thingy-navy-card h2,
+.thingy-navy-card h3 {
+  color: var(--thingy-cream);
+}
+
+/* #D7DCE6 on navy is 10.6:1; links #FFB98F 8.9:1. */
+.thingy-navy-card p {
+  color: #d7dce6;
+}
+
+.thingy-navy-card :where(a:not([class])) {
+  color: var(--thingy-oops);
+}
+
+.thingy-navy-card :where(a:not([class])):hover {
+  color: #ffd9c0;
+}
+
+.thingy-navy-card :focus-visible {
+  outline-color: var(--thingy-rail-focus);
+}
+
+.thingy-icon-tile {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 16px;
+  background: var(--thingy-toy-cream);
+  color: var(--thingy-ink);
+}
+
+.thingy-icon-tile.is-mint {
+  background: var(--thingy-mint);
+}
+
+.thingy-icon-tile.is-tangerine {
+  border-color: transparent;
+  background: var(--thingy-tangerine);
+  color: var(--thingy-on-tangerine);
+}
+
+/* Dashed note rows (MCP prompts, the staff note). */
+.thingy-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 16px 20px;
+  border: 2px dashed var(--thingy-rule);
+  border-radius: 16px;
+  color: var(--thingy-body);
+  font-size: 16px;
+}
+
+/* Arrow links ("Connect an assistant ->"). */
+.thingy-arrow-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--thingy-clay);
+  font-weight: 800;
+  font-size: 17px;
+  text-decoration: none;
+}
+
+.thingy-arrow-link:hover {
+  color: var(--thingy-clay-hover);
+  text-decoration: underline;
+}
+
+/* The mascot image never takes the base img radius. */
+.thingy-static .thingy-mascot {
+  display: block;
+  border-radius: 0;
+}
+
+/* The pill CTAs in the hero row. */
+.thingy-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.thingy-cta-row .thingy-btn {
+  min-height: 56px;
+  padding: 0 28px;
+  font-size: 18px;
+}
+
+/* ---- Source art atoms (the W disc, Another Thing dots and cover,
+   the blog's url, ruled lines and year), shared by the home family tiles
+   and the About source bands. All aria-hidden decoration. ---- */
+.thingy-family-w {
+  display: grid;
+  place-items: center;
+  width: 44%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #fcfcfa;
+  color: var(--thingy-weekly);
+  font: italic 600 clamp(36px, 5vw, 60px) / 1 'Source Serif 4', georgia, serif;
+}
+
+.thingy-family-dots {
+  display: flex;
+  gap: 10px;
+}
+
+.thingy-family-dots > span {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--thingy-another-dot);
+}
+
+.thingy-family-dots > span:last-child {
+  background: var(--thingy-another-red);
+}
+
+.thingy-family-cover {
+  color: #fff;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 0.98;
+}
+
+.thingy-family-url {
+  color: var(--thingy-clay);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.thingy-family-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.thingy-family-lines > span {
+  height: 8px;
+  border-radius: 4px;
+  background: #e2d4b5;
+}
+
+.thingy-family-lines > span:nth-child(1) {
+  width: 92%;
+}
+
+.thingy-family-lines > span:nth-child(2) {
+  width: 74%;
+}
+
+.thingy-family-lines > span:nth-child(3) {
+  width: 84%;
+}
+
+.thingy-family-lines > span:nth-child(4) {
+  width: 58%;
+}
+
+.thingy-family-year {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: clamp(28px, 3.4vw, 40px);
+  line-height: 1;
+}
+
+/* ---- Page hero (About, Connect): copy beside the art. ---- */
+.thingy-page-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: 32px;
+  padding-top: 24px;
+  padding-bottom: 64px;
+}
+
+@media (width >= 60rem) {
+  .thingy-page-hero {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 48px;
+  }
+}
+
+.thingy-page-hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 26px;
+}
+
+.thingy-page-hero-copy .thingy-nametag > span:last-child {
+  text-transform: uppercase;
+}
+
+.thingy-page-hero-copy .thingy-lede {
+  max-width: 36rem;
+}
+
+.thingy-page-hero-art {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  aspect-ratio: 1 / 1.05;
+  margin: 0 auto;
+}
+
+.thingy-page-hero-art .thingy-polka-disc {
+  position: absolute;
+  top: 54%;
+  left: 50%;
+  width: 78%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+}
+
+.thingy-page-hero-art .thingy-mascot {
+  position: absolute;
+  top: 2%;
+  left: 2%;
+  width: 96%;
+  height: auto;
+}
+
+.thingy-prose {
+  max-width: 48rem;
+  color: var(--thingy-body);
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.thingy-icon-tile.is-small {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+
+.thingy-icon-tile.is-paper {
+  width: 56px;
+  height: 56px;
+  background: var(--thingy-paper);
+}
+
+.thingy-static code {
+  padding: 1px 6px;
+  border: 1px solid var(--thingy-rule);
+  border-radius: 6px;
+  background: var(--thingy-toy-cream);
+  color: var(--thingy-ink);
+  font-size: 0.92em;
+}
+
+@media (width <= 40rem) {
+  .thingy-wrap {
+    padding: 0 16px;
+  }
+
+  .thingy-sites-strip ul {
+    padding: 8px 16px;
+  }
+
+  .thingy-page-nav.is-site {
+    padding: 12px 16px 4px;
+  }
+
+  .thingy-page-nav.is-site .thingy-wordmark {
+    font-size: 24px;
+  }
+
+  /* Phone header: brand and Sign in on row one, the nav on row two. */
+  .thingy-page-nav.is-site nav {
+    order: 3;
+    width: 100%;
+    margin-left: -8px;
+  }
+
+  .thingy-page-nav.is-site .thingy-signin {
+    margin-left: auto;
+    padding: 0 18px;
+    font-size: 15px;
+  }
+
+  .thingy-section {
+    padding-bottom: 56px;
+  }
+
+  .thingy-page-hero {
+    padding-top: 12px;
+    padding-bottom: 40px;
+  }
+
+  .thingy-page-hero-art {
+    max-width: 320px;
+  }
+
+  .thingy-pockets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .thingy-pocket {
+    padding: 14px 12px;
+    gap: 10px;
+  }
+
+  .thingy-pocket-label {
+    padding: 8px 6px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+  }
+
+  .thingy-pocket-number {
+    font-size: 36px;
+  }
+
+  .thingy-pocket-number.is-word {
+    font-size: 26px;
+    line-height: 1.38;
+  }
+
+  .thingy-pocket-text {
+    font-size: 14px;
+  }
+
+  .thingy-cta-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thingy-page-nav .thingy-signin,
+  .thingy-page-nav .thingy-signin:hover,
+  .thingy-page-nav .thingy-signin:active {
+    transform: none;
+    transition: none;
+  }
+}

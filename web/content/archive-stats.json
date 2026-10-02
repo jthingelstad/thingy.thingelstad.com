@@ -1,0 +1,11 @@
+{
+  "as_of": "2026-10-01",
+  "provenance": "Librarian corpus_stats (server 2.5.0, corpora generated 2026-10-01T23:40Z) for issues, posts and links; photos from the media index count published on /connect/ 2026-10-01; currently_entries carried over from /about/ unverified. Update by hand after a corpus rebuild, then rebuild the site.",
+  "years": 25,
+  "weekly": { "issues": 352, "since": 2017, "links": 20184 },
+  "blog": { "posts": 10444, "since": 2000, "links": 18741 },
+  "links_total": 38925,
+  "photos": 15038,
+  "currently_entries": 181,
+  "podcast": { "since": 2025 }
+}

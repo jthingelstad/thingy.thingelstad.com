@@ -35,177 +35,358 @@
         "about": { "@id": "https://thingy.thingelstad.com/#app" }
       }
     </script>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Figtree:wght@400..800&family=JetBrains+Mono:wght@400..700&family=Source+Sans+3:wght@400;600&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Figtree:wght@400..800&family=JetBrains+Mono:wght@400..700&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,opsz,wght@1,8..60,600&display=swap" />
   </head>
-  <body>
-    <header class="thingy-page-nav">
-      <a class="brand" href="/"><img src="/img/thingy.png" alt="" />Thingy</a>
-      <nav>
+  <body class="thingy-static thingy-about-page">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <!--sites-strip-->
+    <header class="thingy-page-nav is-site">
+      <a class="brand" href="/">
+        <svg class="thingy-face thingy-face-animated" width="44" height="35" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-ink)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><g fill="none" stroke="var(--thingy-mint)" stroke-width="4" stroke-linecap="round"><g class="thingy-face-blink"><path d="M27 42a9 9 0 0 1 18 0" /><path d="M71 42a9 9 0 0 1 18 0" /></g><path d="M45 50q13 14 26 0" /></g></svg>
+        <span class="thingy-wordmark">Thingy</span>
+      </a>
+      <nav aria-label="Main">
         <a href="/chat/">Chat</a>
+        <a href="/connect/">Connect your AI</a>
         <a href="/about/" aria-current="page">About</a>
-        <a href="/connect/">Connect</a>
       </nav>
+      <a class="thingy-signin" href="/signin/">Sign in</a>
     </header>
-    <main class="thingy-page">
-      <img class="mark" src="/img/thingy.png" alt="" width="1022" height="1022" />
-      <h1>About Thingy</h1>
-      <p class="lede">
-        Thingy is an AI librarian for one writer&rsquo;s public archive. Ask it anything about twenty-five years of
-        Jamie Thingelstad&rsquo;s writing and it answers with citations back to the original posts and issues &mdash; in
-        chat here, or inside your own AI via MCP.
-      </p>
 
-      <h2>The short version</h2>
-      <p>
-        Jamie has published continuously since 2000: a blog, a weekly newsletter, and a podcast. Thingy has read all of
-        it. Instead of scrolling archives or hoping a search engine indexed the right post, you ask a question &mdash;
-        <em>&ldquo;when did Jamie first write about Ethereum?&rdquo;</em>,
-        <em>&ldquo;show me photos from bike rides&rdquo;</em>,
-        <em>&ldquo;what was Jamie reading in 2019?&rdquo;</em> &mdash; and Thingy finds the sources, quotes them, and links
-        you to the originals. It only knows the published archive; it holds no private data. Weekly Thing subscribers
-        sign in with just their email.
-      </p>
+    <main id="main-content" class="thingy-about">
+      <section class="thingy-wrap thingy-page-hero" aria-labelledby="about-title">
+        <div class="thingy-page-hero-copy">
+          <p class="thingy-nametag" aria-hidden="true"><span>Hello, my name is</span><span>Thingy</span></p>
+          <h1 id="about-title" class="thingy-h1">About Thingy<span class="dot" aria-hidden="true">.</span></h1>
+          <p class="thingy-lede">
+            Thingy is an AI librarian for one writer&rsquo;s public archive. Ask it anything about twenty-five years of
+            Jamie Thingelstad&rsquo;s writing and it answers with citations back to the original posts and issues &mdash;
+            in chat here, or inside your own AI via MCP.
+          </p>
+        </div>
+        <div class="thingy-page-hero-art" aria-hidden="true">
+          <div class="thingy-polka-disc"></div>
+          <img class="thingy-mascot" src="/img/thingy.png" alt="" width="1022" height="1022" />
+        </div>
+      </section>
 
-      <h2>What&rsquo;s in the archive</h2>
-      <div class="stats">
-        <div class="stat"><b>25</b><span>years of writing</span></div>
-        <div class="stat"><b>352</b><span>Weekly Thing issues</span></div>
-        <div class="stat"><b>10,442</b><span>blog posts</span></div>
-        <div class="stat"><b>14,277</b><span>indexed images</span></div>
-        <div class="stat"><b>20,382</b><span>newsletter links</span></div>
-        <div class="stat"><b>181</b><span>Currently entries</span></div>
-      </div>
-      <table>
-        <tr>
-          <th>Source</th>
-          <th>Contents</th>
-          <th>Span</th>
-        </tr>
-        <tr>
-          <td><a href="https://weekly.thingelstad.com/">The Weekly Thing</a></td>
-          <td>352 issues, 20,382 links, 4,379 images</td>
-          <td>2017 &ndash; today</td>
-        </tr>
-        <tr>
-          <td><a href="https://www.thingelstad.com/">thingelstad.com</a></td>
-          <td>10,442 blog posts, 9,898 images</td>
-          <td>2000 &ndash; today</td>
-        </tr>
-        <tr>
-          <td><a href="https://another.thingelstad.com/">Another Thing</a></td>
-          <td>Podcast episodes with transcripts</td>
-          <td>2025 &ndash; today</td>
-        </tr>
-      </table>
-      <p>
-        Beyond the text, the corpus carries structure: a link graph across every source, a photo index built from alt
-        text and captions, the newsletter&rsquo;s <em>Currently</em> entries (what Jamie was reading, playing, and
-        watching, year by year), and cross-references between blog posts and the issues that featured them. New posts
-        and issues flow in automatically as they publish.
-      </p>
+      <section class="thingy-wrap thingy-section" aria-labelledby="short-title">
+        <div class="thingy-paper-card thingy-nutshell">
+          <div class="thingy-section-head">
+            <p class="thingy-kicker">In a nutshell</p>
+            <h2 id="short-title" class="thingy-h2">The short version</h2>
+          </div>
+          <div class="thingy-nutshell-body">
+            <p>
+              Jamie has published continuously since 2000: a blog, a weekly newsletter, and a podcast. Thingy has read
+              all of it. Instead of scrolling archives or hoping a search engine indexed the right post, you ask a
+              question &mdash;
+            </p>
+            <ul class="thingy-asks" aria-label="Example questions">
+            <li><a class="thingy-ask" href="/chat/?prompt=when%20did%20Jamie%20first%20write%20about%20Ethereum%3F">&ldquo;when did Jamie first write about Ethereum?&rdquo;</a></li>
+            <li><a class="thingy-ask" href="/chat/?prompt=show%20me%20photos%20from%20bike%20rides">&ldquo;show me photos from bike rides&rdquo;</a></li>
+            <li><a class="thingy-ask" href="/chat/?prompt=what%20was%20Jamie%20reading%20in%202019%3F">&ldquo;what was Jamie reading in 2019?&rdquo;</a></li>
+            </ul>
+            <p>
+              &mdash; and Thingy finds the sources, quotes them, and links you to the originals. It only knows the
+              published archive; it holds no private data. Weekly Thing subscribers sign in with just their email.
+            </p>
+          </div>
+        </div>
+      </section>
 
-      <h2>How it works</h2>
-      <p>Thingy is two open-source pieces:</p>
-      <div class="card">
-        <p>
-          <strong><a href="https://github.com/jthingelstad/librarian-thing">librarian-thing</a></strong> &mdash; the
-          brain. A corpus pipeline (Python) builds embedded, chunked indexes of every source; a serverless API (Node on
-          AWS Lambda) answers from them. Retrieval is hybrid: TF-IDF lexical search and semantic embeddings fused with
-          reciprocal-rank fusion, then reranked. An agentic loop (Claude on Amazon Bedrock) plans tool calls, gathers
-          evidence, and writes cited answers. Filtering runs through a single canonical matcher with declared semantics
-          &mdash; whole-token exact, contiguous phrase, opt-in stemming &mdash; enforced by an eval suite of 850+
-          invariants and known-answer fixtures that runs on every deploy and blocks it on failure.
+      <section class="thingy-wrap thingy-section" aria-labelledby="archive-title">
+        <div class="thingy-section-head">
+          <p class="thingy-kicker">The card catalog</p>
+          <h2 id="archive-title" class="thingy-h2">What&rsquo;s in the archive</h2>
+        </div>
+        <ul class="thingy-pockets is-six stats">
+          <li class="thingy-pocket">
+            <span class="thingy-pocket-label">Since {{archive.blog.since}}</span>
+            <span class="thingy-pocket-number">{{archive.years}}</span>
+            <span class="thingy-pocket-text">years of writing</span>
+          </li>
+          <li class="thingy-pocket">
+            <span class="thingy-pocket-label">The Weekly Thing</span>
+            <span class="thingy-pocket-number is-weekly">{{archive.weekly.issues}}</span>
+            <span class="thingy-pocket-text">Weekly Thing issues</span>
+          </li>
+          <li class="thingy-pocket">
+            <span class="thingy-pocket-label">thingelstad.com</span>
+            <span class="thingy-pocket-number is-blog">{{archive.blog.posts}}</span>
+            <span class="thingy-pocket-text">blog posts</span>
+          </li>
+          <li class="thingy-pocket">
+            <span class="thingy-pocket-label">Photos</span>
+            <span class="thingy-pocket-number">{{archive.photos}}</span>
+            <span class="thingy-pocket-text">indexed images</span>
+          </li>
+          <li class="thingy-pocket">
+            <span class="thingy-pocket-label">Links</span>
+            <span class="thingy-pocket-number is-another">{{archive.weekly.links}}</span>
+            <span class="thingy-pocket-text">newsletter links</span>
+          </li>
+          <li class="thingy-pocket">
+            <span class="thingy-pocket-label">Currently</span>
+            <span class="thingy-pocket-number">{{archive.currently_entries}}</span>
+            <span class="thingy-pocket-text">Currently entries</span>
+          </li>
+        </ul>
+
+        <ul class="thingy-sources">
+          <li class="thingy-source">
+            <div class="thingy-source-band is-weekly" aria-hidden="true"><span class="thingy-family-w">W</span></div>
+            <div class="thingy-source-body">
+              <p class="thingy-kicker">Source</p>
+              <h3><a href="https://weekly.thingelstad.com/">The Weekly Thing</a></h3>
+              <dl>
+                <dt>Contents</dt>
+                <dd>{{archive.weekly.issues}} issues, {{archive.weekly.links}} links</dd>
+                <dt>Span</dt>
+                <dd>{{archive.weekly.since}} &ndash; today</dd>
+              </dl>
+            </div>
+          </li>
+          <li class="thingy-source">
+            <div class="thingy-source-band is-blog" aria-hidden="true">
+              <span class="thingy-source-band-row"
+                ><span class="thingy-family-url">thingelstad.com</span
+                ><span class="thingy-family-lines"><span></span><span></span><span></span></span
+              ></span>
+              <span class="thingy-family-year">2000&rarr;</span>
+            </div>
+            <div class="thingy-source-body">
+              <p class="thingy-kicker">Source</p>
+              <h3><a href="https://www.thingelstad.com/">thingelstad.com</a></h3>
+              <dl>
+                <dt>Contents</dt>
+                <dd>{{archive.blog.posts}} blog posts, {{archive.blog.links}} links</dd>
+                <dt>Span</dt>
+                <dd>{{archive.blog.since}} &ndash; today</dd>
+              </dl>
+            </div>
+          </li>
+          <li class="thingy-source">
+            <div class="thingy-source-band is-another" aria-hidden="true">
+              <span class="thingy-family-dots"><span></span><span></span><span></span></span>
+              <span class="thingy-family-cover">Another Thing</span>
+            </div>
+            <div class="thingy-source-body">
+              <p class="thingy-kicker">Source</p>
+              <h3><a href="https://another.thingelstad.com/">Another Thing</a></h3>
+              <dl>
+                <dt>Contents</dt>
+                <dd>Podcast episodes with transcripts</dd>
+                <dt>Span</dt>
+                <dd>{{archive.podcast.since}} &ndash; today</dd>
+              </dl>
+            </div>
+          </li>
+        </ul>
+        <p class="thingy-prose">
+          Beyond the text, the corpus carries structure: a link graph across every source, a photo index built from alt
+          text and captions, the newsletter&rsquo;s <em>Currently</em> entries (what Jamie was reading, playing, and
+          watching, year by year), and cross-references between blog posts and the issues that featured them. New posts
+          and issues flow in automatically as they publish.
         </p>
-      </div>
-      <div class="card">
-        <p>
-          <strong><a href="https://github.com/jthingelstad/thingy.thingelstad.com">thingy.thingelstad.com</a></strong>
-          &mdash; this site. A static React app built on assistant-ui, served from a private S3 bucket behind
-          CloudFront, calling the Librarian same-origin. It streams answers over server-sent events, renders citations
-          and inline photos, and handles the email sign-in flow; the session itself lives in an HttpOnly cookie no
-          script can read.
-        </p>
-      </div>
-      <p class="flow">
-        question &rarr; preflight &rarr; agent loop &rarr; [ lexical &oplus; semantic &rarr; RRF &rarr; rerank ] &times;
-        tools &rarr; cited answer
-      </p>
-      <p>
-        The same tool registry that powers this chat is published as an <strong>MCP server</strong> at
-        <code>librarian.thingelstad.com/mcp</code> with OAuth&nbsp;2.1 sign-in, so Claude, ChatGPT, Codex, or any MCP
-        client can use the archive with the exact tools Thingy uses &mdash; searching, topic history, quote finding,
-        photo search, claim checking, and more. <a href="/connect/">Connection instructions&nbsp;&rarr;</a>
-        &middot; <a href="/connect/reference/">The full MCP reference&nbsp;&rarr;</a>
-      </p>
+      </section>
 
-      <p>
-        And while you are signed in here, the chat page registers those same archive tools with your
-        <strong>browser&rsquo;s model context</strong> (the emerging WebMCP standard, in beta) &mdash; an agent
-        operating in your browser can search the archive through your own session with no setup at all.
-      </p>
+      <section class="thingy-wrap thingy-section thingy-how" aria-labelledby="how-title">
+        <div class="thingy-section-head">
+          <p class="thingy-kicker">Under the hood</p>
+          <h2 id="how-title" class="thingy-h2">How it works</h2>
+          <p>Thingy is two open-source pieces:</p>
+        </div>
+        <div class="thingy-pieces">
+          <article class="thingy-navy-card thingy-piece">
+            <div class="thingy-piece-head">
+              <span class="thingy-icon-tile is-tangerine" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5" /><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" /></svg></span>
+              <span class="thingy-kicker">Piece one</span>
+            </div>
+            <p>
+              <strong><a href="https://github.com/jthingelstad/librarian-thing">librarian-thing</a></strong> &mdash; the
+              brain. A corpus pipeline (Python) builds embedded, chunked indexes of every source; a serverless API (Node
+              on AWS Lambda) answers from them. Retrieval is hybrid: TF-IDF lexical search and semantic embeddings fused
+              with reciprocal-rank fusion, then reranked. An agentic loop (Claude on Amazon Bedrock) plans tool calls,
+              gathers evidence, and writes cited answers. Filtering runs through a single canonical matcher with declared
+              semantics &mdash; whole-token exact, contiguous phrase, opt-in stemming &mdash; enforced by an eval suite of
+              850+ invariants and known-answer fixtures that runs on every deploy and blocks it on failure.
+            </p>
+          </article>
+          <article class="thingy-paper-card thingy-piece">
+            <div class="thingy-piece-head">
+              <span class="thingy-icon-tile is-mint" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M3 9h18" /><path d="M7 6.5h.01" /><path d="M10 6.5h.01" /></svg></span>
+              <span class="thingy-kicker">Piece two</span>
+            </div>
+            <p>
+              <strong><a href="https://github.com/jthingelstad/thingy.thingelstad.com">thingy.thingelstad.com</a></strong>
+              &mdash; this site. A static React app built on assistant-ui, served from a private S3 bucket behind
+              CloudFront, calling the Librarian same-origin. It streams answers over server-sent events, renders
+              citations and inline photos, and handles the email sign-in flow; the session itself lives in an HttpOnly
+              cookie no script can read.
+            </p>
+          </article>
+        </div>
 
-      <h3>Trust, tested adversarially</h3>
-      <p>
-        When the MCP server launched, an AI agent spent eight review rounds trying to break the tools &mdash; and its
-        findings shaped the architecture. Matching semantics now live in
-        <a href="https://github.com/jthingelstad/librarian-thing/blob/main/apps/librarian/MATCHER.md"
-          >one canonical component with a written spec</a
-        >: whole-token matching (so &ldquo;ENS&rdquo; can never match &ldquo;sense&rdquo;), contiguous phrases, opt-in
-        stemming that can&rsquo;t cross word boundaries. Every answer&rsquo;s evidence carries the exact matched text at
-        its actual offset, so claims are verifiable down to the span. A suite of 850+ fixtures and invariants runs on
-        every deploy and blocks it on failure &mdash; including known answers pinned against the archive itself, like
-        &ldquo;the first Ethereum mention is issue 17, September 2017.&rdquo;
-      </p>
+        <figure class="thingy-pipeline">
+          <figcaption class="thingy-kicker">The answer pipeline</figcaption>
+          <p class="sr-only flow">
+            question &rarr; preflight &rarr; agent loop &rarr; [ lexical &oplus; semantic &rarr; RRF &rarr; rerank ]
+            &times; tools &rarr; cited answer
+          </p>
+          <div class="thingy-pipeline-row" aria-hidden="true">
+            <span class="pill">question</span><span class="arr">&rarr;</span> <span class="pill">preflight</span
+            ><span class="arr">&rarr;</span> <span class="pill is-navy">agent loop</span><span class="arr">&rarr;</span>
+            <span class="thingy-pipeline-loop"
+              ><span class="bracket">[</span> <span class="pill is-flat">lexical</span><span class="op">&oplus;</span>
+              <span class="pill is-flat">semantic</span><span class="arr">&rarr;</span>
+              <span class="pill is-flat is-rrf">RRF</span><span class="arr">&rarr;</span>
+              <span class="pill is-flat">rerank</span> <span class="bracket">]</span>
+              <span class="pill is-brass">&times; tools</span></span
+            >
+            <span class="arr">&rarr;</span> <span class="pill is-answer">cited answer</span>
+          </div>
+        </figure>
 
-      <h2>The archive maintains itself</h2>
-      <p>
-        Thingy&rsquo;s upkeep runs on a small team of AI objective owners &mdash; the
-        <a href="https://github.com/jthingelstad/librarian-thing/tree/main/AGENT-TEAM">AGENT-TEAM</a> &mdash; each
-        accountable for an outcome, not a task list:
-      </p>
-      <div class="card">
-        <p class="owner">
-          <b>Run the Librarian</b> keeps the API, MCP surface, and deploys healthy, observable, and cheap.<span
-            class="cadence"
-            >Saturdays</span
-          >
-        </p>
-      </div>
-      <div class="card">
-        <p class="owner">
-          <b>Keep the Archive True</b> watches ingest, corpus builds, and the link graph as new writing lands.<span
-            class="cadence"
-            >Sundays</span
-          >
-        </p>
-      </div>
-      <div class="card">
-        <p class="owner">
-          <b>Improve Thingy</b> reads real conversations (privately, in aggregate) and turns evidence into fixes with
-          regression fixtures.<span class="cadence">Every 3 days</span>
-        </p>
-      </div>
-      <p>
-        Each run measures from live evidence, fixes at the source, pins the fix with a test, and a healthy no-op is a
-        successful run. Human decisions &mdash; anything reader-visible, schema-changing, or irreversible &mdash; still
-        go to Jamie.
-      </p>
+        <div class="thingy-two-up">
+          <p>
+            The same tool registry that powers this chat is published as an <strong>MCP server</strong> at
+            <code>librarian.thingelstad.com/mcp</code> with OAuth&nbsp;2.1 sign-in, so Claude, ChatGPT, Codex, or any MCP
+            client can use the archive with the exact tools Thingy uses &mdash; searching, topic history, quote finding,
+            photo search, claim checking, and more. <a href="/connect/">Connection instructions&nbsp;&rarr;</a>
+            &middot; <a href="/connect/reference/">The full MCP reference&nbsp;&rarr;</a>
+          </p>
+          <p>
+            And while you are signed in here, the chat page registers those same archive tools with your
+            <strong>browser&rsquo;s model context</strong> (the emerging WebMCP standard, in beta) &mdash; an agent
+            operating in your browser can search the archive through your own session with no setup at all.
+          </p>
+        </div>
 
-      <h2>Boundaries</h2>
-      <ul>
-        <li>The archive is Jamie&rsquo;s public writing; personal data stays out by construction.</li>
-        <li>
-          Every reader has daily budgets for chat and tool calls (doubled for
-          <a href="https://weekly.thingelstad.com/members/">Supporting Members</a>).
-        </li>
-        <li>Answers cite their sources; evidence carries the exact matched text so claims are checkable.</li>
-      </ul>
+        <aside class="thingy-trust" aria-labelledby="trust-title">
+          <div class="thingy-trust-head">
+            <span class="thingy-icon-tile is-paper" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6Z" /><path d="m9 12 2 2 4-4" /></svg></span>
+            <p class="thingy-kicker">850+ fixtures</p>
+            <h3 id="trust-title">Trust, tested adversarially</h3>
+          </div>
+          <p>
+            When the MCP server launched, an AI agent spent eight review rounds trying to break the tools &mdash; and its
+            findings shaped the architecture. Matching semantics now live in
+            <a href="https://github.com/jthingelstad/librarian-thing/blob/main/apps/librarian/MATCHER.md"
+              >one canonical component with a written spec</a
+            >: whole-token matching (so &ldquo;ENS&rdquo; can never match &ldquo;sense&rdquo;), contiguous phrases,
+            opt-in stemming that can&rsquo;t cross word boundaries. Every answer&rsquo;s evidence carries the exact
+            matched text at its actual offset, so claims are verifiable down to the span. A suite of 850+ fixtures and
+            invariants runs on every deploy and blocks it on failure &mdash; including known answers pinned against the
+            archive itself, like &ldquo;the first Ethereum mention is issue 17, September 2017.&rdquo;
+          </p>
+        </aside>
+      </section>
 
-      <footer>
-        <a href="/">Thingy home</a> &middot; <a href="/chat/">Open chat</a> &middot;
-        <a href="/connect/">Connect your AI</a> &middot; <a href="/connect/reference/">MCP reference</a>
-      </footer>
+      <section class="thingy-wrap thingy-section" aria-labelledby="team-title">
+        <div class="thingy-section-head">
+          <p class="thingy-kicker">The staff</p>
+          <h2 id="team-title" class="thingy-h2">The archive maintains itself</h2>
+          <p>
+            Thingy&rsquo;s upkeep runs on a small team of AI objective owners &mdash; the
+            <a href="https://github.com/jthingelstad/librarian-thing/tree/main/AGENT-TEAM">AGENT-TEAM</a> &mdash; each
+            accountable for an outcome, not a task list:
+          </p>
+        </div>
+        <ul class="thingy-staff-list">
+          <li class="thingy-staff">
+            <span class="thingy-staff-clip" aria-hidden="true"></span>
+            <div class="thingy-staff-head" aria-hidden="true">
+              <svg class="thingy-face thingy-face-animated" width="64" height="51" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-ink)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><g fill="none" stroke="var(--thingy-mint)" stroke-width="4" stroke-linecap="round"><g class="thingy-face-blink"><path d="M27 42a9 9 0 0 1 18 0" /><path d="M71 42a9 9 0 0 1 18 0" /></g><path d="M45 50q13 14 26 0" /></g></svg>
+              <span>AGENT-TEAM</span>
+            </div>
+            <div class="thingy-staff-body">
+              <h3>Run the Librarian</h3>
+              <p>keeps the API, MCP surface, and deploys healthy, observable, and cheap.</p>
+              <p class="thingy-staff-foot"><span class="thingy-cadence cadence"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18" /><path d="M8 3v4" /><path d="M16 3v4" /></svg>Saturdays</span></p>
+            </div>
+          </li>
+          <li class="thingy-staff">
+            <span class="thingy-staff-clip" aria-hidden="true"></span>
+            <div class="thingy-staff-head" aria-hidden="true">
+              <svg class="thingy-face" width="64" height="51" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-ink)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><g fill="none" stroke="var(--thingy-mint)" stroke-width="4" stroke-linecap="round"><path d="M29 41a9 9 0 0 1 18 0" /><path d="M73 35h14" /><path d="M41 47q17 21 34 0" /></g></svg>
+              <span>AGENT-TEAM</span>
+            </div>
+            <div class="thingy-staff-body">
+              <h3>Keep the Archive True</h3>
+              <p>watches ingest, corpus builds, and the link graph as new writing lands.</p>
+              <p class="thingy-staff-foot"><span class="thingy-cadence cadence"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18" /><path d="M8 3v4" /><path d="M16 3v4" /></svg>Sundays</span></p>
+            </div>
+          </li>
+          <li class="thingy-staff">
+            <span class="thingy-staff-clip" aria-hidden="true"></span>
+            <div class="thingy-staff-head" aria-hidden="true">
+              <svg class="thingy-face" width="64" height="51" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-ink)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><circle cx="40.5" cy="38" r="5.5" fill="var(--thingy-mint)" /><circle cx="75.5" cy="38" r="5.5" fill="var(--thingy-mint)" /><rect x="48" y="55.5" width="20" height="4" rx="2" fill="var(--thingy-mint)" /></svg>
+              <span>AGENT-TEAM</span>
+            </div>
+            <div class="thingy-staff-body">
+              <h3>Improve Thingy</h3>
+              <p>reads real conversations (privately, in aggregate) and turns evidence into fixes with regression fixtures.</p>
+              <p class="thingy-staff-foot"><span class="thingy-cadence cadence"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12a9 9 0 1 1-3-6.7L21 8" /><path d="M21 3v5h-5" /></svg>Every 3 days</span></p>
+            </div>
+          </li>
+        </ul>
+        <div class="thingy-note">
+          <span class="thingy-icon-tile is-small" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg></span>
+          <p>
+            Each run measures from live evidence, fixes at the source, pins the fix with a test, and a healthy no-op is a
+            successful run. Human decisions &mdash; anything reader-visible, schema-changing, or irreversible &mdash;
+            still go to Jamie.
+          </p>
+        </div>
+      </section>
+
+      <section class="thingy-wrap thingy-section" aria-labelledby="bounds-title">
+        <div class="thingy-section-head">
+          <p class="thingy-kicker">Library rules</p>
+          <h2 id="bounds-title" class="thingy-h2">Boundaries</h2>
+        </div>
+        <ul class="thingy-rules">
+          <li class="thingy-rule-card">
+            <div class="thingy-rule-head">
+              <span class="thingy-kicker">Rule 01</span>
+              <span class="thingy-icon-tile is-small" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg></span>
+            </div>
+            <p>The archive is Jamie&rsquo;s public writing; personal data stays out by construction.</p>
+          </li>
+          <li class="thingy-rule-card">
+            <div class="thingy-rule-head">
+              <span class="thingy-kicker">Rule 02</span>
+              <span class="thingy-icon-tile is-small" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M4 16a8 8 0 1 1 16 0" /><path d="m12 16 4-5" /><path d="M3 20h18" /></svg></span>
+            </div>
+            <p>Every reader has daily budgets for chat and tool calls (doubled for <a href="https://weekly.thingelstad.com/members/">Supporting Members</a>).</p>
+          </li>
+          <li class="thingy-rule-card">
+            <div class="thingy-rule-head">
+              <span class="thingy-kicker">Rule 03</span>
+              <span class="thingy-icon-tile is-small" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M7 7h4v4c0 2.5-1.5 4.5-4 5" /><path d="M14 7h4v4c0 2.5-1.5 4.5-4 5" /></svg></span>
+            </div>
+            <p>Answers cite their sources; evidence carries the exact matched text so claims are checkable.</p>
+          </li>
+        </ul>
+      </section>
     </main>
+
+    <footer class="thingy-site-footer">
+      <div class="thingy-wrap">
+        <p class="thingy-footer-meta">
+          <span class="tinylytics_hits"></span> <span class="tinylytics_countries"></span>
+        </p>
+        <nav aria-label="Footer">
+          <ul>
+            <li><a href="/">Thingy home</a></li>
+            <li><a href="/chat/">Open chat</a></li>
+            <li><a href="/connect/">Connect your AI</a></li>
+            <li><a href="/connect/reference/">MCP reference</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
     <script type="module" src="/src/pages/about.ts"></script>
   </body>
 </html>

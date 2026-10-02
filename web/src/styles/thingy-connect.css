@@ -1,0 +1,692 @@
+/* Connect (/connect/), Felt & Tangerine: the Connect and PhoneConnect
+   boards. Shared chrome and the page hero are in thingy-static.css. */
+
+.thingy-section.is-tight {
+  padding-bottom: 64px;
+}
+
+/* Hero art: Thingy holding a polka plug toward a wall socket, on a toy
+   cream disc. Positions are percentages of the board's 540x520 box. */
+.thingy-plug-art {
+  position: relative;
+  width: 100%;
+  max-width: 540px;
+  aspect-ratio: 540 / 520;
+  margin: 0 auto;
+}
+
+.thingy-plug-art > * {
+  position: absolute;
+}
+
+.thingy-plug-disc {
+  top: 52%;
+  left: 50%;
+  width: 76%;
+  aspect-ratio: 1;
+  border: 3px solid var(--thingy-ink);
+  border-radius: 50%;
+  background: var(--thingy-toy-cream);
+  box-shadow: 8px 8px 0 var(--thingy-ink);
+  transform: translate(-50%, -50%);
+}
+
+.thingy-plug-cord {
+  top: 57.5%;
+  left: 39%;
+  width: 20%;
+  height: 11.5%;
+  border: 9px solid var(--thingy-another);
+  border-top: 0;
+  border-radius: 0 0 80px 80px;
+}
+
+.thingy-plug-art .thingy-mascot {
+  top: 7.7%;
+  left: 0;
+  width: 61%;
+  height: auto;
+}
+
+.thingy-plug-body {
+  top: 48%;
+  left: 55.5%;
+  width: 19.3%;
+  height: 14.6%;
+  border: 3px solid var(--thingy-ink);
+  border-radius: 22px;
+  background-color: var(--thingy-tangerine);
+  background-image: radial-gradient(var(--thingy-polka) 2px, transparent 2.4px);
+  background-size: 16px 16px;
+  box-shadow: 4px 4px 0 var(--thingy-ink);
+  transform: rotate(-4deg);
+}
+
+.thingy-plug-body > span {
+  position: absolute;
+  border: 2px solid var(--thingy-ink);
+}
+
+.thingy-plug-body .prong {
+  right: -36%;
+  width: 34%;
+  height: 16%;
+  border-radius: 0 5px 5px 0;
+  background: var(--thingy-brass);
+}
+
+.thingy-plug-body .prong.is-top {
+  top: 20%;
+}
+
+.thingy-plug-body .prong.is-bottom {
+  top: 58%;
+}
+
+.thingy-plug-body .tail {
+  top: 28%;
+  left: -12%;
+  width: 14%;
+  height: 40%;
+  border-radius: 6px;
+  background: var(--thingy-another);
+}
+
+.thingy-plug-socket {
+  top: 43.5%;
+  left: 83.7%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12%;
+  width: 14.8%;
+  height: 23%;
+  border: 3px solid var(--thingy-ink);
+  border-radius: 22px;
+  background: var(--thingy-paper);
+  box-shadow: 4px 4px 0 var(--thingy-ink);
+}
+
+.thingy-plug-socket .slots {
+  display: flex;
+  justify-content: center;
+  gap: 22%;
+  width: 60%;
+}
+
+.thingy-plug-socket .slots > span {
+  width: 22%;
+  aspect-ratio: 1 / 2.6;
+  border-radius: 4px;
+  background: var(--thingy-ink);
+}
+
+.thingy-plug-socket .ground {
+  width: 18%;
+  aspect-ratio: 1;
+  border-radius: 50% 50% 4px 4px;
+  background: var(--thingy-ink);
+}
+
+.thingy-plug-bubble {
+  top: 4%;
+  right: 2%;
+  font-weight: 800;
+  font-size: 18px;
+}
+
+/* The reference card: cobalt icon tile, text, a round arrow link. */
+.thingy-refcard {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 22px;
+  padding: 24px 28px;
+}
+
+.thingy-refcard p {
+  flex: 1 1 420px;
+  color: var(--thingy-body);
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.thingy-refcard strong {
+  color: var(--thingy-ink);
+}
+
+.thingy-icon-tile.is-cobalt {
+  width: 56px;
+  height: 56px;
+  background: var(--thingy-weekly-tint);
+}
+
+.thingy-round-link {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 50%;
+  background: var(--thingy-paper);
+  color: var(--thingy-ink);
+  box-shadow: var(--thingy-shadow-button);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.thingy-round-link:hover {
+  color: var(--thingy-ink);
+  transform: translateY(-2px);
+  box-shadow: var(--thingy-shadow-button-lift);
+}
+
+.thingy-round-link:active {
+  transform: translateY(3px);
+  box-shadow: var(--thingy-shadow-button-press);
+}
+
+.thingy-after-pockets {
+  margin-top: 28px;
+  max-width: 46rem;
+}
+
+/* Five things to ask: tilted index cards with ruled lines. */
+.thingy-index-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.thingy-index-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 22px 22px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 12px;
+  background: var(--thingy-paper);
+  box-shadow: 0 5px 0 var(--thingy-ink);
+  transform: rotate(-0.8deg);
+}
+
+.thingy-index-card:nth-child(2) {
+  transform: rotate(0.6deg);
+}
+
+.thingy-index-card:nth-child(3) {
+  transform: rotate(-0.4deg);
+}
+
+.thingy-index-card:nth-child(4) {
+  transform: rotate(0.8deg);
+}
+
+.thingy-index-card:nth-child(5) {
+  transform: rotate(-0.6deg);
+}
+
+.thingy-index-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--thingy-another-red);
+}
+
+.thingy-index-card-head .thingy-kicker {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+}
+
+.thingy-index-card p {
+  color: var(--thingy-body);
+  font-size: 16px;
+  line-height: 28px;
+  background-image: repeating-linear-gradient(to bottom, transparent 0 27px, #dce6f5 27px 28px);
+}
+
+.thingy-index-card strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--thingy-ink);
+  font-size: 19px;
+}
+
+.thingy-step-num {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 50%;
+  background: var(--thingy-tangerine);
+  color: var(--thingy-on-tangerine);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 800;
+  font-size: 19px;
+}
+
+.thingy-note .thingy-kicker {
+  margin-bottom: 4px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+}
+
+/* Pick your client: stacked paper sections with numbered steps. */
+.thingy-clients {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.thingy-client {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 32px clamp(20px, 3vw, 40px) 36px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 24px;
+  background: var(--thingy-paper);
+  box-shadow: var(--thingy-shadow-card);
+}
+
+.thingy-client > * {
+  max-width: 820px;
+}
+
+.thingy-client-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.thingy-client-head .thingy-h2 {
+  font-size: clamp(26px, 3vw, 34px);
+  line-height: 1.1;
+}
+
+.thingy-icon-tile.is-client {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+}
+
+.thingy-steps > li {
+  display: flex;
+  gap: 18px;
+  padding: 0 0 22px;
+}
+
+.thingy-steps > li + li {
+  padding-top: 22px;
+  border-top: 2px dashed var(--thingy-rule);
+}
+
+.thingy-steps > li:last-child {
+  padding-bottom: 0;
+}
+
+.thingy-step-body {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  gap: 14px;
+  min-width: 0;
+  padding-top: 6px;
+}
+
+.thingy-step-body p,
+.thingy-client-text {
+  color: var(--thingy-body);
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.thingy-step-body strong,
+.thingy-client-text strong {
+  color: var(--thingy-ink);
+}
+
+/* The URL ticket: toy cream, mono label over the code; the polka stub on
+   the right holds the Copy button once JavaScript enables it. */
+.thingy-ticket {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  max-width: 640px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 14px;
+  background: var(--thingy-toy-cream);
+  box-shadow: 0 4px 0 var(--thingy-ink);
+}
+
+.thingy-ticket-main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px 18px;
+}
+
+.thingy-ticket-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--thingy-meta);
+}
+
+.thingy-static .thingy-ticket code {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--thingy-ink);
+  font-size: 16px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.thingy-ticket-stub {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 148px;
+  padding: 10px;
+  border-left: 2px dashed var(--thingy-ink);
+  border-radius: 0 12px 12px 0;
+  background-color: var(--thingy-tangerine);
+  background-image: radial-gradient(var(--thingy-polka) 2px, transparent 2.4px);
+  background-size: 16px 16px;
+}
+
+.thingy-ticket-stub[hidden] {
+  display: none;
+}
+
+/* The notches where the stub tears off. */
+.thingy-ticket.has-copy::before,
+.thingy-ticket.has-copy::after {
+  content: '';
+  position: absolute;
+  right: 139px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 50%;
+  background: var(--thingy-paper);
+}
+
+.thingy-ticket.has-copy::before {
+  top: -11px;
+  clip-path: inset(50% 0 0);
+}
+
+.thingy-ticket.has-copy::after {
+  bottom: -11px;
+  clip-path: inset(0 0 50%);
+}
+
+.thingy-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 112px;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 999px;
+  background: var(--thingy-paper);
+  color: var(--thingy-ink);
+  font: 800 16px var(--font-ui);
+  box-shadow: var(--thingy-shadow-button);
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.thingy-copy-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--thingy-shadow-button-lift);
+}
+
+.thingy-copy-btn:active {
+  transform: translateY(3px);
+  box-shadow: var(--thingy-shadow-button-press);
+}
+
+/* Copied: #2E6B34 on #E3F6E0 is 5.7:1. */
+.thingy-copy-btn.is-copied {
+  background: var(--thingy-success-tint);
+  color: var(--thingy-success);
+}
+
+/* WebMCP: navy card with the face and a mint beta badge. */
+.thingy-webmcp {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  align-items: start;
+  gap: 28px;
+  padding: 32px;
+}
+
+.thingy-webmcp-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.thingy-webmcp-head .thingy-h2 {
+  font-size: clamp(26px, 3vw, 34px);
+}
+
+.thingy-webmcp > p {
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.thingy-webmcp a {
+  font-weight: 700;
+}
+
+/* Mint on navy is 11.2:1. */
+.thingy-beta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border: 2px solid var(--thingy-mint);
+  border-radius: 999px;
+  color: var(--thingy-mint);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.thingy-beta > span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--thingy-mint);
+}
+
+/* Fair use: copy beside a decorative bars card (aria-hidden; the
+   paragraph carries every number). */
+.thingy-fair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  align-items: center;
+  gap: 40px;
+}
+
+.thingy-fair .thingy-section-head {
+  margin: 0;
+}
+
+.thingy-fair .thingy-section-head > p:not(.thingy-kicker) {
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.thingy-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 28px;
+}
+
+.thingy-bars > .thingy-kicker {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+}
+
+.thingy-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.thingy-bar.is-hourly {
+  padding-top: 18px;
+  border-top: 2px dashed var(--thingy-rule);
+}
+
+.thingy-bar-label {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  font-size: 16px;
+}
+
+.thingy-bar-label > span:first-child {
+  font-weight: 700;
+}
+
+.thingy-bar-label > span:last-child,
+.thingy-bar-scale {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--thingy-meta);
+}
+
+.thingy-bar-track {
+  height: 24px;
+  overflow: hidden;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 999px;
+  background: var(--thingy-toy-cream);
+}
+
+.thingy-bar-fill {
+  height: 100%;
+}
+
+.thingy-bar-fill.is-reader {
+  width: 50%;
+  border-right: 2px solid var(--thingy-ink);
+  background-color: var(--thingy-tangerine);
+  background-image: radial-gradient(var(--thingy-polka) 2px, transparent 2.4px);
+  background-size: 16px 16px;
+}
+
+.thingy-bar-fill.is-member {
+  width: 100%;
+  background: var(--thingy-weekly);
+}
+
+.thingy-bar-fill.is-hour {
+  width: 30%;
+  background: var(--thingy-another);
+}
+
+.thingy-bar-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+@media (width <= 40rem) {
+  .thingy-refcard {
+    padding: 20px;
+  }
+
+  .thingy-client {
+    padding: 24px 18px 28px;
+  }
+
+  .thingy-steps > li {
+    gap: 12px;
+  }
+
+  .thingy-step-num {
+    width: 36px;
+    height: 36px;
+    font-size: 17px;
+  }
+
+  .thingy-step-body p,
+  .thingy-client-text {
+    font-size: 17px;
+  }
+
+  /* PhoneConnect: the stub drops below the code with a dashed top. */
+  .thingy-ticket {
+    flex-direction: column;
+  }
+
+  .thingy-ticket-stub {
+    width: auto;
+    border-top: 2px dashed var(--thingy-ink);
+    border-left: 0;
+    border-radius: 0 0 12px 12px;
+  }
+
+  .thingy-ticket.has-copy::before,
+  .thingy-ticket.has-copy::after {
+    display: none;
+  }
+
+  .thingy-static .thingy-ticket code {
+    font-size: 14px;
+  }
+
+  .thingy-webmcp {
+    padding: 24px;
+  }
+
+  .thingy-bars {
+    padding: 22px;
+  }
+
+  .thingy-plug-bubble {
+    max-width: 140px;
+    font-size: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thingy-round-link,
+  .thingy-round-link:hover,
+  .thingy-round-link:active,
+  .thingy-copy-btn,
+  .thingy-copy-btn:hover,
+  .thingy-copy-btn:active {
+    transform: none;
+    transition: none;
+  }
+}

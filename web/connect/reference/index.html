@@ -48,24 +48,41 @@
   <meta name="theme-color" content="#f6eedc">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Figtree:wght@400..800&family=JetBrains+Mono:wght@400..700&family=Source+Sans+3:wght@400;600&display=swap">
 </head>
-<body>
-  <header class="thingy-page-nav is-reference">
-    <a class="brand" href="/"><img src="/img/thingy.png" alt="">Thingy</a>
-    <nav>
-      <a href="/chat/">Chat</a>
-      <a href="/about/">About</a>
-      <a href="/connect/" aria-current="location">Connect</a>
-    </nav>
-  </header>
-  <main class="thingy-page is-reference">
+<body class="thingy-static thingy-reference-page">
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="thingy-page-nav is-site">
+      <a class="brand" href="/">
+        <svg class="thingy-face thingy-face-animated" width="44" height="35" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-ink)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><g fill="none" stroke="var(--thingy-mint)" stroke-width="4" stroke-linecap="round"><g class="thingy-face-blink"><path d="M27 42a9 9 0 0 1 18 0" /><path d="M71 42a9 9 0 0 1 18 0" /></g><path d="M45 50q13 14 26 0" /></g></svg>
+        <span class="thingy-wordmark">Thingy</span>
+      </a>
+      <nav aria-label="Main">
+        <a href="/chat/">Chat</a>
+        <a href="/connect/" aria-current="location">Connect your AI</a>
+        <a href="/about/">About</a>
+      </nav>
+      <a class="thingy-signin" href="/signin/">Sign in</a>
+    </header>
+  <main class="thingy-page is-reference" id="main-content">
     <p class="crumbs"><a href="/connect/">Connect your AI</a> &rsaquo; Reference</p>
     <h1>Librarian MCP reference</h1>
     <p class="lede">The MCP server behind Thingy, documented from its own declarations: how one tool registry serves Thingy&rsquo;s chat, your AI and agents in your browser, and every tool with its parameters and results.</p>
 <!--mcp-reference-->
-    <footer>
-      <a href="/">Thingy home</a> &middot; <a href="/connect/">Connect your AI</a> &middot; <a href="/about/">About Thingy</a> &middot; <a href="https://github.com/jthingelstad/librarian-thing">Source</a>
-    </footer>
   </main>
+    <footer class="thingy-site-footer">
+      <div class="thingy-wrap">
+        <p class="thingy-footer-meta">
+          <span class="tinylytics_hits"></span> <span class="tinylytics_countries"></span>
+        </p>
+        <nav aria-label="Footer">
+          <ul>
+            <li><a href="/">Thingy home</a></li>
+            <li><a href="/connect/">Connect your AI</a></li>
+            <li><a href="/about/">About Thingy</a></li>
+            <li><a href="https://github.com/jthingelstad/librarian-thing">Source</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
   <script type="module" src="/src/pages/reference.ts"></script>
 </body>
 </html>
