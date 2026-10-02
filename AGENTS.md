@@ -184,6 +184,12 @@ Key files:
   `--color-<name>` theme variables and the collision creates circular
   var() references that silently blank the theme). `answer.css` is the
   one home for rendered-answer typography (chat + share page).
+  `thingy-components.css` holds the Felt & Tangerine base pieces
+  (`.thingy-btn` + `-primary`/`-secondary`/`-danger`/`-alt`/`-compact`,
+  `.thingy-input`, `.thingy-field-label`, `.thingy-card`, `.thingy-modal`,
+  `.thingy-modal-title`, `.thingy-scrim`), imported last in the
+  components layer; build new controls from them rather than re-deriving
+  the borders and shadows in utilities.
   Components style with Tailwind utilities; semantic class names on
   elements are TEST HOOKS for smoke/qa-real (e.g.
   `.thingy-app-shell.is-mobile-rail-open` is asserted by

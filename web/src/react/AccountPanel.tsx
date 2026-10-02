@@ -202,13 +202,13 @@ function ProfileModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-5 backdrop-blur-[3px]"
+      className="thingy-scrim fixed inset-0 z-50 grid place-items-center p-5"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
       <section
-        className="max-h-[min(640px,calc(100vh-40px))] w-[min(30rem,100%)] overflow-y-auto rounded-2xl border border-line bg-surface p-5 font-sans text-ink shadow-2xl"
+        className="thingy-modal max-h-[min(640px,calc(100vh-40px))] w-[min(30rem,100%)] overflow-y-auto p-5 font-sans"
         role="dialog"
         aria-modal="true"
         aria-labelledby="thingy-memory-title"
@@ -221,14 +221,14 @@ function ProfileModal({
             <Icon name="users-round" />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 id="thingy-memory-title" className="text-[17px] font-extrabold">
+            <h2 id="thingy-memory-title" className="thingy-modal-title">
               Profile
             </h2>
             <p className="text-[13px] text-muted">Account details and Thingy activity.</p>
           </div>
           <button
             type="button"
-            className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-ink [&_svg]:size-4"
+            className="-my-1.5 -mr-1.5 grid size-11 shrink-0 place-items-center rounded-xl text-ink hover:bg-surface-2 [&_svg]:size-5"
             aria-label="Close Profile"
             onClick={onClose}
           >

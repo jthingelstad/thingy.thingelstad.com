@@ -100,20 +100,20 @@ export function HistoryDialog({
   return (
     <Dialog.Root open onOpenChange={(next) => (next ? undefined : onClose())}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-5 backdrop-blur-[3px]">
+        <Dialog.Overlay className="thingy-scrim fixed inset-0 z-50 grid place-items-center p-5">
           <Dialog.Content
-            className="flex max-h-[min(680px,calc(100vh-40px))] w-[min(38rem,100%)] flex-col rounded-2xl border border-line bg-surface font-sans text-ink shadow-2xl"
+            className="thingy-modal flex max-h-[min(680px,calc(100vh-40px))] w-[min(38rem,100%)] flex-col font-sans"
             aria-describedby={undefined}
           >
             <div className="flex items-center gap-3 border-b border-line-soft px-5 py-4">
               <Dialog.Title asChild>
-                <h2 className="text-[17px] font-extrabold">All chats</h2>
+                <h2 className="thingy-modal-title">All chats</h2>
               </Dialog.Title>
               <span className="text-[13px] text-muted">{total ? `${total} total` : ''}</span>
               <Dialog.Close asChild>
                 <button
                   type="button"
-                  className="ml-auto grid size-8 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-ink [&_svg]:size-4"
+                  className="ml-auto -my-1.5 -mr-1.5 grid size-11 shrink-0 place-items-center rounded-xl text-ink hover:bg-surface-2 [&_svg]:size-5"
                   aria-label="Close"
                 >
                   <Icon name="x" />

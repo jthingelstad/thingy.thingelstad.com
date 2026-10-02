@@ -53,3 +53,28 @@ test('opening a new dialog settles the previous one as cancelled', async () => {
   await screen.findByText('Second');
   void second;
 });
+
+test('ThingyDialog wears the Felt & Tangerine pieces and keeps its hooks', async () => {
+  render(<DialogHost />);
+  const result = confirmDialog({ title: 'Delete this?', confirmLabel: 'Delete', danger: true, altLabel: 'Archive' });
+  const dialog = await screen.findByRole('dialog');
+  // Test hooks stay; the look comes from the component classes.
+  expect(dialog.classList.contains('thingy-dialog')).toBe(true);
+  expect(dialog.classList.contains('thingy-modal')).toBe(true);
+  expect(dialog.parentElement?.classList.contains('thingy-dialog-scrim')).toBe(true);
+  expect(dialog.parentElement?.classList.contains('thingy-scrim')).toBe(true);
+  expect(screen.getByRole('heading', { name: 'Delete this?' }).classList.contains('thingy-modal-title')).toBe(true);
+  expect(screen.getByRole('button', { name: 'Delete' }).className).toContain('thingy-btn-danger');
+  expect(screen.getByRole('button', { name: 'Cancel' }).className).toContain('thingy-btn-secondary');
+  expect(screen.getByRole('button', { name: 'Archive' }).className).toContain('thingy-btn-alt');
+  void result;
+});
+
+test('a non-danger confirm is the tangerine primary, and the prompt input is named', async () => {
+  render(<DialogHost />);
+  const result = promptDialog({ title: 'Rename conversation', confirmLabel: 'Rename' });
+  const input = await screen.findByRole('textbox', { name: 'Rename conversation' });
+  expect(input.classList.contains('thingy-input')).toBe(true);
+  expect(screen.getByRole('button', { name: 'Rename' }).className).toContain('thingy-btn-primary');
+  void result;
+});

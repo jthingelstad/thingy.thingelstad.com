@@ -15,6 +15,10 @@
 @import './thingy-page.css' layer(components);
 @import './share.css' layer(components);
 
+/* Base components (buttons, inputs, cards, modals) last in the layer, so
+   an a.thingy-btn beats the content pages' link colours. */
+@import './thingy-components.css' layer(components);
+
 /* Read-only thread (owner preview of a shared conversation): hide actions
    that would mutate or send - copy stays. */
 [data-readonly] [data-rw-action] {

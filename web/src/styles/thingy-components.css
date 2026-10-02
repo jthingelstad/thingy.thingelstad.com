@@ -1,0 +1,202 @@
+/* Felt & Tangerine base components (2026-10-01): toy-like pieces on the
+   thingy-base.css tokens - 2px ink borders, hard offset shadows, pill
+   buttons that lift on hover and press on click, 44px minimum targets.
+   The SPA imports this into Tailwind's COMPONENTS layer (app.css), so a
+   utility on the same element still wins; the static pages load it plain.
+   Every entry imports it LAST so it beats the content pages' link rules.
+
+   Never put text on tangerine in any colour but navy (--thingy-on-tangerine). */
+
+/* ---- Buttons ---- */
+
+.thingy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  min-width: 44px;
+  padding: 0 22px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 999px;
+  background: var(--thingy-paper);
+  color: var(--thingy-ink);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: var(--thingy-shadow-button);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.thingy-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--thingy-shadow-button-lift);
+}
+
+.thingy-btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: var(--thingy-shadow-button-press);
+}
+
+.thingy-btn:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+/* Primary: tangerine fill, navy text (4.6:1), heavier weight. */
+.thingy-btn-primary {
+  background: var(--thingy-tangerine);
+  color: var(--thingy-on-tangerine);
+  font-weight: 800;
+}
+
+/* Secondary is the paper default; the class exists so markup can say so. */
+.thingy-btn-secondary {
+  background: var(--thingy-paper);
+  color: var(--thingy-ink);
+}
+
+/* Danger keeps the ink border and shadow; white on #B3261E is 6.5:1. */
+.thingy-btn-danger {
+  background: var(--thingy-danger);
+  color: var(--thingy-on-danger);
+  font-weight: 800;
+}
+
+/* The quiet alternate action that sits left in a dialog footer (e.g.
+   "Stop sharing"): no border, no shadow, danger text. */
+.thingy-btn-alt {
+  border-color: transparent;
+  background: transparent;
+  color: var(--thingy-danger);
+  padding: 0 10px;
+  box-shadow: none;
+}
+
+.thingy-btn-alt:hover:not(:disabled),
+.thingy-btn-alt:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  background: var(--thingy-danger-tint);
+}
+
+/* Tighter rows (menus, inline forms) still keep the 44px target. */
+.thingy-btn-compact {
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: 15px;
+}
+
+/* Link-buttons: the content pages colour every link clay (.thingy-page a,
+   0,1,1). This sheet loads after them, so these equal-specificity rules
+   win and a link styled as a button keeps its button colours. */
+a.thingy-btn,
+a.thingy-btn:hover {
+  color: var(--thingy-ink);
+  text-decoration: none;
+}
+
+a.thingy-btn-primary,
+a.thingy-btn-primary:hover {
+  color: var(--thingy-on-tangerine);
+}
+
+a.thingy-btn-danger,
+a.thingy-btn-danger:hover {
+  color: var(--thingy-on-danger);
+}
+
+/* ---- Inputs ---- */
+
+.thingy-input {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: var(--thingy-radius-input);
+  background: var(--thingy-paper);
+  color: var(--thingy-ink);
+  font-family: var(--font-ui);
+  font-size: 16px; /* 16px stops iOS zooming on focus */
+  line-height: 1.4;
+}
+
+textarea.thingy-input {
+  padding: 12px 14px;
+  resize: none;
+}
+
+.thingy-input::placeholder {
+  color: var(--thingy-placeholder);
+  opacity: 1;
+}
+
+/* Inputs show focus on any focus, not only keyboard focus. */
+.thingy-input:focus {
+  outline: 3px solid var(--thingy-focus);
+  outline-offset: 2px;
+}
+
+/* The visible mono eyebrow label that sits over an input. */
+.thingy-field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--thingy-meta);
+}
+
+/* ---- Cards ---- */
+
+.thingy-card {
+  border: 2px solid var(--thingy-ink);
+  border-radius: var(--thingy-radius-card);
+  background: var(--thingy-paper);
+  color: var(--thingy-ink);
+  box-shadow: var(--thingy-shadow-card);
+}
+
+/* ---- Modals (ThingyDialog and the other dialog shells) ---- */
+
+.thingy-scrim {
+  background: var(--thingy-scrim);
+}
+
+.thingy-modal {
+  border: 2px solid var(--thingy-ink);
+  border-radius: var(--thingy-radius-modal);
+  background: var(--thingy-paper);
+  color: var(--thingy-ink);
+  box-shadow: var(--thingy-shadow-modal);
+}
+
+.thingy-modal-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-style: italic;
+  font-weight: var(--thingy-display-weight);
+  font-stretch: var(--thingy-display-stretch);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* Lift and press are motion: under reduced motion the buttons keep their
+   shadow change as feedback but stop moving. */
+@media (prefers-reduced-motion: reduce) {
+  .thingy-btn,
+  .thingy-btn:hover:not(:disabled),
+  .thingy-btn:active:not(:disabled) {
+    transform: none;
+    transition: none;
+  }
+}

@@ -387,20 +387,20 @@ export function McpLogDialog({ connections, onClose }: { connections: LibrarianM
 
   return (
     <div
-      className="fixed inset-0 z-[60] grid place-items-center bg-black/45 p-5 backdrop-blur-[3px]"
+      className="thingy-scrim fixed inset-0 z-[60] grid place-items-center p-5"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
       <section
-        className="thingy-mcp-log flex max-h-[min(760px,calc(100vh-40px))] w-[min(44rem,100%)] flex-col rounded-2xl border border-line bg-surface p-5 font-sans text-ink shadow-2xl"
+        className="thingy-mcp-log thingy-modal flex max-h-[min(760px,calc(100vh-40px))] w-[min(44rem,100%)] flex-col p-5 font-sans"
         role="dialog"
         aria-modal="true"
         aria-labelledby="thingy-mcp-log-title"
       >
         <header className="mb-3 flex items-start gap-3">
           <div className="min-w-0 flex-1">
-            <h2 id="thingy-mcp-log-title" className="text-[17px] font-extrabold">
+            <h2 id="thingy-mcp-log-title" className="thingy-modal-title">
               MCP request log
             </h2>
             <p className="text-[13px] text-muted">
@@ -410,7 +410,7 @@ export function McpLogDialog({ connections, onClose }: { connections: LibrarianM
           </div>
           <button
             type="button"
-            className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-ink [&_svg]:size-4"
+            className="-my-1.5 -mr-1.5 grid size-11 shrink-0 place-items-center rounded-xl text-ink hover:bg-surface-2 [&_svg]:size-5"
             aria-label="Close MCP request log"
             onClick={onClose}
           >
