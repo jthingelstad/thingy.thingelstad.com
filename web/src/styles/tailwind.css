@@ -47,9 +47,11 @@
   --color-transparent: transparent;
   --color-current: currentcolor;
 
-  --font-sans: var(--sans);
-  --font-serif: var(--serif);
-  --font-mono: ui-monospace, 'SF Mono', menlo, monaco, monospace;
+  /* Same --thingy-font-* targets as thingy-base.css's --font-* names, so
+     the two never disagree (and never reference each other). */
+  --font-sans: var(--thingy-font-ui);
+  --font-mono: var(--thingy-font-mono);
+  --font-display: var(--thingy-font-display);
 }
 
 /* Keyboard focus looks intentional everywhere: the cobalt focus ring on

@@ -102,14 +102,26 @@
   --highlight: var(--thingy-highlight);
   --code-bg: var(--thingy-code-bg);
 
-  /* Typography */
-  --serif: 'Source Serif 4', 'Charter', 'Sitka Text', cambria, georgia, serif;
-  --sans: 'Source Sans 3', -apple-system, blinkmacsystemfont, 'Segoe UI', helvetica, arial, sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, sfmono-regular, 'SF Mono', menlo, consolas, monospace;
-  --font-body: var(--sans);
-  --font-heading: var(--sans);
-  --font-mono: var(--mono);
-  --font-ui: var(--sans);
+  /* Typography. Display is Archivo italic 800 at 112% width (H1/H2, the
+     wordmark, big numbers - opt in with .thingy-display or the Tailwind
+     font-display utility); UI and body are Figtree; eyebrows, meta, codes
+     and tool names are JetBrains Mono. Source Sans 3 is loaded only for
+     the Jamie's-sites strip. The shells load all four from Google Fonts. */
+  --thingy-font-display: 'Archivo', 'Figtree', system-ui, sans-serif;
+  --thingy-font-ui: 'Figtree', -apple-system, blinkmacsystemfont, 'Segoe UI', helvetica, arial, sans-serif;
+  --thingy-font-mono: 'JetBrains Mono', ui-monospace, sfmono-regular, 'SF Mono', menlo, consolas, monospace;
+  --thingy-font-sites: 'Source Sans 3', -apple-system, blinkmacsystemfont, 'Segoe UI', helvetica, arial, sans-serif;
+  --thingy-display-weight: 800;
+  --thingy-display-stretch: 112%;
+  --thingy-display-tracking: -0.025em;
+  --sans: var(--thingy-font-ui);
+  --mono: var(--thingy-font-mono);
+  --font-display: var(--thingy-font-display);
+  --font-body: var(--thingy-font-ui);
+  --font-heading: var(--thingy-font-ui);
+  --font-mono: var(--thingy-font-mono);
+  --font-ui: var(--thingy-font-ui);
+  --font-sites: var(--thingy-font-sites);
 
   /* Sizes */
   --size-base: 1.0625rem;
@@ -331,12 +343,22 @@ th {
 
 .eyebrow {
   font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
+  font-size: 12px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
-  font-weight: 500;
+  font-weight: 600;
   margin: 0 0 var(--space-sm);
+}
+
+/* The display voice: Archivo ExtraBold Italic, wide (Another Thing's
+   cover type). */
+.thingy-display {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: var(--thingy-display-weight);
+  font-stretch: var(--thingy-display-stretch);
+  letter-spacing: var(--thingy-display-tracking);
 }
 
 /* One-time entrance for the new-chat robot mark (4.10 empty state):
