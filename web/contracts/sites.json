@@ -1,0 +1,83 @@
+{
+  "$comment": "Canonical cross-site data for Jamie's sites. Edit here only; consumers vendor a copy (www.thingelstad.com/scripts/sync-shared.sh -> thing-hugo/data/sites.json). Call these sites or properties, never a network.",
+  "owner": {
+    "name": "Jamie Thingelstad",
+    "url": "https://www.thingelstad.com/",
+    "avatar": "https://avatars.micro.blog/avatars/2025/14/1545.jpg",
+    "rel_me": [
+      "https://micro.blog/jthingelstad",
+      "https://github.com/jthingelstad"
+    ]
+  },
+  "sites": [
+    {
+      "id": "www",
+      "name": "Jamie Thingelstad",
+      "short_name": "Blog",
+      "url": "https://www.thingelstad.com/",
+      "description": "Twenty plus years of writing on the web.",
+      "kind": "blog",
+      "in_publishing_system": true,
+      "feeds": {
+        "rss": "https://www.thingelstad.com/feed.xml",
+        "json": "https://www.thingelstad.com/feed.json",
+        "podcast": "https://www.thingelstad.com/podcast.xml"
+      },
+      "subscribe_url": null
+    },
+    {
+      "id": "weekly",
+      "name": "Weekly Thing",
+      "short_name": "Newsletter",
+      "url": "https://weekly.thingelstad.com/",
+      "description": "A weekly collection of interesting links, ideas, and observations from across the internet, curated by Jamie Thingelstad.",
+      "kind": "newsletter",
+      "in_publishing_system": true,
+      "feeds": {
+        "atom": "https://weekly.thingelstad.com/feed.xml",
+        "podcast": "https://weekly.thingelstad.com/podcast.xml"
+      },
+      "subscribe_url": "https://weekly.thingelstad.com/"
+    },
+    {
+      "id": "another",
+      "name": "Another Thing",
+      "short_name": "Podcast",
+      "url": "https://another.thingelstad.com/",
+      "description": "A podcast by Jamie Thingelstad, exploring technology, creativity, and the things that make life interesting.",
+      "kind": "podcast",
+      "in_publishing_system": true,
+      "feeds": {
+        "rss": "https://another.thingelstad.com/feed.xml",
+        "json": "https://another.thingelstad.com/index.json",
+        "podcast": "https://another.thingelstad.com/podcast.xml"
+      },
+      "subscribe_url": "https://another.thingelstad.com/subscribe/"
+    },
+    {
+      "id": "thingy",
+      "name": "Thingy",
+      "short_name": "Ask Thingy",
+      "url": "https://thingy.thingelstad.com/",
+      "description": "Ask Thingy to find and synthesize writing from across Jamie Thingelstad's archive.",
+      "kind": "search",
+      "in_publishing_system": true,
+      "feeds": {},
+      "subscribe_url": null
+    },
+    {
+      "id": "escape",
+      "name": "Escaping Things",
+      "short_name": "Escape Rooms",
+      "url": "https://escape.thingelstad.com/",
+      "description": "The Escaping Things escape-room team: rooms, trips, and stats.",
+      "kind": "hobby",
+      "in_publishing_system": false,
+      "feeds": {
+        "atom": "https://escape.thingelstad.com/feed.xml"
+      },
+      "subscribe_url": null,
+      "$comment": "Whether this appears in cross-site navigation is Jamie's call (MANUAL-STEPS.md). The theme hides sites with in_publishing_system false unless params.sites_include lists their id."
+    }
+  ]
+}
