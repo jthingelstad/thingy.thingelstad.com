@@ -81,6 +81,35 @@ export function Composer({
       window.removeEventListener('offline', off);
     };
   }, []);
+  // iOS Safari scrolls the WINDOW to keep a focused field above the
+  // keyboard, even though both shells pin the document (overflow hidden).
+  // A normal blur scrolls it back; disabling the focused field does not -
+  // the guest lock lands on the last question's meta event, mid-answer,
+  // with the keyboard still up, and left the shared page stuck scrolled
+  // with a keyboard-sized blank under the composer (2026-10-01). The
+  // document must never be offset once the field lets go of focus.
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const unscroll = () => {
+      if (document.activeElement?.id === 'librarian-question') return;
+      if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+    };
+    viewport?.addEventListener('resize', unscroll);
+    window.addEventListener('focusout', unscroll);
+    let timer = 0;
+    if (locked) {
+      const input = document.getElementById('librarian-question');
+      if (input && document.activeElement === input) input.blur();
+      unscroll();
+      // The keyboard animates closed after the lock; settle once it has.
+      timer = window.setTimeout(unscroll, 500);
+    }
+    return () => {
+      viewport?.removeEventListener('resize', unscroll);
+      window.removeEventListener('focusout', unscroll);
+      window.clearTimeout(timer);
+    };
+  }, [locked]);
   const [listening, setListening] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState('');
   const dictationRef = useRef<ReturnType<typeof createDictationController> | null>(null);
