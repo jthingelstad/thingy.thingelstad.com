@@ -118,16 +118,20 @@ function LoadFailed({ onRetry }: { onRetry: () => void }) {
 // blank under the nav for the whole request.
 function LoadingTranscript() {
   return (
-    <div className="thingy-shared-loading mx-auto w-full max-w-3xl px-4 pt-6" aria-hidden="true">
-      <div className="h-9 w-[280px] max-w-full animate-pulse rounded-lg bg-toy sm:h-11 sm:w-[420px]" />
-      <div className="mt-3 h-[13px] w-[220px] max-w-full animate-pulse rounded-lg bg-toy sm:mt-3.5 sm:h-3.5 sm:w-[260px]" />
-      <div className="mt-8 ml-auto h-12 w-[72%] animate-pulse rounded-[20px] bg-toy sm:mt-10 sm:h-[52px] sm:w-3/5 sm:rounded-[22px]" />
-      <div className="mt-7 flex flex-col gap-3 sm:mt-8">
-        <div className="h-[15px] w-full animate-pulse rounded-lg bg-toy sm:h-4" />
-        <div className="h-[15px] w-[92%] animate-pulse rounded-lg bg-toy sm:h-4" />
-        <div className="h-[15px] w-2/3 animate-pulse rounded-lg bg-toy sm:h-4" />
+    <>
+      {/* The page's h1 while the snapshot loads (axe: page-has-heading-one). */}
+      <h1 className="sr-only">Loading a shared conversation</h1>
+      <div className="thingy-shared-loading mx-auto w-full max-w-3xl px-4 pt-6" aria-hidden="true">
+        <div className="h-9 w-[280px] max-w-full animate-pulse rounded-lg bg-toy sm:h-11 sm:w-[420px]" />
+        <div className="mt-3 h-[13px] w-[220px] max-w-full animate-pulse rounded-lg bg-toy sm:mt-3.5 sm:h-3.5 sm:w-[260px]" />
+        <div className="mt-8 ml-auto h-12 w-[72%] animate-pulse rounded-[20px] bg-toy sm:mt-10 sm:h-[52px] sm:w-3/5 sm:rounded-[22px]" />
+        <div className="mt-7 flex flex-col gap-3 sm:mt-8">
+          <div className="h-[15px] w-full animate-pulse rounded-lg bg-toy sm:h-4" />
+          <div className="h-[15px] w-[92%] animate-pulse rounded-lg bg-toy sm:h-4" />
+          <div className="h-[15px] w-2/3 animate-pulse rounded-lg bg-toy sm:h-4" />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
