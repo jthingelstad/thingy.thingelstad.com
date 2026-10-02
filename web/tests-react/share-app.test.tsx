@@ -87,12 +87,22 @@ test('a signed-in fork shows the saved-to-your-chats banner', async () => {
   vi.doMock('../src/react/components/Thread.tsx', () => ({
     // Lightweight stand-in: the real ThreadHost mounts the aui runtime;
     // here we only need the fork callback the adapter would fire when
-    // the server mints the reader's new conversation.
-    ThreadHost: ({ binding }: { binding: { onConversationId?: (id: string) => void } }) => {
+    // the server mints the reader's new conversation, plus the lead slot
+    // (title and banner) the real thread renders above the transcript.
+    ThreadHost: ({
+      binding,
+      lead
+    }: {
+      binding: { onConversationId?: (id: string) => void };
+      lead?: import('react').ReactNode;
+    }) => {
       return (
-        <button type="button" onClick={() => binding.onConversationId?.('conv-forked')}>
-          simulate fork
-        </button>
+        <>
+          {lead}
+          <button type="button" onClick={() => binding.onConversationId?.('conv-forked')}>
+            simulate fork
+          </button>
+        </>
       );
     }
   }));

@@ -2,57 +2,9 @@
    tokens; layout chrome comes from thingy-page.css, answer typography
    from answer.css. */
 
-.thingy-shared .thingy-shared-loading {
-  color: var(--thingy-text-muted);
-}
-
-.thingy-shared-header h1 {
-  margin-bottom: 0.25rem;
-}
-
-.thingy-shared-byline {
-  color: var(--thingy-text-muted);
-  font-size: 0.95rem;
-  margin-top: 0;
-}
-
-.thingy-shared-messages {
-  margin: 2rem 0;
-}
-
-.thingy-shared-messages .librarian-message {
-  margin-bottom: 1.25rem;
-}
-
-.thingy-shared-cta {
-  border-top: 1px solid var(--thingy-border);
-  margin-top: 2.5rem;
-  padding-top: 1.5rem;
-}
-
-.thingy-shared-cta-button,
-.thingy-page a.thingy-shared-cta-button {
-  display: inline-block;
-  background: var(--accent-deep);
-  border-radius: 8px;
-
-  /* Token pair keeps contrast: cream on deep clay (7:1). The .thingy-page a
-     selector is required - the content-page link rule (.thingy-page a,
-     specificity 0,1,1) otherwise overrides this color with the accent,
-     making the label invisible on its own background. */
-  color: var(--thingy-bg);
-  font-weight: 600;
-  padding: 0.55rem 1.1rem;
-  text-decoration: none;
-}
-
-.thingy-shared-cta-button:hover {
-  filter: brightness(1.08);
-}
-
-.thingy-shared-cta-more {
-  margin-left: 0.75rem;
-}
+/* Felt & Tangerine (2026-10-01): the title, banner tickets and the
+   closed/error states are Tailwind utilities in ShareApp.tsx; the CTA
+   links ride .thingy-btn. Only print rules live here now. */
 
 /* ---- Print: a shared conversation is exactly the page a newsletter
    reader prints or sends to Reader mode. Chrome off, transcript flat,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AssistantRuntimeProvider, ThreadPrimitive, useAui, useAuiState, useLocalRuntime } from '@assistant-ui/react';
 import { promptDialog } from '../../shared/stores/dialog-store.ts';
 import { trackEvent } from '../../shared/thingy-analytics.ts';
@@ -107,7 +107,9 @@ function Thread({
   readOnly,
   composerLocked,
   draftKey,
-  historyPending
+  historyPending,
+  lead,
+  startAtTop
 }: {
   guest: boolean;
   welcome: string;
@@ -118,15 +120,31 @@ function Thread({
   composerLocked?: boolean;
   draftKey?: string;
   historyPending?: boolean;
+  lead?: ReactNode;
+  startAtTop?: boolean;
 }) {
+  // A shared transcript opens at the top and stays put while it lays
+  // out; following the newest content starts with the reader's first
+  // follow-up.
+  const running = useAuiState((state) => state.thread.isRunning);
+  const [followed, setFollowed] = useState(false);
+  useEffect(() => {
+    if (running) setFollowed(true);
+  }, [running]);
+  const follow = !startAtTop || followed || running;
   return (
     <ThreadPrimitive.Root
       data-readonly={readOnly ? 'true' : undefined}
       data-guest-locked={composerLocked ? 'true' : undefined}
       className="librarian-chat thingy-aui-thread flex min-h-0 flex-1 flex-col has-[.thingy-aui-empty]:justify-center"
     >
-      <ThreadPrimitive.Viewport className="thingy-chat-scroll min-h-0 flex-1 overflow-y-auto has-[.thingy-aui-empty]:flex-none has-[.thingy-aui-empty]:overflow-visible">
+      <ThreadPrimitive.Viewport
+        scrollToBottomOnInitialize={!startAtTop}
+        autoScroll={follow}
+        className="thingy-chat-scroll min-h-0 flex-1 overflow-y-auto has-[.thingy-aui-empty]:flex-none has-[.thingy-aui-empty]:overflow-visible"
+      >
         <div className="librarian-messages mx-auto w-full max-w-3xl px-4 pt-6 pb-2">
+          {lead}
           <ThreadPrimitive.Empty>
             {welcome ? (
               <div className="thingy-aui-empty flex flex-col gap-5 pt-2 sm:gap-7 sm:pt-6">
@@ -204,7 +222,8 @@ export function ThreadHost({
   sharedMessages,
   readOnly,
   composerLocked,
-  draftKey
+  draftKey,
+  lead
 }: {
   binding: ThingyThreadBinding;
   guest: boolean;
@@ -223,6 +242,9 @@ export function ThreadHost({
   composerLocked?: boolean;
   // Keys the per-conversation composer draft in sessionStorage.
   draftKey?: string;
+  // Content that scrolls with the transcript, above the first message
+  // (the share page's title and banner).
+  lead?: ReactNode;
 }) {
   const adapter = useMemo(() => createThingyAdapter(binding), [binding]);
   const [historyPending, setHistoryPending] = useState(() =>
@@ -299,6 +321,8 @@ export function ThreadHost({
     // One-shot on mount.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // A shared transcript reads from the top (title, banner, question);
+  // chats still land on the latest turn.
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <Thread
@@ -311,6 +335,8 @@ export function ThreadHost({
         composerLocked={composerLocked}
         draftKey={draftKey}
         historyPending={historyPending}
+        lead={lead}
+        startAtTop={Boolean(sharedMessages?.length)}
       />
     </AssistantRuntimeProvider>
   );
