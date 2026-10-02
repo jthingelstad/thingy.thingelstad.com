@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import * as session from '../shared/thingy-session.ts';
 import { errorMessage } from '../shared/thingy-errors.ts';
 import { runningStandalone, trackEvent } from '../shared/thingy-analytics.ts';
+import { ThingyFace } from './components/ThingyFace.tsx';
 
 type SecondaryAction = '' | 'subscribe' | 'resend';
 
@@ -178,114 +179,205 @@ export function SignInApp({
     }
   }
 
+  const mood = busy ? 'thinking' : messageKind === 'error' ? 'oops' : 'idle';
+  // "Check your inbox!" is the mascot's aside once a code is on its way;
+  // the status line below carries the real message.
+  const inboxBubble = codeEntry && messageKind === 'success';
+
   return (
-    <main className="thingy-auth-page grid min-h-dvh place-items-center bg-bg p-5 font-sans text-ink">
-      <div className="flex w-[min(34rem,100%)] flex-col items-center gap-4 rounded-3xl border border-line bg-surface p-7 shadow-[0_24px_70px_-30px_rgb(14_43_38/0.35)] sm:flex-row sm:items-start sm:gap-6">
-        <span className="shrink-0" aria-hidden="true">
-          <img
-            className="size-20 rounded-2xl"
-            src="/img/thingy.png"
-            alt=""
-            width="1022"
-            height="1022"
-            loading="eager"
-          />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-bold tracking-[0.14em] text-accent-deep uppercase">Come on in</p>
-          <h1 className="mt-0.5 text-[22px] leading-tight font-extrabold">Sign in to Thingy</h1>
-          <p className="mt-1.5 text-[14px] leading-relaxed text-ink-soft">
-            {standalone
-              ? 'Enter your email address and Thingy will email you a six-digit sign-in code. Weekly Thing readers can use Chat, and supporting members get the deeper features.'
-              : 'Enter your email address and Thingy will send a private sign-in link. Weekly Thing readers can use Chat, and supporting members get the deeper features.'}
-          </p>
-          <form className="thingy-signin-form mt-4" onSubmit={handleSubmit}>
-            <label className="text-[11px] font-bold tracking-wider text-muted uppercase" htmlFor="thingy-signin-email">
-              Email address
-            </label>
-            <div className="mt-1 flex gap-2">
-              <input
-                className="w-full min-w-0 rounded-xl border border-line bg-bg px-3.5 py-2.5 text-[15px] text-ink outline-none placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent-soft"
-                id="thingy-signin-email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                inputMode="email"
-                required
-                placeholder="you@example.com"
-                value={email}
-                onChange={(event) => setEmail(event.currentTarget.value)}
-              />
-              <button
-                type="submit"
-                className="shrink-0 rounded-xl bg-accent-deep px-4 py-2.5 text-[14px] font-bold text-bg hover:brightness-110 disabled:opacity-50"
-                disabled={busy}
-              >
-                Email Me a Code
-              </button>
-            </div>
-          </form>
-          <p
-            className={`mt-2.5 min-h-5 text-[13.5px] ${messageKind === 'error' ? 'text-error' : messageKind === 'success' ? 'text-accent-deep' : 'text-ink-soft'}`}
-            data-kind={messageKind}
-            aria-live="polite"
+    <main className="thingy-auth-page flex min-h-dvh flex-col bg-bg font-sans text-ink">
+      <header className="mx-auto flex h-[60px] w-full max-w-[1200px] items-center px-4 md:h-auto md:px-8 md:py-6">
+        <a
+          className="inline-flex min-h-11 items-center gap-2.5 text-ink no-underline md:gap-3"
+          href="/"
+          aria-label="Thingy home"
+        >
+          <ThingyFace mood={mood} size={44} />
+          <span className="thingy-display text-[24px] leading-none md:text-[27px]">Thingy</span>
+        </a>
+      </header>
+      <div className="flex flex-1 flex-col items-center px-4 pb-6 md:px-6 md:pt-[150px] md:pb-14">
+        <div className="relative w-full max-w-[600px]">
+          <div
+            className="relative mt-2 flex h-[118px] justify-center md:absolute md:top-[-168px] md:left-1/2 md:mt-0 md:-ml-[110px] md:h-[220px] md:w-[220px]"
+            aria-hidden="true"
           >
-            {message}
-          </p>
-          {codeEntry ? (
-            <form className="thingy-signin-form thingy-signin-code mt-3" onSubmit={submitCode}>
-              <label className="text-[11px] font-bold tracking-wider text-muted uppercase" htmlFor="thingy-signin-code">
-                Sign-in code
+            <img
+              className="size-[136px] select-none md:size-[220px]"
+              src="/img/thingy.png"
+              alt=""
+              width="1022"
+              height="1022"
+              loading="eager"
+              draggable={false}
+            />
+          </div>
+          {inboxBubble ? (
+            <span
+              className="absolute top-[18px] right-[calc(50%+36px)] z-[2] -rotate-3 rounded-[16px_16px_5px_16px] border-2 border-ink bg-paper px-3 py-[7px] text-[14px] font-extrabold whitespace-nowrap shadow-[3px_3px_0_var(--thingy-ink)] md:top-[-150px] md:right-auto md:left-[calc(50%+96px)] md:rotate-3 md:rounded-[20px_20px_20px_6px] md:px-[18px] md:py-3 md:text-[17px] md:shadow-[4px_4px_0_var(--thingy-ink)]"
+              aria-hidden="true"
+            >
+              Check your inbox!
+            </span>
+          ) : null}
+          <section
+            className="relative z-[1] flex flex-col gap-4 rounded-[22px] border-2 border-ink bg-paper px-5 py-[22px] shadow-[0_6px_0_var(--thingy-ink)] md:gap-5 md:rounded-[24px] md:px-11 md:pt-10 md:pb-9"
+            aria-labelledby="thingy-signin-title"
+          >
+            <div className="flex flex-col gap-1.5 md:gap-2.5">
+              <p className="font-mono text-[12px] font-semibold tracking-[0.16em] text-meta uppercase md:text-[13px]">
+                Come on in
+              </p>
+              <h1
+                className="thingy-display text-[34px] leading-[1.02] tracking-[-0.025em] md:text-[46px] md:leading-none"
+                id="thingy-signin-title"
+              >
+                Sign in to Thingy
+              </h1>
+              <p className="mt-1 text-[16px] leading-normal text-[#3d4654] md:text-[17px] md:leading-[1.55]">
+                {standalone
+                  ? 'Enter your email address and Thingy will email you a six-digit sign-in code. Weekly Thing readers can use Chat, and supporting members get the deeper features.'
+                  : 'Enter your email address and Thingy will send a private sign-in link. Weekly Thing readers can use Chat, and supporting members get the deeper features.'}
+              </p>
+            </div>
+            <form className="thingy-signin-form flex flex-col gap-2" onSubmit={handleSubmit}>
+              <label className="thingy-field-label mb-0" htmlFor="thingy-signin-email">
+                Email address
               </label>
-              <div className="mt-1 flex gap-2">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <input
-                  className="w-full min-w-0 rounded-xl border border-line bg-bg px-3.5 py-2.5 font-mono text-[15px] tracking-[0.2em] text-ink outline-none placeholder:font-sans placeholder:tracking-normal placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent-soft"
-                  id="thingy-signin-code"
-                  name="one-time-code"
-                  type="text"
-                  autoComplete="one-time-code"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={6}
-                  placeholder="123456"
-                  autoFocus
-                  value={code}
-                  onChange={(event) => setCode(event.currentTarget.value)}
+                  className="thingy-input min-h-[52px] min-w-0 flex-1 rounded-[14px] px-4"
+                  id="thingy-signin-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  inputMode="email"
+                  required
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(event) => setEmail(event.currentTarget.value)}
                 />
-                <button
-                  type="submit"
-                  className="shrink-0 rounded-xl bg-accent-deep px-4 py-2.5 text-[14px] font-bold text-bg hover:brightness-110 disabled:opacity-50"
-                  disabled={busy || code.replace(/[^0-9]/g, '').length !== 6}
-                >
-                  Sign In
+                <button type="submit" className="thingy-btn thingy-btn-primary min-h-[52px] shrink-0" disabled={busy}>
+                  Email Me a Code
                 </button>
               </div>
             </form>
-          ) : null}
-          <div className="mt-2 flex gap-2" hidden={!secondary}>
-            {secondary === 'subscribe' ? (
-              <button
-                type="button"
-                className="rounded-xl border border-line bg-surface px-3.5 py-2 text-[13.5px] font-bold text-ink hover:border-accent hover:bg-accent-soft disabled:opacity-50"
-                disabled={busy}
-                onClick={() => void requestMagicLink('subscribe')}
+            <div className="empty:sr-only" data-kind={messageKind} aria-live="polite">
+              {message ? <SignInStatus kind={messageKind} text={message} /> : null}
+            </div>
+            {codeEntry ? (
+              <form
+                className="thingy-signin-form thingy-signin-code flex flex-col gap-2.5 border-t-2 border-dashed border-rule pt-[18px]"
+                onSubmit={submitCode}
               >
-                Add Me to The Weekly Thing
-              </button>
+                <label className="thingy-field-label mb-0" htmlFor="thingy-signin-code">
+                  Sign-in code
+                </label>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <input
+                    className="thingy-input min-h-[52px] min-w-0 flex-1 rounded-[14px] px-4 font-mono text-[20px] font-semibold tracking-[0.2em] placeholder:font-sans placeholder:text-base placeholder:font-normal placeholder:tracking-normal"
+                    id="thingy-signin-code"
+                    name="one-time-code"
+                    type="text"
+                    autoComplete="one-time-code"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    placeholder="123456"
+                    autoFocus
+                    value={code}
+                    onChange={(event) => setCode(event.currentTarget.value)}
+                  />
+                  <button
+                    type="submit"
+                    className="thingy-btn thingy-btn-primary min-h-[52px] shrink-0 px-[30px]"
+                    disabled={busy || code.replace(/[^0-9]/g, '').length !== 6}
+                  >
+                    Sign In
+                  </button>
+                </div>
+              </form>
             ) : null}
-            {secondary === 'resend' ? (
-              <button
-                type="button"
-                className="rounded-xl border border-line bg-surface px-3.5 py-2 text-[13.5px] font-bold text-ink hover:border-accent hover:bg-accent-soft disabled:opacity-50"
-                disabled={busy}
-                onClick={() => void requestMagicLink('resend_confirmation')}
-              >
-                Resend Confirmation
-              </button>
-            ) : null}
-          </div>
+            <div className="flex flex-wrap gap-3" hidden={!secondary}>
+              {secondary === 'subscribe' ? (
+                <button
+                  type="button"
+                  className="thingy-btn thingy-btn-secondary"
+                  disabled={busy}
+                  onClick={() => void requestMagicLink('subscribe')}
+                >
+                  Add Me to The Weekly Thing
+                </button>
+              ) : null}
+              {secondary === 'resend' ? (
+                <button
+                  type="button"
+                  className="thingy-btn thingy-btn-secondary"
+                  disabled={busy}
+                  onClick={() => void requestMagicLink('resend_confirmation')}
+                >
+                  Resend Confirmation
+                </button>
+              ) : null}
+            </div>
+          </section>
         </div>
       </div>
     </main>
+  );
+}
+
+// The status line in its four real kinds: error (danger box), success
+// (mint box with a tick), pending (the three thinking dots) and notice
+// (paper with a clay edge).
+function SignInStatus({ kind, text }: { kind: string; text: string }) {
+  if (kind === 'pending') {
+    return (
+      <p className="flex items-center gap-3 px-1 py-3 text-[15px] leading-[1.45] font-semibold text-[#3d4654]">
+        <span className="thingy-dots inline-flex shrink-0 gap-[5px]" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </span>
+        <span>{text}</span>
+      </p>
+    );
+  }
+  if (kind === 'notice') {
+    return (
+      <p className="rounded-[6px_14px_14px_6px] border-[1.5px] border-l-[6px] border-rule border-l-clay bg-paper py-3 pr-4 pl-[18px] text-[15px] leading-[1.45] font-semibold text-ink">
+        {text}
+      </p>
+    );
+  }
+  const error = kind === 'error';
+  return (
+    <p
+      className={`flex items-start gap-2.5 rounded-[14px] border-2 px-4 py-3 text-[15px] leading-[1.45] font-semibold ${
+        error ? 'border-danger bg-danger-tint text-danger' : 'border-[#2e6b34] bg-[#e3f6e0] text-[#2e6b34]'
+      }`}
+    >
+      <svg
+        className="mt-px size-5 shrink-0"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={error ? 2.2 : 2.4}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        {error ? (
+          <>
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v6" />
+            <path d="M12 16.5v.5" />
+          </>
+        ) : (
+          <path d="m5 12.5 4.5 4.5L19 7.5" />
+        )}
+      </svg>
+      <span>{text}</span>
+    </p>
   );
 }
