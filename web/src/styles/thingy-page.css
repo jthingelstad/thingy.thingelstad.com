@@ -1,46 +1,61 @@
-/* Content-page layout on the site's design tokens (thingy-base.css). */
+/* Content-page prose layout on the Felt & Tangerine tokens
+   (thingy-base.css). Since phase 4 only /connect/reference/ uses it; the
+   other static pages are laid out in thingy-static.css and their own
+   sheets. */
 .thingy-page {
   max-width: 44rem;
   margin: 0 auto;
   padding: 3rem 1.25rem 5rem;
-  line-height: 1.55;
-}
-
-.thingy-page img.mark {
-  display: block;
-  width: 110px;
-  height: 110px;
-  margin: 0 auto 12px;
+  line-height: 1.6;
+  color: var(--thingy-body);
 }
 
 .thingy-page h1 {
-  text-align: center;
-  font-size: 2rem;
-  margin: 0 0 0.4rem;
+  margin: 0 0 0.6rem;
+  color: var(--thingy-ink);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 800;
+  font-stretch: 112%;
+  font-size: clamp(36px, 5vw, 56px);
+  line-height: 1;
+  letter-spacing: var(--thingy-display-tracking);
 }
 
 .thingy-page .lede {
-  text-align: center;
-  color: var(--thingy-text-soft);
   margin: 0 0 2.2rem;
+  color: var(--thingy-body);
+  font-size: 1.15rem;
 }
 
 .thingy-page h2 {
-  font-size: 1.2rem;
-  margin: 2.2rem 0 0.6rem;
+  margin: 2.4rem 0 0.7rem;
+  color: var(--thingy-ink);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 800;
+  font-stretch: 112%;
+  font-size: 1.6rem;
+  letter-spacing: var(--thingy-display-tracking);
 }
 
 .thingy-page h3 {
-  font-size: 1.02rem;
   margin: 1.4rem 0 0.4rem;
+  color: var(--thingy-ink);
+  font-size: 1.1rem;
+}
+
+.thingy-page p {
+  margin: 0 0 0.9rem;
 }
 
 .thingy-page code,
 .thingy-page pre {
   font-family: var(--font-mono);
-  font-size: 0.88em;
-  background: var(--thingy-code-bg, rgb(0 0 0 / 6%));
-  border-radius: 5px;
+  font-size: 0.86em;
+  background: var(--thingy-toy-cream);
+  color: var(--thingy-ink);
+  border-radius: 6px;
 }
 
 .thingy-page code {
@@ -49,36 +64,56 @@
 }
 
 .thingy-page pre {
-  padding: 0.8rem 1rem;
+  margin: 0.8rem 0;
+  padding: 0.9rem 1rem;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 12px;
   overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .thingy-page .card {
-  background: var(--thingy-surface, rgb(0 0 0 / 3%));
-  border: 1px solid var(--thingy-border, rgb(0 0 0 / 12%));
-  border-radius: 12px;
-  padding: 1rem 1.2rem;
   margin: 0.8rem 0;
+  padding: 1rem 1.2rem;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 16px;
+  background: var(--thingy-paper);
+  box-shadow: 0 4px 0 var(--thingy-ink);
+}
+
+.thingy-page ul,
+.thingy-page ol {
+  padding-left: 1.2rem;
 }
 
 .thingy-page ul {
-  padding-left: 1.2rem;
+  list-style: disc;
+}
+
+.thingy-page ol {
+  list-style: decimal;
 }
 
 .thingy-page li {
   margin-bottom: 0.35rem;
 }
 
-/* Classless links only: content prose gets the accent, while any link
-   that carries a class is a component and keeps its own colors. This is
-   the structural fix for the invisible share-button bug - a bare
-   `.thingy-page a` out-specified component color rules. */
+/* Classless links only: content prose gets clay, while any link that
+   carries a class is a component and keeps its own colours. This is the
+   structural fix for the invisible share-button bug - a bare
+   `.thingy-page a` out-specified component colour rules. */
 .thingy-page a:not([class]) {
-  color: var(--thingy-accent);
+  color: var(--thingy-clay);
+}
+
+.thingy-page a:not([class]):hover {
+  color: var(--thingy-clay-hover);
 }
 
 .thingy-page table {
   width: 100%;
+  margin: 0.8rem 0;
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
 }
@@ -86,127 +121,102 @@
 .thingy-page th,
 .thingy-page td {
   text-align: left;
-  padding: 0.35rem 0.8rem 0.35rem 0;
-  border-bottom: 1px solid var(--thingy-border, rgb(0 0 0 / 12%));
+  padding: 0.45rem 0.8rem 0.45rem 0;
+  border-bottom: 1px dashed var(--thingy-rule);
+}
+
+.thingy-page th {
+  border-bottom: 2px solid var(--thingy-ink);
 }
 
 .thingy-page footer {
   text-align: center;
   margin-top: 3rem;
-  font-size: 0.9rem;
-  color: var(--thingy-text-muted);
+  font-size: 0.95rem;
+  color: var(--thingy-meta);
 }
 
-/* Stat tiles and owner cards for the About page. */
-.thingy-page .stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
-  gap: 0.7rem;
-  margin: 1rem 0 1.4rem;
-}
-
-.thingy-page .stat {
-  background: var(--thingy-surface);
-  border: 1px solid var(--thingy-border);
-  border-radius: 12px;
-  padding: 0.9rem 1rem;
-  text-align: center;
-}
-
-.thingy-page .stat b {
-  display: block;
-  font-size: 1.45rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--thingy-accent);
-}
-
-.thingy-page .stat span {
-  font-size: 0.82rem;
-  color: var(--thingy-text-muted);
-}
-
-.thingy-page .owner {
-  display: flex;
-  gap: 0.9rem;
-  align-items: baseline;
-}
-
-.thingy-page .owner b {
-  white-space: nowrap;
-}
-
-.thingy-page .owner .cadence {
-  margin-left: auto;
-  font-size: 0.8rem;
-  color: var(--thingy-text-muted);
-  white-space: nowrap;
-}
-
-.thingy-page .flow {
-  font-family: var(--font-mono);
-  font-size: 0.82rem;
-  color: var(--thingy-text-soft);
-  overflow-x: auto;
-  white-space: nowrap;
-  padding: 0.6rem 0;
-}
-
-/* Top navigation for static content pages - the way back out. */
+/* Top navigation: the compact one-row header the share page (/c/) uses,
+   exactly 57px tall (44px targets + 6px padding + 1px rule) because
+   ShareApp sizes its shell as calc(100dvh - 57px). The static pages add
+   .is-site for the full board header (thingy-static.css). */
 .thingy-page-nav {
-  max-width: 44rem;
-  margin: 0 auto;
-  padding: 0.9rem 1.25rem 0;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 12px;
+  width: 100%;
+  height: 57px;
+  margin: 0 auto;
+  padding: 6px max(16px, calc((100% - 1136px) / 2));
+  border-bottom: 1px solid var(--thingy-rule);
+  background: var(--thingy-cream);
 }
 
 .thingy-page-nav .brand {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  font-weight: 700;
-  color: var(--thingy-text);
+  gap: 8px;
+  min-height: 44px;
+  color: var(--thingy-ink);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 800;
+  font-stretch: 112%;
+  font-size: 22px;
+  letter-spacing: -0.01em;
   text-decoration: none;
+}
+
+.thingy-page-nav .brand:hover {
+  color: var(--thingy-ink);
 }
 
 .thingy-page-nav .brand img {
-  width: 26px;
-  height: 26px;
+  width: 34px;
+  height: 34px;
+  border-radius: 0;
 }
 
 .thingy-page-nav nav {
-  margin-left: auto;
   display: flex;
-  gap: 1rem;
+  align-items: center;
+  margin-left: auto;
 }
 
 .thingy-page-nav nav a {
-  color: var(--thingy-text-soft);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 10px;
+  color: var(--thingy-ink);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 16px;
   text-decoration: none;
-  font-size: 0.95rem;
 }
 
 .thingy-page-nav nav a:hover {
-  color: var(--thingy-accent);
+  color: var(--thingy-clay);
 }
 
 .thingy-page-nav nav a[aria-current='page'],
 .thingy-page-nav nav a[aria-current='location'] {
-  color: var(--thingy-accent);
-  font-weight: 600;
+  text-decoration: underline 3px var(--thingy-tangerine);
+  text-underline-offset: 8px;
 }
 
-.thingy-page-nav ~ .thingy-page {
-  padding-top: 2rem;
+@media (width <= 22.5rem) {
+  .thingy-page-nav nav a {
+    padding: 0 6px;
+  }
 }
 
 /* The MCP reference (/connect/reference/): wider measure for parameter
-   tables, which scroll inside their own box on narrow screens so the page
-   itself never scrolls sideways. Body markup is generated at build time
+   tables. Code blocks and tables wrap rather than scroll: a scroll box
+   needs keyboard focus (axe scrollable-region-focusable) and the generated
+   markup carries no tabindex. .table-scroll stays as the overflow guard. Body markup is generated at build time
    (vite.mcp-reference.ts). */
-.thingy-page.is-reference,
-.thingy-page-nav.is-reference {
+.thingy-page.is-reference {
   max-width: 58rem;
 }
 
@@ -215,21 +225,23 @@
 }
 
 .thingy-page .crumbs {
-  text-align: center;
-  font-size: 0.88rem;
-  color: var(--thingy-text-muted);
   margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--thingy-meta);
 }
 
 .thingy-page .ref-meta {
-  text-align: center;
-  font-size: 0.88rem;
-  color: var(--thingy-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--thingy-meta);
   margin: -1.4rem 0 2rem;
 }
 
 .thingy-page .muted {
-  color: var(--thingy-text-muted);
+  color: var(--thingy-meta);
 }
 
 .thingy-page .table-scroll {
@@ -244,19 +256,19 @@
 }
 
 .thingy-page .table-scroll th {
-  white-space: nowrap;
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--thingy-text-muted);
+  color: var(--thingy-meta);
 }
 
 .thingy-page .table-scroll td {
   vertical-align: top;
+  overflow-wrap: anywhere;
 }
 
 .thingy-page table.params {
-  min-width: 40rem;
+  min-width: min(40rem, 100%);
 }
 
 .thingy-page table.params td:first-child,
@@ -277,13 +289,14 @@
   display: inline-block;
   font-size: 0.72rem;
   font-weight: 600;
-  color: var(--thingy-accent);
+  color: var(--thingy-clay);
 }
 
 .thingy-page .ref-toc {
-  background: var(--thingy-surface);
-  border: 1px solid var(--thingy-border);
-  border-radius: 12px;
+  background: var(--thingy-paper);
+  border: 2px solid var(--thingy-ink);
+  border-radius: 16px;
+  box-shadow: 0 4px 0 var(--thingy-ink);
   padding: 0.6rem 1.2rem 0.8rem;
   margin: 0 0 1rem;
 }
@@ -318,16 +331,17 @@
 }
 
 .thingy-page .group-title {
-  font-size: 1.35rem;
-  margin-top: 2.6rem;
-  padding-top: 0.6rem;
-  border-top: 1px solid var(--thingy-border);
+  font-size: 1.7rem;
+  margin-top: 2.8rem;
+  padding-top: 0.8rem;
+  border-top: 2px dashed var(--thingy-rule);
 }
 
 .thingy-page .tool {
-  background: var(--thingy-surface);
-  border: 1px solid var(--thingy-border);
-  border-radius: 12px;
+  background: var(--thingy-paper);
+  border: 2px solid var(--thingy-ink);
+  border-radius: 16px;
+  box-shadow: 0 4px 0 var(--thingy-ink);
   padding: 0.2rem 1.2rem 0.8rem;
   margin: 1rem 0;
   scroll-margin-top: 1rem;
@@ -342,20 +356,21 @@
 }
 
 .thingy-page .tool h4 {
-  font-size: 0.82rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--thingy-text-muted);
+  letter-spacing: 0.12em;
+  color: var(--thingy-meta);
   margin: 1rem 0 0.3rem;
 }
 
 .thingy-page .tool .anchor {
-  color: var(--thingy-text);
+  color: var(--thingy-ink);
   text-decoration: none;
 }
 
 .thingy-page .tool .anchor:hover {
-  color: var(--thingy-accent);
+  color: var(--thingy-clay);
 }
 
 .thingy-page .tool-name {
@@ -371,30 +386,33 @@
 }
 
 .thingy-page .badge {
-  font-size: 0.74rem;
-  padding: 0.1rem 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.1rem 0.55rem;
   border-radius: 999px;
-  border: 1px solid var(--thingy-border);
-  color: var(--thingy-text-soft);
+  border: 1.5px solid var(--thingy-ink);
+  background: var(--thingy-paper);
+  color: var(--thingy-ink);
   white-space: nowrap;
 }
 
 .thingy-page .badge.is-door {
-  background: var(--thingy-accent-soft);
-  border-color: transparent;
-  color: var(--thingy-text);
+  background: var(--thingy-toy-cream);
 }
 
 .thingy-page .badge.is-warn {
-  border-color: var(--thingy-accent);
-  color: var(--thingy-accent);
+  background: var(--thingy-clay-tint);
+  border-color: var(--thingy-clay-hover);
+  color: var(--thingy-clay-hover);
 }
 
 .thingy-page .note {
-  font-size: 0.9rem;
-  border-left: 3px solid var(--thingy-accent);
-  padding-left: 0.7rem;
-  color: var(--thingy-text-soft);
+  font-size: 0.92rem;
+  padding: 0.6rem 0.9rem;
+  border: 2px dashed var(--thingy-rule);
+  border-radius: 12px;
+  color: var(--thingy-body);
 }
 
 .thingy-page .fields {
@@ -402,7 +420,7 @@
 }
 
 .thingy-page .fields .type {
-  color: var(--thingy-text-muted);
+  color: var(--thingy-meta);
   font-size: 0.85em;
 }
 
@@ -411,9 +429,17 @@
 }
 
 .thingy-page summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
   cursor: pointer;
-  color: var(--thingy-accent);
-  font-size: 0.92rem;
+  color: var(--thingy-clay);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.thingy-page summary:hover {
+  color: var(--thingy-clay-hover);
 }
 
 .thingy-page details pre {
@@ -426,8 +452,9 @@
 .thingy-page section > blockquote {
   margin: 0.6rem 0;
   padding: 0.2rem 0 0.2rem 0.9rem;
-  border-left: 3px solid var(--thingy-border);
-  color: var(--thingy-text-soft);
+  border-left: 3px solid var(--thingy-brass);
+  color: var(--thingy-body);
+  font-style: normal;
   font-size: 0.93rem;
 }
 
@@ -457,19 +484,20 @@
 
 .thingy-page .doors-figure .door,
 .thingy-page .doors-figure .flow-step {
-  background: var(--thingy-surface);
-  border: 1px solid var(--thingy-border);
-  border-radius: 12px;
+  background: var(--thingy-paper);
+  border: 2px solid var(--thingy-ink);
+  border-radius: 16px;
+  box-shadow: 0 4px 0 var(--thingy-ink);
   padding: 0.7rem 0.9rem;
   text-align: center;
   font-size: 0.86rem;
-  color: var(--thingy-text-soft);
+  color: var(--thingy-body);
 }
 
 .thingy-page .doors-figure .door b,
 .thingy-page .doors-figure .flow-step b {
   display: block;
-  color: var(--thingy-text);
+  color: var(--thingy-ink);
   font-size: 0.98rem;
 }
 
@@ -490,20 +518,29 @@
   top: -1.45rem;
   left: 50%;
   transform: translateX(-50%);
-  color: var(--thingy-accent);
+  color: var(--thingy-clay);
   font-size: 1.1rem;
   line-height: 1;
 }
 
 .thingy-page .doors-figure .flow-step.is-core {
-  background: var(--thingy-accent-soft);
-  border-color: var(--thingy-accent);
+  background-color: var(--thingy-tangerine);
+  background-image: radial-gradient(var(--thingy-polka) 1.6px, transparent 2px);
+  background-size: 10px 10px;
+  color: var(--thingy-on-tangerine);
+}
+
+.thingy-page .doors-figure .flow-step.is-core b,
+.thingy-page .doors-figure .flow-step.is-core span {
+  padding: 0 4px;
+  background: var(--thingy-tangerine);
+  color: var(--thingy-on-tangerine);
 }
 
 .thingy-page .doors-figure figcaption {
   margin-top: 0.8rem;
   font-size: 0.86rem;
-  color: var(--thingy-text-muted);
+  color: var(--thingy-meta);
   text-align: center;
 }
 
@@ -525,7 +562,7 @@
   .thingy-page table.params tr {
     display: block;
     padding: 0.5rem 0;
-    border-bottom: 1px solid var(--thingy-border);
+    border-bottom: 1px dashed var(--thingy-rule);
   }
 
   .thingy-page table.params td {
@@ -543,7 +580,7 @@
 
   .thingy-page table.params td:nth-child(3) {
     font-size: 0.85rem;
-    color: var(--thingy-text-muted);
+    color: var(--thingy-meta);
   }
 
   .thingy-page .tool {
