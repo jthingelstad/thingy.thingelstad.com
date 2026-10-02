@@ -553,23 +553,36 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
             ) : null}
             {guest ? (
               <aside
-                className="thingy-guest-banner mx-auto mt-3 flex w-[min(48rem,calc(100%-2rem))] flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/40 bg-accent-soft px-4 py-2.5 text-[14px] text-ink"
+                className="thingy-guest-banner mx-3.5 mt-1 flex overflow-hidden rounded-[14px] border-2 border-ink bg-paper text-ink md:mx-auto md:mt-3 md:w-[min(760px,calc(100%-3rem))] md:rounded-2xl md:shadow-[4px_4px_0_var(--thingy-ink)]"
                 aria-label="Guest preview"
               >
-                <span>
-                  {guestRemaining === 0
-                    ? "You've used today's guest questions."
-                    : typeof guestRemaining === 'number'
-                      ? `Guest preview — ${guestRemaining} question${guestRemaining === 1 ? '' : 's'} left today.`
-                      : 'Guest preview — ask a few questions, no account needed.'}
+                <span
+                  className="thingy-polka w-[18px] shrink-0 border-r-2 border-dashed border-ink"
+                  aria-hidden="true"
+                />
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-3.5 py-2.5 text-[14px] leading-snug md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-4 md:px-4 md:text-[15px]">
+                  <span>
+                    {guestRemaining === 0 ? (
+                      "You've used today's guest questions."
+                    ) : typeof guestRemaining === 'number' ? (
+                      <>
+                        <strong>Guest preview</strong> — {guestRemaining} question{guestRemaining === 1 ? '' : 's'} left
+                        today.
+                      </>
+                    ) : (
+                      <>
+                        <strong>Guest preview</strong> — ask a few questions, no account needed.
+                      </>
+                    )}
+                  </span>
+                  <a
+                    className="inline-flex min-h-11 items-center font-extrabold text-clay underline underline-offset-2 hover:text-[#8a3410] md:min-h-0"
+                    href={session.signInUrl('/chat/')}
+                    data-tinylytics-event="librarian.guest_signin_click"
+                  >
+                    Sign in free for more
+                  </a>
                 </span>
-                <a
-                  className="font-bold text-accent-deep underline underline-offset-2"
-                  href={session.signInUrl('/chat/')}
-                  data-tinylytics-event="librarian.guest_signin_click"
-                >
-                  Sign in free for more
-                </a>
               </aside>
             ) : null}
             <ThreadHost

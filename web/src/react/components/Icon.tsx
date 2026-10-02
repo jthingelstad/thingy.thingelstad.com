@@ -5,6 +5,7 @@
 import {
   ArrowDown,
   ArrowLeft,
+  ArrowRight,
   ArrowUp,
   Check,
   ChevronDown,
@@ -19,6 +20,7 @@ import {
   RotateCcw,
   Search,
   Share2,
+  Shuffle,
   Square,
   SquarePen,
   ThumbsDown,
@@ -32,6 +34,7 @@ import {
 const ICONS: Record<string, LucideIcon> = {
   'arrow-down': ArrowDown,
   'arrow-left': ArrowLeft,
+  'arrow-right': ArrowRight,
   'arrow-up': ArrowUp,
   check: Check,
   'chevron-down': ChevronDown,
@@ -46,6 +49,7 @@ const ICONS: Record<string, LucideIcon> = {
   'rotate-ccw': RotateCcw,
   search: Search,
   share: Share2,
+  shuffle: Shuffle,
   square: Square,
   'square-pen': SquarePen,
   'thumbs-down': ThumbsDown,

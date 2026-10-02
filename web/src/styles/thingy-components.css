@@ -181,6 +181,16 @@ textarea.thingy-input {
   box-shadow: var(--thingy-shadow-card);
 }
 
+/* ---- The ticket strip ----
+   Tangerine with cream polka dots: the guest-preview tag in the
+   composer and the edge of the guest, reader and owner banners. */
+
+.thingy-polka {
+  background-color: var(--thingy-tangerine);
+  background-image: radial-gradient(#fff4e0 1.6px, transparent 2px);
+  background-size: 10px 10px;
+}
+
 /* ---- The navy rail ----
    The cobalt focus ring is 2.97:1 on navy; the rail swaps in a light blue
    ring (7.15:1) for everything inside it, the search well included. */

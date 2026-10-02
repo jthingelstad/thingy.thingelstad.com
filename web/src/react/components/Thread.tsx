@@ -24,18 +24,19 @@ function SuggestionChips({ suggestions, pending = false }: { suggestions: string
   const [offset, setOffset] = useState(0);
   // DETERMINISTIC GEOMETRY (mis-click fix, live QA): one truncated
   // single-line row per chip, so skeletons, shuffled sets, and loaded
-  // chips all occupy exactly the same three rows. Pills are content-width
-  // but each sits centered on its own row.
+  // chips all occupy exactly the same three rows. Desktop pills are
+  // content-width and centered on their own row; on a phone they are
+  // full-width cards (Felt & Tangerine, MobileGuest board).
   const CHIP =
-    'inline-block max-w-full truncate rounded-full border px-4 py-1.5 text-center text-[14.5px] leading-snug';
+    'inline-flex min-h-12 w-full max-w-full items-center justify-between gap-3 rounded-2xl border-2 px-4 text-left text-[15px] leading-snug font-semibold sm:w-auto sm:justify-center sm:rounded-full sm:px-5 sm:text-center sm:text-[15.5px]';
   if (!suggestions.length) {
     // Skeletons only while a welcome request is actually in flight; a
     // seeded prompt never fetches suggestions (R3-03).
     if (!pending) return null;
     return (
-      <div className="flex flex-col items-center gap-2" aria-hidden="true">
-        {['w-64', 'w-52', 'w-72'].map((width) => (
-          <span key={width} className={`${CHIP} ${width} animate-pulse border-line-soft bg-surface-2 select-none`}>
+      <div className="flex flex-col items-center gap-2 sm:gap-2.5" aria-hidden="true">
+        {['sm:w-80', 'sm:w-64', 'sm:w-96'].map((width) => (
+          <span key={width} className={`${CHIP} ${width} animate-pulse border-rule bg-toy select-none`}>
             &nbsp;
           </span>
         ))}
@@ -45,29 +46,30 @@ function SuggestionChips({ suggestions, pending = false }: { suggestions: string
   const visible = [0, 1, 2].map((slot) => suggestions[(offset + slot) % suggestions.length]).filter(Boolean);
   const shuffleable = suggestions.length > 3;
   return (
-    <div className="flex flex-col items-center gap-2" aria-label="Suggested questions">
+    <div className="flex flex-col items-center gap-2 sm:gap-2.5" aria-label="Suggested questions">
       {visible.map((suggestion, index) => (
         <button
           key={suggestion}
           type="button"
           title={suggestion}
-          className={`thingy-aui-suggestion ${CHIP} border-line-soft bg-surface text-ink-soft transition-colors hover:border-accent hover:bg-accent-soft hover:text-ink`}
+          className={`thingy-aui-suggestion ${CHIP} border-ink bg-paper text-ink transition-colors hover:border-tangerine hover:bg-[#ffe6d3] [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-clay`}
           onClick={() => {
             trackEvent('librarian.welcome_suggestion', String(index + 1));
             aui.composer.setText(suggestion);
             aui.composer.send();
           }}
         >
-          {suggestion}
+          <span className="min-w-0 truncate">{suggestion}</span>
+          <Icon name="arrow-right" />
         </button>
       ))}
       {shuffleable ? (
         <button
           type="button"
-          className="thingy-aui-shuffle mt-0.5 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] text-muted transition-colors hover:bg-surface-2 hover:text-ink-soft [&_svg]:size-3.5"
+          className="thingy-aui-shuffle inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-[13.5px] font-semibold text-quiet transition-colors hover:bg-toy hover:text-ink [&_svg]:size-[15px]"
           onClick={() => setOffset((value) => (value + 3) % suggestions.length)}
         >
-          <Icon name="rotate-ccw" />
+          <Icon name="shuffle" />
           Different ideas
         </button>
       ) : null}
@@ -127,26 +129,32 @@ function Thread({
         <div className="librarian-messages mx-auto w-full max-w-3xl px-4 pt-6 pb-2">
           <ThreadPrimitive.Empty>
             {welcome ? (
-              <div className="thingy-aui-empty flex flex-col gap-5 pt-6 sm:pt-10">
-                {/* Claude-style empty state: the mark, one short display
-                    line, chips as invitations. Composed client-side at
-                    mount and never swapped (4.10). */}
-                <img
-                  className="thingy-empty-pop mx-auto size-28 select-none sm:size-32"
-                  src="/img/thingy.png"
-                  alt=""
-                  width="1022"
-                  height="1022"
-                  loading="eager"
-                  draggable={false}
-                />
-                <div className="thingy-aui-greeting flex flex-col gap-1.5 text-center">
-                  <p className="text-[26px] leading-snug font-extrabold tracking-tight text-balance text-ink sm:text-[30px]">
-                    {welcome}
-                  </p>
-                  {welcomeSubtext ? (
-                    <p className="text-[15.5px] leading-relaxed text-ink-soft">{welcomeSubtext}</p>
-                  ) : null}
+              <div className="thingy-aui-empty flex flex-col gap-5 pt-2 sm:gap-7 sm:pt-6">
+                {/* The mascot with the greeting in its speech bubble, chips
+                    as invitations. The greeting is composed client-side at
+                    mount and never swapped (4.10). Beside each other on a
+                    wide screen, stacked on a phone. */}
+                <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center sm:gap-2">
+                  <div className="relative size-[150px] shrink-0 sm:size-[190px]" aria-hidden="true">
+                    <span className="absolute bottom-1 left-5 h-3.5 w-[110px] rounded-[50%] bg-[#e4d6b6] sm:bottom-1.5 sm:left-[22px] sm:h-[18px] sm:w-[150px]" />
+                    <img
+                      className="absolute inset-0 size-full select-none"
+                      src="/img/thingy.png"
+                      alt=""
+                      width="1022"
+                      height="1022"
+                      loading="eager"
+                      draggable={false}
+                    />
+                  </div>
+                  <div className="thingy-aui-greeting flex max-w-[400px] flex-col gap-2 text-center sm:text-left">
+                    <p className="thingy-display rounded-[20px] border-2 border-ink bg-paper px-[18px] py-3.5 text-[25px] leading-[1.1] text-balance text-ink shadow-[4px_4px_0_var(--thingy-ink)] sm:rounded-[22px_22px_22px_6px] sm:px-[22px] sm:py-[18px] sm:text-[30px]">
+                      {welcome}
+                    </p>
+                    {welcomeSubtext ? (
+                      <p className="px-2 text-[15.5px] leading-normal text-[#3e4a63]">{welcomeSubtext}</p>
+                    ) : null}
+                  </div>
                 </div>
                 <SuggestionChips suggestions={suggestions} pending={suggestionsPending} />
               </div>
@@ -158,11 +166,11 @@ function Thread({
             // outside ThreadPrimitive.Empty - aui does not show Empty
             // while the history adapter's load is in flight.
             <div className="thingy-history-skeleton flex flex-col gap-5 pt-2" aria-hidden="true">
-              <div className="ml-auto h-10 w-3/5 animate-pulse rounded-2xl bg-surface-2" />
+              <div className="ml-auto h-11 w-3/5 animate-pulse rounded-[22px_22px_6px_22px] bg-toy" />
               <div className="flex flex-col gap-2.5">
-                <div className="h-4 w-full animate-pulse rounded-md bg-surface-2" />
-                <div className="h-4 w-11/12 animate-pulse rounded-md bg-surface-2" />
-                <div className="h-4 w-4/6 animate-pulse rounded-md bg-surface-2" />
+                <div className="h-4 w-full animate-pulse rounded-md bg-toy" />
+                <div className="h-4 w-11/12 animate-pulse rounded-md bg-toy" />
+                <div className="h-4 w-4/6 animate-pulse rounded-md bg-toy" />
               </div>
             </div>
           ) : null}
@@ -172,7 +180,7 @@ function Thread({
         <ThreadPrimitive.ScrollToBottom asChild>
           <button
             type="button"
-            className="sticky bottom-3.5 left-1/2 z-10 grid size-9 -translate-x-1/2 place-items-center rounded-full border border-line bg-surface text-ink shadow-md transition-colors hover:border-accent disabled:hidden [&_svg]:size-4"
+            className="sticky bottom-3.5 left-1/2 z-10 grid size-11 -translate-x-1/2 place-items-center rounded-full border-2 border-ink bg-paper text-ink shadow-[0_3px_0_var(--thingy-ink)] transition-colors hover:bg-toy disabled:hidden [&_svg]:size-5"
             aria-label="Jump to latest"
           >
             <Icon name="arrow-down" />
