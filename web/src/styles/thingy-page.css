@@ -212,9 +212,8 @@
 }
 
 /* The MCP reference (/connect/reference/): wider measure for parameter
-   tables. Code blocks and tables wrap rather than scroll: a scroll box
-   needs keyboard focus (axe scrollable-region-focusable) and the generated
-   markup carries no tabindex. .table-scroll stays as the overflow guard. Body markup is generated at build time
+   tables. Code blocks and cells wrap where possible; table overflow guards
+   are keyboard focusable so narrow screens can scroll every column. Body markup is generated at build time
    (vite.mcp-reference.ts). */
 .thingy-page.is-reference {
   max-width: 58rem;
@@ -250,9 +249,19 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.thingy-page .table-scroll:focus-visible {
+  outline: 3px solid var(--thingy-focus);
+  outline-offset: 3px;
+}
+
 .thingy-page .table-scroll table {
   margin: 0;
   font-size: 0.9rem;
+}
+
+/* Six budget columns need a readable measure; swipe or use arrow keys on phones. */
+.thingy-page table.doors-summary {
+  min-width: 40rem;
 }
 
 .thingy-page .table-scroll th {

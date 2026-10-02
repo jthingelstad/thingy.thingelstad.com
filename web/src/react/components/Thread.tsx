@@ -22,14 +22,15 @@ import { Icon } from './Icon.tsx';
 function SuggestionChips({ suggestions, pending = false }: { suggestions: string[]; pending?: boolean }) {
   const aui = useAui();
   const [offset, setOffset] = useState(0);
+  const pool = [...new Set(suggestions.filter(Boolean))];
   // DETERMINISTIC GEOMETRY (mis-click fix, live QA): one truncated
   // single-line row per chip, so skeletons, shuffled sets, and loaded
-  // chips all occupy exactly the same three rows. Desktop pills are
+  // chips keep stable row heights, with up to three distinct questions. Desktop pills are
   // content-width and centered on their own row; on a phone they are
   // full-width cards (Felt & Tangerine, MobileGuest board).
   const CHIP =
     'inline-flex min-h-12 w-full max-w-full items-center justify-between gap-3 rounded-2xl border-2 px-4 text-left text-[15px] leading-snug font-semibold sm:w-auto sm:justify-center sm:rounded-full sm:px-5 sm:text-center sm:text-[15.5px]';
-  if (!suggestions.length) {
+  if (!pool.length) {
     // Skeletons only while a welcome request is actually in flight; a
     // seeded prompt never fetches suggestions (R3-03).
     if (!pending) return null;
@@ -43,8 +44,8 @@ function SuggestionChips({ suggestions, pending = false }: { suggestions: string
       </div>
     );
   }
-  const visible = [0, 1, 2].map((slot) => suggestions[(offset + slot) % suggestions.length]).filter(Boolean);
-  const shuffleable = suggestions.length > 3;
+  const visible = Array.from({ length: Math.min(3, pool.length) }, (_, slot) => pool[(offset + slot) % pool.length]);
+  const shuffleable = pool.length > 3;
   return (
     <div className="flex flex-col items-center gap-2 sm:gap-2.5" aria-label="Suggested questions">
       {visible.map((suggestion, index) => (
@@ -67,7 +68,7 @@ function SuggestionChips({ suggestions, pending = false }: { suggestions: string
         <button
           type="button"
           className="thingy-aui-shuffle inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-[13.5px] font-semibold text-quiet transition-colors hover:bg-toy hover:text-ink [&_svg]:size-[15px]"
-          onClick={() => setOffset((value) => (value + 3) % suggestions.length)}
+          onClick={() => setOffset((value) => (value + 3) % pool.length)}
         >
           <Icon name="shuffle" />
           Different ideas

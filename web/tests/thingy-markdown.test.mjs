@@ -77,6 +77,14 @@ test('archive-relative links resolve to the newsletter site', () => {
   assert.match(html, /href="https:\/\/weekly\.thingelstad\.com\/archive\/153\/"/);
 });
 
+test('FAQ citations link to the newsletter and use its source label', () => {
+  assert.equal(thingyUrlTransform('/faq/'), 'https://weekly.thingelstad.com/faq/');
+  const html = render('[The Basics](/faq/#the-basics)', [{ source_kind: 'faq', url: '/faq/', subject: 'The Basics' }]);
+  assert.match(html, /href="https:\/\/weekly\.thingelstad\.com\/faq\/#the-basics"/);
+  assert.match(html, /thingy-cite-weekly/);
+  assert.equal(thingyUrlTransform('/faq-other/'), '/faq-other/');
+});
+
 test('unsafe schemes are stripped', () => {
   // oxlint-disable-next-line no-script-url
   const html = render('A [link](javascript:alert(1)).');

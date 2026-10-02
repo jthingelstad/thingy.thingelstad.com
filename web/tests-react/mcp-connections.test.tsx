@@ -1,6 +1,7 @@
 import { afterEach, expect, test, vi } from 'vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 
 const postJson = vi.fn();
 vi.mock('../src/shared/thingy-session.ts', () => ({
@@ -39,6 +40,26 @@ const claude = {
   connected_at: '2026-09-28T12:00:00Z',
   call_count: 3
 };
+
+test('closing the request log returns keyboard focus to its opening control', async () => {
+  const user = userEvent.setup();
+  postJson.mockResolvedValue({ entries: [], retention_days: 45 });
+  function LogHarness() {
+    const [open, setOpen] = useState(false);
+    return (
+      <>
+        <button onClick={() => setOpen(true)}>View MCP request log</button>
+        {open ? <McpLogDialog connections={[]} onClose={() => setOpen(false)} /> : null}
+      </>
+    );
+  }
+  render(<LogHarness />);
+  const opener = screen.getByRole('button', { name: 'View MCP request log' });
+  await user.click(opener);
+  await screen.findByText('No MCP requests in this window.');
+  await user.click(screen.getByRole('button', { name: 'Close MCP request log' }));
+  await waitFor(() => expect(document.activeElement).toBe(opener));
+});
 
 test('lists connections and disconnects one after confirmation', async () => {
   const user = userEvent.setup();

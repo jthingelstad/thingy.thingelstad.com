@@ -249,7 +249,7 @@ function parameterTable(tool: Tool, names: string[]) {
         </tr>`
     )
     .join('');
-  return `<div class="table-scroll"><table class="params">
+  return `<div class="table-scroll" tabindex="0"><table class="params">
         <thead><tr><th>Parameter</th><th>Type</th><th>Constraints</th><th>Description</th></tr></thead>
         <tbody>${rows}</tbody>
       </table></div>`;
@@ -368,7 +368,7 @@ function doorsTable(surface: McpSurface) {
       </tr>`
     )
     .join('');
-  return `<div class="table-scroll"><table>
+  return `<div class="table-scroll" tabindex="0" role="region" aria-label="Access and budgets by connection"><table class="doors-summary">
       <thead><tr><th>Door</th><th>Who</th><th>Tools</th><th>Daily budget</th><th>Per hour</th><th>Result cap</th></tr></thead>
       <tbody>${body}</tbody>
     </table></div>`;
@@ -423,7 +423,7 @@ function connecting(surface: McpSurface) {
       <li>The client opens <code>${escapeHtml(oauth.metadata.authorization_endpoint)}</code> with PKCE (${oauth.metadata.code_challenge_methods_supported.map(code).join(', ')} only). ${escapeHtml(oauth.sign_in)} Then the reader approves the ${oauth.metadata.scopes_supported.map(code).join(', ')} scope, and the redirect carries the RFC 9207 <code>iss</code> parameter.</li>
       <li>The client trades the code at <code>${escapeHtml(oauth.metadata.token_endpoint)}</code> (grants ${oauth.metadata.grant_types_supported.map(code).join(', ')}) and sends the access token as <code>Authorization: Bearer</code> on every <code>/mcp</code> request.</li>
     </ol>
-    <div class="table-scroll"><table>
+    <div class="table-scroll" tabindex="0"><table>
       <thead><tr><th>Credential</th><th>Lifetime</th></tr></thead>
       <tbody>
         <tr><td>Access token</td><td>${duration(life.access_token)}</td></tr>
@@ -444,7 +444,7 @@ function connecting(surface: McpSurface) {
     <p>Each approved client is one <em>connection</em>: one refresh token family, named by the client's registered name. Signed in to Thingy, <b>Profile &gt; MCP connections</b> lists them with when each was connected and last used. <b>Disconnect</b> revokes the family, and the access token stops working on its next request rather than when it expires. Every tool call through <code>/mcp</code> or the WebMCP page tools is recorded against the reader with the connection that made it, its arguments, status, duration and result size; <b>View MCP request log</b> shows the reader's own calls for as long as they are kept.</p>
     <h3 id="quotas">Budgets and rate limits</h3>
     <p>Each reader has a daily budget per door, and an hourly rate limit that smooths bursts. ${escapeHtml(rules.pools)} ${escapeHtml(rules.reset)} Supporting Members get ${rules.supporting_member_multiplier}&times; the daily budget.</p>
-    <div class="table-scroll"><table>
+    <div class="table-scroll" tabindex="0"><table>
       <thead><tr><th>Door</th><th>Daily budget</th><th>Per hour</th></tr></thead>
       <tbody>
         <tr><td>MCP (tool calls and resource reads)</td><td>${quotaText(doors.mcp)}</td><td>${number(doors.mcp.hourly_rate_limit)}</td></tr>
@@ -507,18 +507,18 @@ function conventions(surface: McpSurface, names: string[]) {
   "hint": "Cut to fit ${surface.limits.result_max_chars} characters at 20 results; call again with offset 20 for the rest."
 }</pre>
     <p>The outside doors cap a result at ${number(surface.limits.result_max_chars)} characters. The cut is structural, so the JSON always parses: whole items come off the end of the largest list first (results are ranked, so the weakest go), then the longest text is clipped. When the paged list is the one cut, <code>next_offset</code> moves back to the first item cut, so paging stays exact. A result that cannot fit even then is a <code>too_large</code> error naming the arguments to narrow.</p>
-    <div class="table-scroll"><table><thead><tr><th>Tool</th><th>Paged list</th></tr></thead><tbody>${paged}</tbody></table></div>
+    <div class="table-scroll" tabindex="0"><table><thead><tr><th>Tool</th><th>Paged list</th></tr></thead><tbody>${paged}</tbody></table></div>
 
     <h3 id="structured">Typed results</h3>
     <p>Every tool declares an <code>outputSchema</code>, and a successful call carries the result twice: as <code>structuredContent</code> for clients that read it, and as compact JSON text in <code>content</code> for those that do not. Every tool is annotated <code>readOnlyHint: true</code>; <code>openWorldHint</code> is true only for ${openWorld.map(link).join(' and ')}, the tools that reach the live web.</p>
 
     <h3 id="errors">Errors</h3>
     <p>A tool that cannot answer returns a normal result with <code>isError: true</code>, one <code>code</code> from a closed set, and one <code>next</code> step the agent can act on. Error results carry no <code>structuredContent</code>.</p>
-    <div class="table-scroll"><table><thead><tr><th>code</th><th>next</th></tr></thead><tbody>${codes}</tbody></table></div>
+    <div class="table-scroll" tabindex="0"><table><thead><tr><th>code</th><th>next</th></tr></thead><tbody>${codes}</tbody></table></div>
     <p id="validation">Arguments are validated against the declared schema before any budget is spent. Every schema says <code>additionalProperties: false</code>, and the validator means it: an undeclared argument, a value outside its enum or range, text past its length, an inverted <code>year_range</code>, or <code>year</code> and <code>year_range</code> together is a <code>bad_request</code> that names every problem and lists the accepted arguments. Scalars are accepted in either spelling a client might send (<code>"12"</code> for <code>12</code>).</p>
     <pre>${escapeHtml(JSON.stringify(surface.errors.invalid_arguments_example, null, 2))}</pre>
     <p>Protocol-level failures are JSON-RPC errors:</p>
-    <div class="table-scroll"><table><thead><tr><th>code</th><th>HTTP</th><th>When</th><th>Message</th></tr></thead><tbody>${rpc}</tbody></table></div>
+    <div class="table-scroll" tabindex="0"><table><thead><tr><th>code</th><th>HTTP</th><th>When</th><th>Message</th></tr></thead><tbody>${rpc}</tbody></table></div>
 
     <h3 id="voice">Voice</h3>
     <p>A Weekly Thing passage mixes Jamie&rsquo;s commentary with quotations from the linked author and link titles. Every passage is tagged by voice, and ${voiceTools.map(link).join(', ')} take <code>voice</code>: ${code('jamie')} keeps only Jamie&rsquo;s own words, ${code('quoted')} the passages Jamie quoted, ${code('link')} the headline link titles. Passages are cut to that voice before ranking. Thingy&rsquo;s own bylined blocks in recent issues never enter the archive at all.</p>
@@ -528,7 +528,7 @@ function conventions(surface: McpSurface, names: string[]) {
 
     <h3 id="retired">Retired tools</h3>
     <p>A client holding an old <code>tools/list</code> may still call a tool that was folded into another. It gets an error result that names the replacement, not <code>Unknown tool</code>:</p>
-    <div class="table-scroll"><table><thead><tr><th>Retired</th><th>Answer</th></tr></thead><tbody>${retired}</tbody></table></div>
+    <div class="table-scroll" tabindex="0"><table><thead><tr><th>Retired</th><th>Answer</th></tr></thead><tbody>${retired}</tbody></table></div>
   </section>`;
 }
 
@@ -560,7 +560,7 @@ function resourcesSection(surface: McpSurface, names: string[]) {
   return `<section id="resources">
     <h2>Resources</h2>
     <p>Clients that support resources can attach a source as context without a tool round trip. Every read goes through the same tools (so a resource and a tool call never disagree) and costs ${escapeHtml(surface.resources.quota)}. A resource is one fixed page; for more, its result names the tool call to make.</p>
-    <div class="table-scroll"><table><thead><tr><th>URI template</th><th>Title</th><th>Type</th><th>Description</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="table-scroll" tabindex="0"><table><thead><tr><th>URI template</th><th>Title</th><th>Type</th><th>Description</th></tr></thead><tbody>${rows}</tbody></table></div>
     ${
       list
         ? `<p><code>resources/list</code> offers the newest Weekly Thing issues, read through ${linkTools(list.tool, names)} with <code>${escapeHtml(JSON.stringify(list.arguments))}</code>. The catalogue changes weekly, and a stateless server cannot notify, so clients re-list on connect.</p>`

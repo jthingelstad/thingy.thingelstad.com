@@ -130,6 +130,7 @@ declare module '@tanstack/react-router' {
   }
 }
 
+let handingOffSignIn = false;
 if (loginToken || emailParam) {
   const path = window.location.pathname;
   if (path.startsWith('/chat')) {
@@ -140,11 +141,17 @@ if (loginToken || emailParam) {
     if (loginToken) target.searchParams.set('login_token', loginToken);
     if (emailParam) target.searchParams.set('email', emailParam);
     target.searchParams.set('return', '/chat/');
+    handingOffSignIn = true;
     window.location.replace(target.toString());
   }
 }
 
-const host = document.getElementById('thingy-app');
-if (host) createRoot(host).render(<RouterProvider router={router} />);
-loadTinylytics();
-void bootWebMcp();
+// WebKit can cancel the pending redirect when the URL scrub calls
+// replaceState. Let the sign-in landing capture and scrub its own params;
+// do not mount a guest chat or load analytics during the handoff.
+if (!handingOffSignIn) {
+  const host = document.getElementById('thingy-app');
+  if (host) createRoot(host).render(<RouterProvider router={router} />);
+  loadTinylytics();
+  void bootWebMcp();
+}

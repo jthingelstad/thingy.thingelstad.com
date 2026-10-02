@@ -32,7 +32,7 @@ export type CitationKind = 'weekly' | 'blog' | 'podcast';
 export function citationKind(citation: ThingyCitation): CitationKind {
   if (String(citation.issue_number || '').trim()) return 'weekly';
   const kind = String(citation.source_kind || '').toLowerCase();
-  if (kind.startsWith('weekly')) return 'weekly';
+  if (kind.startsWith('weekly') || kind === 'faq' || kind === 'site_page') return 'weekly';
   if (/podcast|episode/.test(kind)) return 'podcast';
   return 'blog';
 }
@@ -40,7 +40,7 @@ export function citationKind(citation: ThingyCitation): CitationKind {
 // The comparable form of a link target: archive paths resolved, host
 // without www, path without trailing slash, no scheme, query or hash.
 export function citationUrlKey(url: string): string {
-  const resolved = /^\/archive\//i.test(url) ? `https://weekly.thingelstad.com${url}` : url;
+  const resolved = thingyUrlTransform(url);
   try {
     const parsed = new URL(resolved);
     if (!/^https?:$/.test(parsed.protocol)) return '';
@@ -135,10 +135,10 @@ export function remarkWtCitations(map: Map<string, ThingyCitation>, kinds: Map<s
 }
 
 // Same policy as the retired hand-rolled parser: http(s)/mailto pass,
-// /archive/ paths resolve against the newsletter site, other relatives
+// /archive/ and /faq paths resolve against the newsletter site, other relatives
 // stay, the rest die.
 export function thingyUrlTransform(url: string) {
-  if (/^\/archive\//i.test(url)) return `https://weekly.thingelstad.com${url}`;
+  if (/^\/(?:archive\/|faq(?:[/?#]|$))/i.test(url)) return `https://weekly.thingelstad.com${url}`;
   const safe = defaultUrlTransform(url);
   return safe || '';
 }

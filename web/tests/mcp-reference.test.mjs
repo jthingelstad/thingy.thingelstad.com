@@ -14,6 +14,12 @@ const webRoot = fileURLToPath(new URL('..', import.meta.url));
 const surface = loadMcpSurface(webRoot);
 const html = renderMcpReference(surface);
 
+test('reference table overflow is reachable by keyboard', () => {
+  const wrappers = [...html.matchAll(/<div class="table-scroll"[^>]*>/g)];
+  assert.ok(wrappers.length > 0);
+  for (const [wrapper] of wrappers) assert.match(wrapper, /tabindex="0"/);
+});
+
 test('the vendored MCP surface matches its checksum', async () => {
   const text = await readFile(new URL('../contracts/mcp-surface.json', import.meta.url), 'utf8');
   assert.equal(JSON.parse(text).artifact, 'librarian-mcp-surface');

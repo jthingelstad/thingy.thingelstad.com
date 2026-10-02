@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 
 let chromium;
 let webkit;
@@ -115,7 +114,8 @@ async function routeMockApi(page, { holdWelcome = false } = {}) {
                   publish_date: '2023-01-01T11:00:00Z',
                   section: 'Issue',
                   url: '/archive/200/'
-                }
+                },
+                { source_kind: 'faq', url: '/faq/', subject: 'The Basics' }
               ],
               duration_ms: 4200,
               total_tokens: 12345
@@ -157,7 +157,8 @@ async function routeMockApi(page, { holdWelcome = false } = {}) {
               publish_date: '2023-01-01T11:00:00Z',
               section: 'Issue',
               url: '/archive/200/'
-            }
+            },
+            { source_kind: 'faq', url: '/faq/', subject: 'The Basics' }
           ]
         }
       ],
@@ -287,11 +288,11 @@ async function checkSharePage(browser) {
   const context = await browser.newContext();
   const page = await context.newPage();
   const failures = collectUiFailures(page);
-  // Production rewrites /c/* to the share shell at the edge; the preview
-  // server has no such rule, so serve the built shell ourselves.
-  const shareShell = await readFile(new URL('../_site/c/index.html', import.meta.url), 'utf8');
+  // Mirror the production edge rewrite using the server under test. This
+  // preserves Vite dev modules and preview assets without a stale _site
+  // dependency, and keeps the document backed by a real network response.
   await page.route(`${baseUrl}/c/shr_smoketoken`, async (route) => {
-    await route.fulfill({ status: 200, contentType: 'text/html', body: shareShell });
+    await route.continue({ url: `${baseUrl}/c/` });
   });
   await page.route(`${apiHost}/share/shr_smoketoken`, async (route) => {
     await route.fulfill({
@@ -390,6 +391,7 @@ async function checkChat(browser) {
   // 4.10: the welcome response populates chips and caches greeting_lines
   // for the next open - it must NEVER swap the already-shown greeting.
   await page.waitForSelector('.thingy-aui-suggestion');
+  assert.equal(await page.locator('.thingy-aui-suggestion').count(), 1, 'one welcome suggestion renders only once');
   assert.match(await page.locator('.thingy-aui-suggestion').first().textContent(), /smoke-test thread/);
   assert.equal(
     await page.locator('.thingy-aui-greeting').textContent(),
@@ -413,6 +415,10 @@ async function checkChat(browser) {
   assert.equal(await wtAnswerLink.getAttribute('href'), 'https://weekly.thingelstad.com/archive/200/');
   await page.waitForSelector('.librarian-sources');
   assert.match(await page.locator('.librarian-sources').textContent(), /WT200/);
+  assert.ok(
+    await page.locator('.librarian-sources a[href="https://weekly.thingelstad.com/faq/"]').isVisible(),
+    'FAQ source cards point to the newsletter, not the Thingy host'
+  );
   await page.waitForSelector('.thingy-response-timer');
   assert.match(await page.locator('.thingy-response-timer').textContent(), /4s\s*· 12k tokens/);
 

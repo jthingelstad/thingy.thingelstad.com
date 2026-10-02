@@ -400,6 +400,9 @@ function McpClientSettingsCard({ client }: { client: LibrarianMcpRegisteredClien
 }
 
 export function McpLogDialog({ connections, onClose }: { connections: LibrarianMcpConnection[]; onClose: () => void }) {
+  // This controlled nested dialog has no Radix Trigger. Restore the
+  // Profile's opening control instead of dropping keyboard focus on body.
+  const [returnFocusTo] = useState(() => document.activeElement as HTMLElement | null);
   const [filter, setFilter] = useState('');
   const [entries, setEntries] = useState<LibrarianMcpLogEntry[]>([]);
   const [nextCursor, setNextCursor] = useState('');
@@ -435,6 +438,10 @@ export function McpLogDialog({ connections, onClose }: { connections: LibrarianM
           <Dialog.Content
             className={`thingy-mcp-log ${SHEET_CONTENT} max-h-[min(944px,calc(100vh-40px))] w-[min(45rem,100%)] gap-3 px-[26px] pt-[22px] pb-[22px] max-md:h-[calc(100dvh-1rem)] max-md:px-4 max-md:pb-0`}
             aria-describedby={undefined}
+            onCloseAutoFocus={(event) => {
+              event.preventDefault();
+              if (returnFocusTo?.isConnected) returnFocusTo.focus();
+            }}
           >
             <SheetGrab />
             <DialogHeader
