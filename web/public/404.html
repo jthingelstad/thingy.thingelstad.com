@@ -10,29 +10,101 @@
 <link rel="apple-touch-icon" href="/img/icons/apple-touch-icon.png">
 <meta name="theme-color" content="#f6eedc">
 <title>Not found - Thingy</title>
+<!-- public/ is copied raw (no Vite CSS), so the NotFound board's styles
+     live inline. Same tokens as thingy-base.css; no sites strip here. -->
 <style>
 :root { color-scheme: light;
-  --bg: #f6eedc; --surface: #fffaf0; --text: #1f2a38; --text-soft: #3d4654;
-  --accent: #b5461a; --accent-hover: #8a3410; --border: #1f2a38; }
-body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  background: var(--bg); color: var(--text);
+  --thingy-cream: #f6eedc; --thingy-paper: #fffaf0; --thingy-toy-cream: #efe3c8;
+  --thingy-ink: #1f2a38; --thingy-body: #3d4654; --thingy-clay: #b5461a; --thingy-clay-deep: #8a3410;
+  --thingy-brass: #c7a04e; --thingy-screen: #17191b; --thingy-bezel: #ebddbd;
+  --thingy-mint: #b9f0b1; --thingy-oops: #ffb98f; --thingy-focus: #1f6fd6; }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; min-height: 100dvh; display: flex; flex-direction: column; overflow-x: clip;
+  background: var(--thingy-cream); color: var(--thingy-ink);
   font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-.card { width: min(92vw, 24rem); background: var(--surface); border: 2px solid var(--border);
-  border-radius: 20px; box-shadow: 0 6px 0 var(--border); padding: 2rem; box-sizing: border-box; text-align: center; }
-img { width: 72px; height: 72px; }
-h1 { font-family: 'Archivo', 'Figtree', sans-serif; font-style: italic; font-weight: 800; font-stretch: 112%;
-  letter-spacing: -0.025em; font-size: 1.4rem; line-height: 1.15; margin: 0.75rem 0 0.5rem; }
-p { font-size: 1rem; line-height: 1.5; margin: 0.5rem 0 1rem; color: var(--text-soft); }
-a { color: var(--accent); }
-a:hover { color: var(--accent-hover); }
+a { color: var(--thingy-clay); font-weight: 700; }
+a:hover { color: var(--thingy-clay-deep); }
+a:focus-visible { outline: 3px solid var(--thingy-focus); outline-offset: 3px; }
+.nf-header, .nf-main { width: 100%; max-width: 1200px; margin: 0 auto; padding-inline: 32px; }
+.nf-header { padding-block: 24px; }
+.nf-home { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; color: var(--thingy-ink); text-decoration: none; }
+.nf-home:hover { color: var(--thingy-clay); }
+.nf-wordmark { font-family: 'Archivo', 'Figtree', sans-serif; font-style: italic; font-weight: 800; font-stretch: 112%; font-size: 27px; letter-spacing: -0.01em; }
+.thingy-face-animated .thingy-face-blink { transform-box: fill-box; transform-origin: center; animation: thingy-face-blink 4.5s infinite; }
+@keyframes thingy-face-blink { 0%, 92%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.15); } }
+.nf-main { flex-grow: 1; padding-bottom: 40px; display: grid; gap: 48px; align-items: center;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); }
+/* The illustration: the board's 500x640 box, kept whole at any width by
+   percentages and container units. */
+.nf-art { position: relative; width: 100%; max-width: 500px; aspect-ratio: 500 / 640; margin: 0 auto; container-type: inline-size; }
+.nf-art > * { position: absolute; }
+.nf-mascot { left: 26%; top: 0; width: 48%; height: auto; }
+.nf-cabinet { left: 8%; top: 29.06%; width: 84%; height: 40.63%; padding: 3.6cqw; display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.4cqw; background: var(--thingy-toy-cream);
+  border: 2px solid var(--thingy-ink); border-radius: 18px; box-shadow: 0 6px 0 var(--thingy-ink); }
+.nf-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4cqw;
+  background: var(--thingy-paper); border: 2px solid var(--thingy-ink); border-radius: 8px; }
+.nf-cell.is-empty { background: var(--thingy-ink); box-shadow: inset 0 10px 0 #10171f; }
+.nf-label { width: 11.6cqw; height: 4.4cqw; display: flex; flex-direction: column; justify-content: center; gap: 0.6cqw;
+  padding: 0 1.6cqw; border: 2px solid var(--thingy-brass); border-radius: 3px; }
+.nf-label i { display: block; height: 2px; background: #c9b994; }
+.nf-pull { width: 5.2cqw; height: 1.8cqw; border: 2.5px solid var(--thingy-ink); border-top: 0; border-radius: 0 0 14px 14px; background: var(--thingy-brass); }
+.nf-drawer { left: 33%; top: 56.56%; width: 34%; display: flex; flex-direction: column; }
+.nf-drawer svg { display: block; width: 100%; height: auto; margin-bottom: -4px; }
+.nf-drawer-front { aspect-ratio: 170 / 112; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4cqw;
+  background: var(--thingy-paper); border: 2px solid var(--thingy-ink); border-radius: 10px; box-shadow: 0 6px 0 var(--thingy-ink); }
+.nf-404 { min-width: 20.8cqw; padding: 0.8cqw 2.4cqw; text-align: center; background: var(--thingy-paper);
+  border: 3px solid var(--thingy-brass); border-radius: 4px; box-shadow: inset 0 0 0 2px var(--thingy-paper), inset 0 0 0 3px #e4d6b6;
+  font-family: 'Archivo', sans-serif; font-style: italic; font-weight: 800; font-stretch: 112%; font-size: 6.8cqw; line-height: 1.1; letter-spacing: -0.02em; }
+.nf-drawer-front .nf-pull { width: 7.6cqw; height: 2.6cqw; border-width: 3px; }
+.nf-shelf { left: 0; right: 0; top: 93.75%; margin: 0; text-align: center; font-family: 'JetBrains Mono', monospace;
+  font-size: min(13px, 2.6cqw); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #3d526b; }
+.nf-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 24px; max-width: 520px; }
+.nf-oops { display: block; filter: drop-shadow(0 6px 0 var(--thingy-ink)); }
+h1 { margin: 0; font-family: 'Archivo', 'Figtree', sans-serif; font-style: italic; font-weight: 800; font-stretch: 112%;
+  font-size: clamp(40px, 6vw, 64px); line-height: 0.98; letter-spacing: -0.025em; }
+p { margin: 0; font-size: 20px; line-height: 1.55; color: var(--thingy-body); }
+.nf-copy a { display: inline-block; min-height: 44px; line-height: 44px; margin-block: -10px; }
+@media (width <= 40rem) {
+  .nf-header, .nf-main { padding-inline: 16px; }
+  .nf-header { padding-block: 14px; }
+  .nf-main { gap: 28px; }
+  .nf-copy { gap: 18px; }
+  p { font-size: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .thingy-face-animated .thingy-face-blink { animation: none; }
+}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Figtree:wght@400..800&family=JetBrains+Mono:wght@400..700&family=Source+Sans+3:wght@400;600&display=swap">
 </head>
 <body>
-<div class="card">
-  <img src="/img/thingy.png" alt="Thingy">
-  <h1>That page is not in the archive</h1>
-  <p>Thingy looked, but nothing lives at this address. Try the <a href="/">home page</a> or <a href="/chat/">ask Thingy</a> where it went.</p>
-</div>
+<header class="nf-header">
+  <a class="nf-home" href="/" aria-label="Thingy home">
+    <svg class="thingy-face thingy-face-animated" width="44" height="35" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-ink)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><g fill="none" stroke="var(--thingy-mint)" stroke-width="4" stroke-linecap="round"><g class="thingy-face-blink"><path d="M27 42a9 9 0 0 1 18 0" /><path d="M71 42a9 9 0 0 1 18 0" /></g><path d="M45 50q13 14 26 0" /></g></svg>
+    <span class="nf-wordmark" aria-hidden="true">Thingy</span>
+  </a>
+</header>
+<main class="nf-main">
+  <div class="nf-art" role="img" aria-label="Thingy peeking over a library card catalog. The drawer labelled 404 is pulled out and empty.">
+    <img class="nf-mascot" src="/img/thingy.png" alt="" width="240" height="240">
+    <div class="nf-cabinet"><div class="nf-cell"><div class="nf-label"><i></i><i style="width:60%"></i></div><div class="nf-pull"></div></div><div class="nf-cell"><div class="nf-label"><i></i><i style="width:70%"></i></div><div class="nf-pull"></div></div><div class="nf-cell"><div class="nf-label"><i></i><i style="width:45%"></i></div><div class="nf-pull"></div></div><div class="nf-cell"><div class="nf-label"><i></i><i style="width:55%"></i></div><div class="nf-pull"></div></div><div class="nf-cell is-empty"></div><div class="nf-cell"><div class="nf-label"><i></i><i style="width:80%"></i></div><div class="nf-pull"></div></div></div>
+    <div class="nf-drawer">
+      <svg width="170" height="92" viewBox="0 0 170 92" fill="none" aria-hidden="true" focusable="false">
+        <path d="M16 3h138l13 86H3Z" fill="#E4D6B6" stroke="#1F2A38" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M34 18h102l7 58H27Z" fill="#D9C8A2" stroke="#7A6A45" stroke-width="2" stroke-dasharray="6 5" stroke-linejoin="round"/>
+        <path d="M78 30v14" stroke="#7A6A45" stroke-width="2" stroke-linecap="round"/>
+        <path d="M92 30v14" stroke="#7A6A45" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <div class="nf-drawer-front"><div class="nf-404">404</div><div class="nf-pull"></div></div>
+    </div>
+    <p class="nf-shelf">Shelf 404 &middot; Empty</p>
+  </div>
+  <div class="nf-copy">
+    <svg class="thingy-face nf-oops" width="110" height="86" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-ink)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><circle cx="40.5" cy="32" r="4.5" fill="var(--thingy-oops)" /><circle cx="75.5" cy="32" r="4.5" fill="var(--thingy-oops)" /><circle cx="58" cy="55.5" r="7" fill="none" stroke="var(--thingy-oops)" stroke-width="4" /></svg>
+    <h1>That page is not in the archive</h1>
+    <p>Thingy looked, but nothing lives at this address. Try the <a href="/">home page</a> or <a href="/chat/">ask Thingy</a> where it went.</p>
+  </div>
+</main>
 </body>
 </html>
