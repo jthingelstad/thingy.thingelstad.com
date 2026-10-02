@@ -18,7 +18,7 @@ export function HeaderTitle({
         {canRename ? (
           <button
             type="button"
-            className="max-w-full cursor-text truncate rounded-md px-1.5 py-0.5 font-sans text-[15px] font-bold text-ink hover:bg-surface-2"
+            className="min-h-11 max-w-full cursor-text truncate rounded-[10px] px-2.5 font-sans text-base font-bold text-ink hover:bg-toy"
             title="Rename conversation"
             onClick={() => {
               setDraft(title);
@@ -28,7 +28,7 @@ export function HeaderTitle({
             {title}
           </button>
         ) : (
-          <span className="truncate font-sans text-[15px] font-bold text-ink">{title}</span>
+          <span className="truncate px-2.5 font-sans text-base font-bold text-ink">{title}</span>
         )}
       </div>
     );
@@ -41,7 +41,7 @@ export function HeaderTitle({
   return (
     <div className="mobile-chatbar-title min-w-0 flex-1">
       <input
-        className="w-[min(420px,100%)] rounded-md border border-accent bg-surface px-1.5 py-0.5 font-sans text-[15px] font-bold text-ink outline-none"
+        className="min-h-11 w-[min(420px,100%)] rounded-[10px] border-2 border-ink bg-paper px-2.5 font-sans text-base font-bold text-ink outline-none focus:outline-3 focus:outline-offset-2 focus:outline-[var(--thingy-focus)]"
         type="text"
         aria-label="Conversation title"
         value={draft}

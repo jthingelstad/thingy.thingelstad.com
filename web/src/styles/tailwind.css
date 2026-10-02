@@ -44,6 +44,17 @@
   --color-danger-tint: var(--thingy-danger-tint);
   --color-success: var(--thingy-success);
   --color-success-tint: var(--thingy-success-tint);
+  --color-rail: var(--thingy-rail);
+  --color-rail-deep: var(--thingy-rail-deep);
+  --color-rail-raised: var(--thingy-rail-raised);
+  --color-rail-active: var(--thingy-rail-active);
+  --color-rail-text: var(--thingy-rail-text);
+  --color-rail-muted: var(--thingy-rail-muted);
+  --color-rail-icon: var(--thingy-rail-icon);
+  --color-rail-field: var(--thingy-rail-field);
+  --color-rail-field-border: var(--thingy-rail-field-border);
+  --color-rail-rule: var(--thingy-rail-rule);
+  --color-quiet: var(--thingy-quiet);
   --color-transparent: transparent;
   --color-current: currentcolor;
 

@@ -4,6 +4,7 @@ import { AccountPanel } from '../AccountPanel.tsx';
 import { Icon } from './Icon.tsx';
 import { Tip } from './Tip.tsx';
 import { HistoryStatus } from './HistoryStatus.tsx';
+import { ThingyFace } from './ThingyFace.tsx';
 
 export interface ConversationSummary {
   id: string;
@@ -41,8 +42,17 @@ function timeGroups(conversations: ConversationSummary[]) {
   return groups.filter((group) => group.entries.length);
 }
 
+// The navy rail (Felt & Tangerine): cream text on ink, mono group
+// eyebrows, 44px rows and row actions, the tangerine New chat pill.
+// Colours ride the --thingy-rail-* tokens (contrast notes in
+// thingy-base.css); .thingy-rail scopes the light focus ring.
 const RAIL_ICON_BUTTON =
-  'grid size-8 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-ink [&_svg]:size-4';
+  'grid size-11 shrink-0 place-items-center rounded-xl text-rail-icon transition-colors hover:bg-rail-raised hover:text-white [&_svg]:size-5';
+
+const RAIL_EYEBROW = 'px-3 font-mono text-[11px] font-semibold tracking-[0.14em] text-rail-muted uppercase';
+
+const ROW_ACTION =
+  'grid size-11 place-items-center rounded-xl text-rail-icon transition-colors hover:bg-rail-active hover:text-white [&_svg]:size-4';
 
 export function Rail({
   collapsed,
@@ -118,12 +128,12 @@ export function Rail({
   }, [conversations, filter, contentMatches]);
   return (
     <nav
-      className="rail thingy-aui-rail flex h-full min-h-0 w-[280px] flex-col overflow-hidden border-r border-line-soft bg-surface"
+      className="rail thingy-aui-rail thingy-rail flex h-full min-h-0 w-[288px] flex-col gap-3 overflow-hidden border-r-2 border-rail-deep bg-rail px-3 pt-3 pb-3.5 text-bg md:w-[280px] md:px-4 md:pt-5"
       aria-label="Conversations"
     >
-      <div className="flex items-center gap-2 px-3 pt-3 pb-2">
-        <img className="rail-mark size-9 rounded-xl" src="/img/thingy.png" alt="" width="1022" height="1022" />
-        <span className="flex-1 font-sans text-[15px] font-extrabold text-ink">Thingy</span>
+      <div className="flex items-center gap-3 pl-1">
+        <ThingyFace className="rail-mark" size={40} />
+        <span className="thingy-display flex-1 text-[22px] leading-none">Thingy</span>
         <Tip label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
           <button
             type="button"
@@ -135,56 +145,53 @@ export function Rail({
           </button>
         </Tip>
       </div>
-      <div className="px-3 pb-1.5">
-        <button
-          type="button"
-          className="thingy-aui-newchat flex w-full items-center gap-2 rounded-xl border border-line bg-bg px-3 py-2 font-sans text-sm font-bold text-ink transition-colors hover:border-accent hover:bg-accent-soft [&_svg]:size-4"
-          onClick={onNew}
-        >
-          <Icon name="square-pen" /> New chat
-        </button>
-      </div>
-      <div className="rail-body min-h-0 flex-1 overflow-y-auto px-2 pb-2">
-        {conversations.length > 0 ? (
-          <div className="mx-1 mt-1 mb-2 flex items-center gap-1.5 rounded-lg border border-line-soft bg-bg px-2.5 py-1.5 text-muted focus-within:border-accent [&_svg]:size-3.5 [&_svg]:shrink-0">
-            <Icon name="search" />
-            <input
-              ref={filterInputRef}
-              className="w-full min-w-0 bg-transparent font-sans text-[13px] text-ink outline-none placeholder:text-muted"
-              type="search"
-              placeholder="Search chats"
-              aria-label="Search conversations"
-              value={filter}
-              onChange={(event) => setFilter(event.currentTarget.value)}
-            />
-          </div>
-        ) : null}
+      <button
+        type="button"
+        className="thingy-aui-newchat thingy-btn thingy-btn-primary thingy-btn-on-rail w-full shrink-0 [&_svg]:size-[18px]"
+        onClick={onNew}
+      >
+        <Icon name="square-pen" /> New chat
+      </button>
+      {conversations.length > 0 ? (
+        <label className="thingy-rail-search flex min-h-11 shrink-0 items-center gap-2.5 rounded-xl border-2 border-rail-field-border bg-rail-raised px-3.5 text-rail-field [&_svg]:size-4 [&_svg]:shrink-0">
+          <Icon name="search" />
+          <input
+            ref={filterInputRef}
+            className="min-h-10 w-full min-w-0 bg-transparent font-sans text-base text-bg outline-none placeholder:text-rail-field"
+            type="search"
+            placeholder="Search chats"
+            aria-label="Search conversations"
+            value={filter}
+            onChange={(event) => setFilter(event.currentTarget.value)}
+          />
+        </label>
+      ) : null}
+      <div className="rail-body -mx-1 min-h-0 flex-1 overflow-y-auto px-1">
         {historyError ? (
-          <HistoryStatus error={historyError} retry={error ? onRetry : () => void searchQuery.refetch()} />
+          <HistoryStatus error={historyError} retry={error ? onRetry : () => void searchQuery.refetch()} onRail />
         ) : loading || searchPending ? (
-          <p role="status" className="px-2 pt-2 font-sans text-xs text-muted">
+          <p role="status" className={`${RAIL_EYEBROW} pt-2.5`}>
             Loading chats…
           </p>
         ) : groups.length === 0 && historyMatches.length === 0 ? (
-          <p className="px-2 pt-2 font-sans text-xs font-semibold tracking-wide text-muted uppercase">
-            {filter.trim() ? 'No matching chats' : 'No conversations yet.'}
-          </p>
+          <p className={`${RAIL_EYEBROW} pt-2.5`}>{filter.trim() ? 'No matching chats' : 'No conversations yet.'}</p>
         ) : null}
         {historyMatches.length ? (
           <div>
-            <p className="px-2 pt-3 pb-1 font-sans text-[11px] font-bold tracking-wider text-muted uppercase">
-              From your history
-            </p>
+            <p className={`${RAIL_EYEBROW} mt-2.5 mb-1`}>From your history</p>
             <ul className="grid min-w-0 gap-0.5">
               {historyMatches.map((match) => (
-                <li key={match.conversation_id} className="min-w-0 overflow-hidden rounded-lg hover:bg-surface-2">
+                <li
+                  key={match.conversation_id}
+                  className="min-w-0 overflow-hidden rounded-xl text-rail-text transition-colors hover:bg-rail-raised hover:text-white"
+                >
                   <button
                     type="button"
-                    className="block w-full truncate px-2.5 py-2 text-left font-sans text-[13.5px] text-ink"
+                    className="block min-h-11 w-full truncate px-3 py-2 text-left font-sans text-[15px]"
                     onClick={() => onSelect(match.conversation_id, match.title)}
                   >
                     <span className="block truncate">{match.title}</span>
-                    <span className="mt-0.5 block truncate text-[11.5px] text-muted">{match.snippet}</span>
+                    <span className="mt-0.5 block truncate text-[12px] text-rail-field">{match.snippet}</span>
                   </button>
                 </li>
               ))}
@@ -193,87 +200,97 @@ export function Rail({
         ) : null}
         {groups.map((group) => (
           <div key={group.label}>
-            <p className="px-2 pt-3 pb-1 font-sans text-[11px] font-bold tracking-wider text-muted uppercase">
-              {group.label}
-            </p>
+            <p className={`${RAIL_EYEBROW} mt-2.5 mb-1`}>{group.label}</p>
             <ul className="thingy-aui-recents grid min-w-0 gap-0.5">
-              {group.entries.map((entry) => (
-                <li
-                  key={entry.id}
-                  className={`group/row relative min-w-0 overflow-hidden rounded-lg transition-colors ${
-                    entry.id === activeId ? 'bg-accent-soft' : 'hover:bg-surface-2'
-                  }`}
-                >
-                  <button
-                    type="button"
-                    className="thingy-aui-recent block w-full truncate px-2.5 py-2 text-left font-sans text-[13.5px] text-ink"
-                    onClick={() => onSelect(entry.id, entry.title)}
+              {group.entries.map((entry) => {
+                const active = entry.id === activeId;
+                return (
+                  <li
+                    key={entry.id}
+                    className={`group/row relative min-w-0 overflow-hidden rounded-xl transition-colors ${
+                      active
+                        ? 'bg-rail-active font-bold text-white'
+                        : 'text-rail-text hover:bg-rail-raised hover:text-white'
+                    }`}
                   >
-                    <span className="flex items-center gap-1.5">
-                      <span className="min-w-0 flex-1 truncate">{entry.title}</span>
-                      {entry.shared_at ? (
-                        <span className="text-accent-deep [&_svg]:size-3" title="Shared" aria-label="Shared">
-                          <Icon name="share" />
+                    <button
+                      type="button"
+                      className="thingy-aui-recent block min-h-11 w-full truncate px-3 py-2.5 text-left font-sans text-[15px]"
+                      aria-current={active ? 'true' : undefined}
+                      onClick={() => onSelect(entry.id, entry.title)}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        {active ? (
+                          <span className="size-2 shrink-0 rounded-full bg-tangerine" aria-hidden="true" />
+                        ) : null}
+                        <span className="min-w-0 flex-1 truncate">{entry.title}</span>
+                        {entry.shared_at ? (
+                          <span
+                            className="shrink-0 text-[#f2a27a] [&_svg]:size-3.5"
+                            role="img"
+                            title="Shared"
+                            aria-label="Shared"
+                          >
+                            <Icon name="share" />
+                          </span>
+                        ) : null}
+                      </span>
+                      {filter.trim() && contentMatches.has(entry.id) ? (
+                        <span className="mt-0.5 block truncate text-[12px] font-normal text-rail-field">
+                          {contentMatches.get(entry.id)}
                         </span>
                       ) : null}
+                    </button>
+                    <span className="absolute inset-y-0 right-0 hidden items-center rounded-r-xl bg-inherit group-focus-within/row:flex group-hover/row:flex">
+                      <Tip label={entry.shared_at ? 'Refresh share link' : 'Share'}>
+                        <button
+                          type="button"
+                          className={ROW_ACTION}
+                          aria-label="Share"
+                          onClick={() => onShare(entry.id, Boolean(entry.shared_at))}
+                        >
+                          <Icon name="share" />
+                        </button>
+                      </Tip>
+                      <Tip label="Rename">
+                        <button
+                          type="button"
+                          className={ROW_ACTION}
+                          aria-label="Rename"
+                          onClick={() => onRename(entry.id, entry.title)}
+                        >
+                          <Icon name="pencil" />
+                        </button>
+                      </Tip>
+                      <Tip label="Delete">
+                        <button
+                          type="button"
+                          className={`${ROW_ACTION} hover:text-oops`}
+                          aria-label="Delete"
+                          onClick={() => onDelete(entry.id)}
+                        >
+                          <Icon name="trash" />
+                        </button>
+                      </Tip>
                     </span>
-                    {filter.trim() && contentMatches.has(entry.id) ? (
-                      <span className="mt-0.5 block truncate text-[11.5px] text-muted">
-                        {contentMatches.get(entry.id)}
-                      </span>
-                    ) : null}
-                  </button>
-                  <span className="absolute top-1/2 right-1 hidden -translate-y-1/2 items-center gap-0 rounded-md bg-inherit group-focus-within/row:flex group-hover/row:flex">
-                    <Tip label={entry.shared_at ? 'Refresh share link' : 'Share'}>
-                      <button
-                        type="button"
-                        className="grid size-7 place-items-center rounded-md text-muted hover:bg-surface hover:text-ink [&_svg]:size-3.5"
-                        aria-label="Share"
-                        onClick={() => onShare(entry.id, Boolean(entry.shared_at))}
-                      >
-                        <Icon name="share" />
-                      </button>
-                    </Tip>
-                    <Tip label="Rename">
-                      <button
-                        type="button"
-                        className="grid size-7 place-items-center rounded-md text-muted hover:bg-surface hover:text-ink [&_svg]:size-3.5"
-                        aria-label="Rename"
-                        onClick={() => onRename(entry.id, entry.title)}
-                      >
-                        <Icon name="pencil" />
-                      </button>
-                    </Tip>
-                    <Tip label="Delete">
-                      <button
-                        type="button"
-                        className="grid size-7 place-items-center rounded-md text-muted hover:bg-surface hover:text-error [&_svg]:size-3.5"
-                        aria-label="Delete"
-                        onClick={() => onDelete(entry.id)}
-                      >
-                        <Icon name="trash" />
-                      </button>
-                    </Tip>
-                  </span>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         ))}
       </div>
       {onOpenHistory ? (
-        <div className="px-2 pb-1">
-          <button
-            type="button"
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left font-sans text-[13px] font-bold text-muted transition-colors hover:bg-surface-2 hover:text-ink [&_svg]:size-4"
-            onClick={onOpenHistory}
-          >
-            <Icon name="messages-square" />
-            All chats{total ? ` · ${total}` : ''}
-          </button>
-        </div>
+        <button
+          type="button"
+          className="flex min-h-11 w-full shrink-0 items-center gap-2.5 rounded-xl px-3 text-left font-sans text-[15px] font-bold text-rail-icon transition-colors hover:bg-rail-raised hover:text-white [&_svg]:size-[18px]"
+          onClick={onOpenHistory}
+        >
+          <Icon name="messages-square" />
+          All chats{total ? ` · ${total}` : ''}
+        </button>
       ) : null}
-      <div className="border-t border-line-soft p-2">
+      <div className="shrink-0 border-t-2 border-dashed border-rail-rule pt-2.5">
         <AccountPanel />
       </div>
     </nav>

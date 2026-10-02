@@ -310,23 +310,23 @@ export function AccountPanel() {
       <Popover.Root open={open} onOpenChange={setOpen}>
         <Popover.Trigger asChild>
           <button
-            className="rail-account-btn flex w-full items-center gap-2.5 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-surface-2"
+            className="rail-account-btn flex min-h-14 w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-rail-raised"
             type="button"
             title="Account"
           >
             <span
-              className="grid size-8 shrink-0 place-items-center rounded-full bg-accent-deep font-sans text-sm font-extrabold text-bg"
+              className="grid size-[38px] shrink-0 place-items-center rounded-full border-2 border-rail-deep bg-mint font-sans text-base font-extrabold text-ink"
               aria-hidden="true"
             >
               {initial}
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate font-sans text-[13px] font-bold text-ink">{display || 'Signed in'}</span>
-              <span className="block truncate font-sans text-[11.5px] text-muted">
+              <span className="block truncate font-sans text-[15px] font-bold text-bg">{display || 'Signed in'}</span>
+              <span className="block truncate font-mono text-[11px] tracking-[0.04em] text-rail-field">
                 {supporting ? 'Supporting Member' : 'Weekly Thing reader'}
               </span>
             </span>
-            <span className="text-muted [&_svg]:size-4" aria-hidden="true">
+            <span className="text-rail-icon [&_svg]:size-4" aria-hidden="true">
               <Icon name="chevron-down" />
             </span>
           </button>

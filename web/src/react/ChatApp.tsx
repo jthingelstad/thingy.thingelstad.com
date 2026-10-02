@@ -17,6 +17,7 @@ import { ThreadHost } from './components/Thread.tsx';
 import { DialogHost } from './components/DialogHost.tsx';
 import { Tip, TipProvider } from './components/Tip.tsx';
 import { HeaderTitle } from './components/HeaderTitle.tsx';
+import { ThingyFace } from './components/ThingyFace.tsx';
 import { HistoryDialog, type HistoryMatch } from './components/HistoryDialog.tsx';
 
 export interface ChatInitial {
@@ -451,18 +452,22 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                 />
               </div>
               <div
-                className={`rail-scrim fixed inset-0 z-30 bg-black/35 md:hidden ${mobileRailOpen ? '' : 'hidden'}`}
+                className={`rail-scrim thingy-scrim fixed inset-0 z-30 md:hidden ${mobileRailOpen ? '' : 'hidden'}`}
                 aria-hidden="true"
                 onClick={() => setMobileRailOpen(false)}
               />
             </>
           )}
           <section className="thingy-conversation flex min-w-0 flex-1 flex-col">
-            <div className="mobile-chatbar flex h-14 shrink-0 items-center gap-2 border-b border-line-soft px-3">
+            <div
+              className={`mobile-chatbar flex h-[60px] shrink-0 items-center gap-1 pr-2 pl-1 md:h-16 md:gap-2 md:px-6 ${
+                activeId ? 'border-b-2 border-[#e8dcc0]' : ''
+              }`}
+            >
               {guest ? null : (
                 <button
                   type="button"
-                  className="mobile-chatbar-circle grid size-9 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-ink md:hidden [&_svg]:size-[18px]"
+                  className="mobile-chatbar-circle grid size-11 place-items-center rounded-xl text-ink transition-colors hover:bg-toy [&_svg]:size-[22px] md:hidden"
                   aria-label={mobileRailOpen ? 'Hide conversations' : 'Show conversations'}
                   aria-expanded={mobileRailOpen}
                   onClick={() => setMobileRailOpen(!mobileRailOpen)}
@@ -474,7 +479,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                 <Tip label="Expand sidebar">
                   <button
                     type="button"
-                    className="hidden size-9 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-ink md:grid [&_svg]:size-[18px]"
+                    className="hidden size-11 place-items-center rounded-xl text-ink transition-colors hover:bg-toy md:-ml-3 md:grid [&_svg]:size-[22px]"
                     aria-label="Expand sidebar"
                     onClick={() => setRailCollapsed(false)}
                   >
@@ -482,19 +487,26 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                   </button>
                 </Tip>
               ) : null}
-              <HeaderTitle
-                title={headerTitle}
-                canRename={Boolean(activeId)}
-                onRename={async (title) => {
-                  renameMutation.mutate({ id: activeId, title });
-                }}
-              />
+              {guest ? (
+                <div className="mobile-chatbar-title flex min-w-0 flex-1 items-center gap-2.5 pl-2 md:pl-0">
+                  <ThingyFace size={36} />
+                  <span className="thingy-display text-[21px] leading-none">Thingy</span>
+                </div>
+              ) : (
+                <HeaderTitle
+                  title={headerTitle}
+                  canRename={Boolean(activeId)}
+                  onRename={async (title) => {
+                    renameMutation.mutate({ id: activeId, title });
+                  }}
+                />
+              )}
               <div className="mobile-chatbar-actions ml-auto flex items-center gap-1">
                 {activeId ? (
                   <Tip label="Share conversation">
                     <button
                       type="button"
-                      className="mobile-chatbar-action grid size-9 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-ink [&_svg]:size-[18px]"
+                      className="mobile-chatbar-action inline-flex size-11 items-center justify-center gap-2 rounded-xl text-ink transition-colors hover:bg-toy md:w-auto md:rounded-full md:border-2 md:border-ink md:bg-paper md:px-4 md:text-sm md:font-bold [&_svg]:size-5 md:[&_svg]:size-4"
                       aria-label="Share conversation"
                       onClick={() => {
                         const entry = conversations.find((item) => item.id === activeId);
@@ -502,13 +514,23 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                       }}
                     >
                       <Icon name="share" />
+                      <span className="hidden md:inline">Share</span>
                     </button>
                   </Tip>
+                ) : null}
+                {guest ? (
+                  <a
+                    className="thingy-btn thingy-btn-compact min-h-11 px-4 text-sm shadow-[0_3px_0_var(--thingy-ink)]"
+                    href={session.signInUrl('/chat/')}
+                    data-tinylytics-event="librarian.guest_signin_click"
+                  >
+                    Sign in
+                  </a>
                 ) : null}
                 <Tip label="New chat">
                   <button
                     type="button"
-                    className="mobile-chatbar-action grid size-9 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-ink [&_svg]:size-[18px]"
+                    className="mobile-chatbar-action grid size-11 place-items-center rounded-xl text-ink transition-colors hover:bg-toy [&_svg]:size-5"
                     aria-label="New chat"
                     onClick={newConversation}
                   >

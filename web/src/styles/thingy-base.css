@@ -55,6 +55,23 @@
   --thingy-focus: var(--thingy-weekly);
   --thingy-scrim: rgb(31 42 56 / 55%);
 
+  /* The navy rail (chat sidebar and phone drawer): ink ground, cream
+     text. Contrast on the rail ground #1f2a38: text 11.7:1, muted 5.8:1,
+     icons 8.7:1, the search field's border 4.1:1. The cobalt focus ring
+     is too dark on navy, so the rail uses the light cobalt ring. */
+  --thingy-rail: var(--thingy-ink);
+  --thingy-rail-deep: #0f1628; /* borders and shadows on the rail */
+  --thingy-rail-raised: #2c3b5c; /* row hover, the search well */
+  --thingy-rail-active: #34466c; /* the open conversation's row */
+  --thingy-rail-text: #e3e7ef;
+  --thingy-rail-muted: #9aa4ba; /* mono eyebrows */
+  --thingy-rail-icon: #c2c9d8;
+  --thingy-rail-field: #aeb6c8; /* search icon, placeholder, meta */
+  --thingy-rail-field-border: #7a89a8;
+  --thingy-rail-rule: #4a587a; /* the dashed divider above the account */
+  --thingy-rail-focus: #8fb8f5;
+  --thingy-quiet: #4f5a72; /* quiet icon buttons on cream and paper */
+
   /* Semantic names (the screens use these through Tailwind). */
   --thingy-bg: var(--thingy-cream);
   --thingy-surface: var(--thingy-paper);

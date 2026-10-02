@@ -86,6 +86,21 @@
   background: var(--thingy-danger-tint);
 }
 
+/* On the navy rail the ink border and shadow vanish into the ground, so
+   the primary pill drops its shadow onto the deeper navy instead. */
+.thingy-btn-on-rail {
+  border-color: var(--thingy-rail-deep);
+  box-shadow: 0 4px 0 var(--thingy-rail-deep);
+}
+
+.thingy-btn-on-rail:hover:not(:disabled) {
+  box-shadow: 0 6px 0 var(--thingy-rail-deep);
+}
+
+.thingy-btn-on-rail:active:not(:disabled) {
+  box-shadow: 0 1px 0 var(--thingy-rail-deep);
+}
+
 /* Tighter rows (menus, inline forms) still keep the 44px target. */
 .thingy-btn-compact {
   min-height: 44px;
@@ -164,6 +179,19 @@ textarea.thingy-input {
   background: var(--thingy-paper);
   color: var(--thingy-ink);
   box-shadow: var(--thingy-shadow-card);
+}
+
+/* ---- The navy rail ----
+   The cobalt focus ring is 2.97:1 on navy; the rail swaps in a light blue
+   ring (7.15:1) for everything inside it, the search well included. */
+
+.thingy-rail :focus-visible {
+  outline-color: var(--thingy-rail-focus);
+}
+
+.thingy-rail-search:focus-within {
+  outline: 3px solid var(--thingy-rail-focus);
+  outline-offset: 2px;
 }
 
 /* ---- Modals (ThingyDialog and the other dialog shells) ---- */
