@@ -8,27 +8,84 @@
 }
 
 :root {
-  /* Colors */
-  --thingy-bg: #f6f8f5;
-  --thingy-surface: #fff;
-  --thingy-surface-2: #eef4f1;
-  --thingy-text: #17211f;
-  --thingy-text-soft: #3f4f4a;
-  --thingy-text-muted: #596a64;
-  --thingy-accent: #14776f;
-  --thingy-error: #b23a2a;
-  --thingy-accent-hover: #0b4f4a;
-  --thingy-accent-soft: #dcf3ef;
-  --thingy-audio-accent: #b86131;
-  --thingy-border: #dfe7e3;
-  --thingy-border-light: #edf2ef;
-  --thingy-highlight: #d6f2ea;
-  --thingy-code-bg: #eaf1ee;
-  --source-newsletter: #2f6fda;
-  --source-blog: #b86131;
-  --source-podcast: #3f7f63;
-  --shadow-subtle: 0 1px 2px rgb(23 33 31 / 5%);
-  --shadow-agent: 0 22px 70px -42px rgb(14 43 38 / 42%);
+  color-scheme: light;
+
+  /* Felt & Tangerine (2026-10-01): one look, no dark mode, no theme switch.
+     Raw palette first; the semantic names below map onto it so existing
+     screens restyle without renaming a single utility. */
+  --thingy-cream: #f6eedc; /* ground */
+  --thingy-paper: #fffaf0; /* surfaces, cards, dialogs */
+  --thingy-toy-cream: #efe3c8; /* sunken wells, icon tiles, code */
+  --thingy-rule: #c9b994; /* dashed rules and quiet dividers */
+  --thingy-rule-soft: #e2d5b6;
+  --thingy-ink: #1f2a38; /* headings, 2px borders, hard shadows */
+  --thingy-body: #3d4654; /* body copy */
+  --thingy-meta: #3d526b; /* mono eyebrows and meta */
+  --thingy-placeholder: #6a7389; /* on paper only (4.56:1) */
+  --thingy-tangerine: #e8672a; /* FILLS ONLY - text on it is navy */
+  --thingy-on-tangerine: #1b2540;
+  --thingy-clay: #b5461a; /* links */
+  --thingy-clay-hover: #8a3410;
+  --thingy-clay-tint: #fbe7dc;
+  --thingy-brass: #c7a04e;
+  --thingy-screen: #17191b; /* the mascot's face */
+  --thingy-bezel: #ebddbd;
+  --thingy-mint: #b9f0b1;
+  --thingy-oops: #ffb98f;
+  --thingy-polka: #fff4e0; /* polka dots on tangerine */
+
+  /* Family source colours: labels for citation chips and source cards,
+     never themes. */
+  --thingy-weekly: #1f6fd6;
+  --thingy-weekly-deep: #134d99;
+  --thingy-weekly-tint: #e6edfa;
+  --thingy-highlighter: #fff3a8;
+  --thingy-another: #354a5f;
+  --thingy-another-dot: #7c8b9c;
+  --thingy-another-red: #e84a30;
+  --thingy-blog: var(--thingy-clay);
+  --thingy-blog-tint: var(--thingy-clay-tint);
+
+  /* Status */
+  --thingy-danger: #b3261e;
+  --thingy-danger-tint: #fce8e6;
+  --thingy-on-danger: #fff;
+  --thingy-success: #2e6b34;
+  --thingy-success-tint: #e3f6e0;
+  --thingy-focus: var(--thingy-weekly);
+  --thingy-scrim: rgb(31 42 56 / 55%);
+
+  /* Semantic names (the screens use these through Tailwind). */
+  --thingy-bg: var(--thingy-cream);
+  --thingy-surface: var(--thingy-paper);
+  --thingy-surface-2: var(--thingy-toy-cream);
+  --thingy-text: var(--thingy-ink);
+  --thingy-text-soft: var(--thingy-body);
+  --thingy-text-muted: var(--thingy-meta);
+  --thingy-accent: var(--thingy-clay);
+  --thingy-accent-hover: var(--thingy-clay-hover);
+  --thingy-accent-soft: var(--thingy-clay-tint);
+  --thingy-error: var(--thingy-danger);
+  --thingy-border: var(--thingy-rule);
+  --thingy-border-light: var(--thingy-rule-soft);
+  --thingy-highlight: var(--thingy-highlighter);
+  --thingy-code-bg: var(--thingy-toy-cream);
+  --source-newsletter: var(--thingy-weekly);
+  --source-blog: var(--thingy-blog);
+  --source-podcast: var(--thingy-another);
+
+  /* Toy shadows: hard, offset, ink. No blur anywhere. */
+  --thingy-shadow-button: 0 4px 0 var(--thingy-ink);
+  --thingy-shadow-button-lift: 0 6px 0 var(--thingy-ink);
+  --thingy-shadow-button-press: 0 1px 0 var(--thingy-ink);
+  --thingy-shadow-card: 0 6px 0 var(--thingy-ink);
+  --thingy-shadow-modal: 8px 8px 0 var(--thingy-ink);
+  --shadow-subtle: 0 2px 0 var(--thingy-rule);
+
+  /* Radii */
+  --thingy-radius-input: 14px;
+  --thingy-radius-card: 20px;
+  --thingy-radius-modal: 24px;
 
   /* Design-token aliases (preferred for new rules) */
   --bg: var(--thingy-bg);
@@ -76,56 +133,6 @@
   --container-width: 48rem;
   --container-wide: 68rem;
   --sidebar-width: 14rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --thingy-bg: #101716;
-    --thingy-surface: #17211f;
-    --thingy-surface-2: #202c29;
-    --thingy-text: #eaf0ed;
-    --thingy-text-soft: #bcc8c3;
-    --thingy-text-muted: #899791;
-    --thingy-accent: #65c8bc;
-    --thingy-error: #e0705c;
-    --thingy-accent-hover: #8edbd2;
-    --thingy-accent-soft: rgb(101 200 188 / 16%);
-    --thingy-audio-accent: #d98a56;
-    --thingy-border: #2c3a36;
-    --thingy-border-light: #22302d;
-    --thingy-highlight: rgb(101 200 188 / 22%);
-    --thingy-code-bg: #202c29;
-    --source-newsletter: #73a7f3;
-    --source-blog: #d98a56;
-    --source-podcast: #6fcf9c;
-    --shadow-subtle: none;
-    --shadow-agent: none;
-  }
-}
-
-/* Explicit reader choice (data-theme on <html>) beats the OS setting in
-   both directions; the tokens must match the media-query block above. */
-:root[data-theme='dark'] {
-  --thingy-bg: #101716;
-  --thingy-surface: #17211f;
-  --thingy-surface-2: #202c29;
-  --thingy-text: #eaf0ed;
-  --thingy-text-soft: #bcc8c3;
-  --thingy-text-muted: #899791;
-  --thingy-accent: #65c8bc;
-  --thingy-error: #e0705c;
-  --thingy-accent-hover: #8edbd2;
-  --thingy-accent-soft: rgb(101 200 188 / 16%);
-  --thingy-audio-accent: #d98a56;
-  --thingy-border: #2c3a36;
-  --thingy-border-light: #22302d;
-  --thingy-highlight: rgb(101 200 188 / 22%);
-  --thingy-code-bg: #202c29;
-  --source-newsletter: #73a7f3;
-  --source-blog: #d98a56;
-  --source-podcast: #6fcf9c;
-  --shadow-subtle: none;
-  --shadow-agent: none;
 }
 
 html {

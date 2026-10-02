@@ -36,8 +36,7 @@
   background: var(--accent-deep);
   border-radius: 8px;
 
-  /* Token pair keeps contrast in both themes: near-white on deep teal in
-     light mode, near-black on light teal in dark. The .thingy-page a
+  /* Token pair keeps contrast: cream on deep clay (7:1). The .thingy-page a
      selector is required - the content-page link rule (.thingy-page a,
      specificity 0,1,1) otherwise overrides this color with the accent,
      making the label invisible on its own background. */

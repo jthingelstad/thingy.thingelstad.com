@@ -182,8 +182,7 @@
   padding: 0;
 }
 
-/* shiki dual-theme output: light palette default, dark follows the
-   data-theme attribute the theme boot always sets. */
+/* shiki output: one light palette (Thingy has one look). */
 .thingy-shiki pre.shiki {
   margin: 0 0 12px;
   padding: 12px 14px;
@@ -204,10 +203,6 @@
 
 .thingy-shiki pre.shiki span {
   color: var(--shiki-light);
-}
-
-:root[data-theme='dark'] .thingy-shiki pre.shiki span {
-  color: var(--shiki-dark);
 }
 
 /* Inline media in answers: clickable thumbnails that open the source page

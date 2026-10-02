@@ -1,14 +1,10 @@
 /* Tailwind v4 substrate (2026-09-03). Utilities ride the EXISTING Thingy
-   token system: thingy-base.css owns the palette and its light/dark
-   switching; the inline theme below maps those runtime variables into
-   Tailwind color/font names, so `bg-surface text-ink border-line` follow
-   the reader's theme with zero duplication. */
+   token system: thingy-base.css owns the Felt & Tangerine palette (one
+   look, no dark mode since 2026-10-01); the inline theme below maps those
+   variables into Tailwind color/font names, so `bg-surface text-ink
+   border-line` follow the tokens with zero duplication. */
 
 @import 'tailwindcss';
-
-/* The theme boot resolves 'system' to an explicit attribute, so a single
-   attribute variant covers all dark rendering. */
-@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 @theme inline {
   --color-bg: var(--bg);
@@ -25,6 +21,29 @@
   --color-highlight: var(--highlight);
   --color-code: var(--code-bg);
   --color-error: var(--thingy-error);
+  --color-paper: var(--thingy-paper);
+  --color-toy: var(--thingy-toy-cream);
+  --color-rule: var(--thingy-rule);
+  --color-meta: var(--thingy-meta);
+  --color-tangerine: var(--thingy-tangerine);
+  --color-on-tangerine: var(--thingy-on-tangerine);
+  --color-clay: var(--thingy-clay);
+  --color-clay-hover: var(--thingy-clay-hover);
+  --color-clay-tint: var(--thingy-clay-tint);
+  --color-brass: var(--thingy-brass);
+  --color-screen: var(--thingy-screen);
+  --color-bezel: var(--thingy-bezel);
+  --color-mint: var(--thingy-mint);
+  --color-oops: var(--thingy-oops);
+  --color-weekly: var(--thingy-weekly);
+  --color-weekly-deep: var(--thingy-weekly-deep);
+  --color-weekly-tint: var(--thingy-weekly-tint);
+  --color-highlighter: var(--thingy-highlighter);
+  --color-another: var(--thingy-another);
+  --color-danger: var(--thingy-danger);
+  --color-danger-tint: var(--thingy-danger-tint);
+  --color-success: var(--thingy-success);
+  --color-success-tint: var(--thingy-success-tint);
   --color-transparent: transparent;
   --color-current: currentcolor;
 
@@ -33,13 +52,12 @@
   --font-mono: ui-monospace, 'SF Mono', menlo, monaco, monospace;
 }
 
-/* Keyboard focus looks intentional everywhere: accent ring on
-   focus-visible. Inputs opt out (they carry their own focus borders). */
+/* Keyboard focus looks intentional everywhere: the cobalt focus ring on
+   focus-visible. Inputs opt out (they carry their own focus styles). */
 @layer base {
   :focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-    border-radius: 4px;
+    outline: 3px solid var(--thingy-focus);
+    outline-offset: 3px;
   }
 
   input:focus-visible,
@@ -65,7 +83,7 @@
     }
   }
 
-  /* Links inside the dark user bubble stay legible. */
+  /* Links inside the ink user bubble stay legible. */
   .librarian-message-user a {
     color: inherit;
     text-decoration: underline;
