@@ -13,6 +13,13 @@ interface DialogBase {
   // Optional third action rendered as a destructive text button; a
   // confirm dialog then resolves 'alt' when it is chosen.
   altLabel?: string;
+  // Optional header mark beside the title (Dialogs board): a toy-cream
+  // icon tile (a lucide name from components/Icon.tsx; iconDanger puts it
+  // on the danger tint), or the mascot's face in one of its moods. Face
+  // wins when both are given.
+  icon?: string;
+  iconDanger?: boolean;
+  face?: 'idle' | 'thinking' | 'found-it' | 'oops';
 }
 
 interface ConfirmRequest extends DialogBase {
@@ -25,6 +32,10 @@ interface PromptRequest extends DialogBase {
   placeholder?: string;
   maxLength?: number;
   multiline?: boolean;
+  // Visible label for the field; without one the title names it.
+  label?: string;
+  // A value to copy, not edit (the share link).
+  readOnly?: boolean;
 }
 
 type DialogRequest = ConfirmRequest | PromptRequest;

@@ -242,7 +242,8 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
       title: 'Delete this conversation?',
       body: 'The conversation and its saved history are removed for good.',
       confirmLabel: 'Delete',
-      danger: true
+      danger: true,
+      face: 'oops'
     });
     if (!ok) return;
     if (id === activeId) newConversation();
@@ -253,6 +254,8 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
     const title = (
       await promptDialog({
         title: 'Rename conversation',
+        icon: 'pencil',
+        label: 'Conversation title',
         initialValue: current,
         maxLength: 120,
         confirmLabel: 'Rename'
@@ -269,12 +272,14 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
             title: 'This conversation is shared',
             body: 'Anyone with the link can read it. Refreshing keeps the same link and picks up the latest messages; stopping makes the link dead immediately.',
             confirmLabel: 'Refresh & copy link',
-            altLabel: 'Stop sharing'
+            altLabel: 'Stop sharing',
+            icon: 'link'
           }
         : {
             title: 'Share this conversation?',
             body: 'Anyone with the link can read the entire conversation, including your questions. You can stop sharing at any time.',
-            confirmLabel: 'Share'
+            confirmLabel: 'Share',
+            icon: 'share'
           }
     );
     if (!confirmed) return;
@@ -286,7 +291,9 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
           title: 'Could not stop sharing',
           body: errorMessage(error, 'Thingy could not revoke the link. Please try again.'),
           confirmLabel: 'OK',
-          hideCancel: true
+          hideCancel: true,
+          icon: 'triangle-alert',
+          iconDanger: true
         });
         return;
       }
@@ -296,7 +303,8 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
         title: 'Sharing stopped',
         body: 'The link is dead. Anyone who opens it now sees "closed up."',
         confirmLabel: 'Done',
-        hideCancel: true
+        hideCancel: true,
+        face: 'idle'
       });
       return;
     }
@@ -310,7 +318,9 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
         title: 'Sharing failed',
         body: errorMessage(error, 'Thingy could not create the share link. Please try again.'),
         confirmLabel: 'OK',
-        hideCancel: true
+        hideCancel: true,
+        icon: 'triangle-alert',
+        iconDanger: true
       });
       return;
     }
@@ -330,8 +340,11 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
         ? 'The link is in your clipboard. Anyone with it can read this conversation and ask their own follow-ups.'
         : 'Copy the link below - anyone with it can read this conversation and ask their own follow-ups.',
       initialValue: url,
+      label: 'Share link',
+      readOnly: true,
       confirmLabel: 'Done',
-      hideCancel: true
+      hideCancel: true,
+      ...(copied ? { face: 'found-it' as const } : { icon: 'link' })
     });
   }
 

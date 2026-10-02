@@ -78,3 +78,37 @@ test('a non-danger confirm is the tangerine primary, and the prompt input is nam
   expect(screen.getByRole('button', { name: 'Rename' }).className).toContain('thingy-btn-primary');
   void result;
 });
+
+test('a prompt can carry a visible label, and the share link is read-only', async () => {
+  const user = userEvent.setup();
+  render(<DialogHost />);
+  const rename = promptDialog({
+    title: 'Rename conversation',
+    label: 'Conversation title',
+    icon: 'pencil',
+    initialValue: 'Bison',
+    confirmLabel: 'Rename'
+  });
+  const input = await screen.findByRole('textbox', { name: 'Conversation title' });
+  expect((input as HTMLInputElement).readOnly).toBe(false);
+  // The icon tile is decoration; the title still names the dialog.
+  expect(document.querySelector('.thingy-dialog .thingy-icon-tile')?.getAttribute('aria-hidden')).toBe('true');
+  expect(screen.getByRole('dialog', { name: 'Rename conversation' })).toBeTruthy();
+  await user.click(screen.getByRole('button', { name: 'Cancel' }));
+  expect(await rename).toBeNull();
+
+  const share = promptDialog({
+    title: 'Share link copied',
+    label: 'Share link',
+    readOnly: true,
+    face: 'found-it',
+    initialValue: 'https://thingy.example/c/abc',
+    confirmLabel: 'Done',
+    hideCancel: true
+  });
+  const link = await screen.findByRole('textbox', { name: 'Share link' });
+  expect((link as HTMLInputElement).readOnly).toBe(true);
+  expect(document.querySelector('.thingy-dialog .thingy-face')?.getAttribute('data-mood')).toBe('found-it');
+  await user.click(screen.getByRole('button', { name: 'Done' }));
+  expect(await share).toBe('https://thingy.example/c/abc');
+});

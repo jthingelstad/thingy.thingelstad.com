@@ -280,6 +280,8 @@ export function ThreadHost({
         const value = await promptDialog({
           title: 'What went wrong?',
           body: 'Optional, but it helps Jamie tune Thingy.',
+          icon: 'thumbs-down',
+          label: 'Your feedback',
           multiline: true,
           maxLength: 1000,
           confirmLabel: 'Send feedback'
