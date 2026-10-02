@@ -25,6 +25,43 @@ export function citationsByIssue(citations: ThingyCitation[]) {
   return map;
 }
 
+// Which source a citation is, for the chip and card colours: Weekly
+// cobalt, blog clay, Another Thing slate. Colours label sources only.
+export type CitationKind = 'weekly' | 'blog' | 'podcast';
+
+export function citationKind(citation: ThingyCitation): CitationKind {
+  if (String(citation.issue_number || '').trim()) return 'weekly';
+  const kind = String(citation.source_kind || '').toLowerCase();
+  if (kind.startsWith('weekly')) return 'weekly';
+  if (/podcast|episode/.test(kind)) return 'podcast';
+  return 'blog';
+}
+
+// The comparable form of a link target: archive paths resolved, host
+// without www, path without trailing slash, no scheme, query or hash.
+export function citationUrlKey(url: string): string {
+  const resolved = /^\/archive\//i.test(url) ? `https://weekly.thingelstad.com${url}` : url;
+  try {
+    const parsed = new URL(resolved);
+    if (!/^https?:$/.test(parsed.protocol)) return '';
+    return `${parsed.hostname.toLowerCase().replace(/^www\./, '')}${parsed.pathname.replace(/\/+$/, '')}`;
+  } catch {
+    return '';
+  }
+}
+
+// Markdown links whose target is one of the answer's citations (the
+// Librarian cites blog posts and episodes by title + permalink) render
+// as source chips; this maps each cited URL to its kind.
+export function citationKindsByUrl(citations: ThingyCitation[]) {
+  const map = new Map<string, CitationKind>();
+  citations.forEach((citation) => {
+    const key = citationUrlKey(String(citation.url || ''));
+    if (key && !map.has(key)) map.set(key, citationKind(citation));
+  });
+  return map;
+}
+
 export function citationTitle(citation: ThingyCitation): string {
   const parts = [`WT${citation.issue_number}: ${citation.subject || 'Weekly Thing'}`];
   if (citation.publish_date) parts.push(String(citation.publish_date).slice(0, 10));
@@ -36,11 +73,22 @@ const WT_REF = /(?:WT|#)(\d{1,4})(?![\w-])/g;
 
 // remark plugin: turn bare WT123 / #123 references in text into archive
 // links, using the answer's citation metadata for URL and hover title.
-// Skips text already inside links or code.
-export function remarkWtCitations(map: Map<string, ThingyCitation>) {
+// Skips text already inside links or code. With a kinds map it also
+// tags authored links that point at a cited source, so they render as
+// that source's chip.
+export function remarkWtCitations(map: Map<string, ThingyCitation>, kinds: Map<string, CitationKind> = new Map()) {
   return () => (tree: MdastNode) => {
-    if (!map.size) return;
+    if (!map.size && !kinds.size) return;
     const visit = (node: MdastNode, insideLink: boolean) => {
+      if (node.type === 'link' && !insideLink && node.url) {
+        const kind = kinds.get(citationUrlKey(node.url));
+        if (kind) {
+          node.data = {
+            ...node.data,
+            hProperties: { ...node.data?.hProperties, className: `thingy-cite thingy-cite-${kind}` }
+          };
+        }
+      }
       if (node.type === 'link' || node.type === 'linkReference') insideLink = true;
       const children = node.children;
       if (!children) return;
@@ -55,7 +103,7 @@ export function remarkWtCitations(map: Map<string, ThingyCitation>) {
             // Guard: no letter/&/word char immediately before (mirrors the
             // old renderer's prefix rule, keeps &#39; and WT-123-x intact).
             const before = value[index - 1];
-            const citation = map.get(match[1]);
+            const citation = map.size ? map.get(match[1]) : undefined;
             if (!citation || (before && /[\w&-]/.test(before))) continue;
             if (index > last) parts.push({ type: 'text', value: value.slice(last, index) });
             parts.push({
@@ -64,6 +112,7 @@ export function remarkWtCitations(map: Map<string, ThingyCitation>) {
               title: citationTitle(citation),
               data: {
                 hProperties: {
+                  className: 'thingy-cite thingy-cite-weekly',
                   'data-tinylytics-event': 'librarian.source_click',
                   'data-tinylytics-event-value': match[1]
                 }
@@ -131,6 +180,23 @@ export const BASE_COMPONENTS: Components = {
     if (!safeSrc) return createElement('span', {}, alt || '');
     return createElement('img', { src: safeSrc, alt: alt || '', loading: 'lazy' });
   },
-  a: ({ href, title, children, ...rest }) =>
-    createElement('a', { href, title, target: '_blank', rel: 'noopener', ...rest }, children)
+  // A Weekly chip reads "WT127" to everyone: the WT stays in the text
+  // (visually hidden) and the chip draws a W disc in its place. The
+  // explicit name keeps "WT127" whole wherever an accessibility engine
+  // would read the hidden prefix as a separate word. The hast node
+  // react-markdown passes is dropped (it used to land in the DOM as
+  // node="[object Object]").
+  a: ({ href, title, children, node: _node, ...rest }) => {
+    const weekly = String(rest.className || '').includes('thingy-cite-weekly');
+    const issue = typeof children === 'string' ? /^WT(\d{1,4})$/.exec(children) : null;
+    if (weekly && issue) {
+      return createElement(
+        'a',
+        { href, title, target: '_blank', rel: 'noopener', ...rest, 'aria-label': children },
+        createElement('span', { className: 'thingy-cite-prefix' }, 'WT'),
+        issue[1]
+      );
+    }
+    return createElement('a', { href, title, target: '_blank', rel: 'noopener', ...rest }, children);
+  }
 };

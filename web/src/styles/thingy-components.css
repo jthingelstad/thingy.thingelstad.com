@@ -191,6 +191,93 @@ textarea.thingy-input {
   background-size: 10px 10px;
 }
 
+/* ---- Sources ----
+   The W disc (Source Serif 4 italic 600 on near-white, cobalt letter)
+   and Another Thing's three dots, shared by the source cards and the
+   share page. */
+
+.thingy-w-disc {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fcfcfa;
+  color: var(--thingy-weekly);
+  font: italic 600 15px / 1 'Source Serif 4', Georgia, serif;
+  letter-spacing: 0;
+}
+
+.thingy-w-disc::before {
+  content: 'W';
+  content: 'W' / '';
+}
+
+.thingy-another-dots {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 29px;
+  height: 7px;
+  background:
+    radial-gradient(circle, var(--thingy-another-dot) 3.4px, transparent 3.6px) 0 0 / 7px 7px no-repeat,
+    radial-gradient(circle, var(--thingy-another-dot) 3.4px, transparent 3.6px) 11px 0 / 7px 7px no-repeat,
+    radial-gradient(circle, var(--thingy-another-red) 3.4px, transparent 3.6px) 22px 0 / 7px 7px no-repeat;
+}
+
+/* The Weekly band carries a fine inset hairline, as on the cover. */
+.thingy-source-band-weekly::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid #a9c7f2;
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.thingy-source-card-link {
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.thingy-source-card-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 var(--thingy-ink);
+}
+
+/* ---- Thinking ----
+   Three dots that blink in turn while Thingy works: slate, slate, red. */
+
+.thingy-dots > span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--thingy-another-dot);
+  animation: thingy-dot 1.2s infinite;
+}
+
+.thingy-dots > span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.thingy-dots > span:nth-child(3) {
+  background: var(--thingy-another-red);
+  animation-delay: 0.4s;
+}
+
+@keyframes thingy-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+
+  40% {
+    opacity: 1;
+  }
+}
+
 /* ---- The navy rail ----
    The cobalt focus ring is 2.97:1 on navy; the rail swaps in a light blue
    ring (7.15:1) for everything inside it, the search well included. */
@@ -277,6 +364,17 @@ textarea.thingy-input {
 @media (prefers-reduced-motion: reduce) {
   .thingy-face * {
     animation: none;
+  }
+
+  .thingy-dots > span {
+    animation: none;
+    opacity: 1;
+  }
+
+  .thingy-source-card-link,
+  .thingy-source-card-link:hover {
+    transform: none;
+    transition: none;
   }
 
   .thingy-btn,

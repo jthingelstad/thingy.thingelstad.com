@@ -2,7 +2,8 @@
 // MarkdownTextPrimitive: per-block memoization + smooth streaming). This
 // replaced the hand-rolled parser on 2026-09-03 - Jamie's call. Thingy's
 // own behaviors ride on top as a remark plugin and component overrides:
-// WT/# citation autolinks with archive titles, the safe-URL policy,
+// WT/# citation autolinks with archive titles, source chips for links
+// to cited posts and episodes, the safe-URL policy,
 // thumbnail images, and Tinylytics source-click attributes.
 
 import { useMemo, useState } from 'react';
@@ -11,7 +12,13 @@ import { MarkdownTextPrimitive, type MarkdownTextPrimitiveProps } from '@assista
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Icon } from './Icon.tsx';
-import { BASE_COMPONENTS, citationsByIssue, remarkWtCitations, thingyUrlTransform } from './markdown-config.ts';
+import {
+  BASE_COMPONENTS,
+  citationKindsByUrl,
+  citationsByIssue,
+  remarkWtCitations,
+  thingyUrlTransform
+} from './markdown-config.ts';
 import { CodeHighlight } from './CodeHighlight.tsx';
 
 function CodeHeader({ language, code }: { language: string | undefined; code: string }) {
@@ -47,7 +54,7 @@ const STATIC_COMPONENTS: MarkdownTextPrimitiveProps['components'] = {
 // component overrides - minus the aui-only code header.
 export function ThingyMarkdown({ text, citations = [] }: { text: string; citations?: ThingyCitation[] }) {
   const remarkPlugins = useMemo(
-    () => [remarkGfm, remarkWtCitations(citationsByIssue(citations))],
+    () => [remarkGfm, remarkWtCitations(citationsByIssue(citations), citationKindsByUrl(citations))],
     // Stable per rendered content.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
     [citations.map((c) => `${c.issue_number}:${c.url}`).join('|')]
@@ -64,7 +71,7 @@ export function AssistantMarkdown() {
   const citations = ((metadata?.custom as { citations?: ThingyCitation[] } | undefined)?.citations ||
     []) as ThingyCitation[];
   const remarkPlugins = useMemo(
-    () => [remarkGfm, remarkWtCitations(citationsByIssue(citations))],
+    () => [remarkGfm, remarkWtCitations(citationsByIssue(citations), citationKindsByUrl(citations))],
     // The citation list is stable per message once the answer completes;
     // key the memo on its rendered identity, not array identity.
     // oxlint-disable-next-line react-hooks/exhaustive-deps

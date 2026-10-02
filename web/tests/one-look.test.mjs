@@ -83,3 +83,13 @@ test('every shell loads the Felt & Tangerine fonts', async () => {
     assert.match(html, /font-src https:\/\/fonts\.gstatic\.com;/);
   }
 });
+
+// The Weekly citation chip and source card draw their W disc in Source
+// Serif 4 italic 600, so every shell that renders answers must load it.
+test('answer shells load the Weekly W face', async () => {
+  for (const shell of ['chat/index.html', 'c/index.html']) {
+    const html = await source(shell);
+    const link = html.match(/https:\/\/fonts\.googleapis\.com\/css2\?[^"]+/);
+    assert.ok(link[0].includes('family=Source+Serif+4:ital,opsz,wght@1,8..60,600'), `${shell} loads Source Serif 4`);
+  }
+});

@@ -5,11 +5,11 @@
 .librarian-answer-content {
   font-family: var(--sans);
 
-  /* Friendly-robot scale (2026-09-03): chat body reads at chat-app sizes,
-     not journal-PDF sizes - 16px desktop, 17px on phones. Metadata
-     (receipts, badges, source cards) deliberately stays small: big prose
+  /* Felt & Tangerine scale (2026-10-01, the ChatAnswer and PhoneAnswer
+     boards): Figtree at 17px on wide screens, 16px on phones. Metadata
+     (receipts, badges, source cards) stays small and mono: big prose
      over quiet footnotes is the companion feel. */
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.65;
   color: var(--ink);
   overflow-wrap: break-word;
@@ -17,8 +17,8 @@
 
 @media (width <= 640px) {
   .librarian-answer-content {
-    font-size: 17px;
-    line-height: 1.6;
+    font-size: 16px;
+    line-height: 1.62;
   }
 }
 
@@ -58,8 +58,16 @@
   line-height: 1.3;
 }
 
+/* Section heads take the display voice (Archivo italic, wide); smaller
+   heads stay Figtree bold so a long answer does not shout. */
 .librarian-answer-content h2 {
-  font-size: 1.2em;
+  font-family: var(--font-display);
+  font-size: 1.25em;
+  font-style: italic;
+  font-weight: var(--thingy-display-weight);
+  font-stretch: var(--thingy-display-stretch);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
 .librarian-answer-content h3 {
@@ -80,6 +88,97 @@
 
 .librarian-answer-content a:hover {
   text-decoration-color: var(--accent-deep);
+}
+
+.librarian-answer-content mark {
+  padding: 0 3px;
+  border-radius: 3px;
+  background: var(--thingy-highlighter);
+  color: inherit;
+}
+
+/* ---- Citation chips ----
+   Source colours label sources only. Weekly: cobalt with a white W disc
+   (white on cobalt 4.9:1). Blog: clay on #FBE7DC (4.6:1) with a clay
+   edge. Another Thing: slate with its three dots (white 9.2:1). Inline
+   so a long post title wraps like the prose around it. */
+
+.librarian-answer-content a.thingy-cite {
+  padding: 1px 7px;
+  border-radius: 7px;
+  font-weight: 650;
+  text-decoration: none;
+  white-space: normal;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.librarian-answer-content a.thingy-cite:hover {
+  filter: brightness(0.92);
+}
+
+.librarian-answer-content a.thingy-cite-weekly {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px 2px 2px;
+  background: var(--thingy-weekly);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.72em;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  vertical-align: 0.12em;
+}
+
+.librarian-answer-content a.thingy-cite-weekly::before {
+  content: 'W';
+  content: 'W' / '';
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #fcfcfa;
+  color: var(--thingy-weekly);
+  font: italic 600 12px / 1 'Source Serif 4', Georgia, serif;
+}
+
+/* The WT stays in the link text, so the chip still reads "WT127". */
+.librarian-answer-content .thingy-cite-prefix {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.librarian-answer-content a.thingy-cite-blog {
+  border: 1.5px solid var(--thingy-clay);
+  background: #fbe7dc;
+  color: var(--thingy-clay);
+  font-size: 0.9em;
+}
+
+.librarian-answer-content a.thingy-cite-podcast {
+  background: var(--thingy-another);
+  color: #fff;
+  font-size: 0.9em;
+}
+
+.librarian-answer-content a.thingy-cite-podcast::before {
+  content: '';
+  display: inline-block;
+  width: 17px;
+  height: 5px;
+  margin-right: 6px;
+  vertical-align: 0.15em;
+  background:
+    radial-gradient(circle, var(--thingy-another-dot) 2.4px, transparent 2.6px) 0 0 / 6px 5px no-repeat,
+    radial-gradient(circle, var(--thingy-another-dot) 2.4px, transparent 2.6px) 6px 0 / 6px 5px no-repeat,
+    radial-gradient(circle, var(--thingy-another-red) 2.4px, transparent 2.6px) 12px 0 / 6px 5px no-repeat;
 }
 
 .librarian-answer-content blockquote {

@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
   BASE_COMPONENTS,
+  citationKindsByUrl,
   citationsByIssue,
   remarkWtCitations,
   thingyUrlTransform
@@ -18,7 +19,7 @@ function render(text, citations = []) {
     createElement(
       ReactMarkdown,
       {
-        remarkPlugins: [remarkGfm, remarkWtCitations(citationsByIssue(citations))],
+        remarkPlugins: [remarkGfm, remarkWtCitations(citationsByIssue(citations), citationKindsByUrl(citations))],
         urlTransform: thingyUrlTransform,
         components: BASE_COMPONENTS
       },
@@ -34,7 +35,36 @@ test('WT references autolink with citation title and analytics attributes', () =
   assert.match(html, /href="https:\/\/weekly\.thingelstad\.com\/archive\/127\/"/);
   assert.match(html, /data-tinylytics-event="librarian\.source_click"/);
   assert.match(html, /title="WT127: Bison \| 2019-11-23"/);
-  assert.match(html, />WT127<\/a>/);
+  // The Weekly chip draws a W disc in place of the prefix, but the link's
+  // text is still exactly "WT127" (the prefix is visually hidden only).
+  const anchor = html.match(/<a [^>]*class="thingy-cite thingy-cite-weekly"[^>]*>(.*?)<\/a>/);
+  assert.ok(anchor, 'the autolink is a Weekly citation chip');
+  assert.equal(anchor[1].replace(/<[^>]+>/g, ''), 'WT127');
+  assert.match(anchor[1], /<span class="thingy-cite-prefix">WT<\/span>127/);
+});
+
+test('links to cited blog posts and episodes render as their source chips', () => {
+  const citations = [
+    { source_kind: 'blog', url: 'https://www.thingelstad.com/2024/03/02/espresso.html', subject: 'Espresso' },
+    { source_kind: 'podcast', url: 'https://another.thingelstad.com/12/', subject: 'Coffee' },
+    { issue_number: 127, url: '/archive/127/', subject: 'Bison' }
+  ];
+  const html = render(
+    'Read [the espresso post](http://thingelstad.com/2024/03/02/espresso.html), hear ' +
+      '[Coffee](https://another.thingelstad.com/12), see [WT127](https://weekly.thingelstad.com/archive/127/) ' +
+      'and [elsewhere](https://example.com/12/).',
+    citations
+  );
+  assert.match(
+    html,
+    /<a href="http:\/\/thingelstad\.com[^"]*"[^>]*class="thingy-cite thingy-cite-blog"[^>]*>the espresso post<\/a>/
+  );
+  assert.match(
+    html,
+    /<a href="https:\/\/another\.thingelstad\.com\/12"[^>]*class="thingy-cite thingy-cite-podcast"[^>]*>Coffee<\/a>/
+  );
+  assert.match(html, /class="thingy-cite thingy-cite-weekly"[^>]*><span class="thingy-cite-prefix">WT<\/span>127<\/a>/);
+  assert.match(html, /<a href="https:\/\/example\.com\/12\/" target="_blank" rel="noopener">elsewhere<\/a>/);
 });
 
 test('references without a matching citation stay plain text', () => {
