@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Rail, type ConversationSummary } from '../src/react/components/Rail.tsx';
 import { TipProvider } from '../src/react/components/Tip.tsx';
@@ -92,4 +92,49 @@ test('a failed rail search does not claim there are no matching chats', async ()
   await userEvent.setup().type(screen.getByRole('searchbox'), 'bison');
   await screen.findByRole('alert');
   expect(screen.queryByText('No matching chats')).toBeNull();
+});
+
+// Touch (Jamie 2026-10-01): nothing can hover on a phone, so every row
+// carries a "More actions" button that opens an action sheet. These drive
+// it by keyboard and click only - no hover anywhere - to prove Delete,
+// Rename and Share are reachable without it.
+test('Delete is reachable without hover through the More actions sheet', async () => {
+  const user = userEvent.setup();
+  const onDelete = vi.fn();
+  renderRail([{ id: 'a', title: 'Bison thread', updated_at: iso(0) }], undefined, { onDelete });
+  const more = screen.getByRole('button', { name: 'More actions for Bison thread' });
+  expect(more.getAttribute('aria-haspopup')).toBe('dialog');
+  await user.click(more);
+  const sheet = await screen.findByRole('dialog', { name: 'Actions for Bison thread' });
+  await user.click(within(sheet).getByRole('button', { name: 'Delete' }));
+  await waitFor(() => expect(onDelete).toHaveBeenCalledWith('a'));
+  expect(screen.queryByRole('dialog')).toBeNull();
+  // Focus is back on the button that opened the sheet.
+  expect(document.activeElement).toBe(more);
+});
+
+test('the action sheet names a shared row Refresh share link and closes on Escape', async () => {
+  const user = userEvent.setup();
+  const onShare = vi.fn();
+  const onRename = vi.fn();
+  renderRail([{ id: 's', title: 'Shared chat', updated_at: iso(0), shared_at: iso(0) }], undefined, {
+    onShare,
+    onRename
+  });
+  const more = screen.getByRole('button', { name: 'More actions for Shared chat' });
+  more.focus();
+  await user.keyboard('{Enter}');
+  const sheet = await screen.findByRole('dialog', { name: 'Actions for Shared chat' });
+  expect(within(sheet).getByRole('button', { name: 'Refresh share link' })).toBeTruthy();
+  await user.keyboard('{Escape}');
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  expect(document.activeElement).toBe(more);
+  expect(onShare).not.toHaveBeenCalled();
+
+  await user.keyboard('{Enter}');
+  await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Refresh share link' }));
+  await waitFor(() => expect(onShare).toHaveBeenCalledWith('s', true));
+  await user.keyboard('{Enter}');
+  await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Rename' }));
+  await waitFor(() => expect(onRename).toHaveBeenCalledWith('s', 'Shared chat'));
 });

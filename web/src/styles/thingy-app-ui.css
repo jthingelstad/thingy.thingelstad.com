@@ -1,0 +1,271 @@
+/* SPA-only Felt & Tangerine pieces (phase 3, 2026-10-01): bottom sheets,
+   row actions, dialog header tiles, pills. app.css imports this into the
+   COMPONENTS layer after thingy-components.css, so a utility on the same
+   element still wins. Phone width is below Tailwind's md edge (768px), the
+   same edge PHONE_QUERY (hooks/useMediaQuery.ts) and the max-md: sheet
+   utilities in components/Sheet.tsx use. */
+
+/* ---- The display voice over preflight ----
+   .thingy-display lives in thingy-base.css, which the SPA layers as
+   `legacy` - BELOW Tailwind's base layer, where preflight resets every
+   heading to font-weight: inherit. On an h1/h2 that reset won, so the
+   sign-in and share titles rendered Archivo italic at 400 instead of 800.
+   Restating the weight here (components layer) puts it back. */
+.thingy-display {
+  font-weight: var(--thingy-display-weight);
+}
+
+/* ---- Bottom sheets ----
+   The grab handle is decoration: hidden on desktop, never focusable. */
+.thingy-sheet-grab {
+  display: none;
+  flex-shrink: 0;
+  width: 44px;
+  height: 5px;
+  margin: 0 auto 6px;
+  border-radius: 999px;
+  background: var(--thingy-rule);
+}
+
+@media (width <= 767.98px) {
+  .thingy-sheet-grab {
+    display: block;
+  }
+}
+
+/* ---- Dialog header marks ----
+   A 48px toy-cream tile with an ink icon, or its danger variant. The
+   face variant is ThingyFace itself. */
+.thingy-icon-tile {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 14px;
+  background: var(--thingy-toy-cream);
+  color: var(--thingy-ink);
+}
+
+.thingy-icon-tile svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2.2;
+}
+
+.thingy-icon-tile-danger {
+  background: var(--thingy-danger-tint);
+  color: var(--thingy-danger);
+}
+
+/* The 44px quiet icon button (close X) on paper. */
+.thingy-icon-btn {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: var(--thingy-ink);
+  cursor: pointer;
+}
+
+.thingy-icon-btn:hover {
+  background: var(--thingy-toy-cream);
+}
+
+.thingy-icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ---- Row actions (rail and All chats) ----
+   Desktop: Share / Rename / Delete appear on hover or keyboard focus.
+   Touch (no hover, or a coarse pointer): those can never be revealed, so
+   they stay hidden and the always-visible "More actions" button opens
+   the action sheet instead. */
+.thingy-row-actions {
+  display: none;
+}
+
+.thingy-row:hover .thingy-row-actions,
+.thingy-row:focus-within .thingy-row-actions {
+  display: flex;
+}
+
+.thingy-row-more {
+  display: none;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .thingy-row:hover .thingy-row-actions,
+  .thingy-row:focus-within .thingy-row-actions {
+    display: none;
+  }
+
+  .thingy-row-more {
+    display: grid;
+  }
+}
+
+/* One action in the sheet: a 56px row with a 40px tile. */
+.thingy-sheet-action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 56px;
+  padding: 0 12px;
+  border-radius: 14px;
+  color: var(--thingy-ink);
+  font-family: var(--thingy-font-ui);
+  font-size: 17px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.thingy-sheet-action:hover {
+  background: var(--thingy-toy-cream);
+}
+
+.thingy-sheet-action .thingy-icon-tile {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.thingy-sheet-action .thingy-icon-tile svg {
+  width: 19px;
+  height: 19px;
+}
+
+.thingy-sheet-action-danger {
+  color: var(--thingy-danger);
+}
+
+.thingy-sheet-action-danger:hover {
+  background: var(--thingy-danger-tint);
+}
+
+/* ---- Buttons ---- */
+
+/* Outlined danger (Disconnect, Delete an app): no fill, no shadow, the
+   danger border and text, a tint on hover. Pairs with .thingy-btn. */
+.thingy-btn-outline-danger {
+  border-color: var(--thingy-danger);
+  background: transparent;
+  color: var(--thingy-danger);
+  box-shadow: none;
+}
+
+.thingy-btn-outline-danger:hover:not(:disabled),
+.thingy-btn-outline-danger:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  background: var(--thingy-danger-tint);
+}
+
+/* ---- Pills (request-log statuses) ---- */
+.thingy-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border: 1.5px solid var(--thingy-meta);
+  border-radius: 999px;
+  background: var(--thingy-paper);
+  color: var(--thingy-meta);
+  font-family: var(--thingy-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.thingy-pill-danger {
+  border-color: var(--thingy-danger);
+  background: var(--thingy-danger-tint);
+  color: var(--thingy-danger);
+}
+
+/* ---- Profile ----
+   The nine rows as a definition list between dashed rules: label beside
+   value on wide screens, stacked on a phone. */
+.thingy-profile-dl {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  border-bottom: 2px dashed var(--thingy-rule);
+}
+
+.thingy-profile-dl dt {
+  padding: 11px 0 2px;
+  border-top: 2px dashed var(--thingy-rule);
+  color: var(--thingy-meta);
+  font-family: var(--thingy-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.thingy-profile-dl dd {
+  min-width: 0;
+  padding: 0 0 10px;
+  color: var(--thingy-ink);
+  font-size: 16px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+@media (width >= 640px) {
+  .thingy-profile-dl {
+    grid-template-columns: 168px minmax(0, 1fr);
+  }
+
+  .thingy-profile-dl dt {
+    padding: 11px 0 9px;
+  }
+
+  .thingy-profile-dl dd {
+    padding: 8px 0;
+    border-top: 2px dashed var(--thingy-rule);
+  }
+}
+
+/* Usage meter: a pill track in toy cream with an ink-edged fill. */
+.thingy-meter {
+  height: 12px;
+  overflow: hidden;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 999px;
+  background: var(--thingy-toy-cream);
+}
+
+.thingy-meter > span {
+  display: block;
+  height: 100%;
+  border-right: 2px solid var(--thingy-ink);
+  background: var(--thingy-tangerine);
+}
+
+.thingy-meter-mcp > span {
+  background: var(--thingy-weekly);
+}
+
+/* The "Card issued" stamp: lined index-card paper. */
+.thingy-card-stamp {
+  background-color: var(--thingy-toy-cream);
+  background-image: repeating-linear-gradient(180deg, transparent 0 23px, #d9c9a4 23px 24px);
+}
+
+/* The request log: one toy-cream list, entries split by dashed rules. */
+.thingy-mcp-log-list > li + li {
+  border-top: 2px dashed var(--thingy-rule);
+}
+
+/* A select that wears the input look with its own chevron. */
+.thingy-select {
+  appearance: none;
+  padding-right: 40px;
+  cursor: pointer;
+}

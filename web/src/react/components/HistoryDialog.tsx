@@ -3,23 +3,21 @@
 // bounded working set (recent 50 + filter), THIS dialog owns depth -
 // pagination and full-history search - and the profile modal stays
 // account facts. Opened from the rail's "All chats" row.
+//
+// Felt & Tangerine (phase 3): one flat list - no time groups, no shortcut
+// hint (Jamie 2026-10-01) - a labelled search field, mono dates, face
+// states, and row actions that reveal on hover or sit behind "More
+// actions" on touch. Below md it is a bottom sheet.
 
 import { useEffect, useMemo, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Icon } from './Icon.tsx';
-import { Tip } from './Tip.tsx';
 import type { ConversationSummary } from './Rail.tsx';
 import { HistoryStatus } from './HistoryStatus.tsx';
-
-const ROW_ACTION =
-  'grid size-7 place-items-center rounded-md text-muted hover:bg-surface-2 hover:text-ink [&_svg]:size-3.5';
-
-function shortDate(value?: string) {
-  const time = Date.parse(String(value || ''));
-  if (!Number.isFinite(time)) return '';
-  return new Date(time).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-}
+import { RowActions, shortDate } from './RowActions.tsx';
+import { DialogHeader, SHEET_CONTENT, SHEET_OVERLAY, SheetGrab } from './Sheet.tsx';
+import { ThingyFace } from './ThingyFace.tsx';
 
 export interface HistoryMatch {
   conversation_id: string;
@@ -100,119 +98,108 @@ export function HistoryDialog({
   return (
     <Dialog.Root open onOpenChange={(next) => (next ? undefined : onClose())}>
       <Dialog.Portal>
-        <Dialog.Overlay className="thingy-scrim fixed inset-0 z-50 grid place-items-center p-5">
+        <Dialog.Overlay className={SHEET_OVERLAY}>
           <Dialog.Content
-            className="thingy-modal flex max-h-[min(680px,calc(100vh-40px))] w-[min(38rem,100%)] flex-col font-sans"
+            className={`thingy-history ${SHEET_CONTENT} max-h-[min(720px,calc(100vh-40px))] w-[min(45rem,100%)] max-md:h-[calc(100dvh-1rem)]`}
             aria-describedby={undefined}
           >
-            <div className="flex items-center gap-3 border-b border-line-soft px-5 py-4">
-              <Dialog.Title asChild>
-                <h2 className="thingy-modal-title">All chats</h2>
-              </Dialog.Title>
-              <span className="text-[13px] text-muted">{total ? `${total} total` : ''}</span>
-              <Dialog.Close asChild>
-                <button
-                  type="button"
-                  className="ml-auto -my-1.5 -mr-1.5 grid size-11 shrink-0 place-items-center rounded-xl text-ink hover:bg-surface-2 [&_svg]:size-5"
-                  aria-label="Close"
-                >
-                  <Icon name="x" />
-                </button>
-              </Dialog.Close>
-            </div>
-            <div className="px-5 pt-3 pb-1">
-              <div className="flex items-center gap-2 rounded-xl border border-line bg-bg px-3 py-2 text-muted focus-within:border-accent [&_svg]:size-4 [&_svg]:shrink-0">
+            <div className="border-b-2 border-dashed border-rule px-5 pt-5 pb-4 max-md:px-4 max-md:pt-1">
+              <SheetGrab />
+              <DialogHeader
+                title="All chats"
+                titleClassName="text-[28px] max-md:text-[24px]"
+                subtitle={total ? <span className="font-mono text-[13px]">{`${total} total`}</span> : null}
+                mark={{ icon: 'history' }}
+              />
+              <label htmlFor="thingy-history-search" className="sr-only">
+                Search all conversations
+              </label>
+              <div className="mt-4 flex min-h-12 items-center gap-2.5 rounded-[14px] border-2 border-ink bg-paper px-3.5 text-meta focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-weekly [&_svg]:size-[18px] [&_svg]:shrink-0">
                 <Icon name="search" />
                 <input
-                  className="w-full min-w-0 bg-transparent text-[14px] text-ink outline-none placeholder:text-muted"
+                  id="thingy-history-search"
+                  className="min-h-11 w-full min-w-0 bg-transparent text-base text-ink outline-none placeholder:text-meta"
                   type="search"
                   placeholder="Search all conversations"
-                  aria-label="Search all conversations"
                   autoFocus
                   value={filter}
                   onChange={(event) => setFilter(event.currentTarget.value)}
                 />
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-1 pb-3">
+            <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-2 pb-4 max-md:pb-[calc(1rem+env(safe-area-inset-bottom))]">
               {historyError ? (
                 <HistoryStatus
                   error={historyError}
                   retry={() => void (searching ? searchQuery.refetch() : pages.refetch())}
                 />
               ) : rows.length === 0 ? (
-                <p className="px-2 py-6 text-center text-[13.5px] text-muted">
-                  {pending ? 'Loading…' : searching ? 'No conversations match.' : 'No conversations yet.'}
-                </p>
+                <div className="thingy-history-empty grid justify-items-center gap-3 px-4 py-10 text-center">
+                  <ThingyFace mood={pending ? 'thinking' : 'idle'} size={72} />
+                  <p className="text-[15px] text-ink" role={pending ? 'status' : undefined}>
+                    {pending ? 'Loading…' : searching ? 'No conversations match.' : 'No conversations yet.'}
+                  </p>
+                </div>
               ) : null}
-              <ul className="grid gap-0.5">
+              <ul className="grid gap-1">
                 {rows.map((entry) => (
                   <li
                     key={entry.id}
-                    className="group/row relative min-w-0 overflow-hidden rounded-lg transition-colors hover:bg-surface-2"
+                    className="thingy-row relative flex min-w-0 items-center overflow-hidden rounded-[14px] transition-colors hover:bg-toy focus-within:bg-toy"
                   >
                     <button
                       type="button"
-                      className="block w-full px-2.5 py-2 text-left"
+                      className="block min-h-[52px] min-w-0 flex-1 px-3 py-2.5 text-left max-md:min-h-[60px]"
                       onClick={() => {
                         onSelect(entry.id, entry.title);
                         onClose();
                       }}
                     >
-                      <span className="flex items-baseline gap-2">
-                        <span className="min-w-0 flex-1 truncate text-[14px] text-ink">{entry.title}</span>
-                        <span className="shrink-0 font-mono text-[11px] text-muted tabular-nums">
+                      <span className="flex items-baseline gap-3 max-md:flex-col max-md:gap-0.5">
+                        <span className="flex min-w-0 flex-1 items-center gap-2 max-md:w-full">
+                          <span className="min-w-0 truncate text-base font-semibold text-ink">{entry.title}</span>
+                          {entry.shared_at ? (
+                            <span
+                              className="shrink-0 text-clay-hover [&_svg]:size-3.5"
+                              role="img"
+                              title="Shared"
+                              aria-label="Shared"
+                            >
+                              <Icon name="share" />
+                            </span>
+                          ) : null}
+                        </span>
+                        <span className="shrink-0 font-mono text-[12.5px] text-meta tabular-nums">
                           {shortDate(entry.updated_at)}
                         </span>
                       </span>
                       {entry.snippet ? (
-                        <span className="mt-0.5 block truncate text-[12px] text-muted">{entry.snippet}</span>
+                        <span className="mt-1 block truncate text-[14px] text-ink">{entry.snippet}</span>
                       ) : null}
                     </button>
-                    <span className="absolute top-1/2 right-1 hidden -translate-y-1/2 items-center rounded-md bg-inherit group-focus-within/row:flex group-hover/row:flex">
-                      <Tip label={entry.shared_at ? 'Refresh share link' : 'Share'}>
-                        <button
-                          type="button"
-                          className={ROW_ACTION}
-                          aria-label="Share"
-                          onClick={() => onShare(entry.id, Boolean(entry.shared_at))}
-                        >
-                          <Icon name="share" />
-                        </button>
-                      </Tip>
-                      <Tip label="Rename">
-                        <button
-                          type="button"
-                          className={ROW_ACTION}
-                          aria-label="Rename"
-                          onClick={() => onRename(entry.id, entry.title)}
-                        >
-                          <Icon name="pencil" />
-                        </button>
-                      </Tip>
-                      <Tip label="Delete">
-                        <button
-                          type="button"
-                          className={`${ROW_ACTION} hover:text-error`}
-                          aria-label="Delete"
-                          onClick={() => onDelete(entry.id)}
-                        >
-                          <Icon name="trash" />
-                        </button>
-                      </Tip>
-                    </span>
+                    <RowActions
+                      variant="paper"
+                      title={entry.title}
+                      updatedAt={entry.updated_at}
+                      shared={Boolean(entry.shared_at)}
+                      onShare={() => onShare(entry.id, Boolean(entry.shared_at))}
+                      onRename={() => onRename(entry.id, entry.title)}
+                      onDelete={() => onDelete(entry.id)}
+                    />
                   </li>
                 ))}
               </ul>
               {!searching && pages.hasNextPage ? (
-                <button
-                  type="button"
-                  className="mx-auto mt-2 block rounded-lg border border-line bg-bg px-4 py-1.5 text-[13px] font-bold text-ink hover:border-accent hover:bg-accent-soft"
-                  disabled={pages.isFetchingNextPage}
-                  onClick={() => void pages.fetchNextPage()}
-                >
-                  {pages.isFetchingNextPage ? 'Loading…' : 'Load more'}
-                </button>
+                <div className="mt-3 flex justify-center">
+                  <button
+                    type="button"
+                    className="thingy-btn thingy-btn-secondary thingy-btn-compact"
+                    disabled={pages.isFetchingNextPage}
+                    onClick={() => void pages.fetchNextPage()}
+                  >
+                    {pages.isFetchingNextPage ? 'Loading…' : 'Load more'}
+                  </button>
+                </div>
               ) : null}
             </div>
           </Dialog.Content>

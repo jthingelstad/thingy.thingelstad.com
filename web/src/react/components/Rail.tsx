@@ -3,6 +3,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { AccountPanel } from '../AccountPanel.tsx';
 import { Icon } from './Icon.tsx';
 import { Tip } from './Tip.tsx';
+import { RowActions } from './RowActions.tsx';
 import { HistoryStatus } from './HistoryStatus.tsx';
 import { ThingyFace } from './ThingyFace.tsx';
 
@@ -43,16 +44,14 @@ function timeGroups(conversations: ConversationSummary[]) {
 }
 
 // The navy rail (Felt & Tangerine): cream text on ink, mono group
-// eyebrows, 44px rows and row actions, the tangerine New chat pill.
+// eyebrows, 44px rows, the tangerine New chat pill. Row actions
+// (RowActions.tsx) reveal on hover/focus, or behind "More actions" on touch.
 // Colours ride the --thingy-rail-* tokens (contrast notes in
 // thingy-base.css); .thingy-rail scopes the light focus ring.
 const RAIL_ICON_BUTTON =
   'grid size-11 shrink-0 place-items-center rounded-xl text-rail-icon transition-colors hover:bg-rail-raised hover:text-white [&_svg]:size-5';
 
 const RAIL_EYEBROW = 'px-3 font-mono text-[11px] font-semibold tracking-[0.14em] text-rail-muted uppercase';
-
-const ROW_ACTION =
-  'grid size-11 place-items-center rounded-xl text-rail-icon transition-colors hover:bg-rail-active hover:text-white [&_svg]:size-4';
 
 export function Rail({
   collapsed,
@@ -207,7 +206,7 @@ export function Rail({
                 return (
                   <li
                     key={entry.id}
-                    className={`group/row relative min-w-0 overflow-hidden rounded-xl transition-colors ${
+                    className={`thingy-row relative flex min-w-0 items-center overflow-hidden rounded-xl transition-colors ${
                       active
                         ? 'bg-rail-active font-bold text-white'
                         : 'text-rail-text hover:bg-rail-raised hover:text-white'
@@ -215,7 +214,7 @@ export function Rail({
                   >
                     <button
                       type="button"
-                      className="thingy-aui-recent block min-h-11 w-full truncate px-3 py-2.5 text-left font-sans text-[15px]"
+                      className="thingy-aui-recent block min-h-11 min-w-0 flex-1 truncate px-3 py-2.5 text-left font-sans text-[15px]"
                       aria-current={active ? 'true' : undefined}
                       onClick={() => onSelect(entry.id, entry.title)}
                     >
@@ -241,38 +240,15 @@ export function Rail({
                         </span>
                       ) : null}
                     </button>
-                    <span className="absolute inset-y-0 right-0 hidden items-center rounded-r-xl bg-inherit group-focus-within/row:flex group-hover/row:flex">
-                      <Tip label={entry.shared_at ? 'Refresh share link' : 'Share'}>
-                        <button
-                          type="button"
-                          className={ROW_ACTION}
-                          aria-label="Share"
-                          onClick={() => onShare(entry.id, Boolean(entry.shared_at))}
-                        >
-                          <Icon name="share" />
-                        </button>
-                      </Tip>
-                      <Tip label="Rename">
-                        <button
-                          type="button"
-                          className={ROW_ACTION}
-                          aria-label="Rename"
-                          onClick={() => onRename(entry.id, entry.title)}
-                        >
-                          <Icon name="pencil" />
-                        </button>
-                      </Tip>
-                      <Tip label="Delete">
-                        <button
-                          type="button"
-                          className={`${ROW_ACTION} hover:text-oops`}
-                          aria-label="Delete"
-                          onClick={() => onDelete(entry.id)}
-                        >
-                          <Icon name="trash" />
-                        </button>
-                      </Tip>
-                    </span>
+                    <RowActions
+                      variant="rail"
+                      title={entry.title}
+                      updatedAt={entry.updated_at}
+                      shared={Boolean(entry.shared_at)}
+                      onShare={() => onShare(entry.id, Boolean(entry.shared_at))}
+                      onRename={() => onRename(entry.id, entry.title)}
+                      onDelete={() => onDelete(entry.id)}
+                    />
                   </li>
                 );
               })}

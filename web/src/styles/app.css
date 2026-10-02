@@ -19,6 +19,10 @@
    an a.thingy-btn beats the content pages' link colours. */
 @import './thingy-components.css' layer(components);
 
+/* SPA-only pieces (sheets, row actions, dialog tiles, the display-weight
+   fix over preflight) after the base components. */
+@import './thingy-app-ui.css' layer(components);
+
 /* Read-only thread (owner preview of a shared conversation): hide actions
    that would mutate or send - copy stays. */
 [data-readonly] [data-rw-action] {

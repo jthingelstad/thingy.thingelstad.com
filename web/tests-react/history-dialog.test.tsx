@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TipProvider } from '../src/react/components/Tip.tsx';
@@ -106,4 +106,26 @@ test('rejected search shows sign-in recovery instead of no matches', async () =>
   await screen.findByText('Sign in again to load your saved chats.');
   expect(screen.getByRole('link', { name: 'Sign in' })).toBeTruthy();
   expect(screen.queryByText('No conversations match.')).toBeNull();
+});
+
+test('All chats rows reach Delete without hover through the More actions sheet', async () => {
+  const user = userEvent.setup();
+  const onDelete = vi.fn();
+  renderDialog({ onDelete });
+  await screen.findByText('Another chat');
+  const more = screen.getByRole('button', { name: 'More actions for Another chat' });
+  await user.click(more);
+  const sheet = await screen.findByRole('dialog', { name: 'Actions for Another chat' });
+  await user.click(within(sheet).getByRole('button', { name: 'Delete' }));
+  await waitFor(() => expect(onDelete).toHaveBeenCalledWith('b'));
+  // The sheet is gone and All chats is still open behind it.
+  expect(screen.getByRole('dialog', { name: 'All chats' })).toBeTruthy();
+  expect(document.activeElement).toBe(more);
+});
+
+test('All chats labels its search field and shows a face when empty', async () => {
+  renderDialog({ listPage: vi.fn(async () => ({ conversations: [], total: 0 })) });
+  await screen.findByText('No conversations yet.');
+  expect(screen.getByLabelText('Search all conversations')).toBeTruthy();
+  expect(document.querySelector('.thingy-history-empty .thingy-face')).toBeTruthy();
 });
