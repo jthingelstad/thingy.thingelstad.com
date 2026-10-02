@@ -5,9 +5,31 @@
 // (Librarian 4.15.0): the reader pastes the app's callback URL and copies
 // back the values its authorization form asks for. Deliberately generic -
 // no per-app presets.
+//
+// Felt & Tangerine (phase 3): a toy-cream section of paper rows, each
+// connection behind the same generic plug tile (no per-app branding, as
+// above), outlined danger pills for the destructive actions, and the log as
+// a bottom sheet on a phone.
+
+const ROW = 'flex items-center gap-3.5 rounded-[14px] border-2 border-ink bg-paper px-3 py-2.5 max-sm:flex-wrap';
+const OUTLINE_DANGER =
+  'thingy-btn thingy-btn-outline-danger thingy-btn-compact min-h-11 shrink-0 px-4 text-[14px] max-sm:ml-auto';
+const SECONDARY = 'thingy-btn thingy-btn-secondary thingy-btn-compact shrink-0 text-[14px]';
+const ERROR = 'text-[15px] font-semibold text-danger';
+const COPY = 'text-[15px] leading-[1.45] text-ink';
+
+function PlugTile() {
+  return (
+    <span className="thingy-icon-tile size-11 rounded-xl [&_svg]:size-5" aria-hidden="true">
+      <Icon name="plug" />
+    </span>
+  );
+}
 import { useEffect, useId, useState } from 'react';
 import type { FormEvent } from 'react';
+import * as Dialog from '@radix-ui/react-dialog';
 import { Icon } from './components/Icon.tsx';
+import { DialogHeader, SHEET_CONTENT, SHEET_OVERLAY, SheetGrab } from './components/Sheet.tsx';
 import { confirmDialog } from '../shared/stores/dialog-store.ts';
 import { errorMessage } from '../shared/thingy-errors.ts';
 import {
@@ -64,7 +86,8 @@ export function McpConnectionsSection({
       title: `Disconnect ${label}?`,
       body: `${label} loses access to the Librarian right away. To use it again you will sign in from that app and approve it again.`,
       confirmLabel: 'Disconnect',
-      danger: true
+      danger: true,
+      face: 'oops'
     });
     if (!confirmed) return;
     setBusyId(connection.id);
@@ -79,36 +102,39 @@ export function McpConnectionsSection({
   }
 
   return (
-    <section className="thingy-mcp-connections mt-5 rounded-xl border border-line p-3.5" aria-label="MCP connections">
-      <h3 className="text-[14px] font-extrabold">MCP connections</h3>
-      <p className="mt-0.5 text-[13px] text-ink-soft">
-        Apps you have signed in to the Librarian MCP server. Each one searches the archive as you.
-      </p>
-      {loading ? <p className="mt-2 text-[13px] text-muted">Loading connections...</p> : null}
-      {error ? <p className="mt-2 text-[13px] text-error">{error}</p> : null}
+    <section
+      className="thingy-mcp-connections flex flex-col gap-3 rounded-[18px] border-2 border-ink bg-toy px-5 pt-[18px] pb-5 max-sm:px-3.5"
+      aria-label="MCP connections"
+    >
+      <div className="grid gap-1">
+        <h3 className="text-[18px] font-extrabold">MCP connections</h3>
+        <p className={COPY}>
+          Apps you have signed in to the Librarian MCP server. Each one searches the archive as you.
+        </p>
+      </div>
+      {loading ? <p className="text-[15px] text-ink">Loading connections...</p> : null}
+      {error ? <p className={ERROR}>{error}</p> : null}
       {!loading && !error && connections.length === 0 ? (
-        <p className="mt-2 text-[13px] text-muted">
+        <p className={COPY}>
           No apps are connected.{' '}
-          <a className="font-bold text-accent-deep underline" href="/connect/">
+          <a className="font-bold text-clay-hover underline underline-offset-2" href="/connect/">
             Connect Claude, ChatGPT, or another MCP client
           </a>
           .
         </p>
       ) : null}
       {connections.length ? (
-        <ul className="mt-2.5 grid gap-2">
+        <ul className="grid gap-2.5">
           {connections.map((connection) => (
-            <li
-              key={connection.id}
-              className="thingy-mcp-connection flex items-center gap-3 rounded-lg bg-surface-2 px-3 py-2"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[14px] font-bold">{connectionLabel(connection)}</div>
-                <div className="text-[12px] text-muted">{connectionSummary(connection)}</div>
+            <li key={connection.id} className={`thingy-mcp-connection ${ROW}`}>
+              <PlugTile />
+              <div className="grid min-w-0 flex-1 gap-0.5">
+                <span className="truncate text-base font-extrabold">{connectionLabel(connection)}</span>
+                <span className="text-[13.5px] text-ink">{connectionSummary(connection)}</span>
               </div>
               <button
                 type="button"
-                className="shrink-0 rounded-lg border border-error/40 px-2.5 py-1 text-[12.5px] font-bold text-error hover:bg-error/8 disabled:opacity-50"
+                className={OUTLINE_DANGER}
                 disabled={disabled || Boolean(busyId)}
                 onClick={() => void handleDisconnect(connection)}
               >
@@ -119,14 +145,16 @@ export function McpConnectionsSection({
         </ul>
       ) : null}
       <McpAppsBlock disabled={disabled} onConnectionsChanged={setConnections} />
-      <button
-        type="button"
-        className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[13px] font-bold hover:bg-surface-2 [&_svg]:size-4"
-        onClick={() => onOpenLog(connections)}
-      >
-        <Icon name="search" />
-        View MCP request log
-      </button>
+      <div>
+        <button
+          type="button"
+          className="thingy-btn thingy-btn-secondary min-h-[46px] px-5 text-[15px] [&_svg]:size-[18px]"
+          onClick={() => onOpenLog(connections)}
+        >
+          <Icon name="scroll-text" />
+          View MCP request log
+        </button>
+      </div>
     </section>
   );
 }
@@ -191,7 +219,8 @@ function McpAppsBlock({
       title: `Delete ${label}?`,
       body: `Its client ID stops working and any connection made with it is disconnected right away. To use ${label} again you would set it up again and paste the new client ID into it.`,
       confirmLabel: 'Delete',
-      danger: true
+      danger: true,
+      face: 'oops'
     });
     if (!confirmed) return;
     setBusyId(client.client_id);
@@ -208,38 +237,46 @@ function McpAppsBlock({
   }
 
   return (
-    <div className="thingy-mcp-apps mt-4 border-t border-line pt-3">
-      <h4 className="text-[13px] font-extrabold">Apps that ask for a client ID</h4>
-      <p className="mt-0.5 text-[12.5px] text-ink-soft">
-        Some apps don&apos;t sign up on their own. They show you a callback (redirect) URL and ask for a client ID. Set
-        one up here, then copy the values into the app.
-      </p>
-      {error ? <p className="mt-2 text-[13px] text-error">{error}</p> : null}
+    <div className="thingy-mcp-apps grid gap-2.5 border-t-2 border-dashed border-rule pt-3.5">
+      <div className="grid gap-1">
+        <h4 className="text-base font-extrabold">Apps that ask for a client ID</h4>
+        <p className={COPY}>
+          Some apps don&apos;t sign up on their own. They show you a callback (redirect) URL and ask for a client ID.
+          Set one up here, then copy the values into the app.
+        </p>
+      </div>
+      {error ? <p className={ERROR}>{error}</p> : null}
       {clients.length ? (
-        <ul className="mt-2.5 grid gap-2">
+        <ul className="grid gap-2.5">
           {clients.map((client) => (
-            <li key={client.client_id} className="thingy-mcp-app rounded-lg bg-surface-2 px-3 py-2">
-              <div className="flex items-center gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[14px] font-bold">{client.client_name}</div>
-                  <div className="text-[12px] text-muted">{clientStatus(client)}</div>
+            <li
+              key={client.client_id}
+              className="thingy-mcp-app rounded-[14px] border-2 border-ink bg-paper px-3 py-2.5"
+            >
+              <div className="flex items-center gap-3.5 max-sm:flex-wrap">
+                <PlugTile />
+                <div className="grid min-w-0 flex-1 gap-0.5">
+                  <span className="truncate text-base font-extrabold">{client.client_name}</span>
+                  <span className="text-[13.5px] text-ink">{clientStatus(client)}</span>
                 </div>
-                <button
-                  type="button"
-                  className="shrink-0 rounded-lg border border-line px-2.5 py-1 text-[12.5px] font-bold hover:bg-surface"
-                  aria-expanded={openId === client.client_id}
-                  onClick={() => setOpenId(openId === client.client_id ? '' : client.client_id)}
-                >
-                  {openId === client.client_id ? 'Hide settings' : 'Settings'}
-                </button>
-                <button
-                  type="button"
-                  className="shrink-0 rounded-lg border border-error/40 px-2.5 py-1 text-[12.5px] font-bold text-error hover:bg-error/8 disabled:opacity-50"
-                  disabled={disabled || Boolean(busyId)}
-                  onClick={() => void handleDelete(client)}
-                >
-                  {busyId === client.client_id ? 'Deleting...' : 'Delete'}
-                </button>
+                <div className="flex shrink-0 gap-2 max-sm:ml-auto">
+                  <button
+                    type="button"
+                    className={SECONDARY}
+                    aria-expanded={openId === client.client_id}
+                    onClick={() => setOpenId(openId === client.client_id ? '' : client.client_id)}
+                  >
+                    {openId === client.client_id ? 'Hide settings' : 'Settings'}
+                  </button>
+                  <button
+                    type="button"
+                    className={OUTLINE_DANGER.replace(' max-sm:ml-auto', '')}
+                    disabled={disabled || Boolean(busyId)}
+                    onClick={() => void handleDelete(client)}
+                  >
+                    {busyId === client.client_id ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
               </div>
               {openId === client.client_id ? <McpClientSettingsCard client={client} /> : null}
             </li>
@@ -248,26 +285,30 @@ function McpAppsBlock({
       ) : null}
       {formOpen ? (
         <form
-          className="thingy-mcp-app-form mt-2.5 grid gap-2 rounded-lg border border-line p-3"
+          className="thingy-mcp-app-form grid gap-3 rounded-[14px] border-2 border-ink bg-paper p-3.5"
           onSubmit={handleCreate}
         >
-          <label className="grid gap-1 text-[12.5px] font-bold" htmlFor={nameId}>
-            App name
+          <div>
+            <label className="thingy-field-label" htmlFor={nameId}>
+              App name
+            </label>
             <input
               id={nameId}
-              className="rounded-lg border border-line bg-bg px-2 py-1.5 text-[13px] font-normal text-ink"
+              className="thingy-input"
               value={name}
               maxLength={100}
               required
               autoComplete="off"
               onChange={(event) => setName(event.target.value)}
             />
-          </label>
-          <label className="grid gap-1 text-[12.5px] font-bold" htmlFor={callbackId}>
-            Callback URL from the app
+          </div>
+          <div>
+            <label className="thingy-field-label" htmlFor={callbackId}>
+              Callback URL from the app
+            </label>
             <input
               id={callbackId}
-              className="rounded-lg border border-line bg-bg px-2 py-1.5 font-mono text-[12.5px] font-normal text-ink"
+              className="thingy-input font-mono text-[15px]"
               type="url"
               value={callbackUrl}
               required
@@ -276,18 +317,18 @@ function McpAppsBlock({
               spellCheck={false}
               onChange={(event) => setCallbackUrl(event.target.value)}
             />
-          </label>
-          <div className="flex gap-2">
+          </div>
+          <div className="flex flex-wrap gap-2.5">
             <button
               type="submit"
-              className="rounded-lg bg-accent-deep px-3 py-1.5 text-[13px] font-bold text-bg hover:brightness-110 disabled:opacity-50"
+              className="thingy-btn thingy-btn-primary thingy-btn-compact"
               disabled={disabled || saving}
             >
               {saving ? 'Creating...' : 'Create client ID'}
             </button>
             <button
               type="button"
-              className="rounded-lg border border-line px-3 py-1.5 text-[13px] font-bold hover:bg-surface-2"
+              className="thingy-btn thingy-btn-secondary thingy-btn-compact"
               onClick={() => setFormOpen(false)}
             >
               Cancel
@@ -295,17 +336,19 @@ function McpAppsBlock({
           </div>
         </form>
       ) : loaded ? (
-        <button
-          type="button"
-          className="mt-2.5 rounded-lg border border-line px-3 py-1.5 text-[13px] font-bold hover:bg-surface-2 disabled:opacity-50"
-          disabled={disabled}
-          onClick={() => {
-            setError('');
-            setFormOpen(true);
-          }}
-        >
-          Set up an app
-        </button>
+        <div>
+          <button
+            type="button"
+            className={SECONDARY}
+            disabled={disabled}
+            onClick={() => {
+              setError('');
+              setFormOpen(true);
+            }}
+          >
+            Set up an app
+          </button>
+        </div>
       ) : null}
     </div>
   );
@@ -324,23 +367,23 @@ function McpClientSettingsCard({ client }: { client: LibrarianMcpRegisteredClien
   }
 
   return (
-    <div className="thingy-mcp-app-settings mt-2 rounded-lg border border-line bg-surface p-2.5">
-      <p className="mb-2 text-[12px] text-ink-soft">
+    <div className="thingy-mcp-app-settings mt-3 rounded-xl border-2 border-dashed border-rule bg-bg p-3">
+      <p className="mb-2.5 text-[14px] leading-[1.45] text-ink">
         Enter these in the app&apos;s authorization settings. Then start the sign-in from the app: you confirm your
         email with a code, approve it, and it shows up under your connections.
       </p>
       <dl className="grid gap-2">
         {clientSettingRows(client.settings).map((row) => (
           <div key={row.label}>
-            <dt className="text-[11.5px] font-bold text-muted">{row.label}</dt>
+            <dt className="font-mono text-[11.5px] font-semibold tracking-[0.1em] text-meta uppercase">{row.label}</dt>
             <dd className="flex items-center gap-1.5">
-              <span className={`min-w-0 flex-1 text-[12.5px] break-all ${row.copy ? 'font-mono select-all' : ''}`}>
+              <span className={`min-w-0 flex-1 text-[14px] break-all ${row.copy ? 'font-mono select-all' : ''}`}>
                 {row.value}
               </span>
               {row.copy ? (
                 <button
                   type="button"
-                  className="grid size-7 shrink-0 place-items-center rounded-md text-muted hover:bg-surface-2 hover:text-ink [&_svg]:size-3.5"
+                  className="grid size-11 shrink-0 place-items-center rounded-xl text-meta transition-colors hover:bg-toy hover:text-ink [&_svg]:size-[18px]"
                   aria-label={`Copy ${row.label}`}
                   onClick={() => void copy(row.label, row.value)}
                 >
@@ -351,7 +394,7 @@ function McpClientSettingsCard({ client }: { client: LibrarianMcpRegisteredClien
           </div>
         ))}
       </dl>
-      <p className="mt-2 text-[11.5px] text-muted">Callback URL: {client.redirect_uri}</p>
+      <p className="mt-2 text-[13px] break-all text-meta">Callback URL: {client.redirect_uri}</p>
     </div>
   );
 }
@@ -386,76 +429,74 @@ export function McpLogDialog({ connections, onClose }: { connections: LibrarianM
   }, [filter]);
 
   return (
-    <div
-      className="thingy-scrim fixed inset-0 z-[60] grid place-items-center p-5"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <section
-        className="thingy-mcp-log thingy-modal flex max-h-[min(760px,calc(100vh-40px))] w-[min(44rem,100%)] flex-col p-5 font-sans"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="thingy-mcp-log-title"
-      >
-        <header className="mb-3 flex items-start gap-3">
-          <div className="min-w-0 flex-1">
-            <h2 id="thingy-mcp-log-title" className="thingy-modal-title">
-              MCP request log
-            </h2>
-            <p className="text-[13px] text-muted">
-              Every archive tool call made as you, newest first
-              {retentionDays ? `. Kept for ${retentionDays} days.` : '.'}
-            </p>
-          </div>
-          <button
-            type="button"
-            className="-my-1.5 -mr-1.5 grid size-11 shrink-0 place-items-center rounded-xl text-ink hover:bg-surface-2 [&_svg]:size-5"
-            aria-label="Close MCP request log"
-            onClick={onClose}
+    <Dialog.Root open onOpenChange={(next) => (next ? undefined : onClose())}>
+      <Dialog.Portal>
+        <Dialog.Overlay className={`${SHEET_OVERLAY} z-[60]`}>
+          <Dialog.Content
+            className={`thingy-mcp-log ${SHEET_CONTENT} max-h-[min(944px,calc(100vh-40px))] w-[min(45rem,100%)] gap-3 px-[26px] pt-[22px] pb-[22px] max-md:h-[calc(100dvh-1rem)] max-md:px-4 max-md:pb-0`}
+            aria-describedby={undefined}
           >
-            <Icon name="x" />
-          </button>
-        </header>
-        <label className="mb-3 flex items-center gap-2 text-[13px]">
-          <span className="font-bold text-muted">Show</span>
-          <select
-            className="min-w-0 flex-1 rounded-lg border border-line bg-bg px-2 py-1.5 text-[13px] text-ink"
-            value={filter}
-            onChange={(event) => setFilter(event.target.value)}
-          >
-            <option value="">All requests</option>
-            {connections.map((connection) => (
-              <option key={connection.id} value={connection.id}>
-                {connectionLabel(connection)}
-              </option>
-            ))}
-            <option value={WEB_SURFACE_FILTER}>Thingy page (WebMCP)</option>
-          </select>
-        </label>
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          {error ? <p className="text-[13px] text-error">{error}</p> : null}
-          {!loading && !error && entries.length === 0 ? (
-            <p className="text-[13px] text-muted">No MCP requests in this window.</p>
-          ) : null}
-          <ol className="grid gap-1.5">
-            {entries.map((entry) => (
-              <McpLogRow key={`${entry.created_at}-${entry.request_id}`} entry={entry} />
-            ))}
-          </ol>
-          {loading ? <p className="mt-2 text-[13px] text-muted">Loading requests...</p> : null}
-          {!loading && nextCursor ? (
-            <button
-              type="button"
-              className="mt-3 rounded-lg border border-line px-3 py-1.5 text-[13px] font-bold hover:bg-surface-2"
-              onClick={() => void load(nextCursor, true)}
-            >
-              Load more
-            </button>
-          ) : null}
-        </div>
-      </section>
-    </div>
+            <SheetGrab />
+            <DialogHeader
+              title="MCP request log"
+              titleClassName="text-[30px] leading-[1.05] max-md:text-[24px]"
+              subtitle={`Every archive tool call made as you, newest first${retentionDays ? `. Kept for ${retentionDays} days.` : '.'}`}
+              mark={{ icon: 'scroll-text' }}
+              closeLabel="Close MCP request log"
+            />
+            <label className="flex items-center gap-3">
+              <span className="font-mono text-[12px] font-semibold tracking-[0.14em] text-meta uppercase">Show</span>
+              <span className="relative flex min-w-0 flex-1">
+                <select
+                  className="thingy-input thingy-select min-h-[46px] min-w-0 flex-1 text-[15px] font-semibold"
+                  value={filter}
+                  onChange={(event) => setFilter(event.target.value)}
+                >
+                  <option value="">All requests</option>
+                  {connections.map((connection) => (
+                    <option key={connection.id} value={connection.id}>
+                      {connectionLabel(connection)}
+                    </option>
+                  ))}
+                  <option value={WEB_SURFACE_FILTER}>Thingy page (WebMCP)</option>
+                </select>
+                <span
+                  className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-ink [&_svg]:size-[18px]"
+                  aria-hidden="true"
+                >
+                  <Icon name="chevron-down" />
+                </span>
+              </span>
+            </label>
+            <div className="min-h-0 flex-1 overflow-y-auto p-0.5 pb-2 max-md:pb-[calc(1rem+env(safe-area-inset-bottom))]">
+              {error ? <p className={ERROR}>{error}</p> : null}
+              {!loading && !error && entries.length === 0 ? (
+                <p className="mt-2 text-[15px] text-ink">No MCP requests in this window.</p>
+              ) : null}
+              {entries.length ? (
+                <ol className="thingy-mcp-log-list overflow-hidden rounded-[14px] border-2 border-ink bg-toy">
+                  {entries.map((entry) => (
+                    <McpLogRow key={`${entry.created_at}-${entry.request_id}`} entry={entry} />
+                  ))}
+                </ol>
+              ) : null}
+              {loading ? <p className="mt-2 text-[15px] text-ink">Loading requests...</p> : null}
+              {!loading && nextCursor ? (
+                <div className="flex justify-center pt-3">
+                  <button
+                    type="button"
+                    className="thingy-btn thingy-btn-secondary min-h-[46px] px-6 text-[15px]"
+                    onClick={() => void load(nextCursor, true)}
+                  >
+                    Load more
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </Dialog.Content>
+        </Dialog.Overlay>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
@@ -464,23 +505,21 @@ function McpLogRow({ entry }: { entry: LibrarianMcpLogEntry }) {
   const failed = entry.status !== 'ok';
   const details = [
     logEntryConnectionLabel(entry),
-    typeof entry.duration_ms === 'number' ? `${entry.duration_ms.toLocaleString()} ms` : '',
-    formatResultSize(entry.result_chars),
-    entry.response_truncated ? 'truncated' : ''
+    typeof entry.duration_ms === 'number' ? `${entry.duration_ms.toLocaleString('en-US')} ms` : '',
+    formatResultSize(entry.result_chars)
   ].filter(Boolean);
   return (
-    <li className="thingy-mcp-log-entry rounded-lg bg-surface-2 px-3 py-2">
-      <div className="flex flex-wrap items-baseline gap-x-2">
-        <code className="font-mono text-[13px] font-bold">{entry.tool_name}</code>
-        {failed ? (
-          <span className="rounded bg-error/12 px-1.5 text-[11px] font-bold text-error">{entry.status}</span>
-        ) : null}
-        <time className="ml-auto text-[12px] text-muted" dateTime={entry.created_at}>
+    <li className="thingy-mcp-log-entry grid gap-1 px-4 py-3">
+      <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+        <code className="font-mono text-[14px] font-semibold text-ink">{entry.tool_name}</code>
+        {failed ? <span className="thingy-pill thingy-pill-danger">{entry.status}</span> : null}
+        {entry.response_truncated ? <span className="thingy-pill">truncated</span> : null}
+        <time className="ml-auto text-[13px] text-ink" dateTime={entry.created_at}>
           {formatLogTime(entry.created_at)}
         </time>
       </div>
-      <div className="text-[12px] text-muted">{details.join(' · ')}</div>
-      {args ? <div className="mt-0.5 font-mono text-[11.5px] break-all text-ink-soft">{args}</div> : null}
+      {details.length ? <div className="text-[13px] leading-[1.35] text-ink">{details.join(' · ')}</div> : null}
+      {args ? <div className="font-mono text-[12px] leading-[1.4] break-all text-meta">{args}</div> : null}
     </li>
   );
 }
