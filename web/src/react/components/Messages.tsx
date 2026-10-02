@@ -16,6 +16,7 @@ import { createChatMessageActions } from '../../shared/thingy-message-actions.ts
 import { liveActivityStatus } from '../thingy-runtime.ts';
 import { trackEvent } from '../../shared/thingy-analytics.ts';
 import { Icon } from './Icon.tsx';
+import { ThingyFace } from './ThingyFace.tsx';
 import { Tip } from './Tip.tsx';
 import { AssistantMarkdown } from './MarkdownText.tsx';
 import { thingyUrlTransform } from './markdown-config.ts';
@@ -87,9 +88,9 @@ function ResponseTimer() {
   const shownMs = !running && serverMs ? serverMs : elapsed;
   return (
     <span className="thingy-response-timer inline-flex items-center gap-1.5 font-mono text-[11.5px] text-muted tabular-nums">
-      {running ? (
-        <span className="size-1.5 shrink-0 animate-pulse rounded-full bg-accent motion-reduce:animate-none" />
-      ) : null}
+      {/* The thinking face is the live loader: its eyes scan while the
+          answer streams (still under reduced motion). */}
+      {running ? <ThingyFace mood="thinking" size={26} className="thingy-response-face" /> : null}
       {formatElapsed(shownMs)}
       {!running && tokens ? <span className="shrink-0">· {formatTokens(tokens)}</span> : null}
       {running && phrase ? <span className="truncate font-sans">· {phrase}</span> : null}

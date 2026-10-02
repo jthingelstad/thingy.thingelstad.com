@@ -190,9 +190,57 @@ textarea.thingy-input {
   line-height: 1.1;
 }
 
-/* Lift and press are motion: under reduced motion the buttons keep their
-   shadow change as feedback but stop moving. */
+/* ---- The screen face (ThingyFace.tsx) ----
+   Motion that means something: the idle face blinks now and then, the
+   thinking face scans. Nothing else moves, and none of it under reduced
+   motion. */
+
+.thingy-face {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.thingy-face-animated .thingy-face-blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: thingy-face-blink 4.5s infinite;
+}
+
+.thingy-face-animated .thingy-face-scan {
+  animation: thingy-face-scan 1.4s ease-in-out infinite;
+}
+
+@keyframes thingy-face-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+
+  96% {
+    transform: scaleY(0.15);
+  }
+}
+
+@keyframes thingy-face-scan {
+  0%,
+  100% {
+    transform: translateX(-5px);
+  }
+
+  50% {
+    transform: translateX(5px);
+  }
+}
+
+/* Lift, press, blink and scan are motion: under reduced motion the face
+   holds still and the buttons keep only their shadow change. */
 @media (prefers-reduced-motion: reduce) {
+  .thingy-face * {
+    animation: none;
+  }
+
   .thingy-btn,
   .thingy-btn:hover:not(:disabled),
   .thingy-btn:active:not(:disabled) {
