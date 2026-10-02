@@ -179,7 +179,8 @@ Key files:
   stylesheets (`answer.css`, `thingy-page.css`, `share.css`) in
   `layer(components)` - above preflight, which would otherwise strip
   link colors. `thingy-base.css` owns the design tokens - the palette lives at
-  `--thingy-*` (NEVER name app tokens `--color-*`: Tailwind emits
+  `--thingy-*`, one light palette with no `prefers-color-scheme` or
+  `data-theme` blocks (NEVER name app tokens `--color-*`: Tailwind emits
   `--color-<name>` theme variables and the collision creates circular
   var() references that silently blank the theme). `answer.css` is the
   one home for rendered-answer typography (chat + share page).
@@ -207,10 +208,12 @@ Key files:
 - `web/public/manifest.webmanifest` + `web/public/img/icons/`: PWA
   install config (add-to-home-screen). `start_url` is `/chat/`, scope
   `/`, standalone display; icons are the Thingy robot composited onto
-  `--thingy-accent-soft` (regenerate from `public/img/thingy.png` with
-  sharp if the artwork changes; maskable variant keeps the robot inside
-  the central 80% safe zone). Every shell links the manifest,
-  apple-touch-icon, and light/dark `theme-color`. No service worker -
+  the pre-2026-10 mint tint (regenerate from `public/img/thingy.png` with
+  sharp onto the Felt & Tangerine palette when the artwork changes;
+  maskable variant keeps the robot inside the central 80% safe zone).
+  Every shell links the manifest, apple-touch-icon, and ONE `theme-color`
+  (cream `#f6eedc`, matching the manifest) - there is no dark variant
+  (`tests/one-look.test.mjs` guards this). No service worker -
   deliberate: the app is a thin client over live APIs and stale-asset
   caching bugs outweigh offline value.
 - `web/vite.config.ts`: multi-page build config and build-time public config

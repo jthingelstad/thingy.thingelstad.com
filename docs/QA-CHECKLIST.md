@@ -101,8 +101,9 @@ npm run qa:real -- --cleanup-only
 
 ## Static Pages
 
-- `/about/` and `/connect/` render in light and dark with the top nav; the
-  current page is highlighted; brand mark returns home.
+- `/about/` and `/connect/` render in the one Felt & Tangerine look (no
+  dark mode) with the top nav; the current page is highlighted; brand mark
+  returns home.
 - `/connect/` instructions match the live MCP endpoint
   (`https://librarian.thingelstad.com/mcp`).
 

@@ -4,8 +4,8 @@
 // engine the CSP blocks anyway. Uses the JavaScript regex engine (no
 // WASM); everything loads lazily so the chat bundle only pays when an
 // answer actually contains a fenced block. Languages outside the set fall
-// back to the plain monospace block. Dual-theme output follows the site's
-// data-theme pattern in answer.css.
+// back to the plain monospace block. One light theme (Thingy has one
+// look); colours ride --shiki-light, read in answer.css.
 
 import { useEffect, useState } from 'react';
 import type { SyntaxHighlighterProps } from '@assistant-ui/react-markdown';
@@ -40,7 +40,7 @@ let highlighterPromise: Promise<HighlighterCore> | null = null;
 function loadHighlighter(): Promise<HighlighterCore> {
   highlighterPromise ||= Promise.all([import('shiki/core'), import('shiki/engine/javascript')]).then(([core, engine]) =>
     core.createHighlighterCore({
-      themes: [import('@shikijs/themes/github-light'), import('@shikijs/themes/github-dark')],
+      themes: [import('@shikijs/themes/github-light')],
       langs: LANGS(),
       engine: engine.createJavaScriptRegexEngine({ forgiving: true })
     })
@@ -59,7 +59,7 @@ export function CodeHighlight({ components, language, code }: SyntaxHighlighterP
         const highlighter = await loadHighlighter();
         const rendered = highlighter.codeToHtml(code, {
           lang: language,
-          themes: { light: 'github-light', dark: 'github-dark' },
+          themes: { light: 'github-light' },
           defaultColor: false
         });
         if (!cancelled) setHtml(rendered);

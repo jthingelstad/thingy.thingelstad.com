@@ -7,7 +7,6 @@ import { Icon } from './components/Icon.tsx';
 import { McpConnectionsSection, McpLogDialog } from './McpConnections.tsx';
 import { confirmDialog } from '../shared/stores/dialog-store.ts';
 import * as session from '../shared/thingy-session.ts';
-import { setTheme, storedTheme, type ThingyTheme } from '../shared/thingy-theme.ts';
 
 // React port of the account trigger + menu + profile modal (the Preact
 // versions retired with the Preact chat). Same CSS classes, same /memory
@@ -280,7 +279,6 @@ export function AccountPanel() {
   const [preferredName, setPreferredName] = useState(() => String(session.storedProfile().preferred_name || '').trim());
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [theme, setThemeState] = useState<ThingyTheme>(() => storedTheme());
   const [nameStatus, setNameStatus] = useState('');
   const supporting = hasSupportingAccess(profile);
   const display = email || preferredName;
@@ -382,33 +380,6 @@ export function AccountPanel() {
                 <small className="block text-[11.5px] text-muted">Account details and activity</small>
               </span>
             </button>
-            <div className="mx-1 my-0.5 border-t border-line-soft" role="separator" />
-            <div className="px-1.5">
-              <label id="thingy-theme-label" className="text-[11px] font-bold tracking-wider text-muted uppercase">
-                Theme
-              </label>
-              <div className="mt-1 flex gap-1.5" role="radiogroup" aria-labelledby="thingy-theme-label">
-                {(['system', 'light', 'dark'] as ThingyTheme[]).map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    role="radio"
-                    aria-checked={theme === option}
-                    className={`flex-1 rounded-lg border px-0 py-1.5 text-[12px] font-bold transition-colors ${
-                      theme === option
-                        ? 'border-accent bg-accent-soft text-ink'
-                        : 'border-line bg-bg text-ink-soft hover:bg-surface-2'
-                    }`}
-                    onClick={() => {
-                      setTheme(option);
-                      setThemeState(option);
-                    }}
-                  >
-                    {option === 'system' ? 'System' : option === 'light' ? 'Light' : 'Dark'}
-                  </button>
-                ))}
-              </div>
-            </div>
             <div className="mx-1 my-0.5 border-t border-line-soft" role="separator" />
             <button
               type="button"

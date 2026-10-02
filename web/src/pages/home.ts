@@ -1,9 +1,6 @@
 import '../styles/thingy-home-entry.css';
 import { loadTinylytics } from '../shared/thingy-tinylytics-loader.ts';
 import { refreshAuth, sessionActive } from '../shared/thingy-session.ts';
-import { initTheme } from '../shared/thingy-theme.ts';
-
-initTheme();
 
 // Emailed magic links land here (THINGY_MAGIC_LINK_BASE_URL is the site
 // root). Hand the token to the sign-in route before analytics scrubs it.

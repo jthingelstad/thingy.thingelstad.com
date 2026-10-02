@@ -4,29 +4,27 @@
 <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://tinylytics.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.thingelstad.com https://tinylytics.app; connect-src 'self' https://fonts.googleapis.com https://tinylytics.app">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light">
 <meta name="robots" content="noindex">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/img/icons/apple-touch-icon.png">
-<meta name="theme-color" content="#f6f8f5" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#101716" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f6eedc">
 <title>Not found - Thingy</title>
 <style>
-:root { color-scheme: light dark;
-  --bg: #f6f8f5; --surface: #fff; --text: #17211f; --text-soft: #3f4f4a;
-  --accent: #14776f; --border: #dfe7e3; }
-@media (prefers-color-scheme: dark) { :root {
-  --bg: #101716; --surface: #17211f; --text: #eaf0ed; --text-soft: #bcc8c3;
-  --accent: #65c8bc; --border: #2c3a36; } }
+:root { color-scheme: light;
+  --bg: #f6eedc; --surface: #fffaf0; --text: #1f2a38; --text-soft: #3d4654;
+  --accent: #b5461a; --accent-hover: #8a3410; --border: #1f2a38; }
 body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
   background: var(--bg); color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-.card { width: min(92vw, 24rem); background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; padding: 2rem; box-sizing: border-box; text-align: center; }
+  font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+.card { width: min(92vw, 24rem); background: var(--surface); border: 2px solid var(--border);
+  border-radius: 20px; box-shadow: 0 6px 0 var(--border); padding: 2rem; box-sizing: border-box; text-align: center; }
 img { width: 72px; height: 72px; }
-h1 { font-size: 1.2rem; margin: 0.75rem 0 0.5rem; }
-p { font-size: 0.95rem; line-height: 1.45; margin: 0.5rem 0 1rem; color: var(--text-soft); }
+h1 { font-family: 'Archivo', 'Figtree', sans-serif; font-style: italic; font-weight: 800; font-stretch: 112%;
+  letter-spacing: -0.025em; font-size: 1.4rem; line-height: 1.15; margin: 0.75rem 0 0.5rem; }
+p { font-size: 1rem; line-height: 1.5; margin: 0.5rem 0 1rem; color: var(--text-soft); }
 a { color: var(--accent); }
+a:hover { color: var(--accent-hover); }
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Figtree:wght@400..800&family=JetBrains+Mono:wght@400..700&family=Source+Sans+3:wght@400;600&display=swap">
 </head>

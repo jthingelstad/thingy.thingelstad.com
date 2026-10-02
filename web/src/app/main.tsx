@@ -15,7 +15,6 @@ import {
   RouterProvider
 } from '@tanstack/react-router';
 import '../styles/app.css';
-import { initTheme } from '../shared/thingy-theme.ts';
 import { registerClientErrorTracking } from '../shared/thingy-analytics.ts';
 import { composeExplorePrompt } from '../shared/thingy-explore.ts';
 import { resolveFromValue } from '../shared/thingy-from.ts';
@@ -34,7 +33,6 @@ import { SignInApp } from '../react/SignInApp.tsx';
 const LazyChatApp = lazyRouteComponent(() => import('../react/ChatApp.tsx'), 'ChatApp');
 const LazyShareApp = lazyRouteComponent(() => import('../react/ShareApp.tsx'), 'ShareApp');
 
-initTheme();
 registerClientErrorTracking(
   window.location.pathname.startsWith('/signin')
     ? 'signin'
