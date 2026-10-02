@@ -224,15 +224,34 @@ logic belongs in the Librarian Lambda in `librarian-thing`.
 
 ## Design Direction
 
-Thingy should feel like its own standalone agent/product.
+Thingy should feel like its own standalone agent/product, with a personality:
+the "Felt & Tangerine" look, decided 2026-10-01. The design canvas is the
+reference: https://claude.ai/artifact/RMsX3mnEYKLuZc9fk2BFBs (brand kit,
+every screen, phone boards). When code and canvas disagree, ask before
+inventing a third look.
 
 Do:
 
-- Keep the UI neutral and product-like.
-- Treat Weekly Thing, Another Thing, and the blog as source properties, not as
-  visual themes to copy.
+- Build on the warm palette in `thingy-base.css`: cream ground, paper
+  surfaces, ink text and borders, tangerine fills (navy text only on
+  tangerine), clay links. One look only: there is no dark mode and no theme
+  switch.
+- Type: Archivo italic 800 (wide) for display, Figtree for UI and body,
+  JetBrains Mono for eyebrows and meta. Source Sans 3 only in the sites strip.
+- Toy-like components: 2px ink borders, hard offset shadows, pill buttons that
+  lift on hover and press on click, 44px minimum targets.
+- Let the mascot carry the personality: the screen face and its moods (idle,
+  thinking, found-it, oops) in the avatar, loaders, empty and error states.
+- Motion is CSS only and only when it says something (the blinking face, the
+  three thinking dots). No PixiJS, no confetti, no ambient animation; all of it
+  off under `prefers-reduced-motion`.
+- Use the source colours (Weekly cobalt, Another Thing slate, blog clay) only
+  to identify sources: citation chips and source cards. They are labels, not
+  themes.
 - Make the chat/auth surface the primary object.
-- Keep source cards and cross-site nav useful but secondary.
+- Put the shared "Jamie's sites" strip (Notebook look, from
+  `shared/sites.json`) on the static marketing pages only - never on chat,
+  sign-in, share, or 404.
 - Preserve responsive/mobile layout and avoid horizontal overflow.
 
 Do not:
@@ -240,6 +259,7 @@ Do not:
 - Revert to Weekly Thing's serif/editorial page style.
 - Make Thingy look like the blog's stock Micro.blog theme.
 - Hide the actual chat below large marketing sections.
+- Put text on tangerine in any colour but navy `#1B2540`.
 
 ## Runtime URL Parameters
 
