@@ -226,6 +226,13 @@ async function checkSignInRedirect(browser) {
   assert.equal(new URL(page.url()).searchParams.get('return'), '/chat/');
   assert.doesNotMatch(page.url(), /thingy%40thingelstad|What%20about|weekly\.thingelstad|corpus=blog/);
   await page.waitForSelector('.thingy-signin-form');
+  // The display voice is Archivo italic 800: preflight's heading reset once
+  // dropped it to 400 because .thingy-display sat in a lower layer.
+  assert.equal(
+    await page.locator('#thingy-signin-title').evaluate((node) => getComputedStyle(node).fontWeight),
+    '800',
+    'the sign-in heading renders at the display weight'
+  );
   await assertAccessible(page, 'sign-in');
   assertNoUiFailures(failures, 'sign-in redirect');
   await context.close();
@@ -492,6 +499,63 @@ async function checkMobileChat(browser) {
   await context.close();
 }
 
+// A touch phone (Jamie 2026-10-01): nothing can hover, so the rail's row
+// actions sit behind an always-visible "More actions" button that opens an
+// action sheet, and the account menu is a bottom sheet. Delete must be
+// reachable without hover; the confirm is cancelled so nothing is deleted.
+async function checkTouchChat(browser) {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  await seedSession(context);
+  const page = await context.newPage();
+  const failures = collectUiFailures(page);
+  await routeMockApi(page);
+  const actions = [];
+  page.on('request', (request) => {
+    if (request.url().endsWith('/conversations') && request.method() === 'POST') {
+      try {
+        actions.push(JSON.parse(request.postData() || '{}').action || 'list');
+      } catch {
+        actions.push('unknown');
+      }
+    }
+  });
+  await page.goto(`${baseUrl}/chat/`);
+  await page.waitForSelector('.librarian-chat');
+  await page.locator('.mobile-chatbar-circle').tap();
+  await page.waitForSelector('.thingy-aui-rail', { state: 'visible' });
+  const more = page.getByRole('button', { name: 'More actions for Smoke conversation' });
+  await more.waitFor({ state: 'visible' });
+  assert.equal(
+    await page.locator('.thingy-aui-recents .thingy-row-actions').first().isVisible(),
+    false,
+    'hover-only row actions stay hidden on touch'
+  );
+  await more.tap();
+  const sheet = page.getByRole('dialog', { name: 'Actions for Smoke conversation' });
+  await sheet.waitFor();
+  const sheetBox = await sheet.boundingBox();
+  assert.ok(sheetBox && Math.abs(sheetBox.y + sheetBox.height - 844) <= 1, 'the action sheet sits on the bottom edge');
+  assert.ok(sheetBox && sheetBox.width >= 389, 'the action sheet spans the phone width');
+  await assertAccessible(page, 'touch action sheet');
+  await sheet.getByRole('button', { name: 'Delete' }).tap();
+  const confirm = page.getByRole('dialog', { name: 'Delete this conversation?' });
+  await confirm.waitFor();
+  await confirm.getByRole('button', { name: 'Cancel' }).tap();
+  await confirm.waitFor({ state: 'hidden' });
+  assert.ok(!actions.includes('delete'), 'cancelling the confirm deletes nothing');
+
+  // The account menu is a bottom sheet with the build stamp.
+  await page.locator('.rail-account-btn').tap();
+  const account = page.getByRole('dialog', { name: 'Account' });
+  await account.waitFor();
+  assert.match((await account.locator('.rail-menu-build').textContent()).trim(), /^Build .+/);
+  await assertAccessible(page, 'touch account sheet');
+  await page.keyboard.press('Escape');
+  await account.waitFor({ state: 'hidden' });
+  assertNoUiFailures(failures, 'touch chat');
+  await context.close();
+}
+
 async function checkSessionRecovery(browser, browserName) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   await context.addInitScript(() => {
@@ -601,6 +665,7 @@ async function main() {
       await checkSharePage(browser);
       await checkChat(browser);
       await checkMobileChat(browser);
+      await checkTouchChat(browser);
       await checkSessionRecovery(browser, name);
       await checkExpiredSession(browser);
     } finally {
