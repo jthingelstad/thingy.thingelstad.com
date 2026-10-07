@@ -155,8 +155,8 @@ const TOOL_GROUPS: { id: string; title: string; blurb: string; tools: string[] }
   },
   {
     id: 'live-web',
-    title: 'Live web',
-    blurb: 'The only tool that reaches past the archive. Not offered on WebMCP or to guests.',
+    title: 'Fresh posts',
+    blurb: "Reads a page on Jamie's own sites live, for a post too new to be in the archive. No other site. Not offered on WebMCP or to guests.",
     tools: ['fetch_page']
   }
 ];
