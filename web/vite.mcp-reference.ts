@@ -156,8 +156,8 @@ const TOOL_GROUPS: { id: string; title: string; blurb: string; tools: string[] }
   {
     id: 'live-web',
     title: 'Live web',
-    blurb: 'The only tools that reach past the archive. Not offered on WebMCP or to guests.',
-    tools: ['fetch_page', 'web_search']
+    blurb: 'The only tool that reaches past the archive. Not offered on WebMCP or to guests.',
+    tools: ['fetch_page']
   }
 ];
 
@@ -334,7 +334,7 @@ function groupedTools(surface: McpSurface) {
 }
 
 // A door's tool count as a deployment without optional configuration
-// serves it, plus the tools that need configuration (web_search).
+// serves it, plus any tools that need configuration.
 function toolCount(surface: McpSurface, door: Door) {
   const conditional = door.tools.filter((name) => surface.tools.find((tool) => tool.name === name)?.conditional);
   const base = door.tools.length - conditional.length;
