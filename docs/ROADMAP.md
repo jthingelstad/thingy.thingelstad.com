@@ -97,8 +97,9 @@ product direction.
 - Media answers: a photo index (~14,000 images) renders inline clickable
   thumbnails in chat; Currently entries and reference aggregation became
   first-class tools.
-- Live-web reach: `fetch_page` (any public page) and `web_search` (Brave,
-  key-gated) close the freshness gap.
+- Live-web reach: `fetch_page` (any public page) closes the freshness gap.
+  (A Brave-backed `web_search` was built key-gated, never configured, and
+  removed 2026-10-07.)
 - Matching semantics live in one canonical matcher with a written spec
   (`librarian-thing/apps/librarian/MATCHER.md`), hardened through eight
   adversarial MCP review rounds; a three-layer eval (fixtures, response
