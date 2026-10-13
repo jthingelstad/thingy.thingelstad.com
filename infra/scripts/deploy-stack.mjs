@@ -25,12 +25,17 @@ export async function main() {
   const region = process.env.AWS_REGION || "us-east-1";
   const stackName = process.env.THINGY_WEB_STACK_NAME || "thingy-web";
   const roleArn = process.env.THINGY_CFN_ROLE_ARN;
-  if (!roleArn) throw new Error("Missing deployment setting THINGY_CFN_ROLE_ARN");
+  if (!roleArn)
+    throw new Error("Missing deployment setting THINGY_CFN_ROLE_ARN");
 
   const cloudformation = new CloudFormationClient({ region });
   let exists = true;
+  let previousKeys;
   try {
-    await cloudformation.send(new DescribeStacksCommand({ StackName: stackName }));
+    const previous = await cloudformation.send(
+      new DescribeStacksCommand({ StackName: stackName }),
+    );
+    previousKeys = previous.Stacks[0].Parameters.map((p) => p.ParameterKey);
   } catch (error) {
     if (error?.name === "ValidationError") exists = false;
     else throw error;
@@ -42,6 +47,7 @@ export async function main() {
     Parameters: deploymentParameters({
       environment: process.env,
       stackExists: exists,
+      previousKeys,
     }),
     RoleARN: roleArn,
     Tags: [

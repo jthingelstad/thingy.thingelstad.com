@@ -18,10 +18,66 @@ Parameters:
     MinLength: 32
     Description: Shared marker CloudFront injects as X-Thingy-Origin on API origin requests. Inert until the Librarian Lambdas start requiring it (the cookie-auth phase); set once at stack creation and preserved by the deploy scripts thereafter. Also recorded in librarian-thing/.env for the Lambda side.
 
+  NativeRouting:
+    Type: String
+    Default: legacy
+    AllowedValues: [legacy, auth, native]
+  NativeAuthDomain:
+    Type: String
+    Default: ""
+  NativeArchiveDomain:
+    Type: String
+    Default: ""
+
 Conditions:
+  NativeAuthRouting: !Not [!Equals [!Ref NativeRouting, legacy]]
+  NativeArchiveRouting: !Equals [!Ref NativeRouting, native]
   HasCertificate: !Not [!Equals [!Ref WebCertificateArn, ""]]
 
 Resources:
+  NativeOriginAccess:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: thingy-native-librarian
+        OriginAccessControlOriginType: lambda
+        SigningBehavior: always-amz-auth
+        SigningProtocol: sigv4
+  NativeCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: thingy-native-private
+        MinTTL: 0
+        DefaultTTL: 0
+        MaxTTL: 1
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingGzip: false
+          EnableAcceptEncodingBrotli: false
+          HeadersConfig: { HeaderBehavior: whitelist, Headers: [Authorization] }
+          CookiesConfig: { CookieBehavior: none }
+          QueryStringsConfig: { QueryStringBehavior: none }
+  NativeRequestPolicy:
+    Type: AWS::CloudFront::OriginRequestPolicy
+    Properties:
+      OriginRequestPolicyConfig:
+        Name: thingy-native-librarian
+        HeadersConfig:
+          HeaderBehavior: whitelist
+          Headers:
+            [
+              Origin,
+              Content-Type,
+              Accept,
+              CloudFront-Viewer-Address,
+              X-Librarian-Contract-Version,
+              MCP-Protocol-Version,
+              Mcp-Session-Id,
+              Last-Event-ID,
+            ]
+        CookiesConfig:
+          { CookieBehavior: whitelist, Cookies: [__Host-thingy_session] }
+        QueryStringsConfig: { QueryStringBehavior: all }
   WebBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
@@ -155,7 +211,18 @@ Resources:
             S3OriginConfig:
               OriginAccessIdentity: ""
           - Id: api
-            DomainName: k0yklt9vg3.execute-api.us-east-1.amazonaws.com
+            DomainName:
+              !If [
+                NativeAuthRouting,
+                !Ref NativeAuthDomain,
+                k0yklt9vg3.execute-api.us-east-1.amazonaws.com,
+              ]
+            OriginAccessControlId:
+              !If [
+                NativeAuthRouting,
+                !GetAtt NativeOriginAccess.Id,
+                !Ref AWS::NoValue,
+              ]
             CustomOriginConfig:
               HTTPSPort: 443
               OriginProtocolPolicy: https-only
@@ -164,7 +231,18 @@ Resources:
               - HeaderName: X-Thingy-Origin
                 HeaderValue: !Ref WebOriginToken
           - Id: stream
-            DomainName: jcvud66qqpq53frvno5stoqntm0zqntw.lambda-url.us-east-1.on.aws
+            DomainName:
+              !If [
+                NativeArchiveRouting,
+                !Ref NativeArchiveDomain,
+                jcvud66qqpq53frvno5stoqntm0zqntw.lambda-url.us-east-1.on.aws,
+              ]
+            OriginAccessControlId:
+              !If [
+                NativeArchiveRouting,
+                !GetAtt NativeOriginAccess.Id,
+                !Ref AWS::NoValue,
+              ]
             CustomOriginConfig:
               HTTPSPort: 443
               OriginProtocolPolicy: https-only
@@ -190,8 +268,18 @@ Resources:
             CachedMethods: [GET, HEAD]
             Compress: false
             ViewerProtocolPolicy: https-only
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+            CachePolicyId:
+              !If [
+                NativeArchiveRouting,
+                !Ref NativeCachePolicy,
+                4135ea2d-6df8-44a3-9df3-4b5a84be39ad,
+              ]
+            OriginRequestPolicyId:
+              !If [
+                NativeArchiveRouting,
+                !Ref NativeRequestPolicy,
+                b689b0a8-53d0-40ab-baf2-68738e2966ac,
+              ]
             FunctionAssociations:
               - EventType: viewer-request
                 FunctionARN: !GetAtt WebRequestFunction.FunctionMetadata.FunctionARN
@@ -201,8 +289,18 @@ Resources:
             CachedMethods: [GET, HEAD]
             Compress: false
             ViewerProtocolPolicy: https-only
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+            CachePolicyId:
+              !If [
+                NativeArchiveRouting,
+                !Ref NativeCachePolicy,
+                4135ea2d-6df8-44a3-9df3-4b5a84be39ad,
+              ]
+            OriginRequestPolicyId:
+              !If [
+                NativeArchiveRouting,
+                !Ref NativeRequestPolicy,
+                b689b0a8-53d0-40ab-baf2-68738e2966ac,
+              ]
             FunctionAssociations:
               - EventType: viewer-request
                 FunctionARN: !GetAtt WebRequestFunction.FunctionMetadata.FunctionARN
@@ -212,8 +310,18 @@ Resources:
             CachedMethods: [GET, HEAD]
             Compress: false
             ViewerProtocolPolicy: https-only
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+            CachePolicyId:
+              !If [
+                NativeArchiveRouting,
+                !Ref NativeCachePolicy,
+                4135ea2d-6df8-44a3-9df3-4b5a84be39ad,
+              ]
+            OriginRequestPolicyId:
+              !If [
+                NativeArchiveRouting,
+                !Ref NativeRequestPolicy,
+                b689b0a8-53d0-40ab-baf2-68738e2966ac,
+              ]
             FunctionAssociations:
               - EventType: viewer-request
                 FunctionARN: !GetAtt WebRequestFunction.FunctionMetadata.FunctionARN
@@ -225,8 +333,18 @@ Resources:
             CachedMethods: [GET, HEAD]
             Compress: true
             ViewerProtocolPolicy: https-only
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+            CachePolicyId:
+              !If [
+                NativeArchiveRouting,
+                !Ref NativeCachePolicy,
+                4135ea2d-6df8-44a3-9df3-4b5a84be39ad,
+              ]
+            OriginRequestPolicyId:
+              !If [
+                NativeArchiveRouting,
+                !Ref NativeRequestPolicy,
+                b689b0a8-53d0-40ab-baf2-68738e2966ac,
+              ]
             FunctionAssociations:
               - EventType: viewer-request
                 FunctionARN: !GetAtt WebRequestFunction.FunctionMetadata.FunctionARN
@@ -236,8 +354,18 @@ Resources:
             CachedMethods: [GET, HEAD]
             Compress: true
             ViewerProtocolPolicy: https-only
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+            CachePolicyId:
+              !If [
+                NativeAuthRouting,
+                !Ref NativeCachePolicy,
+                4135ea2d-6df8-44a3-9df3-4b5a84be39ad,
+              ]
+            OriginRequestPolicyId:
+              !If [
+                NativeAuthRouting,
+                !Ref NativeRequestPolicy,
+                b689b0a8-53d0-40ab-baf2-68738e2966ac,
+              ]
             FunctionAssociations:
               - EventType: viewer-request
                 FunctionARN: !GetAtt WebRequestFunction.FunctionMetadata.FunctionARN

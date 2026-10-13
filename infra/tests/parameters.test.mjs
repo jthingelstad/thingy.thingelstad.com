@@ -16,7 +16,9 @@ async function templateParameterKeys() {
   const template = await readFile(resolve(infraRoot, "template.yaml"), "utf8");
   const section = template.match(/^Parameters:\n([\s\S]*?)^[A-Za-z]/m)?.[1];
   assert.ok(section, "template.yaml must declare a Parameters block");
-  const keys = [...section.matchAll(/^  ([A-Za-z0-9]+):/gm)].map(([, key]) => key);
+  const keys = [...section.matchAll(/^  ([A-Za-z0-9]+):/gm)].map(
+    ([, key]) => key,
+  );
   assert.ok(keys.length > 0, "the Parameters block parse must not be vacuous");
   return keys;
 }
@@ -59,29 +61,40 @@ test("explicit value wins, previous value preserved, create requires secrets", (
     },
     stackExists: true,
   });
-  assert.deepEqual(explicit, [
-    {
-      ParameterKey: "WebCertificateArn",
-      ParameterValue: "arn:aws:acm:us-east-1:1:certificate/x",
-    },
-    {
-      ParameterKey: "WebOriginToken",
-      ParameterValue: "0123456789abcdef0123456789abcdef",
-    },
-  ]);
+  assert.deepEqual(
+    explicit.filter((p) => !p.ParameterKey.startsWith("Native")),
+    [
+      {
+        ParameterKey: "WebCertificateArn",
+        ParameterValue: "arn:aws:acm:us-east-1:1:certificate/x",
+      },
+      {
+        ParameterKey: "WebOriginToken",
+        ParameterValue: "0123456789abcdef0123456789abcdef",
+      },
+    ],
+  );
 
-  const preserved = deploymentParameters({ environment: {}, stackExists: true });
-  assert.deepEqual(preserved, [
-    { ParameterKey: "WebCertificateArn", UsePreviousValue: true },
-    { ParameterKey: "WebOriginToken", UsePreviousValue: true },
-  ]);
+  const preserved = deploymentParameters({
+    environment: {},
+    stackExists: true,
+  });
+  assert.deepEqual(
+    preserved.filter((p) => !p.ParameterKey.startsWith("Native")),
+    [
+      { ParameterKey: "WebCertificateArn", UsePreviousValue: true },
+      { ParameterKey: "WebOriginToken", UsePreviousValue: true },
+    ],
+  );
 
   assert.throws(
     () => deploymentParameters({ environment: {}, stackExists: false }),
     /THINGY_WEB_ORIGIN_TOKEN/,
   );
   const created = deploymentParameters({
-    environment: { THINGY_WEB_ORIGIN_TOKEN: "0123456789abcdef0123456789abcdef" },
+    environment: {
+      THINGY_WEB_ORIGIN_TOKEN: "0123456789abcdef0123456789abcdef",
+    },
     stackExists: false,
   });
   assert.deepEqual(created, [
@@ -90,4 +103,29 @@ test("explicit value wins, previous value preserved, create requires secrets", (
       ParameterValue: "0123456789abcdef0123456789abcdef",
     },
   ]);
+});
+
+test("first native update omits absent parameters; later updates preserve all routing", () => {
+  const first = deploymentParameters({
+    environment: {},
+    stackExists: true,
+    previousKeys: ["WebCertificateArn", "WebOriginToken"],
+  });
+  assert.equal(
+    first.some((p) => p.ParameterKey.startsWith("Native")),
+    false,
+  );
+  const later = deploymentParameters({
+    environment: { THINGY_NATIVE_ROUTING: "native" },
+    stackExists: true,
+  });
+  assert.deepEqual(
+    later.find((p) => p.ParameterKey === "NativeRouting"),
+    { ParameterKey: "NativeRouting", ParameterValue: "native" },
+  );
+  assert.equal(
+    later.find((p) => p.ParameterKey === "NativeArchiveDomain")
+      .UsePreviousValue,
+    true,
+  );
 });

@@ -48,3 +48,21 @@ thereafter.
 
 `npm test` runs the parameter guard plus the cache-control and content-type
 rules `scripts/deploy-web.mjs` applies per object.
+
+## Native Librarian origins
+
+`NativeRouting` selects `legacy`, `auth` (native account/OAuth only), or `native`
+(both doors). Supply `NativeAuthDomain` and `NativeArchiveDomain` from the Librarian
+stack outputs. Later deployments preserve all three; the first update omits any
+new absent parameter so CloudFormation can apply its default.
+
+Native OAC preserves viewer Authorization while signing the origin request.
+The native cache policy forwards Authorization; every dynamic response is no-store.
+The request policy carries the session cookie, contract header and trusted
+CloudFront viewer address, excludes viewer Host, and retains the existing origin
+marker. `/api/tools` stays pinned to the archive origin.
+
+Install `native-cfn-policy.json` as the narrow `ThingyNativeOriginRequests` inline
+policy on the existing CloudFormation service role before first deployment. It
+adds origin-request-policy lifecycle, which the existing role did not permit.
+Set `NativeRouting=legacy` to restore both original origins for routing rollback.
