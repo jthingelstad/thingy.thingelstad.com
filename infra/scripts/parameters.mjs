@@ -9,6 +9,9 @@ const PRESERVED_PARAMETERS = [
   // Empty until the ACM certificate for thingy.thingelstad.com is issued;
   // then supplied once (with the alias attach) and preserved thereafter.
   ["WebCertificateArn", "THINGY_WEB_CERTIFICATE_ARN"],
+  ["NativeRouting", "THINGY_NATIVE_ROUTING"],
+  ["NativeAuthDomain", "THINGY_NATIVE_AUTH_DOMAIN"],
+  ["NativeArchiveDomain", "THINGY_NATIVE_ARCHIVE_DOMAIN"],
 ];
 
 // Secret-bearing parameters: required when the stack is created, preserved
@@ -18,26 +21,37 @@ const REQUIRED_PARAMETERS = [["WebOriginToken", "THINGY_WEB_ORIGIN_TOKEN"]];
 
 function preservedParameter(parameterKey, value, stackExists) {
   if (value) return { ParameterKey: parameterKey, ParameterValue: value };
-  if (stackExists) return { ParameterKey: parameterKey, UsePreviousValue: true };
+  if (stackExists)
+    return { ParameterKey: parameterKey, UsePreviousValue: true };
   return undefined;
 }
 
-function requiredParameter(parameterKey, environmentKey, environment, stackExists) {
+function requiredParameter(
+  parameterKey,
+  environmentKey,
+  environment,
+  stackExists,
+) {
   const value = environment[environmentKey]?.trim();
   if (value) return { ParameterKey: parameterKey, ParameterValue: value };
-  if (stackExists) return { ParameterKey: parameterKey, UsePreviousValue: true };
+  if (stackExists)
+    return { ParameterKey: parameterKey, UsePreviousValue: true };
   throw new Error(
     `Missing ${environmentKey}; it is required when creating the stack`,
   );
 }
 
-export function deploymentParameters({ environment, stackExists }) {
+export function deploymentParameters({
+  environment,
+  stackExists,
+  previousKeys,
+}) {
   const parameters = [];
   for (const [parameterKey, environmentKey] of PRESERVED_PARAMETERS) {
     const parameter = preservedParameter(
       parameterKey,
       environment[environmentKey]?.trim(),
-      stackExists,
+      stackExists && (!previousKeys || previousKeys.includes(parameterKey)),
     );
     if (parameter) parameters.push(parameter);
   }

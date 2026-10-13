@@ -1,0 +1,9 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Sid": "NativeOriginRequestPolicies",
+    "Effect": "Allow",
+    "Action": ["cloudfront:CreateOriginRequestPolicy", "cloudfront:UpdateOriginRequestPolicy", "cloudfront:DeleteOriginRequestPolicy", "cloudfront:GetOriginRequestPolicy", "cloudfront:GetOriginRequestPolicyConfig"],
+    "Resource": "*"
+  }]
+}
