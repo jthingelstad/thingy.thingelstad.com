@@ -125,3 +125,27 @@ test('a Turnstile refusal shows the reason and resets the widget', async () => {
   await screen.findByText(/confirm this request came from a person/);
   expect(resetTurnstile).toHaveBeenCalledTimes(1);
 });
+
+test('a firewalled address is told it is under review, as a notice', async () => {
+  const user = userEvent.setup();
+  const review = new Error('This email address was flagged as suspicious and has been recorded for review.');
+  review.status = 403;
+  review.data = { status: 'inactive', under_review: true };
+  postJson.mockRejectedValueOnce(review);
+  render(<SignInApp />);
+  await user.type(screen.getByLabelText('Email address'), 'flagged@example.com');
+  await user.click(screen.getByRole('button', { name: 'Email Me a Code' }));
+  const text = await screen.findByText(/recorded for review/);
+  expect(text.closest('[data-kind]')?.getAttribute('data-kind')).toBe('notice');
+});
+
+test('needs_jamie from subscribe shows the Librarian’s words', async () => {
+  const user = userEvent.setup();
+  postJson.mockResolvedValueOnce({ status: 'not_found' });
+  postJson.mockResolvedValueOnce({ status: 'needs_jamie', error: 'Recorded for review; not subscribed yet.' });
+  render(<SignInApp />);
+  await user.type(screen.getByLabelText('Email address'), 'flagged@example.com');
+  await user.click(screen.getByRole('button', { name: 'Email Me a Code' }));
+  await user.click(await screen.findByRole('button', { name: 'Add Me to The Weekly Thing' }));
+  await screen.findByText('Recorded for review; not subscribed yet.');
+});

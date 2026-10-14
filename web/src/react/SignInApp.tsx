@@ -138,6 +138,11 @@ export function SignInApp({
         setMessage('Please confirm your Weekly Thing subscription first.');
         setMessageKind('notice');
         setSecondary('resend');
+      } else if (data.status === 'needs_jamie') {
+        // Suppressed, or flagged by Buttondown's firewall for Jamie's review:
+        // the Librarian says which, in words.
+        setMessage(data.error || 'Thingy could not add that address. Email jamie@thingelstad.com.');
+        setMessageKind('notice');
       } else if (data.status === 'subscribed') {
         setMessage('Check your inbox to confirm your subscription, then come back to sign in.');
         setMessageKind('success');
@@ -151,9 +156,12 @@ export function SignInApp({
         error.status === 403 &&
         (error.data as { status?: string } | undefined)?.status === 'turnstile_failed';
       if (refused) turnstile.reset();
-      trackEvent('librarian.signin_request', refused ? 'turnstile_failed' : 'error');
+      // A firewalled address is recorded for Jamie's review, not an error.
+      const underReview =
+        error instanceof Error && (error.data as { under_review?: boolean } | undefined)?.under_review === true;
+      trackEvent('librarian.signin_request', refused ? 'turnstile_failed' : underReview ? 'under_review' : 'error');
       setMessage(errorMessage(error, 'Sign-in is unavailable right now.'));
-      setMessageKind('error');
+      setMessageKind(underReview ? 'notice' : 'error');
     } finally {
       setBusy(false);
     }
