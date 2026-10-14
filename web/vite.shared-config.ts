@@ -106,8 +106,8 @@ export function htmlConfigPlugin(): Plugin {
 // its cookie and origin-marker policy. Cookie sign-in works because the proxy makes
 // everything same-origin on localhost (a trustworthy context, so the Secure
 // cookie is accepted). Cookie-authenticated calls additionally need the
-// X-Thingy-Origin marker: export THINGY_WEB_ORIGIN_TOKEN (librarian .env) and
-// the proxy stamps it; without it, sign-in still works but cookie calls 401.
+// Thingy's front door stamps X-Thingy-Origin. When explicitly overriding an
+// origin, export THINGY_WEB_ORIGIN_TOKEN so the proxy can stamp it instead.
 export const librarianProxy = {
   // /tools is private to Thingy's front door. Its /api origin path survives
   // the local prefix rewrite; an explicit origin override still uses /tools.

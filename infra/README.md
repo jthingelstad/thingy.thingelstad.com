@@ -13,7 +13,7 @@ migration off GitHub Pages; this site cut over on 2026-09-01
 - **CloudFront distribution** - alias `thingy.thingelstad.com` (Namecheap
   CNAME), default origin S3 via OriginAccessControl, plus the same-origin
   Librarian API: `/api/chat|welcome|feedback` and `/api/tools` pin to the
-  streaming Lambda's Function URL, every other `/api/*` goes to the HTTP API,
+  native archive Web Function, every other `/api/*` goes to the native auth Web Function,
   with the `/api` prefix stripped by the CloudFront function and the
   `X-Thingy-Origin` marker stamped from the `WebOriginToken` parameter.
   No `CustomErrorResponses` - they apply distribution-wide to every method
@@ -51,10 +51,9 @@ rules `scripts/deploy-web.mjs` applies per object.
 
 ## Native Librarian origins
 
-`NativeRouting` selects `legacy`, `auth` (native account/OAuth only), or `native`
-(both doors). Supply `NativeAuthDomain` and `NativeArchiveDomain` from the Librarian
-stack outputs. Later deployments preserve all three; the first update omits any
-new absent parameter so CloudFormation can apply its default.
+Supply `NativeAuthDomain` and `NativeArchiveDomain` from the Librarian stack
+outputs when creating the stack. Later deployments preserve both. Routing is
+always native; API Gateway and the old streaming Function URL have been retired.
 
 Native OAC preserves viewer Authorization while signing the origin request.
 The native cache policy forwards Authorization; every dynamic response is no-store.
@@ -65,4 +64,5 @@ marker. `/api/tools` stays pinned to the archive origin.
 Install `native-cfn-policy.json` as the narrow `ThingyNativeOriginRequests` inline
 policy on the existing CloudFormation service role before first deployment. It
 adds origin-request-policy lifecycle, which the existing role did not permit.
-Set `NativeRouting=legacy` to restore both original origins for routing rollback.
+Rollback changes the Librarian's live native revision pins to its protected
+previous revisions; the distribution keeps its stable native live origins.

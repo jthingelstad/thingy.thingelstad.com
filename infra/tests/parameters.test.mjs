@@ -11,6 +11,10 @@ import { test } from "node:test";
 import { deploymentParameters } from "../scripts/parameters.mjs";
 
 const infraRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const nativeOrigins = {
+  THINGY_NATIVE_AUTH_DOMAIN: "auth.lambda-web.us-east-1.on.aws",
+  THINGY_NATIVE_ARCHIVE_DOMAIN: "archive.lambda-web.us-east-1.on.aws",
+};
 
 async function templateParameterKeys() {
   const template = await readFile(resolve(infraRoot, "template.yaml"), "utf8");
@@ -40,6 +44,7 @@ test("no undeclared parameter is ever sent", async () => {
   const declared = await templateParameterKeys();
   const sent = deploymentParameters({
     environment: {
+      ...nativeOrigins,
       THINGY_WEB_CERTIFICATE_ARN: "arn:aws:acm:us-east-1:1:certificate/x",
       THINGY_WEB_ORIGIN_TOKEN: "0123456789abcdef0123456789abcdef",
     },
@@ -93,6 +98,7 @@ test("explicit value wins, previous value preserved, create requires secrets", (
   );
   const created = deploymentParameters({
     environment: {
+      ...nativeOrigins,
       THINGY_WEB_ORIGIN_TOKEN: "0123456789abcdef0123456789abcdef",
     },
     stackExists: false,
@@ -102,30 +108,51 @@ test("explicit value wins, previous value preserved, create requires secrets", (
       ParameterKey: "WebOriginToken",
       ParameterValue: "0123456789abcdef0123456789abcdef",
     },
+    {
+      ParameterKey: "NativeAuthDomain",
+      ParameterValue: nativeOrigins.THINGY_NATIVE_AUTH_DOMAIN,
+    },
+    {
+      ParameterKey: "NativeArchiveDomain",
+      ParameterValue: nativeOrigins.THINGY_NATIVE_ARCHIVE_DOMAIN,
+    },
   ]);
 });
 
-test("first native update omits absent parameters; later updates preserve all routing", () => {
-  const first = deploymentParameters({
-    environment: {},
-    stackExists: true,
-    previousKeys: ["WebCertificateArn", "WebOriginToken"],
-  });
-  assert.equal(
-    first.some((p) => p.ParameterKey.startsWith("Native")),
-    false,
+test("native origins are required on first setup and preserved on routine updates", () => {
+  assert.throws(
+    () =>
+      deploymentParameters({
+        environment: {},
+        stackExists: true,
+        previousKeys: ["WebCertificateArn", "WebOriginToken"],
+      }),
+    /THINGY_NATIVE_AUTH_DOMAIN/,
   );
   const later = deploymentParameters({
     environment: { THINGY_NATIVE_ROUTING: "native" },
     stackExists: true,
   });
-  assert.deepEqual(
-    later.find((p) => p.ParameterKey === "NativeRouting"),
-    { ParameterKey: "NativeRouting", ParameterValue: "native" },
+  assert.equal(
+    later.some((p) => p.ParameterKey === "NativeRouting"),
+    false,
   );
   assert.equal(
     later.find((p) => p.ParameterKey === "NativeArchiveDomain")
       .UsePreviousValue,
     true,
   );
+});
+
+test("retired routing choices cannot restore deleted HTTP endpoints", () => {
+  for (const mode of ["legacy", "auth", "rollback"]) {
+    assert.throws(
+      () =>
+        deploymentParameters({
+          environment: { THINGY_NATIVE_ROUTING: mode },
+          stackExists: true,
+        }),
+      /Legacy routing is retired/,
+    );
+  }
 });

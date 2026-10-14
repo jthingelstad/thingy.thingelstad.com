@@ -18,20 +18,14 @@ Parameters:
     MinLength: 32
     Description: Shared marker CloudFront injects as X-Thingy-Origin on API origin requests. Inert until the Librarian Lambdas start requiring it (the cookie-auth phase); set once at stack creation and preserved by the deploy scripts thereafter. Also recorded in librarian-thing/.env for the Lambda side.
 
-  NativeRouting:
-    Type: String
-    Default: legacy
-    AllowedValues: [legacy, auth, native]
   NativeAuthDomain:
     Type: String
-    Default: ""
+    AllowedPattern: ^[a-z0-9.-]+\.lambda-web\.us-east-1\.on\.aws$
   NativeArchiveDomain:
     Type: String
-    Default: ""
+    AllowedPattern: ^[a-z0-9.-]+\.lambda-web\.us-east-1\.on\.aws$
 
 Conditions:
-  NativeAuthRouting: !Not [!Equals [!Ref NativeRouting, legacy]]
-  NativeArchiveRouting: !Equals [!Ref NativeRouting, native]
   HasCertificate: !Not [!Equals [!Ref WebCertificateArn, ""]]
 
 Resources:
@@ -167,7 +161,7 @@ Resources:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
-        Comment: thingy.thingelstad.com static site
+        Comment: thingy.thingelstad.com static site with native Librarian HTTP
         Enabled: true
         HttpVersion: http2and3
         IPV6Enabled: true
@@ -202,8 +196,7 @@ Resources:
         # through this distribution as /api/*; the CloudFront function strips
         # the prefix. librarian.thingelstad.com stays the third-party door
         # (OAuth/MCP) and is deliberately not fronted here. Origin hostnames
-        # are the stable physical endpoints of the weekly-thing-librarian
-        # stack (HTTP API k0yklt9vg3 and the stream Lambda Function URL).
+        # are the stable native live endpoints of the Librarian stack.
         Origins:
           - Id: web
             DomainName: !GetAtt WebBucket.RegionalDomainName
@@ -211,18 +204,8 @@ Resources:
             S3OriginConfig:
               OriginAccessIdentity: ""
           - Id: api
-            DomainName:
-              !If [
-                NativeAuthRouting,
-                !Ref NativeAuthDomain,
-                k0yklt9vg3.execute-api.us-east-1.amazonaws.com,
-              ]
-            OriginAccessControlId:
-              !If [
-                NativeAuthRouting,
-                !GetAtt NativeOriginAccess.Id,
-                !Ref AWS::NoValue,
-              ]
+            DomainName: !Ref NativeAuthDomain
+            OriginAccessControlId: !GetAtt NativeOriginAccess.Id
             CustomOriginConfig:
               HTTPSPort: 443
               OriginProtocolPolicy: https-only
@@ -231,18 +214,8 @@ Resources:
               - HeaderName: X-Thingy-Origin
                 HeaderValue: !Ref WebOriginToken
           - Id: stream
-            DomainName:
-              !If [
-                NativeArchiveRouting,
-                !Ref NativeArchiveDomain,
-                jcvud66qqpq53frvno5stoqntm0zqntw.lambda-url.us-east-1.on.aws,
-              ]
-            OriginAccessControlId:
-              !If [
-                NativeArchiveRouting,
-                !GetAtt NativeOriginAccess.Id,
-                !Ref AWS::NoValue,
-              ]
+            DomainName: !Ref NativeArchiveDomain
+            OriginAccessControlId: !GetAtt NativeOriginAccess.Id
             CustomOriginConfig:
               HTTPSPort: 443
               OriginProtocolPolicy: https-only
@@ -253,14 +226,9 @@ Resources:
             OriginCustomHeaders:
               - HeaderName: X-Thingy-Origin
                 HeaderValue: !Ref WebOriginToken
-        # Streaming endpoints pin to the Function URL origin; everything else
-        # under /api/* goes to the HTTP API. Any FUTURE streaming endpoint
-        # (an SSE /api/tools, say) needs its own pinned behavior here or it
-        # silently routes to the buffered HTTP API. Managed policy IDs by literal,
-        # copied from Drop's working config: CachingDisabled
-        # (4135ea2d-6df8-44a3-9df3-4b5a84be39ad) and AllViewerExceptHostHeader
-        # (b689b0a8-53d0-40ab-baf2-68738e2966ac). Compress stays off on the
-        # stream paths so CloudFront never buffers SSE to compress it.
+        # Archive routes share the native archive origin. Keep compression off
+        # for SSE so CloudFront never buffers answer events. All API routes use
+        # the private native request/cache policies and regional SigV4 OAC.
         CacheBehaviors:
           - PathPattern: /api/chat
             TargetOriginId: stream
@@ -268,18 +236,8 @@ Resources:
             CachedMethods: [GET, HEAD]
             Compress: false
             ViewerProtocolPolicy: https-only
-            CachePolicyId:
-              !If [
-                NativeArchiveRouting,
-                !Ref NativeCachePolicy,
-                4135ea2d-6df8-44a3-9df3-4b5a84be39ad,
-              ]
-            OriginRequestPolicyId:
-              !If [
-                NativeArchiveRouting,
-                !Ref NativeRequestPolicy,
-                b689b0a8-53d0-40ab-baf2-68738e2966ac,
-              ]
+            CachePolicyId: !Ref NativeCachePolicy
+            OriginRequestPolicyId: !Ref NativeRequestPolicy
             FunctionAssociations:
               - EventType: viewer-request
                 FunctionARN: !GetAtt WebRequestFunction.FunctionMetadata.FunctionARN
@@ -289,18 +247,8 @@ Resources:
             CachedMethods: [GET, HEAD]
             Compress: false
             ViewerProtocolPolicy: https-only
-            CachePolicyId:
-              !If [
-                NativeArchiveRouting,
-                !Ref NativeCachePolicy,
-                4135ea2d-6df8-44a3-9df3-4b5a84be39ad,
-              ]
-            OriginRequestPolicyId:
-              !If [
-                NativeArchiveRouting,
-                !Ref NativeRequestPolicy,
-                b689b0a8-53d0-40ab-baf2-68738e2966ac,
-              ]
+            CachePolicyId: !Ref NativeCachePolicy
+            OriginRequestPolicyId: !Ref NativeRequestPolicy
             FunctionAssociations:
               - EventType: viewer-request
                 FunctionARN: !GetAtt WebRequestFunction.FunctionMetadata.FunctionARN
@@ -310,18 +258,8 @@ Resources:
             CachedMethods: [GET, HEAD]
             Compress: false
             ViewerProtocolPolicy: https-only
-            CachePolicyId:
-              !If [
-                NativeArchiveRouting,
-                !Ref NativeCachePolicy,
-                4135ea2d-6df8-44a3-9df3-4b5a84be39ad,
-              ]
-            OriginRequestPolicyId:
-              !If [
-                NativeArchiveRouting,
-                !Ref NativeRequestPolicy,
-                b689b0a8-53d0-40ab-baf2-68738e2966ac,
-              ]
+            CachePolicyId: !Ref NativeCachePolicy
+            OriginRequestPolicyId: !Ref NativeRequestPolicy
             FunctionAssociations:
               - EventType: viewer-request
                 FunctionARN: !GetAtt WebRequestFunction.FunctionMetadata.FunctionARN
@@ -333,18 +271,8 @@ Resources:
             CachedMethods: [GET, HEAD]
             Compress: true
             ViewerProtocolPolicy: https-only
-            CachePolicyId:
-              !If [
-                NativeArchiveRouting,
-                !Ref NativeCachePolicy,
-                4135ea2d-6df8-44a3-9df3-4b5a84be39ad,
-              ]
-            OriginRequestPolicyId:
-              !If [
-                NativeArchiveRouting,
-                !Ref NativeRequestPolicy,
-                b689b0a8-53d0-40ab-baf2-68738e2966ac,
-              ]
+            CachePolicyId: !Ref NativeCachePolicy
+            OriginRequestPolicyId: !Ref NativeRequestPolicy
             FunctionAssociations:
               - EventType: viewer-request
                 FunctionARN: !GetAtt WebRequestFunction.FunctionMetadata.FunctionARN
@@ -354,18 +282,8 @@ Resources:
             CachedMethods: [GET, HEAD]
             Compress: true
             ViewerProtocolPolicy: https-only
-            CachePolicyId:
-              !If [
-                NativeAuthRouting,
-                !Ref NativeCachePolicy,
-                4135ea2d-6df8-44a3-9df3-4b5a84be39ad,
-              ]
-            OriginRequestPolicyId:
-              !If [
-                NativeAuthRouting,
-                !Ref NativeRequestPolicy,
-                b689b0a8-53d0-40ab-baf2-68738e2966ac,
-              ]
+            CachePolicyId: !Ref NativeCachePolicy
+            OriginRequestPolicyId: !Ref NativeRequestPolicy
             FunctionAssociations:
               - EventType: viewer-request
                 FunctionARN: !GetAtt WebRequestFunction.FunctionMetadata.FunctionARN

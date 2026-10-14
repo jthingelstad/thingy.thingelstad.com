@@ -9,15 +9,16 @@ const PRESERVED_PARAMETERS = [
   // Empty until the ACM certificate for thingy.thingelstad.com is issued;
   // then supplied once (with the alias attach) and preserved thereafter.
   ["WebCertificateArn", "THINGY_WEB_CERTIFICATE_ARN"],
-  ["NativeRouting", "THINGY_NATIVE_ROUTING"],
-  ["NativeAuthDomain", "THINGY_NATIVE_AUTH_DOMAIN"],
-  ["NativeArchiveDomain", "THINGY_NATIVE_ARCHIVE_DOMAIN"],
 ];
 
 // Secret-bearing parameters: required when the stack is created, preserved
 // on every update. CI never supplies them. The live value is recorded in
 // librarian-thing/.env (the Lambda side consumes it in the cookie-auth phase).
-const REQUIRED_PARAMETERS = [["WebOriginToken", "THINGY_WEB_ORIGIN_TOKEN"]];
+const REQUIRED_PARAMETERS = [
+  ["WebOriginToken", "THINGY_WEB_ORIGIN_TOKEN"],
+  ["NativeAuthDomain", "THINGY_NATIVE_AUTH_DOMAIN"],
+  ["NativeArchiveDomain", "THINGY_NATIVE_ARCHIVE_DOMAIN"],
+];
 
 function preservedParameter(parameterKey, value, stackExists) {
   if (value) return { ParameterKey: parameterKey, ParameterValue: value };
@@ -46,6 +47,13 @@ export function deploymentParameters({
   stackExists,
   previousKeys,
 }) {
+  if (
+    environment.THINGY_NATIVE_ROUTING?.trim() &&
+    environment.THINGY_NATIVE_ROUTING.trim() !== "native"
+  )
+    throw new Error(
+      "Legacy routing is retired; only native Web Functions are supported",
+    );
   const parameters = [];
   for (const [parameterKey, environmentKey] of PRESERVED_PARAMETERS) {
     const parameter = preservedParameter(
@@ -57,7 +65,12 @@ export function deploymentParameters({
   }
   for (const [parameterKey, environmentKey] of REQUIRED_PARAMETERS) {
     parameters.push(
-      requiredParameter(parameterKey, environmentKey, environment, stackExists),
+      requiredParameter(
+        parameterKey,
+        environmentKey,
+        environment,
+        stackExists && (!previousKeys || previousKeys.includes(parameterKey)),
+      ),
     );
   }
   return parameters;
