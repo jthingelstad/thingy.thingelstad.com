@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import * as session from '../shared/thingy-session.ts';
 import { errorMessage } from '../shared/thingy-errors.ts';
 import { runningStandalone, trackEvent } from '../shared/thingy-analytics.ts';
+import { useTurnstile } from '../shared/turnstile.ts';
 import { ThingyFace } from './components/ThingyFace.tsx';
 
 type SecondaryAction = '' | 'subscribe' | 'resend';
@@ -26,6 +27,7 @@ export function SignInApp({
   // Installed app: the emailed magic link opens the browser's separate
   // cookie jar, so the code is the path that signs THIS context in.
   const standalone = useMemo(() => runningStandalone(), []);
+  const { slotRef, turnstile } = useTurnstile('thingy-signin');
 
   function destinationPath() {
     if (!returnTo || returnTo === '/signin/' || returnTo.startsWith('/signin/?')) return '/chat/';
@@ -101,9 +103,16 @@ export function SignInApp({
     setMessage(action === 'subscribe' ? 'Adding you to The Weekly Thing...' : 'Checking the subscriber list...');
     setMessageKind('pending');
     try {
+      const turnstileToken = await turnstile.tokenFor(address);
       const data = await session.postJson(
         '/auth',
-        { action, email: address, source: 'thingy', return_path: returnTo },
+        {
+          action,
+          email: address,
+          source: 'thingy',
+          return_path: returnTo,
+          ...(turnstileToken ? { turnstile_token: turnstileToken } : {})
+        },
         {}
       );
       if (data.token) {
@@ -137,7 +146,12 @@ export function SignInApp({
         setMessageKind('notice');
       }
     } catch (error) {
-      trackEvent('librarian.signin_request', 'error');
+      const refused =
+        error instanceof Error &&
+        error.status === 403 &&
+        (error.data as { status?: string } | undefined)?.status === 'turnstile_failed';
+      if (refused) turnstile.reset();
+      trackEvent('librarian.signin_request', refused ? 'turnstile_failed' : 'error');
       setMessage(errorMessage(error, 'Sign-in is unavailable right now.'));
       setMessageKind('error');
     } finally {
@@ -255,12 +269,17 @@ export function SignInApp({
                   required
                   placeholder="you@example.com"
                   value={email}
-                  onChange={(event) => setEmail(event.currentTarget.value)}
+                  onFocus={() => turnstile.warm()}
+                  onChange={(event) => {
+                    turnstile.warm();
+                    setEmail(event.currentTarget.value);
+                  }}
                 />
                 <button type="submit" className="thingy-btn thingy-btn-primary min-h-[52px] shrink-0" disabled={busy}>
                   Email Me a Code
                 </button>
               </div>
+              <div ref={slotRef} />
             </form>
             <div className="empty:sr-only" data-kind={messageKind} aria-live="polite">
               {message ? <SignInStatus kind={messageKind} text={message} /> : null}

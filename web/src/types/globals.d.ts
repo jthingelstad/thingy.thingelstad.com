@@ -56,6 +56,14 @@ interface Window {
   ThingyConfig?: ThingyPublicConfig;
   SpeechRecognition?: ThingySpeechRecognitionConstructor;
   webkitSpeechRecognition?: ThingySpeechRecognitionConstructor;
+  turnstile?: ThingyTurnstileApi;
+  thingyTurnstileLoaded?: () => void;
+}
+
+// The slice of Cloudflare's Turnstile API the sign-in page uses.
+interface ThingyTurnstileApi {
+  render(container: HTMLElement, options: Record<string, unknown>): string;
+  reset(widgetId: string): void;
 }
 
 interface ThingySpeechRecognitionEvent extends Event {

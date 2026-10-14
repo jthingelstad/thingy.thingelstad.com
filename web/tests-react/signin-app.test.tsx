@@ -15,10 +15,24 @@ vi.mock('../src/shared/thingy-session.ts', async (importOriginal) => {
   };
 });
 
+const tokenFor = vi.fn();
+const resetTurnstile = vi.fn();
+
+// Cloudflare's script never loads in happy-dom; stand in for the widget.
+vi.mock('../src/shared/turnstile.ts', () => ({
+  useTurnstile: () => ({
+    slotRef: { current: null },
+    turnstile: { warm: () => {}, tokenFor: (email: string) => tokenFor(email), reset: () => resetTurnstile() }
+  })
+}));
+
 const { SignInApp } = await import('../src/react/SignInApp.tsx');
 
 beforeEach(() => {
   postJson.mockReset();
+  tokenFor.mockReset();
+  tokenFor.mockResolvedValue('');
+  resetTurnstile.mockReset();
 });
 
 afterEach(cleanup);
@@ -75,4 +89,39 @@ test('a server error surfaces as a readable message', async () => {
   await user.type(screen.getByLabelText('Email address'), 'reader@example.com');
   await user.click(screen.getByRole('button', { name: 'Email Me a Code' }));
   await screen.findByText('Thingy is unavailable.');
+});
+
+test('the email request carries the Turnstile token when there is one', async () => {
+  const user = userEvent.setup();
+  tokenFor.mockResolvedValue('turnstile-token');
+  postJson.mockResolvedValueOnce({ status: 'not_found' });
+  render(<SignInApp />);
+  await user.type(screen.getByLabelText('Email address'), 'Reader@Example.com');
+  await user.click(screen.getByRole('button', { name: 'Email Me a Code' }));
+  await screen.findByRole('button', { name: 'Add Me to The Weekly Thing' });
+  expect(tokenFor).toHaveBeenCalledWith('reader@example.com');
+  expect(postJson.mock.calls[0][1]).toMatchObject({ action: 'check', turnstile_token: 'turnstile-token' });
+});
+
+test('without a token the request still goes, with no token field', async () => {
+  const user = userEvent.setup();
+  postJson.mockResolvedValueOnce({ status: 'magic_link_sent' });
+  render(<SignInApp />);
+  await user.type(screen.getByLabelText('Email address'), 'reader@example.com');
+  await user.click(screen.getByRole('button', { name: 'Email Me a Code' }));
+  await screen.findByText(/Enter the six-digit code below/);
+  expect(postJson.mock.calls[0][1]).not.toHaveProperty('turnstile_token');
+});
+
+test('a Turnstile refusal shows the reason and resets the widget', async () => {
+  const user = userEvent.setup();
+  const refusal = new Error('We couldn’t confirm this request came from a person.');
+  refusal.status = 403;
+  refusal.data = { status: 'turnstile_failed' };
+  postJson.mockRejectedValueOnce(refusal);
+  render(<SignInApp />);
+  await user.type(screen.getByLabelText('Email address'), 'reader@example.com');
+  await user.click(screen.getByRole('button', { name: 'Email Me a Code' }));
+  await screen.findByText(/confirm this request came from a person/);
+  expect(resetTurnstile).toHaveBeenCalledTimes(1);
 });
