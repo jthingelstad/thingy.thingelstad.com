@@ -54,6 +54,18 @@ async function routeMockApi(page, { holdWelcome = false } = {}) {
     releaseWelcome = resolve;
   });
   if (!holdWelcome) releaseWelcome();
+  // Cloudflare's real Turnstile script refuses localhost (the widget lists
+  // only the thingelstad.com hosts); a stand-in hands out a fixed token.
+  await page.route(/challenges\.cloudflare\.com\/turnstile\/v0\/api\.js/, (route) =>
+    route.fulfill({
+      contentType: 'text/javascript',
+      body: `window.turnstile = {
+        render: (el, opts) => { setTimeout(() => opts.callback('smoke-turnstile-token'), 10); return 'smoke'; },
+        reset: () => {}
+      };
+      setTimeout(() => window.thingyTurnstileLoaded(), 0);`
+    })
+  );
   await page.route(`${apiHost}/auth`, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
@@ -570,9 +582,11 @@ async function checkSessionRecovery(browser, browserName) {
   const page = await context.newPage();
   const failures = collectUiFailures(page);
   await routeMockApi(page);
+  const emailActions = [];
   await page.route(`${apiHost}/auth`, async (route) => {
-    const { action } = JSON.parse(route.request().postData() || '{}');
+    const { action, turnstile_token: turnstileToken } = JSON.parse(route.request().postData() || '{}');
     if (action === 'verify_code' || action === 'session') return route.fallback();
+    emailActions.push({ action, turnstileToken });
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ status: 'magic_link_sent' }) });
   });
   const historyHeaders = [];
@@ -593,6 +607,11 @@ async function checkSessionRecovery(browser, browserName) {
   await page.getByRole('button', { name: 'Sign In', exact: true }).click();
   await page.waitForURL('**/chat/');
   await page.locator('.thingy-aui-recent').first().waitFor();
+  assert.deepEqual(
+    emailActions,
+    [{ action: 'check', turnstileToken: 'smoke-turnstile-token' }],
+    'the sign-in email request carries the Turnstile token'
+  );
   assert.ok(historyHeaders.length > 0, 'history loads after signing in');
   assert.ok(
     historyHeaders.every((headers) => !headers.authorization),
