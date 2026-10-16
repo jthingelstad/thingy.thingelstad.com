@@ -9,6 +9,13 @@
 // browser gets a checkbox under the form. If the script cannot load the
 // request goes ahead without a token and the Librarian decides.
 //
+// A click waits at most MAX_WAIT_MS for a token. The wait once stretched to
+// two minutes whenever the widget asked for a checkbox, so a reader who
+// missed it sat on a busy button and gave up. In observe mode the Librarian
+// lets a tokenless request through, so the request goes ahead without one
+// after the bound; once a wait has timed out, later clicks do not wait again
+// until the widget delivers a token.
+//
 // A token is single-use at Cloudflare, but the Librarian keeps its verdict
 // for five minutes and three uses, bound to the first address it was sent
 // with, so one token covers check then subscribe. A new address, a fourth
@@ -19,8 +26,7 @@ import { useRef } from 'react';
 const SITE_KEY = '0x4AAAAAAFWqGqZVkNAWfIQn';
 const TURNSTILE_SCRIPT =
   'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=thingyTurnstileLoaded';
-const QUIET_WAIT_MS = 5000;
-const INTERACTIVE_WAIT_MS = 120000;
+export const MAX_WAIT_MS = 3000;
 const MAX_USES = 3;
 const MAX_AGE_MS = 270000;
 
@@ -56,7 +62,7 @@ function attachTurnstile(slot: () => HTMLElement | null, action: string): Turnst
   let issuedAt = 0;
   let uses = 0;
   let boundEmail = '';
-  let interactive = false;
+  let timedOut = false;
   let unavailable = false;
   let waiters: Array<() => void> = [];
 
@@ -82,18 +88,14 @@ function attachTurnstile(slot: () => HTMLElement | null, action: string): Turnst
             issuedAt = Date.now();
             uses = 0;
             boundEmail = '';
-            interactive = false;
+            timedOut = false;
             settle();
           },
           'expired-callback': () => {
             token = '';
           },
-          'before-interactive-callback': () => {
-            interactive = true;
-          },
           'error-callback': () => {
             token = '';
-            interactive = false;
             settle();
           }
         });
@@ -134,6 +136,7 @@ function attachTurnstile(slot: () => HTMLElement | null, action: string): Turnst
     if (token && !fresh(email)) reset();
     return new Promise((resolve) => {
       const started = Date.now();
+      const limit = timedOut ? 0 : MAX_WAIT_MS;
       const finish = () => {
         if (!token) return resolve('');
         uses += 1;
@@ -142,16 +145,22 @@ function attachTurnstile(slot: () => HTMLElement | null, action: string): Turnst
       };
       const poll = () => {
         if (token || unavailable) return finish();
-        const limit = interactive ? INTERACTIVE_WAIT_MS : QUIET_WAIT_MS;
-        if (Date.now() - started >= limit) return finish();
+        const left = limit - (Date.now() - started);
+        if (left <= 0) {
+          timedOut = true;
+          return finish();
+        }
         const wake = () => {
           window.clearTimeout(timer);
           poll();
         };
-        const timer = window.setTimeout(() => {
-          waiters = waiters.filter((fn) => fn !== wake);
-          poll();
-        }, 250);
+        const timer = window.setTimeout(
+          () => {
+            waiters = waiters.filter((fn) => fn !== wake);
+            poll();
+          },
+          Math.min(250, left)
+        );
         waiters.push(wake);
       };
       poll();
@@ -160,6 +169,9 @@ function attachTurnstile(slot: () => HTMLElement | null, action: string): Turnst
 
   return { warm, tokenFor, reset };
 }
+
+// Exported for tests; components use useTurnstile.
+export { attachTurnstile };
 
 // One widget per component, rendered into the element the ref points at.
 export function useTurnstile(action: string) {
