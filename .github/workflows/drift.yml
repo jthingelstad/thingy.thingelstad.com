@@ -41,8 +41,27 @@ jobs:
       - name: Vendored MCP surface matches librarian-thing main
         run: npm run mcp-surface:check
 
+      # Every high or critical advisory fails, except UNFIXABLE: braces
+      # <=3.0.3 (GHSA-vfj7-8cjw-p6xm, 2026-09-18) has no patched release,
+      # and stylelint reaches it through globby, fast-glob and micromatch to
+      # glob our own CSS. Failing on it turned this check red every day with
+      # nothing to fix, which would hide real contract drift. It is still
+      # listed in the log; drop it here once braces ships a fix.
       - name: npm advisories
-        run: npm audit --audit-level=high
+        env:
+          UNFIXABLE: GHSA-vfj7-8cjw-p6xm
+        run: |
+          npm audit --json > "$RUNNER_TEMP/audit.json" || true
+          jq -r '[.vulnerabilities[].via[] | objects
+                  | select(.severity == "high" or .severity == "critical")]
+                 | unique_by(.url)[] | "\(.severity) \(.name) \(.url)"' \
+            "$RUNNER_TEMP/audit.json" > "$RUNNER_TEMP/advisories.txt"
+          echo "High and critical advisories:"
+          cat "$RUNNER_TEMP/advisories.txt"
+          if grep -v "/advisories/${UNFIXABLE}$" "$RUNNER_TEMP/advisories.txt"; then
+            echo "::error::npm advisories beyond ${UNFIXABLE} (listed above)"
+            exit 1
+          fi
 
       - name: Open or update the drift issue on failure
         if: failure()
