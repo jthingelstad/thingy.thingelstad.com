@@ -210,12 +210,19 @@ Key files:
   Copy buttons - progressive enhancement: the stubs stay `hidden` without
   JS or the clipboard API, and copies are announced through
   `#thingy-copy-status`).
-- `web/vite.page-data.ts`: build-time data for `/`, `/about/` and
-  `/connect/`. It replaces a `<!--sites-strip-->` marker with the Jamie's
-  sites strip from `web/contracts/sites.json` (entries with
-  `in_publishing_system: true`; Thingy is current), a vendored copy of the
-  domain's `shared/sites.json` - refresh with `npm run sites:sync`, check
-  with `npm run sites:check`. It also renders `{{archive.<path>}}` tokens
+- `web/vite.page-data.ts`: build-time data for the static pages. It
+  replaces a `<!--sites-strip-->` marker on `/`, `/about/`, `/connect/` and
+  `/connect/reference/` with the Jamie's sites strip from
+  `web/contracts/sites.json` (entries with `in_sites_strip: true`, in file
+  order; every site shows its `name` except Thingy, the current site, which
+  shows its `short_name` and carries `sites-strip__item--current` and
+  `aria-current`), a vendored copy of the domain's `shared/sites.json` -
+  refresh with `npm run sites:sync`, check with `npm run sites:check`. The
+  markup, classes and values are the shared contract in the domain
+  `AGENTS.md` ("The sites strip"), identical on every one of Jamie's sites;
+  only the inner width and side padding follow Thingy's header frame, and
+  the contract's dark values are left out (Thingy has no dark mode). Change
+  the contract there first. It also renders `{{archive.<path>}}` tokens
   from `web/content/archive-stats.json`, the ONE source for every archive
   count the static pages quote (issues, posts, links, photos); update its
   numbers and `as_of` from the Librarian's `corpus_stats` rather than
@@ -270,7 +277,8 @@ Do:
   tangerine), clay links. One look only: there is no dark mode and no theme
   switch.
 - Type: Archivo italic 800 (wide) for display, Figtree for UI and body,
-  JetBrains Mono for eyebrows and meta. Source Sans 3 only in the sites strip.
+  JetBrains Mono for eyebrows and meta. Inter only in the sites strip (the
+  shared contract's face on every one of Jamie's sites).
 - Toy-like components: 2px ink borders, hard offset shadows, pill buttons that
   lift on hover and press on click, 44px minimum targets.
 - Let the mascot carry the personality: the screen face and its moods (idle,
@@ -282,9 +290,11 @@ Do:
   to identify sources: citation chips and source cards. They are labels, not
   themes.
 - Make the chat/auth surface the primary object.
-- Put the shared "Jamie's sites" strip (Notebook look, from
-  `shared/sites.json`) on the static marketing pages only - never on chat,
-  sign-in, share, or 404.
+- Put the shared "Jamie's sites" strip (the blog v2 strip, from
+  `shared/sites.json`, exactly as the domain `AGENTS.md` contract sets it)
+  on the static pages only (`/`, `/about/`, `/connect/`,
+  `/connect/reference/`) - never on chat, sign-in, share, or 404 (Jamie,
+  2026-10-01: "Chat should NOT get the bar.").
 - Preserve responsive/mobile layout and avoid horizontal overflow.
 
 Do not:

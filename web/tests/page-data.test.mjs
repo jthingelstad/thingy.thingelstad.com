@@ -17,14 +17,12 @@ const {
 } = await import('../vite.page-data.ts');
 
 const WEB_ROOT = fileURLToPath(new URL('..', import.meta.url));
-const STRIP_PAGES = ['index.html', 'about/index.html', 'connect/index.html'];
-const NO_STRIP_PAGES = [
-  'chat/index.html',
-  'signin/index.html',
-  'c/index.html',
-  'connect/reference/index.html',
-  'public/404.html'
-];
+// Every public static page opens with the strip; chat, sign-in, share and
+// 404 never carry it (Jamie, 2026-10-01: "Chat should NOT get the bar.").
+const STRIP_PAGES = ['index.html', 'about/index.html', 'connect/index.html', 'connect/reference/index.html'];
+const NO_STRIP_PAGES = ['chat/index.html', 'signin/index.html', 'c/index.html', 'public/404.html'];
+// The pages that quote archive counts.
+const ARCHIVE_PAGES = ['index.html', 'about/index.html', 'connect/index.html'];
 
 async function source(path) {
   return await readFile(new URL(`../${path}`, import.meta.url), 'utf8');
@@ -39,43 +37,91 @@ function decode(text) {
     .replaceAll('&amp;', '&');
 }
 
-test('the sites strip matches the vendored sites.json', () => {
+const ITEM =
+  /<li class="sites-strip__item sites-strip__item--([a-z0-9-]+)( sites-strip__item--current)?"><a href="([^"]+)" title="([^"]+)"( aria-current="true")?>([^<]+)<\/a><\/li>/g;
+
+test('the sites strip renders the shared contract from the vendored sites.json', () => {
   const sites = loadSites(WEB_ROOT);
-  const expected = sites.filter((site) => site.in_publishing_system);
-  assert.ok(expected.length > 0, 'at least one site is in the publishing system');
+  const expected = sites.filter((site) => site.in_sites_strip);
+  assert.ok(expected.length > 1, 'more than one site is in the strip');
   assert.ok(
-    sites.some((site) => !site.in_publishing_system),
+    sites.some((site) => !site.in_sites_strip),
     'the fixture still exercises the exclusion'
   );
+  assert.ok(
+    expected.some((site) => site.id === 'xyz' && !site.in_publishing_system),
+    'thingelstad.xyz is in the strip though it is outside the publishing system'
+  );
+  assert.ok(!expected.some((site) => site.id === 'escape'), 'Escaping Things stays out');
 
   const html = renderSitesStrip(sites);
-  assert.match(html, /^<nav class="thingy-sites-strip" aria-label="Jamie's sites"><ul>/);
-  const links = [...html.matchAll(/<a href="([^"]+)"( aria-current="true")? title="([^"]+)">([^<]+)<\/a>/g)];
+  assert.match(
+    html,
+    /^<nav class="sites-strip" aria-label="Jamie's sites"><div class="sites-strip__inner"><span class="sites-strip__label">Jamie's sites<\/span><ul class="sites-strip__list"><li /
+  );
+  assert.match(html, /<\/li><\/ul><\/div><\/nav>$/);
+  const items = [...html.matchAll(ITEM)];
+  assert.equal(html.match(/<li /g).length, items.length, 'every item matches the contract markup');
   assert.deepEqual(
-    links.map(([, href, current, title, text]) => ({
+    items.map(([, id, currentClass, href, title, currentAria, text]) => ({
+      id,
+      currentClass: Boolean(currentClass),
+      currentAria: Boolean(currentAria),
       href,
-      current: Boolean(current),
       title: decode(title),
       text: decode(text)
     })),
     expected.map((site) => ({
+      id: site.id,
+      currentClass: site.id === 'thingy',
+      currentAria: site.id === 'thingy',
       href: site.url,
-      current: site.id === 'thingy',
       title: site.description,
-      text: site.short_name
+      text: site.id === 'thingy' ? site.short_name : site.name
     }))
   );
-  assert.equal(links.filter((link) => link[2]).length, 1, 'exactly one site is current');
+  assert.equal(items.filter((item) => item[2]).length, 1, 'exactly one site is current');
+  assert.ok(html.includes('>Ask Thingy</a>'), 'Thingy shows its short name');
+  assert.ok(html.includes('>Things I’ve built</a>'), 'thingelstad.xyz shows its full name');
   assert.deepEqual(stripSites(sites), expected);
 });
 
-test('the strip sits on /, /about/ and /connect/ only', async () => {
+test('the sites strip escapes every value', () => {
+  const html = renderSitesStrip([
+    {
+      id: 'a"b',
+      name: '<b>Bold</b> & "quoted"',
+      short_name: 'Short',
+      url: 'https://example.com/?a=1&b="2"',
+      description: 'Tag <i> & "quote"',
+      in_sites_strip: true
+    }
+  ]);
+  assert.ok(!html.includes('<b>') && !html.includes('<i>'), 'no markup leaks from the data');
+  assert.ok(html.includes('sites-strip__item--a&quot;b"'));
+  assert.ok(html.includes('href="https://example.com/?a=1&amp;b=&quot;2&quot;"'));
+  assert.ok(html.includes('title="Tag &lt;i&gt; &amp; &quot;quote&quot;"'));
+  assert.ok(html.includes('>&lt;b&gt;Bold&lt;/b&gt; &amp; &quot;quoted&quot;</a>'));
+  assert.ok(!html.includes('aria-current'), 'no current site when Thingy is not listed');
+});
+
+test('the strip sits on the static pages and never on chat, sign-in, share or 404', async () => {
+  const plugin = pageDataPlugin(WEB_ROOT);
   for (const page of STRIP_PAGES) {
     const html = await source(page);
     assert.equal(html.split(SITES_STRIP_MARKER).length, 2, `${page} has one sites-strip marker`);
+    const out = plugin.transformIndexHtml(html);
+    assert.equal(out.split('<nav class="sites-strip"').length, 2, `${page} renders one strip`);
+    assert.ok(
+      out.indexOf('<nav class="sites-strip"') < out.indexOf('<header class="thingy-page-nav is-site">'),
+      `${page} opens with the strip, above the header`
+    );
   }
   for (const page of NO_STRIP_PAGES) {
-    assert.ok(!(await source(page)).includes(SITES_STRIP_MARKER), `${page} has no sites strip`);
+    const html = await source(page);
+    assert.ok(!html.includes(SITES_STRIP_MARKER), `${page} has no sites-strip marker`);
+    assert.ok(!html.includes('sites-strip'), `${page} has no hand-written strip`);
+    assert.ok(!plugin.transformIndexHtml(html).includes('sites-strip'), `${page} builds without the strip`);
   }
 });
 
@@ -83,7 +129,7 @@ test('every archive count on the static pages comes from archive-stats.json', as
   const stats = loadArchiveStats(WEB_ROOT);
   assert.equal(stats.links_total, stats.weekly.links + stats.blog.links, 'links_total is the two corpora summed');
   const plugin = pageDataPlugin(WEB_ROOT);
-  for (const page of STRIP_PAGES) {
+  for (const page of ARCHIVE_PAGES) {
     const html = await source(page);
     assert.ok(html.includes('{{archive.'), `${page} quotes the shared counts`);
     const out = plugin.transformIndexHtml(html);

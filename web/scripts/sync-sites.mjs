@@ -1,6 +1,7 @@
 // Vendors the canonical list of Jamie's sites (thingelstad.com
 // shared/sites.json) into contracts/sites.json, which the build renders as
-// the sites strip on /, /about/ and /connect/ (vite.page-data.ts). Mirrors
+// the sites strip on /, /about/, /connect/ and /connect/reference/
+// (vite.page-data.ts). Mirrors
 // www.thingelstad.com/scripts/sync-shared.sh:
 //
 //   npm run sites:sync    copy from the sibling shared/sites.json

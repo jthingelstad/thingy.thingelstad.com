@@ -1,5 +1,5 @@
 {
-  "$comment": "Canonical cross-site data for Jamie's sites. Edit here only; consumers vendor a copy (www.thingelstad.com/scripts/sync-shared.sh -> thing-hugo/data/sites.json). Call these sites or properties, never a network.",
+  "$comment": "Canonical cross-site data for Jamie's sites. Edit here only; consumers vendor a copy (www.thingelstad.com/scripts/sync-shared.sh -> thing-hugo/data/sites.json; npm run sites:sync in thingy.thingelstad.com/web, weekly.thingelstad.com, another.thingelstad.com and thingelstad.xyz). in_sites_strip picks the sites the \"Jamie's sites\" strip and the blog's footer list; in_publishing_system says only whether WT Builder and librarian-thing work with the site. Call these sites or properties, never a network.",
   "owner": {
     "name": "Jamie Thingelstad",
     "url": "https://www.thingelstad.com/",
@@ -18,6 +18,7 @@
       "description": "Twenty plus years of writing on the web.",
       "kind": "blog",
       "in_publishing_system": true,
+      "in_sites_strip": true,
       "feeds": {
         "rss": "https://www.thingelstad.com/feed.xml",
         "json": "https://www.thingelstad.com/feed.json",
@@ -33,6 +34,7 @@
       "description": "A weekly collection of interesting links, ideas, and observations from across the internet, curated by Jamie Thingelstad.",
       "kind": "newsletter",
       "in_publishing_system": true,
+      "in_sites_strip": true,
       "feeds": {
         "atom": "https://weekly.thingelstad.com/feed.xml",
         "podcast": "https://weekly.thingelstad.com/podcast.xml"
@@ -47,6 +49,7 @@
       "description": "A podcast by Jamie Thingelstad, exploring technology, creativity, and the things that make life interesting.",
       "kind": "podcast",
       "in_publishing_system": true,
+      "in_sites_strip": true,
       "feeds": {
         "rss": "https://another.thingelstad.com/feed.xml",
         "json": "https://another.thingelstad.com/index.json",
@@ -62,7 +65,23 @@
       "description": "Ask Thingy to find and synthesize writing from across Jamie Thingelstad's archive.",
       "kind": "search",
       "in_publishing_system": true,
+      "in_sites_strip": true,
       "feeds": {},
+      "subscribe_url": null
+    },
+    {
+      "id": "xyz",
+      "name": "Things I’ve built",
+      "short_name": "Projects",
+      "url": "https://thingelstad.xyz/",
+      "description": "An index and archive of Jamie Thingelstad's projects, active and retired.",
+      "kind": "projects",
+      "in_publishing_system": false,
+      "in_sites_strip": true,
+      "feeds": {
+        "rss": "https://thingelstad.xyz/feed.xml",
+        "json": "https://thingelstad.xyz/feed.json"
+      },
       "subscribe_url": null
     },
     {
@@ -73,11 +92,12 @@
       "description": "The Escaping Things escape-room team: rooms, trips, and stats.",
       "kind": "hobby",
       "in_publishing_system": false,
+      "in_sites_strip": false,
       "feeds": {
         "atom": "https://escape.thingelstad.com/feed.xml"
       },
       "subscribe_url": null,
-      "$comment": "Whether this appears in cross-site navigation is Jamie's call (MANUAL-STEPS.md). The theme hides sites with in_publishing_system false unless params.sites_include lists their id."
+      "$comment": "Whether this appears in cross-site navigation is Jamie's call (MANUAL-STEPS.md); decided 2026-10-01: leave it out. The blog also shows a site whose in_sites_strip is false when params.sites_include lists its id."
     }
   ]
 }

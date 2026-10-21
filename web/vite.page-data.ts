@@ -1,9 +1,12 @@
-// Build-time data for the static pages (/, /about/, /connect/):
+// Build-time data for the static pages (/, /about/, /connect/,
+// /connect/reference/):
 //
 // - The sites strip. contracts/sites.json is a vendored copy of the
 //   thingelstad.com shared/sites.json (scripts/sync-sites.mjs); the plugin
 //   replaces a <!--sites-strip--> marker with the strip, so the pages carry
-//   real links with no client JavaScript.
+//   real links with no client JavaScript. The markup is the shared contract
+//   in the thingelstad.com AGENTS.md ("The sites strip"): every site renders
+//   it identically, so change it there first.
 // - The archive counts. content/archive-stats.json is the one source for
 //   every number the static pages quote; templates write {{archive.<path>}}
 //   and an unknown or leftover token fails the build instead of shipping.
@@ -23,7 +26,7 @@ export interface Site {
   short_name: string;
   url: string;
   description: string;
-  in_publishing_system: boolean;
+  in_sites_strip: boolean;
 }
 
 export type ArchiveStats = Record<string, unknown>;
@@ -34,18 +37,26 @@ export function loadSites(root: string): Site[] {
 }
 
 export function stripSites(sites: Site[]): Site[] {
-  return sites.filter((site) => site.in_publishing_system);
+  return sites.filter((site) => site.in_sites_strip);
 }
 
+// The current site shows its short name ("Ask Thingy"), the others their
+// full names.
 export function renderSitesStrip(sites: Site[], currentId = THINGY_SITE_ID): string {
   const items = stripSites(sites).map((site) => {
-    const current = site.id === currentId ? ' aria-current="true"' : '';
+    const current = site.id === currentId;
+    const itemClass = `sites-strip__item sites-strip__item--${escapeHtml(site.id)}${current ? ' sites-strip__item--current' : ''}`;
     return (
-      `<li><a href="${escapeHtml(site.url)}"${current} title="${escapeHtml(site.description)}">` +
-      `${escapeHtml(site.short_name)}</a></li>`
+      `<li class="${itemClass}">` +
+      `<a href="${escapeHtml(site.url)}" title="${escapeHtml(site.description)}"${current ? ' aria-current="true"' : ''}>` +
+      `${escapeHtml(current ? site.short_name : site.name)}</a></li>`
     );
   });
-  return `<nav class="thingy-sites-strip" aria-label="Jamie's sites"><ul>${items.join('')}</ul></nav>`;
+  return (
+    `<nav class="sites-strip" aria-label="Jamie's sites"><div class="sites-strip__inner">` +
+    `<span class="sites-strip__label">Jamie's sites</span>` +
+    `<ul class="sites-strip__list">${items.join('')}</ul></div></nav>`
+  );
 }
 
 export function loadArchiveStats(root: string): ArchiveStats {

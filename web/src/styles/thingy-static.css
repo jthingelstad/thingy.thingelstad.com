@@ -1,5 +1,5 @@
 /* Felt & Tangerine chrome for the static pages (/, /about/, /connect/,
-   /connect/reference/): the Jamie's-sites strip, the site header, the navy
+   /connect/reference/): the Jamie's sites strip, the site header, the navy
    footer and the toy pieces the pages share (name tag, pocket cards, ask
    chips, icon tiles, dashed notes). Scoped under body.thingy-static so none
    of it reaches the SPA. Semantic class names are test hooks. */
@@ -151,42 +151,81 @@
   font-size: 17px;
 }
 
-/* ---- Jamie's sites strip (Notebook look, rendered at build time by
-   vite.page-data.ts). Links are 13px Source Sans 3 text, about 20px tall
-   with their padding: the one deliberate exception to the 44px rule, as
-   on the blog. #595955 on #F4F4F1 is 6.6:1. ---- */
-.thingy-sites-strip {
-  background: #f4f4f1;
-  border-bottom: 1px solid #e6e6e2;
+/* ---- Jamie's sites strip, rendered at build time by vite.page-data.ts.
+   The shared contract (thingelstad.com AGENTS.md, "The sites strip") is
+   the blog v2 strip and every site renders it identically, so these
+   values are the contract's, not Thingy's palette; only the inner width
+   and side padding follow Thingy's header frame (1200px, 32px / 16px).
+   Thingy has no dark mode, so the contract's dark values are left out.
+   On #f3f3f5: label #5a5a66 6.1:1, links #16161a 16.3:1, the Weekly,
+   Another and Thingy marks 5.7:1, 4.7:1 and 4.9:1. ---- */
+.sites-strip {
+  background: #f3f3f5;
   font-family: var(--font-sites);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
-.thingy-sites-strip ul {
+.sites-strip__inner {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 16px;
+  align-items: center;
+  gap: 4px 24px;
+  min-height: 40px;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 8px 32px;
+  padding: 0 32px;
+}
+
+.sites-strip__label {
+  color: #5a5a66;
+}
+
+.sites-strip__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  margin: 0;
+  padding: 0;
   list-style: none;
 }
 
-.thingy-sites-strip a {
-  display: inline-block;
-  padding: 1px 0;
-  color: #595955;
+.sites-strip a {
+  color: #16161a;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.sites-strip a:hover {
+  color: #16161a;
+  text-decoration-thickness: 2px;
+}
+
+.sites-strip a:focus-visible {
+  outline: 2px solid #16161a;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.sites-strip__item--current a {
   text-decoration: none;
 }
 
-.thingy-sites-strip a:hover {
-  color: var(--thingy-clay);
+.sites-strip__item--weekly a,
+.sites-strip__item--weekly a:hover {
+  color: #1a5eb6;
 }
 
-.thingy-sites-strip a[aria-current] {
-  color: #191919;
-  font-weight: 600;
+.sites-strip__item--another a,
+.sites-strip__item--another a:hover {
+  color: #c63a20;
+}
+
+.sites-strip__item--thingy a,
+.sites-strip__item--thingy a:hover {
+  color: #b5461a;
 }
 
 /* ---- Site header (static pages): face + wordmark, nav, Sign in pill.
@@ -738,8 +777,22 @@
     padding: 0 16px;
   }
 
-  .thingy-sites-strip ul {
-    padding: 8px 16px;
+  /* Phone strip: one row that scrolls sideways, label hidden. */
+  .sites-strip__inner {
+    flex-wrap: nowrap;
+    gap: 18px;
+    padding: 0 16px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .sites-strip__label {
+    display: none;
+  }
+
+  .sites-strip__list {
+    flex-wrap: nowrap;
+    gap: 18px;
   }
 
   .thingy-page-nav.is-site {

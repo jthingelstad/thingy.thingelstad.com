@@ -74,7 +74,7 @@ test('every shell loads the Felt & Tangerine fonts', async () => {
       'family=Archivo:ital,wdth,wght',
       'family=Figtree',
       'family=JetBrains+Mono',
-      'family=Source+Sans+3'
+      'family=Inter:wght@400;600'
     ]) {
       assert.ok(link[0].includes(family), `${shell} loads ${family}`);
     }
