@@ -131,9 +131,10 @@ async function resolveModelContext(): Promise<{ context: ModelContextLike; flavo
     // Bundled polyfill: installs document.modelContext so the WebMCP Bridge
     // extension (and other polyfill-aware consumers) can see the tools in
     // browsers without the native API. Loaded lazily - visitors without an
-    // agent in play never parse it.
-    const { initializeWebMCPPolyfill } = await import('@mcp-b/webmcp-polyfill');
-    initializeWebMCPPolyfill();
+    // agent in play never parse it. It installs nothing on an insecure page
+    // or an engine older than Chrome/Firefox 126 or Safari 18.
+    const { installWebMCP } = await import('@mcp-b/webmcp-polyfill');
+    installWebMCP();
     return document.modelContext ? { context: document.modelContext, flavor: 'polyfill' } : null;
   } catch (error) {
     return null;
