@@ -24,6 +24,7 @@ export interface Site {
   id: string;
   name: string;
   short_name: string;
+  strip_label: string;
   url: string;
   description: string;
   in_sites_strip: boolean;
@@ -40,8 +41,8 @@ export function stripSites(sites: Site[]): Site[] {
   return sites.filter((site) => site.in_sites_strip);
 }
 
-// The current site shows its short name ("Ask Thingy"), the others their
-// full names.
+// Every site shows its strip_label, Thingy included; the current site
+// differs only in its class and aria-current.
 export function renderSitesStrip(sites: Site[], currentId = THINGY_SITE_ID): string {
   const items = stripSites(sites).map((site) => {
     const current = site.id === currentId;
@@ -49,7 +50,7 @@ export function renderSitesStrip(sites: Site[], currentId = THINGY_SITE_ID): str
     return (
       `<li class="${itemClass}">` +
       `<a href="${escapeHtml(site.url)}" title="${escapeHtml(site.description)}"${current ? ' aria-current="true"' : ''}>` +
-      `${escapeHtml(current ? site.short_name : site.name)}</a></li>`
+      `${escapeHtml(site.strip_label)}</a></li>`
     );
   });
   return (

@@ -77,12 +77,13 @@ test('the sites strip renders the shared contract from the vendored sites.json',
       currentAria: site.id === 'thingy',
       href: site.url,
       title: site.description,
-      text: site.id === 'thingy' ? site.short_name : site.name
+      text: site.strip_label
     }))
   );
   assert.equal(items.filter((item) => item[2]).length, 1, 'exactly one site is current');
-  assert.ok(html.includes('>Ask Thingy</a>'), 'Thingy shows its short name');
-  assert.ok(html.includes('>Things I’ve built</a>'), 'thingelstad.xyz shows its full name');
+  assert.ok(html.includes('>Thingy</a>') && !html.includes('>Ask Thingy</a>'), 'Thingy reads as on every other site');
+  assert.ok(html.includes('>Blog</a>') && !html.includes('>Jamie Thingelstad</a>'), 'the blog shows its strip label');
+  assert.ok(html.includes('>Things I’ve built</a>'), 'thingelstad.xyz shows its strip label');
   assert.deepEqual(stripSites(sites), expected);
 });
 
@@ -90,8 +91,9 @@ test('the sites strip escapes every value', () => {
   const html = renderSitesStrip([
     {
       id: 'a"b',
-      name: '<b>Bold</b> & "quoted"',
+      name: 'Name',
       short_name: 'Short',
+      strip_label: '<b>Bold</b> & "quoted"',
       url: 'https://example.com/?a=1&b="2"',
       description: 'Tag <i> & "quote"',
       in_sites_strip: true
