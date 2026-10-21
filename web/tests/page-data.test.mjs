@@ -75,7 +75,7 @@ test('the sites strip renders the shared contract from the vendored sites.json',
       id: site.id,
       currentClass: site.id === 'thingy',
       currentAria: site.id === 'thingy',
-      href: site.url,
+      href: `${site.url}?ref=sites-strip-thingy`,
       title: site.description,
       text: site.strip_label
     }))
@@ -101,7 +101,7 @@ test('the sites strip escapes every value', () => {
   ]);
   assert.ok(!html.includes('<b>') && !html.includes('<i>'), 'no markup leaks from the data');
   assert.ok(html.includes('sites-strip__item--a&quot;b"'));
-  assert.ok(html.includes('href="https://example.com/?a=1&amp;b=&quot;2&quot;"'));
+  assert.ok(html.includes('href="https://example.com/?a=1&amp;b=&quot;2&quot;&amp;ref=sites-strip-thingy"'));
   assert.ok(html.includes('title="Tag &lt;i&gt; &amp; &quot;quote&quot;"'));
   assert.ok(html.includes('>&lt;b&gt;Bold&lt;/b&gt; &amp; &quot;quoted&quot;</a>'));
   assert.ok(!html.includes('aria-current'), 'no current site when Thingy is not listed');

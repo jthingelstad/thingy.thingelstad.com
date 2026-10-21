@@ -216,7 +216,8 @@ Key files:
   `web/contracts/sites.json` (entries with `in_sites_strip: true`, in file
   order; every site shows its `strip_label`, Thingy too, so the strip reads
   the same as on every other site; Thingy, the current site, differs only
-  in `sites-strip__item--current` and `aria-current`), a vendored copy of the domain's `shared/sites.json` -
+  in `sites-strip__item--current` and `aria-current`; every link carries
+  `?ref=sites-strip-thingy` for Tinylytics), a vendored copy of the domain's `shared/sites.json` -
   refresh with `npm run sites:sync`, check with `npm run sites:check`. The
   markup, classes and values are the shared contract in the domain
   `AGENTS.md` ("The sites strip"), identical on every one of Jamie's sites;

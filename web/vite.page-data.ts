@@ -42,14 +42,17 @@ export function stripSites(sites: Site[]): Site[] {
 }
 
 // Every site shows its strip_label, Thingy included; the current site
-// differs only in its class and aria-current.
+// differs only in its class and aria-current. Every link carries
+// ?ref=sites-strip-<current site> so Tinylytics' Sources report on the
+// destination shows which site's strip sent the visit.
 export function renderSitesStrip(sites: Site[], currentId = THINGY_SITE_ID): string {
   const items = stripSites(sites).map((site) => {
     const current = site.id === currentId;
+    const href = `${site.url}${site.url.includes('?') ? '&' : '?'}ref=sites-strip-${encodeURIComponent(currentId)}`;
     const itemClass = `sites-strip__item sites-strip__item--${escapeHtml(site.id)}${current ? ' sites-strip__item--current' : ''}`;
     return (
       `<li class="${itemClass}">` +
-      `<a href="${escapeHtml(site.url)}" title="${escapeHtml(site.description)}"${current ? ' aria-current="true"' : ''}>` +
+      `<a href="${escapeHtml(href)}" title="${escapeHtml(site.description)}"${current ? ' aria-current="true"' : ''}>` +
       `${escapeHtml(site.strip_label)}</a></li>`
     );
   });
