@@ -93,3 +93,22 @@ test('answer shells load the Weekly W face', async () => {
     assert.ok(link[0].includes('family=Source+Serif+4:ital,opsz,wght@1,8..60,600'), `${shell} loads Source Serif 4`);
   }
 });
+
+// One favicon everywhere: the static mascot face (2026-10-21; it replaced
+// the old clay W). The ?v= busts the browsers' week-long SVG cache, so bump
+// it on every shell together when the artwork changes.
+test('every shell links the same mascot favicon', async () => {
+  const favicon = await source('public/favicon.svg');
+  assert.ok(favicon.includes('stroke="#b9f0b1"'), 'the favicon is the mint screen face');
+  assert.ok(!favicon.includes('<text'), 'the favicon carries no lettering');
+  const hrefs = new Set();
+  for (const shell of SHELLS) {
+    const html = await source(shell);
+    const icons = [...html.matchAll(/<link rel="icon" href="([^"]+)" type="image\/svg\+xml"\s*\/?>/g)];
+    assert.equal(icons.length, 1, `${shell} links one SVG favicon`);
+    assert.ok(!/<link rel="icon"[^>]*thingy\.png/.test(html), `${shell} no longer uses the robot PNG as its favicon`);
+    hrefs.add(icons[0][1]);
+    assert.match(html, /<link rel="apple-touch-icon"/, `${shell} keeps the apple-touch icon`);
+  }
+  assert.deepEqual([...hrefs], ['/favicon.svg?v=2'], 'every shell links the same cache-busted favicon');
+});

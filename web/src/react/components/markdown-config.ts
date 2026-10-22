@@ -6,6 +6,7 @@
 import { createElement } from 'react';
 import type { Components } from 'react-markdown';
 import { defaultUrlTransform } from 'react-markdown';
+import { withRef } from '../../shared/thingy-refs.ts';
 
 type MdastNode = {
   type: string;
@@ -26,12 +27,24 @@ export function citationsByIssue(citations: ThingyCitation[]) {
 }
 
 // Which source a citation is, for the chip and card colours: Weekly
-// cobalt, blog clay, Another Thing slate. Colours label sources only.
-export type CitationKind = 'weekly' | 'blog' | 'podcast';
+// cobalt, blog clay, Another Thing slate, Things I've built (thingelstad.xyz)
+// neutral ink on paper. Colours label sources only.
+export type CitationKind = 'weekly' | 'blog' | 'podcast' | 'thing';
+
+function isThing(citation: ThingyCitation, kind: string) {
+  if (kind === 'thing') return true;
+  if (/^thing-/.test(String(citation.id || citation.source_id || ''))) return true;
+  try {
+    return new URL(String(citation.url || '')).hostname.toLowerCase().replace(/^www\./, '') === 'thingelstad.xyz';
+  } catch {
+    return false;
+  }
+}
 
 export function citationKind(citation: ThingyCitation): CitationKind {
   if (String(citation.issue_number || '').trim()) return 'weekly';
   const kind = String(citation.source_kind || '').toLowerCase();
+  if (isThing(citation, kind)) return 'thing';
   if (kind.startsWith('weekly') || kind === 'faq' || kind === 'site_page') return 'weekly';
   if (/podcast|episode/.test(kind)) return 'podcast';
   return 'blog';
@@ -71,11 +84,16 @@ export function citationTitle(citation: ThingyCitation): string {
 
 const WT_REF = /(?:WT|#)(\d{1,4})(?![\w-])/g;
 
+// Citation links to Jamie's sites carry ?ref=thingy-source.
+function sourceHref(url: string) {
+  return withRef(thingyUrlTransform(url), 'thingy-source');
+}
+
 // remark plugin: turn bare WT123 / #123 references in text into archive
 // links, using the answer's citation metadata for URL and hover title.
 // Skips text already inside links or code. With a kinds map it also
 // tags authored links that point at a cited source, so they render as
-// that source's chip.
+// that source's chip. Every citation link gets the source ref.
 export function remarkWtCitations(map: Map<string, ThingyCitation>, kinds: Map<string, CitationKind> = new Map()) {
   return () => (tree: MdastNode) => {
     if (!map.size && !kinds.size) return;
@@ -83,6 +101,7 @@ export function remarkWtCitations(map: Map<string, ThingyCitation>, kinds: Map<s
       if (node.type === 'link' && !insideLink && node.url) {
         const kind = kinds.get(citationUrlKey(node.url));
         if (kind) {
+          node.url = sourceHref(node.url);
           node.data = {
             ...node.data,
             hProperties: { ...node.data?.hProperties, className: `thingy-cite thingy-cite-${kind}` }
@@ -108,7 +127,7 @@ export function remarkWtCitations(map: Map<string, ThingyCitation>, kinds: Map<s
             if (index > last) parts.push({ type: 'text', value: value.slice(last, index) });
             parts.push({
               type: 'link',
-              url: String(citation.url || ''),
+              url: sourceHref(String(citation.url || '')),
               title: citationTitle(citation),
               data: {
                 hProperties: {

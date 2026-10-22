@@ -100,8 +100,9 @@
 /* ---- Citation chips ----
    Source colours label sources only. Weekly: cobalt with a white W disc
    (white on cobalt 4.9:1). Blog: clay on #FBE7DC (4.6:1) with a clay
-   edge. Another Thing: slate with its three dots (white 9.2:1). Inline
-   so a long post title wraps like the prose around it. */
+   edge. Another Thing: slate with its three dots (white 9.2:1). Things
+   I've built: ink on paper with an ink edge, neutral until its colour is
+   decided. Inline so a long post title wraps like the prose around it. */
 
 .librarian-answer-content a.thingy-cite {
   padding: 1px 7px;
@@ -165,6 +166,13 @@
 .librarian-answer-content a.thingy-cite-podcast {
   background: var(--thingy-another);
   color: #fff;
+  font-size: 0.9em;
+}
+
+.librarian-answer-content a.thingy-cite-thing {
+  border: 1.5px solid var(--thingy-ink);
+  background: var(--thingy-paper);
+  color: var(--thingy-ink);
   font-size: 0.9em;
 }
 

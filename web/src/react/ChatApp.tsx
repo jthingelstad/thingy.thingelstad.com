@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { confirmDialog, promptDialog } from '../shared/stores/dialog-store.ts';
 import { runningStandalone, trackEvent } from '../shared/thingy-analytics.ts';
 import { errorMessage } from '../shared/thingy-errors.ts';
+import { withRef } from '../shared/thingy-refs.ts';
 import * as session from '../shared/thingy-session.ts';
 import { isAuthError } from '../shared/thingy-url.ts';
 import { type ThingyThreadBinding } from './thingy-runtime.ts';
@@ -198,19 +199,27 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
   // Permalinks: the URL always names the open conversation
   // (/chat/?conversation=<id>), so reload and copy-link both work, and
   // back/forward walk the conversations you visited. Guests have no
-  // server-side conversations to link to.
+  // server-side conversations to link to. An inbound ?ref= (the cross-site
+  // origin tag, e.g. ref=weekly-issue) stays: the first sync keeps it
+  // (Tinylytics loads in parallel and must still see it), a URL that differs
+  // from the wanted one only by it is left alone (so Back to it does not
+  // push a new entry), and later pushes drop it.
   const urlSyncedRef = useRef(false);
   useEffect(() => {
     if (guest) return;
     const wanted = activeId ? `/chat/?conversation=${encodeURIComponent(activeId)}` : '/chat/';
+    const inboundRef = new URLSearchParams(window.location.search).get('ref');
+    const wantedWithRef = inboundRef
+      ? `${wanted}${wanted.includes('?') ? '&' : '?'}ref=${encodeURIComponent(inboundRef)}`
+      : wanted;
     const current = `${window.location.pathname}${window.location.search}`;
-    if (current !== wanted) {
+    if (current !== wanted && current !== wantedWithRef) {
       // Preserve TanStack Router's own history state; the first sync is a
       // URL normalization and must replace, not push (a pushed entry
       // makes the first Back press look dead).
       const state = { ...window.history.state, thingyConversation: activeId };
       if (urlSyncedRef.current) window.history.pushState(state, '', wanted);
-      else window.history.replaceState(state, '', wanted);
+      else window.history.replaceState(state, '', wantedWithRef);
     }
     urlSyncedRef.current = true;
   }, [activeId, guest]);
@@ -555,7 +564,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
             {initial.from ? (
               <a
                 className="return-chip mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 py-1.5 text-[13px] font-semibold text-ink hover:border-accent [&_svg]:size-3.5"
-                href={initial.from.href}
+                href={withRef(initial.from.href, 'thingy-return')}
                 data-tinylytics-event="network.return"
               >
                 <Icon name="arrow-left" />

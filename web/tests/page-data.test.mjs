@@ -1,17 +1,24 @@
-// The static pages' build-time data: the sites strip (vendored
-// contracts/sites.json) and the archive counts (content/archive-stats.json).
+// The static pages' build-time data: the sites strip, Jamie's h-card and
+// rel=me links, and the family tiles (vendored contracts/sites.json), and
+// the archive counts (content/archive-stats.json).
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 const {
+  OWNER_HCARD_MARKER,
+  REL_ME_MARKER,
   SITES_STRIP_MARKER,
   formatStat,
   loadArchiveStats,
+  loadOwner,
   loadSites,
   pageDataPlugin,
   renderArchiveStats,
+  renderOwnerHcard,
+  renderRelMe,
+  renderSiteTokens,
   renderSitesStrip,
   stripSites
 } = await import('../vite.page-data.ts');
@@ -160,4 +167,116 @@ test('archive tokens format counts, keep years bare and fail loud', () => {
   const plugin = pageDataPlugin(WEB_ROOT);
   assert.throws(() => plugin.transformIndexHtml('{{archive.Bad}}'), /left unrendered/);
   assert.equal(plugin.transformIndexHtml('<p>plain</p>'), '<p>plain</p>');
+});
+
+test('the archive years are derived from the blog start year, never typed', () => {
+  const stats = loadArchiveStats(WEB_ROOT);
+  assert.equal(stats.blog.since, 2004, 'the blog started in 2004');
+  assert.equal(stats.years, Number(stats.as_of.slice(0, 4)) - stats.blog.since);
+  assert.equal(
+    formatStat('weekly.latest', stats.weekly.latest),
+    String(stats.weekly.latest),
+    'issue numbers print bare'
+  );
+});
+
+test('site tokens print sites.json values and fail loud on an unknown one', () => {
+  const sites = loadSites(WEB_ROOT);
+  assert.equal(renderSiteTokens('{{site.xyz.url}}', sites), 'https://thingelstad.xyz/');
+  assert.equal(renderSiteTokens('{{site.xyz.name}}', sites), 'Things I’ve built');
+  assert.throws(() => renderSiteTokens('{{site.nope.url}}', sites), /no url for site nope/);
+  assert.throws(() => renderSiteTokens('{{site.xyz.colour}}', sites), /no colour for site xyz/);
+  assert.throws(() => pageDataPlugin(WEB_ROOT).transformIndexHtml('{{site.Bad}}'), /left unrendered/);
+});
+
+test('the h-card and rel=me links render the shared owner block', () => {
+  const owner = loadOwner(WEB_ROOT);
+  assert.equal(
+    renderOwnerHcard(owner),
+    `<a class="h-card" href="${owner.url}" rel="me author"><img class="u-photo" src="${owner.avatar}" alt="" width="28" height="28">` +
+      `<span class="p-name">${owner.name}</span><data class="p-note" value="${owner.note}"></data></a>`
+  );
+  assert.ok(owner.rel_me.length > 0, 'the owner has rel=me links');
+  assert.equal(renderRelMe(owner), owner.rel_me.map((url) => `<link rel="me" href="${url}">`).join(''));
+  const html = renderOwnerHcard({ ...owner, name: '<b>J</b>', note: 'a "note"' });
+  assert.ok(!html.includes('<b>') && html.includes('value="a &quot;note&quot;"'), 'owner values are escaped');
+});
+
+test('the static pages carry the h-card and rel=me; chat, sign-in, share and 404 do not', async () => {
+  const owner = loadOwner(WEB_ROOT);
+  const plugin = pageDataPlugin(WEB_ROOT);
+  for (const page of STRIP_PAGES) {
+    const html = await source(page);
+    assert.equal(html.split(OWNER_HCARD_MARKER).length, 2, `${page} has one h-card marker`);
+    assert.equal(html.split(REL_ME_MARKER).length, 2, `${page} has one rel-me marker`);
+    const out = plugin.transformIndexHtml(html);
+    const footer = out.slice(out.indexOf('<footer'));
+    assert.ok(footer.includes(renderOwnerHcard(owner)), `${page} has the h-card in its footer`);
+    const head = out.slice(0, out.indexOf('</head>'));
+    for (const url of owner.rel_me)
+      assert.ok(head.includes(`<link rel="me" href="${url}">`), `${page} links rel=me ${url}`);
+    assert.match(head, /img-src[^;"]*https:\/\/avatars\.micro\.blog/, `${page} lets the avatar load under its CSP`);
+    assert.ok(!/href="[^"]*ref=[^"]*" rel="me/.test(out), `${page} identity links carry no ref`);
+  }
+  for (const page of NO_STRIP_PAGES) {
+    const out = plugin.transformIndexHtml(await source(page));
+    assert.ok(!out.includes('h-card') && !out.includes('rel="me"'), `${page} carries no h-card or rel=me`);
+  }
+});
+
+test('the home family tiles list every sister site with ?ref=thingy-family', async () => {
+  const sites = loadSites(WEB_ROOT);
+  const out = pageDataPlugin(WEB_ROOT).transformIndexHtml(await source('index.html'));
+  const family = out.slice(
+    out.indexOf('<ul class="thingy-family">'),
+    out.indexOf('</ul>', out.indexOf('<ul class="thingy-family">'))
+  );
+  const hrefs = [...family.matchAll(/<a class="thingy-family-tile" href="([^"]+)"/g)].map(([, href]) => href);
+  const sisters = stripSites(sites).filter((site) => site.id !== 'thingy');
+  assert.deepEqual(
+    hrefs.filter((href) => href !== '/').sort(),
+    sisters.map((site) => `${site.url}?ref=thingy-family`).sort()
+  );
+  assert.ok(
+    family.includes('<a class="thingy-family-tile" href="/" aria-current="page">'),
+    'the Thingy tile is home, with no ref'
+  );
+  assert.ok(
+    family.includes('class="thingy-family-face is-xyz"') && family.includes('>Things I’ve built<'),
+    'Things I’ve built has a tile'
+  );
+  assert.ok(out.includes('Thingy reads them all'), 'the kicker states no count');
+  // The home JSON-LD Person names every site and identity Jamie has.
+  const ld = JSON.parse(out.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+  const person = findPerson(ld);
+  assert.ok(person, 'the home JSON-LD has a Person');
+  const owner = loadOwner(WEB_ROOT);
+  for (const url of [owner.url, ...sisters.map((site) => site.url), ...owner.rel_me]) {
+    assert.ok(person.sameAs.includes(url) || person.url === url, `the Person names ${url}`);
+  }
+});
+
+function findPerson(node) {
+  if (Array.isArray(node)) return node.map(findPerson).find(Boolean) || null;
+  if (!node || typeof node !== 'object') return null;
+  if (node['@type'] === 'Person') return node;
+  return Object.values(node).map(findPerson).find(Boolean) || null;
+}
+
+test('no page says the blog began in 2000 or is twenty-five years old', async () => {
+  const plugin = pageDataPlugin(WEB_ROOT);
+  for (const page of [...STRIP_PAGES, ...NO_STRIP_PAGES]) {
+    const out = plugin.transformIndexHtml(await source(page)).replace(/<svg[\s\S]*?<\/svg>/g, '');
+    assert.ok(
+      !/twenty-five|quarter century|back to 2000|since 2000|25 years/i.test(out),
+      `${page} keeps the blog at 2004`
+    );
+  }
+  for (const file of ['src/shared/thingy-say-hi.ts', 'src/react/hooks/useAgentWelcome.ts', 'src/react/ShareApp.tsx']) {
+    const text = await source(file);
+    assert.ok(
+      !/twenty-five|quarter century|back to 2000|since 2000|25 years/i.test(text),
+      `${file} keeps the blog at 2004`
+    );
+  }
 });

@@ -331,7 +331,7 @@ async function checkSharePage(browser) {
   await page.waitForSelector('.librarian-message-user');
   assert.match(await page.locator('.librarian-message-user').textContent(), /Tell me about bison/);
   const wtLink = page.locator('.librarian-answer-content a', { hasText: 'WT127' });
-  assert.equal(await wtLink.getAttribute('href'), 'https://weekly.thingelstad.com/archive/127/');
+  assert.equal(await wtLink.getAttribute('href'), 'https://weekly.thingelstad.com/archive/127/?ref=thingy-source');
   assert.ok(await page.locator('.thingy-guest-banner').isVisible(), 'share guest banner renders');
   assert.ok(await page.locator('#librarian-question').isVisible(), 'share follow-up composer is live');
 
@@ -372,12 +372,15 @@ async function checkChat(browser) {
   const page = await context.newPage();
   const failures = collectUiFailures(page);
   const mocks = await routeMockApi(page, { holdWelcome: true });
-  await page.goto(`${baseUrl}/chat/`);
+  // An inbound cross-site ref (?ref=weekly-issue) must survive the first
+  // URL sync: Tinylytics may load after it and still needs to see it.
+  await page.goto(`${baseUrl}/chat/?ref=weekly-issue`);
 
   // Signed-in shell: rail with New chat, thread root, composer.
   await page.waitForSelector('.librarian-chat');
   await page.waitForSelector('.thingy-aui-rail');
   await page.waitForSelector('.thingy-aui-newchat');
+  assert.equal(new URL(page.url()).searchParams.get('ref'), 'weekly-issue', 'the first URL sync keeps the inbound ref');
 
   // The greeting is composed client-side (4.10): one short display line
   // (salutation phrase or archive tease), rendered immediately - nothing
@@ -422,11 +425,16 @@ async function checkChat(browser) {
     document.querySelector('.librarian-message-assistant:last-of-type')?.textContent?.includes('worth a read')
   );
   const wtAnswerLink = page.locator('.librarian-answer-content a', { hasText: 'WT200' });
-  assert.equal(await wtAnswerLink.getAttribute('href'), 'https://weekly.thingelstad.com/archive/200/');
+  assert.equal(
+    await wtAnswerLink.getAttribute('href'),
+    'https://weekly.thingelstad.com/archive/200/?ref=thingy-source'
+  );
   await page.waitForSelector('.librarian-sources');
   assert.match(await page.locator('.librarian-sources').textContent(), /WT200/);
   assert.ok(
-    await page.locator('.librarian-sources a[href="https://weekly.thingelstad.com/faq/"]').isVisible(),
+    await page
+      .locator('.librarian-sources a[href="https://weekly.thingelstad.com/faq/?ref=thingy-source"]')
+      .isVisible(),
     'FAQ source cards point to the newsletter, not the Thingy host'
   );
   await page.waitForSelector('.thingy-response-timer');
@@ -435,9 +443,15 @@ async function checkChat(browser) {
   // Permalink + tab title: the URL names the conversation the mock
   // stream minted, and Back returns to the clean new-chat URL.
   assert.match(page.url(), /\?conversation=conv-smoke/);
+  assert.ok(!page.url().includes('ref='), 'the conversation permalink drops the inbound ref');
   assert.match(await page.title(), /— Thingy$/);
   await page.goBack();
   assert.ok(!page.url().includes('conversation='), 'Back returns to the new-chat URL');
+  assert.equal(
+    new URL(page.url()).searchParams.get('ref'),
+    'weekly-issue',
+    'Back returns to the URL the visit arrived on'
+  );
   await page.goForward();
   assert.match(page.url(), /\?conversation=conv-smoke/);
 

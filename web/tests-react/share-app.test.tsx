@@ -34,12 +34,51 @@ test('renders the shared conversation live: transcript, banner, composer', async
   await screen.findByRole('heading', { name: 'Bison across the archive' });
   await screen.findByText('Tell me about bison.');
   const wtLink = await screen.findByRole('link', { name: 'WT127' });
-  expect(wtLink.getAttribute('href')).toBe('https://weekly.thingelstad.com/archive/127/');
+  expect(wtLink.getAttribute('href')).toBe('https://weekly.thingelstad.com/archive/127/?ref=thingy-source');
   expect(screen.getByLabelText('Guest preview')).toBeTruthy();
   expect(screen.getByPlaceholderText('Ask Thingy…')).toBeTruthy();
   // The 4.8 stored receipt renders without the turn ever running here.
   await screen.findByText(/1m 1s/);
   expect(screen.getByText(/48k tokens/)).toBeTruthy();
+});
+
+test('source cards name Things I have built and carry ?ref=thingy-source', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            ...PAYLOAD,
+            messages: [
+              PAYLOAD.messages[0],
+              {
+                ...PAYLOAD.messages[1],
+                content: 'Jamie built Thingy and wrote about espresso.',
+                citations: [
+                  { source_kind: 'thing', id: 'thing-thingy', url: 'https://thingelstad.xyz/things/thingy/', subject: 'Thingy' },
+                  { source_kind: 'blog', url: 'https://www.thingelstad.com/2024/03/02/espresso.html#top', subject: 'Espresso' },
+                  { source_kind: 'web', url: 'https://example.com/elsewhere/', subject: 'Elsewhere' }
+                ]
+              }
+            ]
+          }),
+          { status: 200 }
+        )
+    )
+  );
+  render(<ShareApp token="shr_thingtoken" />);
+  const sources = await screen.findByRole('navigation', { name: 'Sources' });
+  const cards = [...sources.querySelectorAll('a.thingy-source-card')];
+  expect(cards.map((card) => card.getAttribute('href'))).toEqual([
+    'https://thingelstad.xyz/things/thingy/?ref=thingy-source',
+    'https://www.thingelstad.com/2024/03/02/espresso.html?ref=thingy-source#top',
+    'https://example.com/elsewhere/'
+  ]);
+  expect(cards[0].textContent).toContain('Things I’ve built');
+  expect(cards[0].textContent).toContain('Project');
+  expect(cards[0].getAttribute('data-tinylytics-event-value')).toBe('Project');
+  expect(cards[0].querySelector('.thingy-thing-mark')).toBeTruthy();
 });
 
 test('the owner sees open-the-original instead of a composer', async () => {

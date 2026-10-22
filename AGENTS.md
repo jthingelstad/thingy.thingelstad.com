@@ -223,7 +223,12 @@ Key files:
   `AGENTS.md` ("The sites strip"), identical on every one of Jamie's sites;
   only the inner width and side padding follow Thingy's header frame, and
   the contract's dark values are left out (Thingy has no dark mode). Change
-  the contract there first. It also renders `{{archive.<path>}}` tokens
+  the contract there first. The same file's `owner` block renders the
+  footer h-card (`<!--owner-hcard-->`, the bird avatar, so the CSP allows
+  `https://avatars.micro.blog`) and the head's `<link rel="me">` links
+  (`<!--rel-me-->`) on the four static pages, never on chat, sign-in,
+  share or 404; `{{site.<id>.<field>}}` prints a sites.json value (the
+  home family tiles). It also renders `{{archive.<path>}}` tokens
   from `web/content/archive-stats.json`, the ONE source for every archive
   count the static pages quote (issues, posts, links, photos); update its
   numbers and `as_of` from the Librarian's `corpus_stats` rather than
@@ -249,9 +254,12 @@ Key files:
   canvas height on the any-purpose icons; the maskable variant keeps every
   opaque pixel inside the central 80% safe circle). Regenerate the same
   way when the artwork changes.
-  Every shell links the manifest, apple-touch-icon, and ONE `theme-color`
-  (cream `#f6eedc`, matching the manifest) - there is no dark variant
-  (`tests/one-look.test.mjs` guards this). No service worker -
+  Every shell links the manifest, apple-touch-icon, ONE `theme-color`
+  (cream `#f6eedc`, matching the manifest) - there is no dark variant -
+  and the same favicon, `/favicon.svg?v=2`: the static mascot screen face
+  (2026-10-21). SVGs cache for a week in browsers, so bump `?v=` on every
+  shell together when the artwork changes (`tests/one-look.test.mjs`
+  guards all of this). No service worker -
   deliberate: the app is a thin client over live APIs and stale-asset
   caching bugs outweigh offline value.
 - `web/vite.config.ts`: multi-page build config and build-time public config
@@ -326,6 +334,14 @@ Document behavior changes in `README.md` when touching these.
   sync via pushState (back/forward walk visited conversations; reload
   restores the same one). Signed-in only - guests never adopt a
   deep-linked id. Deliberately NOT stripped before analytics loads.
+- `ref`: the cross-site origin tag (`ref=weekly-issue`). Never read, never
+  stripped; the chat's first URL sync keeps it (Tinylytics may load after
+  that sync), later pushes drop it. Outbound links Thingy renders to the
+  sister sites get `?ref=thingy-<placement>` through `withRef`
+  (`src/shared/thingy-refs.ts`; `tests/refs.test.mjs` pins its hosts to
+  `contracts/sites.json`): `thingy-source` on source cards and citation
+  links, `thingy-about`, `thingy-family`, `thingy-return`. Identity links
+  (h-card, rel=me) never carry one.
 
 Privacy requirement: after the app reads these params, the Tinylytics loader
 strips `email`, `prompt`, `from`, `explore`, `issue`, `scope`, `corpus`,
@@ -349,7 +365,8 @@ Current Tinylytics usage:
 - declarative `data-tinylytics-event` hooks (the embed's click delegation
   handles React-rendered elements): `home.start_chat`, `network.return`,
   `librarian.source_click` (inline WT autolinks and the source cards,
-  value = `WT<N>`/`Blog`/`Podcast`), `librarian.guest_signin_click` (both
+  value = `WT<N>`/`Blog`/`Podcast`/`Project`, the last for Things I've
+  built), `librarian.guest_signin_click` (both
   guest banners), `librarian.share_cta`
 - programmatic events posted straight to the collector
   (`src/shared/thingy-analytics.ts` `trackEvent`), all `librarian.*`:

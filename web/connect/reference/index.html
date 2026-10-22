@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://tinylytics.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.thingelstad.com https://tinylytics.app; connect-src 'self' https://fonts.googleapis.com https://tinylytics.app">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://tinylytics.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.thingelstad.com https://avatars.micro.blog https://tinylytics.app; connect-src 'self' https://fonts.googleapis.com https://tinylytics.app">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <title>Librarian MCP reference - Thingy</title>
   <meta name="description" content="Technical reference for the Librarian MCP server behind Thingy: every tool with its parameters and results, OAuth 2.1, budgets, protocol conventions, resources and prompts.">
   <link rel="canonical" href="https://thingy.thingelstad.com/connect/reference/">
+  <!--rel-me-->
   <meta name="robots" content="index, follow">
   <meta property="og:title" content="Librarian MCP reference">
   <meta property="og:description" content="How the MCP server that powers Thingy works: one tool registry, three doors, and every tool documented from the server's own declarations.">
@@ -41,7 +42,7 @@
     }
   }
   </script>
-  <link rel="icon" href="/img/thingy.png">
+  <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icons/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-title" content="Thingy">
@@ -71,6 +72,7 @@
   </main>
     <footer class="thingy-site-footer">
       <div class="thingy-wrap">
+        <p class="thingy-footer-owner">A sidekick by <!--owner-hcard--></p>
         <p class="thingy-footer-meta">
           <span class="tinylytics_hits"></span> <span class="tinylytics_countries"></span>
         </p>

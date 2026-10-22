@@ -225,6 +225,28 @@ textarea.thingy-input {
     radial-gradient(circle, var(--thingy-another-red) 3.4px, transparent 3.6px) 22px 0 / 7px 7px no-repeat;
 }
 
+/* Things I've built: a small tilted T sticker, ink on paper. Its own
+   colour is still being decided, so the source stays neutral here. */
+.thingy-thing-mark {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: var(--thingy-ink);
+  color: var(--thingy-paper);
+  font: 800 12px / 1 var(--font-ui);
+  letter-spacing: 0;
+  text-transform: none;
+  transform: rotate(-4deg);
+}
+
+.thingy-thing-mark::before {
+  content: 'T';
+  content: 'T' / '';
+}
+
 /* The Weekly band carries a fine inset hairline, as on the cover. */
 .thingy-source-band-weekly::after {
   content: '';

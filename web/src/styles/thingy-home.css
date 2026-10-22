@@ -306,6 +306,73 @@
   background: var(--thingy-paper);
 }
 
+/* Things I've built: neutral ink on paper (its own colour is decided
+   separately), a registry's rows and that site's tilted T sticker. */
+.thingy-family-face.is-xyz {
+  background: var(--thingy-paper);
+}
+
+.thingy-family-face.is-xyz .thingy-family-url {
+  color: var(--thingy-ink);
+}
+
+.thingy-family-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.thingy-family-rows > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 10px;
+}
+
+.thingy-family-rows > span::before {
+  content: '';
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--thingy-ink);
+  border-radius: 3px;
+}
+
+.thingy-family-rows > span::after {
+  content: '';
+  height: 8px;
+  border-radius: 4px;
+  background: #e2d4b5;
+}
+
+.thingy-family-rows > span:nth-child(1)::after {
+  width: 78%;
+}
+
+.thingy-family-rows > span:nth-child(2)::after {
+  width: 62%;
+}
+
+.thingy-family-rows > span:nth-child(3)::after {
+  width: 70%;
+}
+
+.thingy-family-t {
+  display: grid;
+  place-items: center;
+  align-self: flex-start;
+  width: clamp(40px, 4.6vw, 54px);
+  aspect-ratio: 1;
+  border-radius: 12px;
+  background: var(--thingy-ink);
+  color: var(--thingy-paper);
+  font-family: var(--font-ui);
+  font-weight: 800;
+  font-size: clamp(24px, 2.8vw, 32px);
+  line-height: 1;
+  transform: rotate(-4deg);
+}
+
 .thingy-family-face.is-thingy {
   align-items: center;
   justify-content: center;
@@ -376,6 +443,10 @@
   }
 
   .thingy-family-lines {
+    gap: 6px;
+  }
+
+  .thingy-family-rows {
     gap: 6px;
   }
 

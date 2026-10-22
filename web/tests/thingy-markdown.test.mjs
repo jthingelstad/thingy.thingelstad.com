@@ -32,7 +32,8 @@ test('WT references autolink with citation title and analytics attributes', () =
   const html = render('See WT127 for the bison thread.', [
     { issue_number: 127, url: '/archive/127/', subject: 'Bison', publish_date: '2019-11-23T13:00:47Z' }
   ]);
-  assert.match(html, /href="https:\/\/weekly\.thingelstad\.com\/archive\/127\/"/);
+  // Citation links to the sister sites carry ?ref=thingy-source.
+  assert.match(html, /href="https:\/\/weekly\.thingelstad\.com\/archive\/127\/\?ref=thingy-source"/);
   assert.match(html, /data-tinylytics-event="librarian\.source_click"/);
   assert.match(html, /title="WT127: Bison \| 2019-11-23"/);
   // The Weekly chip draws a W disc in place of the prefix, but the link's
@@ -57,14 +58,42 @@ test('links to cited blog posts and episodes render as their source chips', () =
   );
   assert.match(
     html,
-    /<a href="http:\/\/thingelstad\.com[^"]*"[^>]*class="thingy-cite thingy-cite-blog"[^>]*>the espresso post<\/a>/
+    /<a href="http:\/\/thingelstad\.com\/2024\/03\/02\/espresso\.html\?ref=thingy-source"[^>]*class="thingy-cite thingy-cite-blog"[^>]*>the espresso post<\/a>/
   );
   assert.match(
     html,
-    /<a href="https:\/\/another\.thingelstad\.com\/12"[^>]*class="thingy-cite thingy-cite-podcast"[^>]*>Coffee<\/a>/
+    /<a href="https:\/\/another\.thingelstad\.com\/12\?ref=thingy-source"[^>]*class="thingy-cite thingy-cite-podcast"[^>]*>Coffee<\/a>/
   );
   assert.match(html, /class="thingy-cite thingy-cite-weekly"[^>]*><span class="thingy-cite-prefix">WT<\/span>127<\/a>/);
   assert.match(html, /<a href="https:\/\/example\.com\/12\/" target="_blank" rel="noopener">elsewhere<\/a>/);
+});
+
+test('Things I have built citations render as the neutral thing chip', () => {
+  const citations = [
+    { source_kind: 'thing', id: 'thing-thingy', url: 'https://thingelstad.xyz/things/thingy/', subject: 'Thingy' },
+    { id: 'thing-kubb', url: 'https://thingelstad.xyz/things/kubb/', subject: 'Kubb scores' },
+    { url: 'https://www.thingelstad.xyz/things/escape/?tab=story', subject: 'Escape' }
+  ];
+  const kinds = citationKindsByUrl(citations);
+  assert.deepEqual([...new Set(kinds.values())], ['thing'], 'kind, id prefix and host each mark a thing');
+  const html = render(
+    'Built [Thingy](https://thingelstad.xyz/things/thingy/), [scores](https://thingelstad.xyz/things/kubb/#log) ' +
+      'and [Escape](https://www.thingelstad.xyz/things/escape/?tab=story).',
+    citations
+  );
+  assert.match(
+    html,
+    /<a href="https:\/\/thingelstad\.xyz\/things\/thingy\/\?ref=thingy-source"[^>]*class="thingy-cite thingy-cite-thing"[^>]*>Thingy<\/a>/
+  );
+  // The ref goes before the #fragment and joins a query the link already has.
+  assert.match(
+    html,
+    /href="https:\/\/thingelstad\.xyz\/things\/kubb\/\?ref=thingy-source#log"[^>]*class="thingy-cite thingy-cite-thing"/
+  );
+  assert.match(
+    html,
+    /href="https:\/\/www\.thingelstad\.xyz\/things\/escape\/\?tab=story&amp;ref=thingy-source"[^>]*class="thingy-cite thingy-cite-thing"/
+  );
 });
 
 test('references without a matching citation stay plain text', () => {
@@ -80,7 +109,7 @@ test('archive-relative links resolve to the newsletter site', () => {
 test('FAQ citations link to the newsletter and use its source label', () => {
   assert.equal(thingyUrlTransform('/faq/'), 'https://weekly.thingelstad.com/faq/');
   const html = render('[The Basics](/faq/#the-basics)', [{ source_kind: 'faq', url: '/faq/', subject: 'The Basics' }]);
-  assert.match(html, /href="https:\/\/weekly\.thingelstad\.com\/faq\/#the-basics"/);
+  assert.match(html, /href="https:\/\/weekly\.thingelstad\.com\/faq\/\?ref=thingy-source#the-basics"/);
   assert.match(html, /thingy-cite-weekly/);
   assert.equal(thingyUrlTransform('/faq-other/'), '/faq-other/');
 });

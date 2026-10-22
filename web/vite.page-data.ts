@@ -7,6 +7,12 @@
 //   real links with no client JavaScript. The markup is the shared contract
 //   in the thingelstad.com AGENTS.md ("The sites strip"): every site renders
 //   it identically, so change it there first.
+// - Jamie. The same file's owner block renders the footer h-card
+//   (<!--owner-hcard-->) and the head's rel=me links (<!--rel-me-->), the
+//   shared markup in the thingelstad.com AGENTS.md ("Jamie on every site").
+//   Identity links point at the clean URL and never carry a ref.
+// - Site facts. {{site.<id>.<field>}} prints a sites.json value (the family
+//   tiles on the home page take their links and names from it).
 // - The archive counts. content/archive-stats.json is the one source for
 //   every number the static pages quote; templates write {{archive.<path>}}
 //   and an unknown or leftover token fails the build instead of shipping.
@@ -17,8 +23,11 @@ import type { Plugin } from 'vite';
 import { escapeHtml } from './vite.mcp-reference.ts';
 
 export const SITES_STRIP_MARKER = '<!--sites-strip-->';
+export const OWNER_HCARD_MARKER = '<!--owner-hcard-->';
+export const REL_ME_MARKER = '<!--rel-me-->';
 const THINGY_SITE_ID = 'thingy';
 const TOKEN = /\{\{archive\.([a-z_.]+)\}\}/g;
+const SITE_TOKEN = /\{\{site\.([a-z0-9-]+)\.([a-z_]+)\}\}/g;
 
 export interface Site {
   id: string;
@@ -30,11 +39,26 @@ export interface Site {
   in_sites_strip: boolean;
 }
 
+export interface Owner {
+  name: string;
+  url: string;
+  avatar: string;
+  note: string;
+  rel_me: string[];
+}
+
 export type ArchiveStats = Record<string, unknown>;
 
+function loadSitesFile(root: string) {
+  return JSON.parse(readFileSync(resolve(root, 'contracts/sites.json'), 'utf8')) as { owner: Owner; sites: Site[] };
+}
+
 export function loadSites(root: string): Site[] {
-  const data = JSON.parse(readFileSync(resolve(root, 'contracts/sites.json'), 'utf8')) as { sites: Site[] };
-  return data.sites;
+  return loadSitesFile(root).sites;
+}
+
+export function loadOwner(root: string): Owner {
+  return loadSitesFile(root).owner;
 }
 
 export function stripSites(sites: Site[]): Site[] {
@@ -63,8 +87,38 @@ export function renderSitesStrip(sites: Site[], currentId = THINGY_SITE_ID): str
   );
 }
 
+// The shared h-card: owner.avatar (the bird-on-the-hat photo, micro.blog's
+// 200px copy) as a 28px round photo beside the name.
+export function renderOwnerHcard(owner: Owner): string {
+  return (
+    `<a class="h-card" href="${escapeHtml(owner.url)}" rel="me author">` +
+    `<img class="u-photo" src="${escapeHtml(owner.avatar)}" alt="" width="28" height="28">` +
+    `<span class="p-name">${escapeHtml(owner.name)}</span>` +
+    `<data class="p-note" value="${escapeHtml(owner.note)}"></data></a>`
+  );
+}
+
+export function renderRelMe(owner: Owner): string {
+  return owner.rel_me.map((url) => `<link rel="me" href="${escapeHtml(url)}">`).join('');
+}
+
+export function renderSiteTokens(html: string, sites: Site[]): string {
+  return html.replace(SITE_TOKEN, (_match, id: string, field: string) => {
+    const site = sites.find((entry) => entry.id === id) as Record<string, unknown> | undefined;
+    const value = site?.[field];
+    if (typeof value !== 'string') throw new Error(`sites.json has no ${field} for site ${id}`);
+    return escapeHtml(value);
+  });
+}
+
+// years is derived, not typed: the years from the blog's first year
+// (blog.since, 2004) to the year of the counts (as_of).
 export function loadArchiveStats(root: string): ArchiveStats {
-  return JSON.parse(readFileSync(resolve(root, 'content/archive-stats.json'), 'utf8')) as ArchiveStats;
+  const stats = JSON.parse(readFileSync(resolve(root, 'content/archive-stats.json'), 'utf8')) as ArchiveStats;
+  const since = (stats.blog as { since?: unknown } | undefined)?.since;
+  const asOfYear = Number(String(stats.as_of || '').slice(0, 4));
+  if (typeof since === 'number' && Number.isInteger(asOfYear) && asOfYear > since) stats.years = asOfYear - since;
+  return stats;
 }
 
 function lookup(stats: ArchiveStats, path: string): unknown {
@@ -76,11 +130,12 @@ function lookup(stats: ArchiveStats, path: string): unknown {
   return value;
 }
 
-// Counts print with en-US grouping (10,444); years print bare (2017).
+// Counts print with en-US grouping (10,444); years and issue numbers print
+// bare (2017, WT353).
 export function formatStat(path: string, value: unknown): string {
   if (typeof value === 'number') {
-    const isYear = path === 'as_of' || path.endsWith('since');
-    return isYear ? String(value) : value.toLocaleString('en-US');
+    const isBare = path === 'as_of' || path.endsWith('since') || path.endsWith('latest');
+    return isBare ? String(value) : value.toLocaleString('en-US');
   }
   if (typeof value === 'string') return escapeHtml(value);
   throw new Error(`archive-stats.json has no value at ${path}`);
@@ -96,8 +151,12 @@ export function pageDataPlugin(root: string): Plugin {
     transformIndexHtml(html: string) {
       let out = html;
       if (out.includes(SITES_STRIP_MARKER)) out = out.replace(SITES_STRIP_MARKER, renderSitesStrip(loadSites(root)));
+      if (out.includes(OWNER_HCARD_MARKER)) out = out.replace(OWNER_HCARD_MARKER, renderOwnerHcard(loadOwner(root)));
+      if (out.includes(REL_ME_MARKER)) out = out.replace(REL_ME_MARKER, renderRelMe(loadOwner(root)));
+      if (out.includes('{{site.')) out = renderSiteTokens(out, loadSites(root));
       if (out.includes('{{archive.')) out = renderArchiveStats(out, loadArchiveStats(root));
-      if (out.includes('{{archive')) throw new Error('An {{archive...}} token was left unrendered.');
+      if (out.includes('{{archive') || out.includes('{{site'))
+        throw new Error('A {{...}} page-data token was left unrendered.');
       return out;
     }
   };

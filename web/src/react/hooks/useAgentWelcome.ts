@@ -13,9 +13,9 @@ import * as session from '../../shared/thingy-session.ts';
 // built-in teases only cover a device's very first open - keep them
 // timeless (no counts that will drift stale).
 const FALLBACK_LINES = [
-  'A quarter century of writing is in here somewhere.',
+  'More than twenty years of writing is in here somewhere.',
   'I can trace one idea across the newsletter, the blog, and the podcast.',
-  'The archive reaches back to 2000. Name a year.',
+  'The archive reaches back to 2004. Name a year.',
   'Jamie keeps writing about the same things - the fun part is finding out when.'
 ];
 

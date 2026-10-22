@@ -89,6 +89,25 @@ walk the conversations you visited, and reload restores the open one.
 Signed-in readers only; guests never adopt a deep-linked id. This is the
 one Thingy parameter deliberately not stripped before analytics loads.
 
+### `ref`
+
+The cross-site origin tag Jamie's sites put on links to each other
+(`ref=<origin>-<placement>`, e.g. `ref=weekly-issue`), read by
+Tinylytics' Sources report. Thingy never reads it and never strips it; the
+chat's first URL sync keeps it so analytics still sees it, and later
+conversation pushes drop it.
+
+Example:
+
+- `https://thingy.thingelstad.com/chat/?prompt=What%20about%20kubb%3F&ref=weekly-issue`
+
+Links Thingy renders to the sister sites carry their own ref:
+`thingy-source` (source cards and citation links in answers),
+`thingy-about` (the About page's source cards), `thingy-family` (the
+home page's family tiles), `thingy-return` (the chat's Return link) and
+`thingy-<placement>` for the other template links. Identity links (the
+footer h-card, `rel=me`) carry none.
+
 ### `email`
 
 Prefills the subscriber email field and starts the auth check.

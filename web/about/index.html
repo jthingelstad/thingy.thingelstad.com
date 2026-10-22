@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://tinylytics.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.thingelstad.com https://tinylytics.app; connect-src 'self' https://fonts.googleapis.com https://tinylytics.app">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://tinylytics.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.thingelstad.com https://avatars.micro.blog https://tinylytics.app; connect-src 'self' https://fonts.googleapis.com https://tinylytics.app">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light" />
     <title>About Thingy</title>
@@ -12,6 +12,7 @@
     />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://thingy.thingelstad.com/about/" />
+    <!--rel-me-->
     <meta property="og:title" content="About Thingy" />
     <meta property="og:description" content="What Thingy is, what it has archived, and how it works." />
     <meta property="og:url" content="https://thingy.thingelstad.com/about/" />
@@ -21,7 +22,7 @@
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="About Thingy" />
     <meta name="twitter:image" content="https://thingy.thingelstad.com/img/thingy.png" />
-    <link rel="icon" href="/img/thingy.png" />
+    <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/img/icons/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="Thingy" />
@@ -59,7 +60,7 @@
           <p class="thingy-nametag" aria-hidden="true"><span>Hello, my name is</span><span>Thingy</span></p>
           <h1 id="about-title" class="thingy-h1">About Thingy<span class="dot" aria-hidden="true">.</span></h1>
           <p class="thingy-lede">
-            Thingy is an AI librarian for one writer&rsquo;s public archive. Ask it anything about twenty-five years of
+            Thingy is an AI librarian for one writer&rsquo;s public archive. Ask it anything about more than twenty years of
             Jamie Thingelstad&rsquo;s writing and it answers with citations back to the original posts and issues &mdash;
             in chat here, or inside your own AI via MCP.
           </p>
@@ -78,7 +79,7 @@
           </div>
           <div class="thingy-nutshell-body">
             <p>
-              Jamie has published continuously since 2000: a blog, a weekly newsletter, and a podcast. Thingy has read
+              Jamie has published continuously since {{archive.blog.since}}: a blog, a weekly newsletter, and a podcast. Thingy has read
               all of it. Instead of scrolling archives or hoping a search engine indexed the right post, you ask a
               question &mdash;
             </p>
@@ -138,7 +139,7 @@
             <div class="thingy-source-band is-weekly" aria-hidden="true"><span class="thingy-family-w">W</span></div>
             <div class="thingy-source-body">
               <p class="thingy-kicker">Source</p>
-              <h3><a href="https://weekly.thingelstad.com/">The Weekly Thing</a></h3>
+              <h3><a href="https://weekly.thingelstad.com/?ref=thingy-about">The Weekly Thing</a></h3>
               <dl>
                 <dt>Contents</dt>
                 <dd>{{archive.weekly.issues}} issues, {{archive.weekly.links}} links</dd>
@@ -153,11 +154,11 @@
                 ><span class="thingy-family-url">thingelstad.com</span
                 ><span class="thingy-family-lines"><span></span><span></span><span></span></span
               ></span>
-              <span class="thingy-family-year">2000&rarr;</span>
+              <span class="thingy-family-year">{{archive.blog.since}}&rarr;</span>
             </div>
             <div class="thingy-source-body">
               <p class="thingy-kicker">Source</p>
-              <h3><a href="https://www.thingelstad.com/">thingelstad.com</a></h3>
+              <h3><a href="https://www.thingelstad.com/?ref=thingy-about">thingelstad.com</a></h3>
               <dl>
                 <dt>Contents</dt>
                 <dd>{{archive.blog.posts}} blog posts, {{archive.blog.links}} links</dd>
@@ -173,7 +174,7 @@
             </div>
             <div class="thingy-source-body">
               <p class="thingy-kicker">Source</p>
-              <h3><a href="https://another.thingelstad.com/">Another Thing</a></h3>
+              <h3><a href="https://another.thingelstad.com/?ref=thingy-about">Another Thing</a></h3>
               <dl>
                 <dt>Contents</dt>
                 <dd>Podcast episodes with transcripts</dd>
@@ -359,7 +360,7 @@
               <span class="thingy-kicker">Rule 02</span>
               <span class="thingy-icon-tile is-small" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M4 16a8 8 0 1 1 16 0" /><path d="m12 16 4-5" /><path d="M3 20h18" /></svg></span>
             </div>
-            <p>Every reader has daily budgets for chat and tool calls (doubled for <a href="https://weekly.thingelstad.com/members/">Supporting Members</a>).</p>
+            <p>Every reader has daily budgets for chat and tool calls (doubled for <a href="https://weekly.thingelstad.com/members/?ref=thingy-about">Supporting Members</a>).</p>
           </li>
           <li class="thingy-rule-card">
             <div class="thingy-rule-head">
@@ -374,6 +375,7 @@
 
     <footer class="thingy-site-footer">
       <div class="thingy-wrap">
+        <p class="thingy-footer-owner">A sidekick by <!--owner-hcard--></p>
         <p class="thingy-footer-meta">
           <span class="tinylytics_hits"></span> <span class="tinylytics_countries"></span>
         </p>

@@ -312,6 +312,41 @@
   color: #c2c9d8;
 }
 
+/* Jamie's h-card (the shared markup, thingelstad.com AGENTS.md "Jamie on
+   every site"): the bird photo small and round beside the name, cream on
+   the navy footer. */
+.thingy-site-footer .thingy-footer-owner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 8px;
+  color: var(--thingy-cream);
+  font-size: 15px;
+}
+
+.thingy-site-footer .h-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--thingy-cream);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.thingy-site-footer .h-card:hover {
+  color: var(--thingy-oops);
+  text-decoration: underline;
+}
+
+.thingy-site-footer .h-card .u-photo {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--thingy-cream);
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .thingy-site-footer nav ul {
   display: flex;
   flex-wrap: wrap;

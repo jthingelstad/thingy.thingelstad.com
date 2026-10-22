@@ -6,7 +6,7 @@
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://tinylytics.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://tinylytics.app; connect-src 'self' https://fonts.googleapis.com https://tinylytics.app"
+      content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://tinylytics.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://avatars.micro.blog https://tinylytics.app; connect-src 'self' https://fonts.googleapis.com https://tinylytics.app"
     />
     <title>Thingy — Jamie Thingelstad&#39;s Archive Agent</title>
     <meta
@@ -36,8 +36,9 @@
     <meta name="twitter:image:alt" content="Thingy, Jamie Thingelstad's archive agent" />
 
     <link rel="canonical" href="https://thingy.thingelstad.com/" />
+    <!--rel-me-->
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/img/icons/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="Thingy" />
@@ -79,7 +80,8 @@
             "about": [
               { "@type": "CreativeWorkSeries", "name": "The Weekly Thing", "url": "https://weekly.thingelstad.com/" },
               { "@type": "Blog", "name": "thingelstad.com", "url": "https://www.thingelstad.com/" },
-              { "@type": "PodcastSeries", "name": "Another Thing", "url": "https://another.thingelstad.com/" }
+              { "@type": "PodcastSeries", "name": "Another Thing", "url": "https://another.thingelstad.com/" },
+              { "@type": "WebSite", "name": "Things I’ve built", "url": "https://thingelstad.xyz/" }
             ]
           },
           {
@@ -87,7 +89,14 @@
             "@id": "https://www.thingelstad.com/#jamie",
             "name": "Jamie Thingelstad",
             "url": "https://www.thingelstad.com/",
-            "sameAs": ["https://weekly.thingelstad.com/", "https://another.thingelstad.com/"]
+            "sameAs": [
+              "https://www.thingelstad.com/",
+              "https://weekly.thingelstad.com/",
+              "https://another.thingelstad.com/",
+              "https://thingelstad.xyz/",
+              "https://micro.blog/jthingelstad",
+              "https://github.com/jthingelstad"
+            ]
           }
         ]
       }
@@ -121,8 +130,8 @@
           <p class="thingy-nametag" aria-hidden="true"><span>Hello, my name is</span><span>Thingy</span></p>
           <h1 id="home-title" class="thingy-h1">Meet Thingy<span class="dot">.</span></h1>
           <p class="thingy-lede thingy-home-lede">
-            Thingy is the librarian for Jamie&rsquo;s public archive &mdash; 350 newsletter issues, ten thousand blog
-            posts back to 2000, photos, links, and the podcast. Ask it anything and it answers with citations back to
+            Thingy is the librarian for Jamie&rsquo;s public archive &mdash; {{archive.weekly.issues}} newsletter issues, ten
+            thousand blog posts since {{archive.blog.since}}, photos, links, and the podcast. Ask it anything and it answers with citations back to
             <span class="thingy-mark">the original writing</span>.
           </p>
           <div class="thingy-cta-row thingy-home-actions">
@@ -134,7 +143,7 @@
           </div>
           <p class="thingy-home-guest-note">
             No account needed &mdash; ask a few questions free.
-            <a href="https://weekly.thingelstad.com/">Weekly Thing</a> readers sign in for saved conversations and more.
+            <a href="https://weekly.thingelstad.com/?ref=thingy-guest">Weekly Thing</a> readers sign in for saved conversations and more.
           </p>
         </div>
 
@@ -144,9 +153,9 @@
             <img class="thingy-mascot" src="/img/thingy.png" alt="" width="1022" height="1022" loading="eager" />
           </button>
           <p class="thingy-bubble thingy-home-bubble" aria-live="polite">
-            Ask me about coffee, kubb, or 25 years of links.
+            Ask me about coffee, kubb, or two decades of links.
           </p>
-          <span class="thingy-home-chip is-weekly" aria-hidden="true"><span class="thingy-w-disc"></span>281</span>
+          <span class="thingy-home-chip is-weekly" aria-hidden="true"><span class="thingy-w-disc"></span>{{archive.weekly.latest}}</span>
           <span class="thingy-home-chip is-another" aria-hidden="true"
             ><span class="thingy-another-dots"></span>Another Thing</span
           >
@@ -250,35 +259,46 @@
       <section class="thingy-wrap thingy-section thingy-home-network" aria-labelledby="family-title">
         <div class="thingy-section-head is-row">
           <h2 id="family-title" class="thingy-h2">The family</h2>
-          <p class="thingy-kicker">Thingy reads all three</p>
+          <p class="thingy-kicker">Thingy reads them all</p>
         </div>
         <ul class="thingy-family">
           <li>
-            <a class="thingy-family-tile" href="https://weekly.thingelstad.com/">
+            <a class="thingy-family-tile" href="{{site.weekly.url}}?ref=thingy-family">
               <span class="thingy-family-face is-weekly" aria-hidden="true"><span class="thingy-family-w">W</span></span>
-              <span class="thingy-family-name">Weekly Thing</span>
+              <span class="thingy-family-name">{{site.weekly.name}}</span>
               <span class="thingy-family-meta">Newsletter &middot; since {{archive.weekly.since}}</span>
             </a>
           </li>
           <li>
-            <a class="thingy-family-tile" href="https://another.thingelstad.com/">
+            <a class="thingy-family-tile" href="{{site.another.url}}?ref=thingy-family">
               <span class="thingy-family-face is-another" aria-hidden="true"
                 ><span class="thingy-family-dots"><span></span><span></span><span></span></span
                 ><span class="thingy-family-cover">Another<br />Thing</span></span
               >
-              <span class="thingy-family-name">Another Thing</span>
+              <span class="thingy-family-name">{{site.another.name}}</span>
               <span class="thingy-family-meta">Podcast</span>
             </a>
           </li>
           <li>
-            <a class="thingy-family-tile" href="https://www.thingelstad.com/">
+            <a class="thingy-family-tile" href="{{site.www.url}}?ref=thingy-family">
               <span class="thingy-family-face is-blog" aria-hidden="true"
                 ><span class="thingy-family-url">thingelstad.com</span
                 ><span class="thingy-family-lines"><span></span><span></span><span></span><span></span></span
-                ><span class="thingy-family-year">2000&rarr;</span></span
+                ><span class="thingy-family-year">{{archive.blog.since}}&rarr;</span></span
               >
               <span class="thingy-family-name">thingelstad.com</span>
               <span class="thingy-family-meta">Blog &middot; since {{archive.blog.since}}</span>
+            </a>
+          </li>
+          <li>
+            <a class="thingy-family-tile" href="{{site.xyz.url}}?ref=thingy-family">
+              <span class="thingy-family-face is-xyz" aria-hidden="true"
+                ><span class="thingy-family-url">thingelstad.xyz</span
+                ><span class="thingy-family-rows"><span></span><span></span><span></span></span
+                ><span class="thingy-family-t">T</span></span
+              >
+              <span class="thingy-family-name">{{site.xyz.name}}</span>
+              <span class="thingy-family-meta">{{site.xyz.short_name}}</span>
             </a>
           </li>
           <li>
@@ -294,6 +314,7 @@
 
     <footer class="thingy-site-footer">
       <div class="thingy-wrap">
+        <p class="thingy-footer-owner">A sidekick by <!--owner-hcard--></p>
         <p class="thingy-footer-meta thingy-home-meta">
           <span class="thingy-home-hits"
             ><span class="tinylytics_hits"></span> <span class="tinylytics_countries"></span

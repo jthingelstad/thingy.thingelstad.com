@@ -20,6 +20,7 @@ import { ThingyFace } from './ThingyFace.tsx';
 import { Tip } from './Tip.tsx';
 import { AssistantMarkdown } from './MarkdownText.tsx';
 import { citationKind, thingyUrlTransform, type CitationKind } from './markdown-config.ts';
+import { withRef } from '../../shared/thingy-refs.ts';
 
 const messageActionsService = createChatMessageActions({ track: (name, value) => trackEvent(name, value) });
 
@@ -199,8 +200,10 @@ function ActivityPart(props: { text: string }) {
 // dropped, and hover titles don't exist on touch. The metadata rides
 // every message, including reloaded history and share transcripts.
 // Each card wears its source's colour band: Weekly cobalt with the W
-// disc, blog toy cream with the host, Another Thing slate with its dots.
-// A grid on wide screens, a stack of horizontal cards on a phone.
+// disc, blog toy cream with the host, Another Thing slate with its dots,
+// Things I've built paper with a tilted T. A grid on wide screens, a stack
+// of horizontal cards on a phone. Card links to Jamie's sites carry
+// ?ref=thingy-source.
 function sourceMonth(value: string) {
   const time = Date.parse(value);
   if (!Number.isFinite(time)) return '';
@@ -218,18 +221,35 @@ function sourceHost(href: string) {
 const BAND: Record<CitationKind, string> = {
   weekly: 'thingy-source-band-weekly bg-weekly text-white',
   blog: 'bg-toy text-[#8a3410]',
-  podcast: 'bg-another text-white'
+  podcast: 'bg-another text-white',
+  thing: 'thingy-source-band-thing bg-paper text-ink'
 };
 
 const BADGE: Record<CitationKind, string> = {
   weekly: 'text-weekly-deep',
   blog: 'text-clay',
-  podcast: 'text-another'
+  podcast: 'text-another',
+  thing: 'text-ink'
+};
+
+// The badge names the kind of source; the band names its site (the blog's
+// shows its host).
+const BADGE_LABEL: Record<Exclude<CitationKind, 'weekly'>, string> = {
+  blog: 'Blog',
+  podcast: 'Podcast',
+  thing: 'Project'
+};
+
+const BAND_LABEL: Record<Exclude<CitationKind, 'blog'>, string> = {
+  weekly: 'Weekly Thing',
+  podcast: 'Another Thing',
+  thing: 'Things I’ve built'
 };
 
 function SourceMark({ kind }: { kind: CitationKind }) {
   if (kind === 'weekly') return <span className="thingy-w-disc" aria-hidden="true" />;
   if (kind === 'podcast') return <span className="thingy-another-dots" aria-hidden="true" />;
+  if (kind === 'thing') return <span className="thingy-thing-mark" aria-hidden="true" />;
   return null;
 }
 
@@ -247,18 +267,21 @@ function SourcesFooter() {
       {citations.slice(0, 8).map((citation, index) => {
         const issue = String(citation.issue_number || '').trim();
         const kind = citationKind(citation);
-        const badge = issue ? `WT${issue}` : kind === 'blog' ? 'Blog' : kind === 'podcast' ? 'Podcast' : 'Source';
-        const href = thingyUrlTransform(String(citation.url || (issue ? `/archive/${issue}/` : '')));
+        const badge = issue ? `WT${issue}` : kind === 'weekly' ? 'Source' : BADGE_LABEL[kind];
+        const href = withRef(
+          thingyUrlTransform(String(citation.url || (issue ? `/archive/${issue}/` : ''))),
+          'thingy-source'
+        );
         const date = sourceMonth(String(citation.publish_date || ''));
         const label = String(citation.subject || '').trim();
         const host = sourceHost(href);
-        const bandLabel = kind === 'weekly' ? 'Weekly Thing' : kind === 'podcast' ? 'Another Thing' : host || 'Blog';
+        const bandLabel = kind === 'blog' ? host || 'Blog' : BAND_LABEL[kind];
         const footer = String(citation.section || '').trim() || (kind === 'blog' ? host : '');
         const card = (
           <>
             <span
               className={`relative flex shrink-0 items-center gap-2 border-ink max-sm:w-14 max-sm:justify-center max-sm:border-r-2 sm:h-10 sm:px-3 ${
-                kind === 'blog' ? 'sm:border-b-2' : ''
+                kind === 'blog' || kind === 'thing' ? 'sm:border-b-2' : ''
               } font-mono text-[11px] font-semibold tracking-[0.14em] uppercase ${BAND[kind]}`}
             >
               <SourceMark kind={kind} />

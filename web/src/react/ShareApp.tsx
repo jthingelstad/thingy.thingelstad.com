@@ -66,8 +66,8 @@ function Unavailable({ signedIn }: { signedIn: boolean }) {
       </div>
       <aside className="thingy-shared-cta flex w-full max-w-[560px] flex-col items-center gap-4 rounded-[20px] border-2 border-ink bg-toy p-5 shadow-[0_6px_0_var(--thingy-ink)] sm:gap-[18px] sm:px-7 sm:py-6">
         <p className="m-0 text-[16px] leading-[1.55] text-ink sm:text-[17px]">
-          Thingy answers questions about Jamie Thingelstad&rsquo;s public archive &mdash; twenty-five years of writing,
-          with citations.
+          Thingy answers questions about Jamie Thingelstad&rsquo;s public archive &mdash; more than twenty years of
+          writing, with citations.
         </p>
         <a
           className="thingy-shared-cta-button thingy-btn thingy-btn-primary min-h-[52px] px-6 text-[17px] sm:min-h-14 sm:px-7 sm:text-[18px] [&_svg]:size-5"

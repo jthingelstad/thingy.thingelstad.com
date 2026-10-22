@@ -3,7 +3,7 @@
 // JavaScript the bubble keeps its first line and the press still hops
 // through CSS :active.
 const LINES = [
-  'Ask me about coffee, kubb, or 25 years of links.',
+  'Ask me about coffee, kubb, or two decades of links.',
   'Hi! Pull up a chair.',
   'Polka dots. Obviously.',
   'Go on, ask me something.'
