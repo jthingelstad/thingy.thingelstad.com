@@ -306,14 +306,15 @@
   background: var(--thingy-paper);
 }
 
-/* Things I've built: neutral ink on paper (its own colour is decided
-   separately), a registry's rows and that site's tilted T sticker. */
+/* Things I've built: its green, with a registry's rows and that site's
+   tilted T sticker. White url and checkboxes 5.8:1 on the green, the
+   rows 3.3:1, the paper T tile 5.6:1 with a green T (5.6:1). */
 .thingy-family-face.is-xyz {
-  background: var(--thingy-paper);
+  background: var(--thingy-xyz);
 }
 
 .thingy-family-face.is-xyz .thingy-family-url {
-  color: var(--thingy-ink);
+  color: var(--thingy-on-fill);
 }
 
 .thingy-family-rows {
@@ -334,7 +335,7 @@
   flex-shrink: 0;
   width: 10px;
   height: 10px;
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-on-fill);
   border-radius: 3px;
 }
 
@@ -342,7 +343,7 @@
   content: '';
   height: 8px;
   border-radius: 4px;
-  background: #e2d4b5;
+  background: var(--thingy-xyz-row);
 }
 
 .thingy-family-rows > span:nth-child(1)::after {
@@ -364,8 +365,8 @@
   width: clamp(40px, 4.6vw, 54px);
   aspect-ratio: 1;
   border-radius: 12px;
-  background: var(--thingy-ink);
-  color: var(--thingy-paper);
+  background: var(--thingy-paper);
+  color: var(--thingy-xyz);
   font-family: var(--font-ui);
   font-weight: 800;
   font-size: clamp(24px, 2.8vw, 32px);

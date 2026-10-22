@@ -112,3 +112,32 @@ test('every shell links the same mascot favicon', async () => {
   }
   assert.deepEqual([...hrefs], ['/favicon.svg?v=2'], 'every shell links the same cache-busted favicon');
 });
+
+// The strip and the source labels use every site's shared colour
+// (thingelstad.com AGENTS.md "The sites strip", shared/tokens.css). Another
+// Thing moved to crimson and Things I've built to green on 2026-10-22
+// (Jamie: "Approved: phase 2 colours, Another Thing to crimson and
+// thingelstad.xyz to green across their sites, favicons and the sites
+// strip"); the blog stays ink.
+test('the strip and the source labels carry the shared site colours', async () => {
+  const marks = {};
+  for (const match of (await source('src/styles/thingy-static.css')).matchAll(
+    /\.sites-strip__item--([a-z]+) a,\s*\.sites-strip__item--\1 a:hover \{\s*color: (#[0-9a-f]{6});/g
+  )) {
+    marks[match[1]] = match[2];
+  }
+  assert.deepEqual(marks, { weekly: '#1a5eb6', another: '#b3123f', thingy: '#b5461a', xyz: '#1d7348' });
+  const sites = JSON.parse(await source('contracts/sites.json')).sites;
+  for (const id of Object.keys(marks)) {
+    assert.ok(
+      sites.some((site) => site.id === id && site.in_sites_strip),
+      `${id} is a strip site`
+    );
+  }
+  const base = await source('src/styles/thingy-base.css');
+  assert.match(base, /--thingy-another: #b3123f;/, 'Another Thing is the shared crimson');
+  assert.match(base, /--thingy-xyz: #1d7348;/, "Things I've built is the shared green");
+  for (const file of await sourceFiles('src')) {
+    assert.ok(!(await source(file)).toLowerCase().includes('#c63a20'), `${file} still has the old Another Thing red`);
+  }
+});

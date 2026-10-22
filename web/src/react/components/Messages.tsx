@@ -200,8 +200,8 @@ function ActivityPart(props: { text: string }) {
 // dropped, and hover titles don't exist on touch. The metadata rides
 // every message, including reloaded history and share transcripts.
 // Each card wears its source's colour band: Weekly cobalt with the W
-// disc, blog toy cream with the host, Another Thing slate with its dots,
-// Things I've built paper with a tilted T. A grid on wide screens, a stack
+// disc, blog toy cream with the host, Another Thing crimson with its dots,
+// Things I've built green with a tilted T. A grid on wide screens, a stack
 // of horizontal cards on a phone. Card links to Jamie's sites carry
 // ?ref=thingy-source.
 function sourceMonth(value: string) {
@@ -222,14 +222,14 @@ const BAND: Record<CitationKind, string> = {
   weekly: 'thingy-source-band-weekly bg-weekly text-white',
   blog: 'bg-toy text-[#8a3410]',
   podcast: 'bg-another text-white',
-  thing: 'thingy-source-band-thing bg-paper text-ink'
+  thing: 'thingy-source-band-thing bg-xyz text-white'
 };
 
 const BADGE: Record<CitationKind, string> = {
   weekly: 'text-weekly-deep',
   blog: 'text-clay',
   podcast: 'text-another',
-  thing: 'text-ink'
+  thing: 'text-xyz'
 };
 
 // The badge names the kind of source; the band names its site (the blog's
@@ -281,7 +281,7 @@ function SourcesFooter() {
           <>
             <span
               className={`relative flex shrink-0 items-center gap-2 border-ink max-sm:w-14 max-sm:justify-center max-sm:border-r-2 sm:h-10 sm:px-3 ${
-                kind === 'blog' || kind === 'thing' ? 'sm:border-b-2' : ''
+                kind === 'blog' ? 'sm:border-b-2' : ''
               } font-mono text-[11px] font-semibold tracking-[0.14em] uppercase ${BAND[kind]}`}
             >
               <SourceMark kind={kind} />

@@ -34,15 +34,28 @@
   --thingy-oops: #ffb98f;
   --thingy-polka: #fff4e0; /* polka dots on tangerine */
 
+  /* Thingy's own slate and dots: the kicker dots, the thinking dots, the
+     Connect plug and its hour bar. Thingy's look, not a source label. */
+  --thingy-slate: #354a5f;
+  --thingy-slate-dot: #7c8b9c;
+  --thingy-dot-red: #e84a30;
+
   /* Family source colours: labels for citation chips and source cards,
-     never themes. */
+     never themes. Another Thing crimson and Things I've built green are
+     the shared --jt-another / --jt-xyz fills (thingelstad.com
+     shared/tokens.css, 2026-10-22), which are also their text colours.
+     White on the crimson fill 6.8:1, on the green 5.8:1; crimson text on
+     paper 6.6:1, green 5.6:1. The quiet cover dots on crimson are 3.3:1
+     and the registry rows on green 3.3:1. */
   --thingy-weekly: #1f6fd6;
   --thingy-weekly-deep: #134d99;
   --thingy-weekly-tint: #e6edfa;
   --thingy-highlighter: #fff3a8;
-  --thingy-another: #354a5f;
-  --thingy-another-dot: #7c8b9c;
-  --thingy-another-red: #e84a30;
+  --thingy-another: #b3123f;
+  --thingy-another-dot: #e2a5b6; /* the cover's two quiet dots, on crimson */
+  --thingy-xyz: #1d7348;
+  --thingy-xyz-row: #a9cab9; /* the registry's rows, on green */
+  --thingy-on-fill: #fff; /* text and the lit dot on crimson and green */
   --thingy-blog: var(--thingy-clay);
   --thingy-blog-tint: var(--thingy-clay-tint);
 

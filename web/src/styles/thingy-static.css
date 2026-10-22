@@ -121,11 +121,11 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--thingy-another-dot);
+  background: var(--thingy-slate-dot);
 }
 
 .thingy-kicker-dots > span:last-child {
-  background: var(--thingy-another-red);
+  background: var(--thingy-dot-red);
 }
 
 /* A section heading: mono eyebrow over a display H2. */
@@ -158,7 +158,8 @@
    and side padding follow Thingy's header frame (1200px, 32px / 16px).
    Thingy has no dark mode, so the contract's dark values are left out.
    On #f3f3f5: label #5a5a66 6.1:1, links #16161a 16.3:1, the Weekly,
-   Another and Thingy marks 5.7:1, 4.7:1 and 4.9:1. ---- */
+   Another Thing, Thingy and Things I've built marks 5.7:1, 6.2:1, 4.9:1
+   and 5.3:1 (the blog stays ink). ---- */
 .sites-strip {
   background: #f3f3f5;
   font-family: var(--font-sites);
@@ -220,12 +221,17 @@
 
 .sites-strip__item--another a,
 .sites-strip__item--another a:hover {
-  color: #c63a20;
+  color: #b3123f;
 }
 
 .sites-strip__item--thingy a,
 .sites-strip__item--thingy a:hover {
   color: #b5461a;
+}
+
+.sites-strip__item--xyz a,
+.sites-strip__item--xyz a:hover {
+  color: #1d7348;
 }
 
 /* ---- Site header (static pages): face + wordmark, nav, Sign in pill.
@@ -491,8 +497,9 @@
   text-transform: uppercase;
 }
 
-/* Numbers in source colours: cobalt 3.8:1 and slate 7.2:1 on toy cream
-   at 36-54px bold (large text only); clay is the deep #8A3410 (6.4:1). */
+/* Numbers in source colours: cobalt 3.8:1, Another Thing crimson 5.3:1
+   and Thingy's slate 7.2:1 on toy cream at 36-54px bold (large text
+   only); clay is the deep #8A3410 (6.4:1). */
 .thingy-pocket-number {
   font-size: 54px;
   line-height: 1;
@@ -509,6 +516,10 @@
 
 .thingy-pocket-number.is-another {
   color: var(--thingy-another);
+}
+
+.thingy-pocket-number.is-slate {
+  color: var(--thingy-slate);
 }
 
 .thingy-pocket-number.is-word {
@@ -641,7 +652,9 @@
 
 /* ---- Source art atoms (the W disc, Another Thing dots and cover,
    the blog's url, ruled lines and year), shared by the home family tiles
-   and the About source bands. All aria-hidden decoration. ---- */
+   and the About source bands. All aria-hidden decoration. Another
+   Thing's cover dots sit on its crimson: two quiet (3.3:1), one lit
+   white (6.8:1). ---- */
 .thingy-family-w {
   display: grid;
   place-items: center;
@@ -666,7 +679,7 @@
 }
 
 .thingy-family-dots > span:last-child {
-  background: var(--thingy-another-red);
+  background: var(--thingy-on-fill);
 }
 
 .thingy-family-cover {

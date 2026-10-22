@@ -27,8 +27,8 @@ export function citationsByIssue(citations: ThingyCitation[]) {
 }
 
 // Which source a citation is, for the chip and card colours: Weekly
-// cobalt, blog clay, Another Thing slate, Things I've built (thingelstad.xyz)
-// neutral ink on paper. Colours label sources only.
+// cobalt, blog clay, Another Thing crimson, Things I've built
+// (thingelstad.xyz) green. Colours label sources only.
 export type CitationKind = 'weekly' | 'blog' | 'podcast' | 'thing';
 
 function isThing(citation: ThingyCitation, kind: string) {

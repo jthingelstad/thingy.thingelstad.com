@@ -40,6 +40,7 @@
   --color-weekly-tint: var(--thingy-weekly-tint);
   --color-highlighter: var(--thingy-highlighter);
   --color-another: var(--thingy-another);
+  --color-xyz: var(--thingy-xyz);
   --color-danger: var(--thingy-danger);
   --color-danger-tint: var(--thingy-danger-tint);
   --color-success: var(--thingy-success);

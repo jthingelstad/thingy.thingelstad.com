@@ -68,7 +68,7 @@ test('links to cited blog posts and episodes render as their source chips', () =
   assert.match(html, /<a href="https:\/\/example\.com\/12\/" target="_blank" rel="noopener">elsewhere<\/a>/);
 });
 
-test('Things I have built citations render as the neutral thing chip', () => {
+test('Things I have built citations render as the green thing chip', () => {
   const citations = [
     { source_kind: 'thing', id: 'thing-thingy', url: 'https://thingelstad.xyz/things/thingy/', subject: 'Thingy' },
     { id: 'thing-kubb', url: 'https://thingelstad.xyz/things/kubb/', subject: 'Kubb scores' },

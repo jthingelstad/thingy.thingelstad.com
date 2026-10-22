@@ -192,9 +192,10 @@ textarea.thingy-input {
 }
 
 /* ---- Sources ----
-   The W disc (Source Serif 4 italic 600 on near-white, cobalt letter)
-   and Another Thing's three dots, shared by the source cards and the
-   share page. */
+   The W disc (Source Serif 4 italic 600 on near-white, cobalt letter),
+   Another Thing's three dots (two quiet, one lit, on its crimson) and
+   the Things I've built T, shared by the source cards and the share
+   page. */
 
 .thingy-w-disc {
   display: grid;
@@ -222,11 +223,12 @@ textarea.thingy-input {
   background:
     radial-gradient(circle, var(--thingy-another-dot) 3.4px, transparent 3.6px) 0 0 / 7px 7px no-repeat,
     radial-gradient(circle, var(--thingy-another-dot) 3.4px, transparent 3.6px) 11px 0 / 7px 7px no-repeat,
-    radial-gradient(circle, var(--thingy-another-red) 3.4px, transparent 3.6px) 22px 0 / 7px 7px no-repeat;
+    radial-gradient(circle, var(--thingy-on-fill) 3.4px, transparent 3.6px) 22px 0 / 7px 7px no-repeat;
 }
 
-/* Things I've built: a small tilted T sticker, ink on paper. Its own
-   colour is still being decided, so the source stays neutral here. */
+/* Things I've built: a small tilted T sticker, a paper tile with a green
+   T on the green band (paper on green 5.6:1, green on paper 5.6:1), the
+   way the W disc sits on cobalt. */
 .thingy-thing-mark {
   display: grid;
   flex-shrink: 0;
@@ -234,8 +236,8 @@ textarea.thingy-input {
   width: 20px;
   height: 20px;
   border-radius: 6px;
-  background: var(--thingy-ink);
-  color: var(--thingy-paper);
+  background: var(--thingy-paper);
+  color: var(--thingy-xyz);
   font: 800 12px / 1 var(--font-ui);
   letter-spacing: 0;
   text-transform: none;
@@ -275,7 +277,7 @@ textarea.thingy-input {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--thingy-another-dot);
+  background: var(--thingy-slate-dot);
   animation: thingy-dot 1.2s infinite;
 }
 
@@ -284,7 +286,7 @@ textarea.thingy-input {
 }
 
 .thingy-dots > span:nth-child(3) {
-  background: var(--thingy-another-red);
+  background: var(--thingy-dot-red);
   animation-delay: 0.4s;
 }
 

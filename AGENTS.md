@@ -295,9 +295,15 @@ Do:
 - Motion is CSS only and only when it says something (the blinking face, the
   three thinking dots). No PixiJS, no confetti, no ambient animation; all of it
   off under `prefers-reduced-motion`.
-- Use the source colours (Weekly cobalt, Another Thing slate, blog clay) only
-  to identify sources: citation chips and source cards. They are labels, not
-  themes.
+- Use the source colours (Weekly cobalt, Another Thing crimson `#b3123f`,
+  blog clay, Things I've built green `#1d7348`) only to identify sources:
+  citation chips, source cards, the home family tiles and About's source
+  bands. They are labels, not themes. Crimson and green are the shared
+  `shared/tokens.css` values (2026-10-22, Jamie: "Approved: phase 2 colours,
+  Another Thing to crimson and thingelstad.xyz to green across their sites,
+  favicons and the sites strip"). The slate `--thingy-slate` and the
+  slate/red kicker and thinking dots are Thingy's own look, not Another
+  Thing's label.
 - Make the chat/auth surface the primary object.
 - Put the shared "Jamie's sites" strip (the blog v2 strip, from
   `shared/sites.json`, exactly as the domain `AGENTS.md` contract sets it)
