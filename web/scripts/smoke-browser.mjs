@@ -262,6 +262,12 @@ async function checkSharedType(browser) {
     const context = await browser.newContext({ viewport: { width, height: 900 } });
     const page = await context.newPage();
     const fontHosts = watchFontHosts(page);
+    // Type is checked offline: nothing leaves the preview (no analytics hit,
+    // no avatar), and the request listener still sees a Google Fonts try.
+    await page.route(
+      (url) => !url.href.startsWith(`${baseUrl}/`),
+      (route) => route.abort()
+    );
     // Static pages never need the Librarian; anything unmocked is refused
     // here rather than reaching it through the preview proxy.
     await page.route(
