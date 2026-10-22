@@ -263,7 +263,6 @@
   background: var(--thingy-tangerine);
   color: var(--thingy-on-tangerine);
   font-family: var(--font-display);
-  font-style: italic;
   font-weight: 800;
   font-size: 21px;
 }

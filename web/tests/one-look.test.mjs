@@ -73,7 +73,7 @@ test('every shell self-hosts the shared type and Archivo', async () => {
   for (const shell of SHELLS) {
     const html = await source(shell);
     assert.match(html, /<link rel="stylesheet" href="\/shared\/tokens\.css"\s*\/?>/, `${shell} links the shared type`);
-    for (const font of ['/shared/fonts/inter-latin-wght-normal.woff2', '/fonts/archivo-latin-wdth-italic.woff2']) {
+    for (const font of ['/shared/fonts/inter-latin-wght-normal.woff2', '/fonts/archivo-latin-wdth-normal.woff2']) {
       assert.ok(
         html.includes(`<link rel="preload" href="${font}" as="font" type="font/woff2" crossorigin`),
         `${shell} preloads ${font}`
@@ -189,4 +189,27 @@ test('the strip and the source labels carry the shared site colours', async () =
   for (const file of await sourceFiles('src')) {
     assert.ok(!(await source(file)).toLowerCase().includes('#c63a20'), `${file} still has the old Another Thing red`);
   }
+});
+
+// No slanted sans in the design (Jamie, 2026-10-22: "I really dislike
+// italics with san serif fonts … I like the color and I like using font
+// weight with san serif"; then "Approved: Thingy display face upright,
+// Archivo 800 roman"). Archivo ships roman only; display type, headings
+// and quotes stand upright. The one italic left is the base `em, i` in
+// thingy-base.css, for emphasis inside an answer.
+test('nothing slants the type but the base em and i rule', async () => {
+  const files = [...(await sourceFiles('src')), ...SHELLS];
+  const slanted = [];
+  for (const file of files) {
+    const text = (await source(file)).replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const [, selector, body] of text.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      if (/font-style:\s*(italic|oblique)/.test(body)) slanted.push(`${file}: ${selector.trim().replace(/\s+/g, ' ')}`);
+    }
+    assert.ok(!/font-variation-settings:[^;]*"slnt"/.test(text), `${file} sets a slnt axis`);
+    assert.ok(!/transform:[^;]*skew/.test(text), `${file} skews text`);
+    assert.ok(!/\bclassName=["'{`][^"'}`]*\bitalic\b/.test(text), `${file} uses Tailwind's italic utility`);
+  }
+  assert.deepEqual(slanted, ['src/styles/thingy-base.css: em, i']);
+  const fonts = await readdir(new URL('../public/fonts/', import.meta.url));
+  assert.ok(!fonts.some((name) => /italic/.test(name)), 'Archivo ships roman only');
 });

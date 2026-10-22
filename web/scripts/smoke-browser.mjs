@@ -311,7 +311,7 @@ async function checkSignInRedirect(browser) {
   assert.equal(new URL(page.url()).searchParams.get('return'), '/chat/');
   assert.doesNotMatch(page.url(), /thingy%40thingelstad|What%20about|weekly\.thingelstad|corpus=blog/);
   await page.waitForSelector('.thingy-signin-form');
-  // The display voice is Archivo italic 800: preflight's heading reset once
+  // The display voice is Archivo 800: preflight's heading reset once
   // dropped it to 400 because .thingy-display sat in a lower layer.
   assert.equal(
     await page.locator('#thingy-signin-title').evaluate((node) => getComputedStyle(node).fontWeight),

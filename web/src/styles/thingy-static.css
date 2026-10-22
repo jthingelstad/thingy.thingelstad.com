@@ -62,13 +62,12 @@
   padding: 0 var(--jt-gutter, 1.5rem);
 }
 
-/* Display type: Archivo italic 800, wide. */
+/* Display type: Archivo 800, wide, upright. */
 .thingy-h1,
 .thingy-h2,
 .thingy-wordmark,
 .thingy-pocket-number {
   font-family: var(--font-display);
-  font-style: italic;
   font-weight: var(--thingy-display-weight);
   font-stretch: var(--thingy-display-stretch);
   letter-spacing: var(--thingy-display-tracking);
@@ -403,7 +402,6 @@
 .thingy-nametag > span:last-child {
   padding: 6px 18px 8px;
   font-family: var(--font-display);
-  font-style: italic;
   font-weight: 800;
   font-stretch: 112%;
   font-size: 24px;
@@ -690,7 +688,6 @@
 .thingy-family-cover {
   color: #fff;
   font-family: var(--font-display);
-  font-style: italic;
   font-weight: 800;
   font-size: clamp(24px, 3vw, 34px);
   line-height: 0.98;
@@ -734,7 +731,6 @@
 
 .thingy-family-year {
   font-family: var(--font-display);
-  font-style: italic;
   font-weight: 800;
   font-size: clamp(28px, 3.4vw, 40px);
   line-height: 1;

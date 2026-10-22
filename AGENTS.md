@@ -286,7 +286,7 @@ Do:
   surfaces, ink text and borders, tangerine fills (navy text only on
   tangerine), clay links. One look only: there is no dark mode and no theme
   switch.
-- Type: Archivo italic 800 (wide) for display, Thingy's own costume; Inter
+- Type: Archivo 800 (wide, upright) for display, Thingy's own costume; Inter
   for UI and body, Inter Tight 800 for smaller headings, the shared mono for
   real code only. These are the shared faces of Jamie's sites; see "Shared
   type".
@@ -334,7 +334,7 @@ Since 2026-10-22 Thingy reads on the type Jamie's sites share (the domain's
 - Everything is self-hosted: no Google Fonts anywhere, and every CSP has
   `font-src 'self'`. `tests/one-look.test.mjs` and the smoke fail on a
   Google Fonts reference or request.
-- Archivo (variable, italic, width axis, latin and latin-ext, with its OFL
+- Archivo (variable, roman, width axis, latin and latin-ext, with its OFL
   licence) lives in `web/public/fonts/` as Thingy's own font, declared at the
   top of `thingy-base.css`. It is the only display face; add no others.
 - Roles: body and UI `--thingy-font-ui` (Inter), headings below display

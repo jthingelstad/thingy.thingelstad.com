@@ -14,7 +14,6 @@
   margin: 0 0 0.6rem;
   color: var(--thingy-ink);
   font-family: var(--font-display);
-  font-style: italic;
   font-weight: 800;
   font-stretch: 112%;
   font-size: clamp(36px, 5vw, 56px);
@@ -32,7 +31,6 @@
   margin: 2.4rem 0 0.7rem;
   color: var(--thingy-ink);
   font-family: var(--font-display);
-  font-style: italic;
   font-weight: 800;
   font-stretch: 112%;
   font-size: 1.6rem;
@@ -160,7 +158,6 @@
   min-height: 44px;
   color: var(--thingy-ink);
   font-family: var(--font-display);
-  font-style: italic;
   font-weight: 800;
   font-stretch: 112%;
   font-size: 24px;

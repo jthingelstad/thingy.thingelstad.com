@@ -9,7 +9,7 @@
    .thingy-display lives in thingy-base.css, which the SPA layers as
    `legacy` - BELOW Tailwind's base layer, where preflight resets every
    heading to font-weight: inherit. On an h1/h2 that reset won, so the
-   sign-in and share titles rendered Archivo italic at 400 instead of 800.
+   sign-in and share titles rendered Archivo at 400 instead of 800.
    Restating the weight here (components layer) puts it back. */
 .thingy-display {
   font-weight: var(--thingy-display-weight);
