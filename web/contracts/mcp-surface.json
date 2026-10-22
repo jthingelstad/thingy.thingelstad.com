@@ -5,8 +5,8 @@
   "server": {
     "name": "librarian",
     "title": "The Librarian - Jamie Thingelstad's archive",
-    "version": "2.6.0",
-    "version_format": "2.6.0+tools.<fingerprint>: the fingerprint hashes every packaged prompt file, the tool specs included, so it changes whenever the declared tools do",
+    "version": "2.7.0",
+    "version_format": "2.7.0+tools.<fingerprint>: the fingerprint hashes every packaged prompt file, the tool specs included, so it changes whenever the declared tools do",
     "website_url": "https://thingy.thingelstad.com/",
     "icons": [
       {
@@ -452,7 +452,7 @@
         "readOnlyHint": true,
         "openWorldHint": false
       },
-      "description": "Read one source whole: a Weekly Thing issue, blog post or podcast episode, by the id other tools return. format outline gives the facts, skim and section names; text adds the body; full (default) adds the links. section reads one section. An issue's audio edition is audio_url, audio_duration_seconds and audio_chapters; with section, section_audio starts its chapter.",
+      "description": "Read one source whole: a Weekly Thing issue, blog post or podcast episode, by the id other tools return. format outline gives the facts, skim and section names; text adds the body; full (default) adds the links. section reads one section. An issue's audio edition is audio_url, audio_duration_seconds and audio_chapters; with section, section_audio starts its chapter. readers carries what Tinylytics counted (views, an issue's email opens and feed reads, kudos) since the site was first counted, never all time.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -494,7 +494,7 @@
           },
           "source": {
             "type": "object",
-            "description": "The source; its date is the Chicago day it was published (Jamie publishes in Central time); publish_date is the corpus value as stored: a UTC timestamp for an issue, the Chicago day for a blog post, the day for an episode."
+            "description": "The source; its date is the Chicago day it was published (Jamie publishes in Central time); publish_date is the corpus value as stored: a UTC timestamp for an issue, the Chicago day for a blog post, the day for an episode. readers (when the corpus carries them): {site, tracked_since, through, views {count, last_30_days, prior_30_days, trend, by_month [{month, count}]}, email_opens and feed_reads (issues, same shape without trend), kudos {count, days}, note}; days are US Central."
           },
           "truncated": {
             "type": "object",
@@ -537,7 +537,7 @@
           "server_version"
         ]
       },
-      "chat_description": "Fetch full context for one known archive source in the active scope: a Weekly Thing issue, blog post/micropost, thingelstad.com page, or podcast episode. Use after search_archive, list_content, archive_lens, archive_gems, find_links or source_neighborhood identifies a specific source worth reading more deeply. Identify it by id as other tools emit it (wt-351, blog-<microblog id>, page-<page id>, ep-<n>; WT351, a bare issue number or the source's url also work). Optional section narrows the returned text; format outline skips the body and links, text skips the links. body is the source's full text and sections lists its section names and word counts; a body longer than one result is cut and named in truncated, whose next_offset reads the rest; section reads one section or heading (an exact name wins), and a name that matches nothing is an error listing available_sections. A Weekly Thing issue with an audio edition carries audio_url, audio_duration_seconds and audio_chapters [{start, title}]; with section, section_audio {url, start, chapter} starts that section's chapter. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
+      "chat_description": "Fetch full context for one known archive source in the active scope: a Weekly Thing issue, blog post/micropost, thingelstad.com page, or podcast episode. Use after search_archive, list_content, archive_lens, archive_gems, find_links or source_neighborhood identifies a specific source worth reading more deeply. Identify it by id as other tools emit it (wt-351, blog-<microblog id>, page-<page id>, ep-<n>; WT351, a bare issue number or the source's url also work). Optional section narrows the returned text; format outline skips the body and links, text skips the links. body is the source's full text and sections lists its section names and word counts; a body longer than one result is cut and named in truncated, whose next_offset reads the rest; section reads one section or heading (an exact name wins), and a name that matches nothing is an error listing available_sections. A Weekly Thing issue with an audio edition carries audio_url, audio_duration_seconds and audio_chapters [{start, title}]; with section, section_audio {url, start, chapter} starts that section's chapter. readers is what Tinylytics counted for the source: views (count, last_30_days, prior_30_days, trend rising/falling/steady/new, by_month), an issue's email_opens and feed_reads, and kudos {count, days}; counted since tracked_since (www since July 2024, the other sites since 2026), never all time, so say since when. Email opens are per issue, never per reader. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
       "doors": {
         "mcp": true,
         "webmcp": true,
@@ -553,7 +553,7 @@
         "readOnlyHint": true,
         "openWorldHint": false
       },
-      "description": "List and count sources deterministically: by source_kind, year_range, topic, linked domain, link kind or category, blog posts an issue reprinted (also_in_issue) or linked (linked_from_issue), and issues with an audio edition (has_audio; each carries audio_url and audio_duration_seconds). For how-many and which-ones questions; search_archive is for relevance.",
+      "description": "List and count sources deterministically: by source_kind, year_range, topic, linked domain, link kind or category, blog posts an issue reprinted (also_in_issue) or linked (linked_from_issue), and issues with an audio edition (has_audio; each carries audio_url and audio_duration_seconds). sort most_read, most_read_30d, most_read_90d, most_kudos or rising orders by what Tinylytics counted, never all time. For how-many and which-ones questions; search_archive is for relevance.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -672,6 +672,19 @@
           "case_sensitive": {
             "type": "boolean",
             "description": "Match case: topic \"Go\" finds the language, never \"to go\". Default false."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "newest",
+              "most_read",
+              "most_read_30d",
+              "most_read_90d",
+              "most_kudos",
+              "rising"
+            ],
+            "default": "newest",
+            "description": "newest (default), or by Tinylytics counts: most_read (views since the site was first counted), most_read_30d, most_read_90d, most_kudos, rising (gain in views, last 30 days over the 30 before). Ties keep date order."
           }
         },
         "additionalProperties": false
@@ -715,9 +728,17 @@
             "type": "array",
             "description": "[{<key>, count}]"
           },
+          "readers_counted": {
+            "type": "object",
+            "description": "With a reader sort: {<site host>: {tracked_since, through}}, the US Central days the listed sites' numbers cover."
+          },
+          "note": {
+            "type": "string",
+            "description": "With a reader sort, says which sources have no numbers yet (or that none do, and the list stayed newest first)."
+          },
           "results": {
             "type": "array",
-            "description": "Newest first. On each source, date is the Chicago day it was published (Jamie publishes in Central time); publish_date is the corpus value as stored: a UTC timestamp for an issue, the Chicago day for a blog post, the day for an episode."
+            "description": "Newest first, or in applied.sort's order. On each source, date is the Chicago day it was published (Jamie publishes in Central time); publish_date is the corpus value as stored: a UTC timestamp for an issue, the Chicago day for a blog post, the day for an episode. With a reader sort each carries readers {views, views_last_30_days, views_prior_30_days, views_last_90_days, trend, kudos, email_opens (issues)}."
           },
           "truncated": {
             "type": "object",
@@ -761,7 +782,7 @@
           "server_version"
         ]
       },
-      "chat_description": "List source-level metadata across the active scope: Weekly Thing issues, blog posts/microposts/pages, and podcast episodes. Use for counts and deterministic listings by source_kind, year_range (or year), topic, linked domain, link_kind, link_category, target_resolved, has_also_in_issues, also_in_issue, has_linked_from_issues, linked_from_issue, or has_audio. Prefer this over semantic search for inventory questions like posts by year, which sources mention a domain, which blog posts crossed into Weekly Thing, or which issues have an audio edition. A blog result's also_in_issues names the issues that reprinted it; linked_from_issues the issues that linked it without reprinting it. A Weekly Thing result with an audio edition carries audio_url and audio_duration_seconds. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer. Matching is whole-token/phrase based (see match_mode); match_reasons name the exact span found. Undated thingelstad.com pages list after every dated source; undated_count says how many are in total_count but in no year.",
+      "chat_description": "List source-level metadata across the active scope: Weekly Thing issues, blog posts/microposts/pages, and podcast episodes. Use for counts and deterministic listings by source_kind, year_range (or year), topic, linked domain, link_kind, link_category, target_resolved, has_also_in_issues, also_in_issue, has_linked_from_issues, linked_from_issue, or has_audio. Prefer this over semantic search for inventory questions like posts by year, which sources mention a domain, which blog posts crossed into Weekly Thing, or which issues have an audio edition. A blog result's also_in_issues names the issues that reprinted it; linked_from_issues the issues that linked it without reprinting it. A Weekly Thing result with an audio edition carries audio_url and audio_duration_seconds. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer. Matching is whole-token/phrase based (see match_mode); match_reasons name the exact span found. Undated thingelstad.com pages list after every dated source; undated_count says how many are in total_count but in no year. sort orders by what readers did instead of by date: most_read (views since counting began), most_read_30d, most_read_90d, most_kudos, or rising (the biggest gain in views, last 30 days over the 30 before; sources from the last 60 days are new and come after); each result then carries readers and readers_counted says since when each site was counted. Reader numbers say what was read, not what matters or what is relevant to a question.",
       "paged_list": "results",
       "doors": {
         "mcp": true,
