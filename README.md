@@ -39,6 +39,8 @@ Known hostnames and legacy word aliases:
 - `thingelstad.com`, `www.thingelstad.com`, `blog`, `jamie`
 - `Weekly Thing`, `weekly.thingelstad.com`, `newsletter`
 - `Another Thing`, `another.thingelstad.com`, `podcast`
+- `Things I’ve built`, `thingelstad.xyz`, `projects` (name and URL from
+  `web/contracts/sites.json`)
 
 When `from` matches one of the known properties, that navigation link is
 highlighted and labeled `Return`. If `from` is a URL, the matching link points
@@ -46,10 +48,14 @@ back to that exact URL. Unknown values are ignored.
 
 ### `prompt`
 
-Seeds the question box. Signed-in readers auto-submit; guests get the
-composer prefilled and press send themselves (crawler protection: the
-blog's explore links were auto-firing a guest model call for every
-JS-executing crawler that followed them, 2026-09-02). When `prompt` is
+Seeds the question box. Signed-in readers auto-submit when the link came
+from one of Jamie's sites; guests, and readers arriving from anywhere else,
+get the composer prefilled and press send themselves (crawler protection:
+the blog's explore links were auto-firing a guest model call for every
+JS-executing crawler that followed them, 2026-09-02; and any page could
+link `?prompt=` with words the reader never typed). The trusted referrers
+are Thingy itself, `thingelstad.com` and its subdomains, and exactly
+`https://thingelstad.xyz` (added 2026-10-21). When `prompt` is
 present, Thingy skips the generated welcome and starts with the prompt
 instead.
 
@@ -94,8 +100,9 @@ one Thingy parameter deliberately not stripped before analytics loads.
 The cross-site origin tag Jamie's sites put on links to each other
 (`ref=<origin>-<placement>`, e.g. `ref=weekly-issue`), read by
 Tinylytics' Sources report. Thingy never reads it and never strips it; the
-chat's first URL sync keeps it so analytics still sees it, and later
-conversation pushes drop it.
+chat's first URL sync keeps it so analytics still sees it, Back to that
+entry keeps it, and later conversation pushes drop it (Jamie, 2026-10-21:
+"Keep the ref. Don't remove it.").
 
 Example:
 

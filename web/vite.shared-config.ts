@@ -3,7 +3,18 @@
 // React build passes; the site is single-pass React since 2026-09-02.)
 
 import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { type Plugin } from 'vite';
+
+// Things I've built is the one `from` entry read from the vendored
+// contracts/sites.json (its strip_label and url), so the Return chip names
+// it the way every site's strip does.
+const xyzSite = (
+  JSON.parse(readFileSync(new URL('./contracts/sites.json', import.meta.url), 'utf8')) as {
+    sites: { id: string; url: string; strip_label: string }[];
+  }
+).sites.find((site) => site.id === 'xyz');
+if (!xyzSite) throw new Error('contracts/sites.json has no xyz site for the from map.');
 
 export const SITE = {
   title: 'Thingy',
@@ -28,6 +39,12 @@ export const SITE = {
       href: 'https://another.thingelstad.com/',
       key: 'another-thing',
       aliases: ['another thing', 'another.thingelstad.com', 'podcast']
+    },
+    {
+      label: xyzSite.strip_label,
+      href: xyzSite.url,
+      key: 'things-ive-built',
+      aliases: [xyzSite.strip_label.toLowerCase(), "things i've built", 'thingelstad.xyz', 'projects']
     }
   ]
 };

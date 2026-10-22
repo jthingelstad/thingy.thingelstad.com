@@ -319,11 +319,21 @@ Document behavior changes in `README.md` when touching these.
 
 - `from`: Prefer an actual sending URL, URL-encoded. Thingy matches the host
   against known properties, highlights the matching nav item, labels it
-  `Return`, and rewrites that link to the exact source URL.
-- `prompt`: Seeds the question. Signed-in readers auto-submit; guests get
+  `Return`, and rewrites that link to the exact source URL. The known
+  properties are `SITE.networkLinks` in `vite.shared-config.ts`: the blog,
+  Weekly Thing, Another Thing, and Things I've built (thingelstad.xyz,
+  label and URL read from `contracts/sites.json`).
+- `prompt`: Seeds the question. Signed-in readers auto-submit only when
+  the visit came from a trusted referrer; everyone else (guests always) gets
   the composer prefilled and must press send (crawler protection - the
   blog's explore links were auto-firing a model call for every
-  JS-executing crawler, 2026-09-02).
+  JS-executing crawler, 2026-09-02; and any page can link
+  `?prompt=<attacker text>`, audit W3). Trusted
+  (`src/shared/thingy-referrer.ts`, pinned by `tests/referrer.test.mjs`):
+  Thingy's own host, `thingelstad.com` and its subdomains (by host), and
+  exactly the origin `https://thingelstad.xyz` (Jamie, 2026-10-21: "Yes" -
+  no http, no www, no subdomains). Add no wildcard and no other host
+  without Jamie.
 - `email`: Prefills the auth field and starts subscriber auth.
 - `explore`: Canonical https URL of a source page; Thingy composes the
   exploration question itself (`src/shared/thingy-explore.ts`) and uses the
@@ -336,7 +346,9 @@ Document behavior changes in `README.md` when touching these.
   deep-linked id. Deliberately NOT stripped before analytics loads.
 - `ref`: the cross-site origin tag (`ref=weekly-issue`). Never read, never
   stripped; the chat's first URL sync keeps it (Tinylytics may load after
-  that sync), later pushes drop it. Outbound links Thingy renders to the
+  that sync), Back to that entry keeps it, and later conversation pushes
+  drop it. This is Jamie's decision (2026-10-21: "Keep the ref. Don't
+  remove it."). Outbound links Thingy renders to the
   sister sites get `?ref=thingy-<placement>` through `withRef`
   (`src/shared/thingy-refs.ts`; `tests/refs.test.mjs` pins its hosts to
   `contracts/sites.json`): `thingy-source` on source cards and citation
