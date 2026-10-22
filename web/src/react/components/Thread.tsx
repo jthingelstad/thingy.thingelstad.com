@@ -29,7 +29,7 @@ function SuggestionChips({ suggestions, pending = false }: { suggestions: string
   // content-width and centered on their own row; on a phone they are
   // full-width cards (Felt & Tangerine, MobileGuest board).
   const CHIP =
-    'inline-flex min-h-12 w-full max-w-full items-center justify-between gap-3 rounded-2xl border-2 px-4 text-left text-[15px] leading-snug font-semibold sm:w-auto sm:justify-center sm:rounded-full sm:px-5 sm:text-center sm:text-[15.5px]';
+    'inline-flex min-h-12 w-full max-w-full items-center justify-between gap-3 rounded-2xl border-2 px-4 text-left text-[17px] leading-snug font-semibold sm:w-auto sm:justify-center sm:rounded-full sm:px-5 sm:text-center sm:text-[17px]';
   if (!pool.length) {
     // Skeletons only while a welcome request is actually in flight; a
     // seeded prompt never fetches suggestions (R3-03).
@@ -67,7 +67,7 @@ function SuggestionChips({ suggestions, pending = false }: { suggestions: string
       {shuffleable ? (
         <button
           type="button"
-          className="thingy-aui-shuffle inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-[13.5px] font-semibold text-quiet transition-colors hover:bg-toy hover:text-ink [&_svg]:size-[15px]"
+          className="thingy-aui-shuffle inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-[15px] font-semibold text-quiet transition-colors hover:bg-toy hover:text-ink [&_svg]:size-[15px]"
           onClick={() => setOffset((value) => (value + 3) % pool.length)}
         >
           <Icon name="shuffle" />
@@ -171,7 +171,7 @@ function Thread({
                       {welcome}
                     </p>
                     {welcomeSubtext ? (
-                      <p className="px-2 text-[15.5px] leading-normal text-[#3e4a63]">{welcomeSubtext}</p>
+                      <p className="px-2 text-[17px] leading-normal text-[#3e4a63]">{welcomeSubtext}</p>
                     ) : null}
                   </div>
                 </div>

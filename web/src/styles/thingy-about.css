@@ -21,7 +21,7 @@
   gap: 18px;
   min-width: 0;
   color: var(--thingy-body);
-  font-size: 18px;
+  font-size: var(--size-base);
   line-height: 1.65;
 }
 
@@ -74,7 +74,6 @@
 
 .thingy-source-band.is-weekly .thingy-family-w {
   width: 92px;
-  font-size: 60px;
 }
 
 .thingy-source-band.is-blog {
@@ -122,31 +121,27 @@
   padding: 22px 24px 26px;
 }
 
-.thingy-source-body .thingy-kicker {
-  font-size: 12px;
-  letter-spacing: 0.14em;
-}
-
 .thingy-source-body h3 {
   margin-bottom: 10px;
-  font-size: 22px;
-  font-weight: 800;
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: var(--thingy-heading-weight);
 }
 
 .thingy-source-body dl {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 8px 16px;
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.5;
 }
 
 .thingy-source-body dt {
   padding-top: 3px;
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-family: var(--font-label);
+  font-size: var(--thingy-size-label);
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--thingy-label-tracking);
   text-transform: uppercase;
   color: var(--thingy-meta);
 }
@@ -176,23 +171,18 @@
   gap: 14px;
 }
 
-.thingy-piece-head .thingy-kicker {
-  font-size: 12px;
-  letter-spacing: 0.14em;
-}
-
 .thingy-navy-card .thingy-piece-head .thingy-kicker {
   color: #c2c9d8;
 }
 
 .thingy-piece p {
-  font-size: 17px;
+  font-size: 19px;
   line-height: 1.65;
   color: var(--thingy-body);
 }
 
 .thingy-piece strong {
-  font-size: 20px;
+  font-size: 22px;
 }
 
 .thingy-navy-card.thingy-piece p {
@@ -208,11 +198,6 @@
   border: 2px dashed var(--thingy-rule);
   border-radius: 20px;
   background: var(--thingy-toy-cream);
-}
-
-.thingy-pipeline .thingy-kicker {
-  font-size: 12px;
-  letter-spacing: 0.14em;
 }
 
 .thingy-pipeline-row {
@@ -231,7 +216,7 @@
   border-radius: 999px;
   background: var(--thingy-paper);
   color: var(--thingy-ink);
-  font: 600 15px var(--font-mono);
+  font: 600 17px var(--font-ui);
   white-space: nowrap;
   box-shadow: 0 3px 0 var(--thingy-ink);
 }
@@ -263,7 +248,7 @@
 .thingy-pipeline .arr,
 .thingy-pipeline .op,
 .thingy-pipeline .bracket {
-  font: 600 20px var(--font-mono);
+  font: 600 22px var(--font-ui);
   color: var(--thingy-ink);
 }
 
@@ -292,7 +277,7 @@
   gap: 32px;
   margin-bottom: 40px;
   color: var(--thingy-body);
-  font-size: 18px;
+  font-size: var(--size-base);
   line-height: 1.65;
 }
 
@@ -322,8 +307,6 @@
 }
 
 .thingy-trust-head .thingy-kicker {
-  font-size: 12px;
-  letter-spacing: 0.14em;
   color: var(--thingy-ink);
 }
 
@@ -340,7 +323,7 @@
   flex: 2 1 460px;
   min-width: 0;
   color: var(--thingy-ink);
-  font-size: 17px;
+  font-size: 19px;
   line-height: 1.7;
 }
 
@@ -399,10 +382,10 @@
   border-radius: 20px 20px 0 0;
   background: var(--thingy-ink);
   color: #c2c9d8;
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-family: var(--font-label);
+  font-size: var(--thingy-size-label);
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--thingy-label-tracking);
 }
 
 .thingy-staff-body {
@@ -424,7 +407,7 @@
 
 .thingy-staff-body p {
   color: var(--thingy-body);
-  font-size: 17px;
+  font-size: 19px;
 }
 
 .thingy-staff-body p:not(.thingy-staff-foot) {
@@ -446,13 +429,13 @@
   border-radius: 999px;
   background: var(--thingy-brass);
   color: var(--thingy-ink);
-  font: 600 13px var(--font-mono);
-  letter-spacing: 0.06em;
+  font: 600 var(--thingy-size-label) var(--font-label);
+  letter-spacing: var(--thingy-label-tracking);
 }
 
 .thingy-note p {
   flex: 1 1 18rem;
-  font-size: 17px;
+  font-size: 19px;
   line-height: 1.6;
 }
 
@@ -489,26 +472,15 @@
   border-bottom: 2px solid var(--thingy-ink);
 }
 
-.thingy-rule-head .thingy-kicker {
-  font-size: 12px;
-  letter-spacing: 0.14em;
-}
-
 .thingy-rule-card p {
   color: var(--thingy-ink);
-  font-size: 17px;
+  font-size: 19px;
   line-height: 1.6;
 }
 
 @media (width <= 40rem) {
   .thingy-pockets.is-six {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .thingy-nutshell-body,
-  .thingy-two-up,
-  .thingy-prose {
-    font-size: 17px;
   }
 
   .thingy-piece {

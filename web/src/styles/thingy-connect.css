@@ -133,7 +133,7 @@
   top: 4%;
   right: 2%;
   font-weight: 800;
-  font-size: 18px;
+  font-size: 20px;
 }
 
 /* The reference card: cobalt icon tile, text, a round arrow link. */
@@ -148,7 +148,7 @@
 .thingy-refcard p {
   flex: 1 1 420px;
   color: var(--thingy-body);
-  font-size: 17px;
+  font-size: 19px;
   line-height: 1.6;
 }
 
@@ -238,14 +238,9 @@
   border-bottom: 2px solid var(--thingy-dot-red);
 }
 
-.thingy-index-card-head .thingy-kicker {
-  font-size: 12px;
-  letter-spacing: 0.14em;
-}
-
 .thingy-index-card p {
   color: var(--thingy-body);
-  font-size: 16px;
+  font-size: 18px;
   line-height: 28px;
   background-image: repeating-linear-gradient(to bottom, transparent 0 27px, #dce6f5 27px 28px);
 }
@@ -254,7 +249,7 @@
   display: block;
   margin-bottom: 4px;
   color: var(--thingy-ink);
-  font-size: 19px;
+  font-size: 21px;
 }
 
 .thingy-step-num {
@@ -270,13 +265,14 @@
   font-family: var(--font-display);
   font-style: italic;
   font-weight: 800;
-  font-size: 19px;
+  font-size: 21px;
 }
 
+/* The note's paragraph rule (thingy-about.css) would size the kicker as
+   body text; keep it a label. */
 .thingy-note .thingy-kicker {
   margin-bottom: 4px;
-  font-size: 12px;
-  letter-spacing: 0.14em;
+  font-size: var(--thingy-size-label);
 }
 
 /* Pick your client: stacked paper sections with numbered steps. */
@@ -345,7 +341,7 @@
 .thingy-step-body p,
 .thingy-client-text {
   color: var(--thingy-body);
-  font-size: 18px;
+  font-size: var(--size-base);
   line-height: 1.55;
 }
 
@@ -354,7 +350,7 @@
   color: var(--thingy-ink);
 }
 
-/* The URL ticket: toy cream, mono label over the code; the polka stub on
+/* The URL ticket: toy cream, a label over the mono code; the polka stub on
    the right holds the Copy button once JavaScript enables it. */
 .thingy-ticket {
   position: relative;
@@ -377,10 +373,10 @@
 }
 
 .thingy-ticket-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-label);
+  font-size: var(--thingy-size-label);
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--thingy-label-tracking);
   text-transform: uppercase;
   color: var(--thingy-meta);
 }
@@ -390,7 +386,7 @@
   border: 0;
   background: none;
   color: var(--thingy-ink);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   overflow-wrap: anywhere;
 }
@@ -447,7 +443,7 @@
   border-radius: 999px;
   background: var(--thingy-paper);
   color: var(--thingy-ink);
-  font: 800 16px var(--font-ui);
+  font: 800 18px var(--font-ui);
   box-shadow: var(--thingy-shadow-button);
   cursor: pointer;
   transition:
@@ -492,7 +488,7 @@
 }
 
 .thingy-webmcp > p {
-  font-size: 18px;
+  font-size: var(--size-base);
   line-height: 1.65;
 }
 
@@ -509,10 +505,10 @@
   border: 2px solid var(--thingy-mint);
   border-radius: 999px;
   color: var(--thingy-mint);
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-family: var(--font-label);
+  font-size: var(--thingy-size-label);
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--thingy-label-tracking);
   text-transform: uppercase;
 }
 
@@ -537,7 +533,7 @@
 }
 
 .thingy-fair .thingy-section-head > p:not(.thingy-kicker) {
-  font-size: 18px;
+  font-size: var(--size-base);
   line-height: 1.65;
 }
 
@@ -546,11 +542,6 @@
   flex-direction: column;
   gap: 22px;
   padding: 28px;
-}
-
-.thingy-bars > .thingy-kicker {
-  font-size: 12px;
-  letter-spacing: 0.14em;
 }
 
 .thingy-bar {
@@ -569,7 +560,7 @@
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 4px 12px;
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .thingy-bar-label > span:first-child {
@@ -578,7 +569,6 @@
 
 .thingy-bar-label > span:last-child,
 .thingy-bar-scale {
-  font-family: var(--font-mono);
   font-weight: 600;
   color: var(--thingy-meta);
 }
@@ -616,7 +606,7 @@
 .thingy-bar-scale {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 400;
 }
 
@@ -636,12 +626,7 @@
   .thingy-step-num {
     width: 36px;
     height: 36px;
-    font-size: 17px;
-  }
-
-  .thingy-step-body p,
-  .thingy-client-text {
-    font-size: 17px;
+    font-size: 19px;
   }
 
   /* PhoneConnect: the stub drops below the code with a dashed top. */
@@ -661,6 +646,8 @@
     display: none;
   }
 
+  /* The shared mono runs wider than the old one: at 14px the
+     MCP URL still fits one line on a 500px phone. */
   .thingy-static .thingy-ticket code {
     font-size: 14px;
   }
@@ -675,7 +662,7 @@
 
   .thingy-plug-bubble {
     max-width: 140px;
-    font-size: 15px;
+    font-size: 17px;
   }
 }
 

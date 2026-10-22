@@ -34,7 +34,7 @@
 }
 
 .thingy-home-guest-note {
-  font-size: 15px;
+  font-size: 17px;
   color: var(--thingy-body);
 }
 
@@ -127,8 +127,8 @@
   border-radius: 10px;
   box-shadow: 3px 3px 0 var(--thingy-ink);
   color: #fff;
-  font-family: var(--font-mono);
-  font-size: 13px;
+  font-family: var(--font-label);
+  font-size: var(--thingy-size-label);
   font-weight: 600;
   pointer-events: none;
 }
@@ -148,18 +148,13 @@
   transform: rotate(5deg);
 }
 
-.thingy-home-chip .thingy-w-disc {
-  font-size: 15px;
-}
-
 .thingy-home-psst {
   position: absolute;
   right: 0;
   bottom: -4px;
   left: 0;
   text-align: center;
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--thingy-meta);
   pointer-events: none;
 }
@@ -194,7 +189,7 @@
 .thingy-surface p {
   flex-grow: 1;
   color: var(--thingy-body);
-  font-size: 17px;
+  font-size: 19px;
 }
 
 .thingy-surface.is-chat p {
@@ -275,12 +270,11 @@
 
 .thingy-family-name {
   font-weight: 800;
-  font-size: 18px;
+  font-size: 20px;
 }
 
 .thingy-family-meta {
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--thingy-meta);
 }
 
@@ -398,11 +392,6 @@
     gap: 22px;
   }
 
-  .thingy-home-copy .thingy-kicker {
-    font-size: 12px;
-    letter-spacing: 0.14em;
-  }
-
   .thingy-home-copy .thingy-cta-row {
     align-self: stretch;
   }
@@ -410,7 +399,7 @@
   .thingy-bubble.thingy-home-bubble {
     max-width: 168px;
     padding: 10px 14px;
-    font-size: 14px;
+    font-size: 16px;
   }
 
   .thingy-home-asks {
@@ -440,7 +429,7 @@
   }
 
   .thingy-family-url {
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .thingy-family-lines {
@@ -452,7 +441,7 @@
   }
 
   .thingy-family-name {
-    font-size: 16px;
+    font-size: 18px;
   }
 }
 

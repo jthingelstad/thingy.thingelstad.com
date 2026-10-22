@@ -52,11 +52,14 @@
   font-weight: 600;
 }
 
+/* The frame is the shared one (--jt-frame, 1120px with 24px gutters, 16px
+   on phones), so the strip, header, content and footer line up with the
+   blog's and every other site's. */
 .thingy-wrap {
   width: 100%;
-  max-width: 1200px;
+  max-width: var(--jt-frame, 70rem);
   margin: 0 auto;
-  padding: 0 32px;
+  padding: 0 var(--jt-gutter, 1.5rem);
 }
 
 /* Display type: Archivo italic 800, wide. */
@@ -87,7 +90,7 @@
 
 .thingy-lede {
   max-width: 34rem;
-  font-size: clamp(18px, 1.6vw, 20px);
+  font-size: clamp(20px, 1.8vw, 22px);
   line-height: 1.55;
   color: var(--thingy-body);
 }
@@ -98,16 +101,17 @@
   border-radius: 3px;
 }
 
-/* Mono eyebrows: #3D526B on cream is 7.2:1. */
+/* Eyebrows: Inter labels, uppercase at 14px with the shared tracking.
+   #3D526B on cream is 7.2:1. */
 .thingy-kicker {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 14px;
-  font-family: var(--font-mono);
-  font-size: 13px;
+  font-family: var(--font-label);
+  font-size: var(--thingy-size-label);
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: var(--thingy-label-tracking);
   text-transform: uppercase;
   color: var(--thingy-meta);
 }
@@ -128,7 +132,7 @@
   background: var(--thingy-dot-red);
 }
 
-/* A section heading: mono eyebrow over a display H2. */
+/* A section heading: an eyebrow over a display H2. */
 .thingy-section {
   padding-bottom: 72px;
 }
@@ -140,29 +144,24 @@
   margin-bottom: 28px;
 }
 
-.thingy-section-head .thingy-kicker {
-  font-size: 12px;
-  letter-spacing: 0.14em;
-}
-
 .thingy-section-head > p:not(.thingy-kicker) {
   max-width: 44rem;
   color: var(--thingy-body);
-  font-size: 17px;
+  font-size: 19px;
 }
 
 /* ---- Jamie's sites strip, rendered at build time by vite.page-data.ts.
    The shared contract (thingelstad.com AGENTS.md, "The sites strip") is
    the blog v2 strip and every site renders it identically, so these
-   values are the contract's, not Thingy's palette; only the inner width
-   and side padding follow Thingy's header frame (1200px, 32px / 16px).
+   values are the contract's, not Thingy's palette; the inner width and
+   side padding are the shared frame (--jt-frame, --jt-gutter).
    Thingy has no dark mode, so the contract's dark values are left out.
    On #f3f3f5: label #5a5a66 6.1:1, links #16161a 16.3:1, the Weekly,
    Another Thing, Thingy and Things I've built marks 5.7:1, 6.2:1, 4.9:1
    and 5.3:1 (the blog stays ink). ---- */
 .sites-strip {
   background: #f3f3f5;
-  font-family: var(--font-sites);
+  font-family: var(--jt-font-body, 'Inter', system-ui, sans-serif);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -173,9 +172,9 @@
   align-items: center;
   gap: 4px 24px;
   min-height: 40px;
-  max-width: 1200px;
+  max-width: var(--jt-frame, 70rem);
   margin: 0 auto;
-  padding: 0 32px;
+  padding: 0 var(--jt-gutter, 1.5rem);
 }
 
 .sites-strip__label {
@@ -238,9 +237,9 @@
    The compact .thingy-page-nav base (share page) lives in
    thingy-page.css; .is-site is the full board header. ---- */
 .thingy-page-nav.is-site {
-  max-width: 1200px;
+  max-width: var(--jt-frame, 70rem);
   height: auto;
-  padding: 24px 32px;
+  padding: 24px var(--jt-gutter, 1.5rem);
   border-bottom: 0;
   flex-wrap: wrap;
   gap: 8px 16px;
@@ -313,8 +312,7 @@
 }
 
 .thingy-site-footer .thingy-footer-meta {
-  font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 14px;
   color: #c2c9d8;
 }
 
@@ -327,7 +325,7 @@
   align-items: center;
   gap: 0 8px;
   color: var(--thingy-cream);
-  font-size: 15px;
+  font-size: 17px;
 }
 
 .thingy-site-footer .h-card {
@@ -366,7 +364,7 @@
   padding: 0 8px;
   color: var(--thingy-cream);
   font-weight: 700;
-  font-size: 15px;
+  font-size: 17px;
   text-decoration: none;
 }
 
@@ -395,10 +393,10 @@
   padding: 6px 18px;
   background: var(--thingy-tangerine);
   color: var(--thingy-on-tangerine);
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-family: var(--font-label);
+  font-size: var(--thingy-size-label);
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--thingy-label-tracking);
   text-transform: uppercase;
 }
 
@@ -431,7 +429,7 @@
   background: var(--thingy-paper);
   box-shadow: 4px 4px 0 var(--thingy-ink);
   font-weight: 700;
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.35;
   transform: rotate(4deg);
 }
@@ -453,7 +451,7 @@
   background: var(--thingy-paper);
   color: var(--thingy-ink);
   font-weight: 600;
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.3;
   text-decoration: none;
 }
@@ -490,10 +488,10 @@
   border: 2px solid var(--thingy-brass);
   border-radius: 6px;
   background: var(--thingy-paper);
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-family: var(--font-label);
+  font-size: var(--thingy-size-label);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--thingy-label-tracking);
   text-transform: uppercase;
 }
 
@@ -528,7 +526,7 @@
 }
 
 .thingy-pocket-text {
-  font-size: 15px;
+  font-size: 17px;
   color: var(--thingy-body);
 }
 
@@ -611,7 +609,7 @@
   border: 2px dashed var(--thingy-rule);
   border-radius: 16px;
   color: var(--thingy-body);
-  font-size: 16px;
+  font-size: 18px;
 }
 
 /* Arrow links ("Connect an assistant ->"). */
@@ -621,7 +619,7 @@
   min-height: 44px;
   color: var(--thingy-clay);
   font-weight: 800;
-  font-size: 17px;
+  font-size: 19px;
   text-decoration: none;
 }
 
@@ -647,7 +645,7 @@
 .thingy-cta-row .thingy-btn {
   min-height: 56px;
   padding: 0 28px;
-  font-size: 18px;
+  font-size: 20px;
 }
 
 /* ---- Source art atoms (the W disc, Another Thing dots and cover,
@@ -663,7 +661,14 @@
   border-radius: 50%;
   background: #fcfcfa;
   color: var(--thingy-weekly);
-  font: italic 600 clamp(36px, 5vw, 60px) / 1 'Source Serif 4', georgia, serif;
+}
+
+.thingy-family-w::before {
+  content: '';
+  width: 100%;
+  height: 100%;
+  background: currentcolor;
+  mask: var(--thingy-w-glyph) center / 100% no-repeat;
 }
 
 .thingy-family-dots {
@@ -695,7 +700,7 @@
   color: var(--thingy-clay);
   font-family: var(--font-mono);
   font-weight: 600;
-  font-size: 15px;
+  font-size: 17px;
   overflow-wrap: anywhere;
 }
 
@@ -795,8 +800,8 @@
 .thingy-prose {
   max-width: 48rem;
   color: var(--thingy-body);
-  font-size: 18px;
-  line-height: 1.65;
+  font-size: var(--size-base);
+  line-height: var(--jt-line-height, 1.6);
 }
 
 .thingy-icon-tile.is-small {
@@ -817,19 +822,14 @@
   border-radius: 6px;
   background: var(--thingy-toy-cream);
   color: var(--thingy-ink);
-  font-size: 0.92em;
+  font-size: max(0.875rem, 0.92em);
 }
 
 @media (width <= 40rem) {
-  .thingy-wrap {
-    padding: 0 16px;
-  }
-
   /* Phone strip: one row that scrolls sideways, label hidden. */
   .sites-strip__inner {
     flex-wrap: nowrap;
     gap: 18px;
-    padding: 0 16px;
     overflow-x: auto;
     white-space: nowrap;
   }
@@ -844,7 +844,7 @@
   }
 
   .thingy-page-nav.is-site {
-    padding: 12px 16px 4px;
+    padding: 12px var(--jt-gutter, 1rem) 4px;
   }
 
   .thingy-page-nav.is-site .thingy-wordmark {
@@ -861,7 +861,7 @@
   .thingy-page-nav.is-site .thingy-signin {
     margin-left: auto;
     padding: 0 18px;
-    font-size: 15px;
+    font-size: 17px;
   }
 
   .thingy-section {
@@ -889,8 +889,7 @@
 
   .thingy-pocket-label {
     padding: 8px 6px;
-    font-size: 11px;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.02em;
   }
 
   .thingy-pocket-number {
@@ -903,7 +902,7 @@
   }
 
   .thingy-pocket-text {
-    font-size: 14px;
+    font-size: 16px;
   }
 
   .thingy-cta-row {

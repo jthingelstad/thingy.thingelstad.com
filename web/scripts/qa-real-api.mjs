@@ -180,7 +180,6 @@ function collectFailures(page) {
   page.on('requestfailed', (request) => {
     const url = request.url();
     const error = request.failure()?.errorText || '';
-    if (/fonts\.gstatic\.com/.test(url) && /aborted/i.test(error)) return;
     if (/ERR_ABORTED|aborted/i.test(error)) return;
     failures.push(`request: ${request.method()} ${url.slice(0, 140)} ${error}`);
   });

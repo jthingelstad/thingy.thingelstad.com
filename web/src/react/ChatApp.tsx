@@ -512,7 +512,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
               {guest ? (
                 <div className="mobile-chatbar-title flex min-w-0 flex-1 items-center gap-2.5 pl-2 md:pl-0">
                   <ThingyFace size={36} />
-                  <span className="thingy-display text-[21px] leading-none">Thingy</span>
+                  <span className="thingy-display text-[23px] leading-none">Thingy</span>
                 </div>
               ) : (
                 <HeaderTitle
@@ -528,7 +528,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                   <Tip label="Share conversation">
                     <button
                       type="button"
-                      className="mobile-chatbar-action inline-flex size-11 items-center justify-center gap-2 rounded-xl text-ink transition-colors hover:bg-toy md:w-auto md:rounded-full md:border-2 md:border-ink md:bg-paper md:px-4 md:text-sm md:font-bold [&_svg]:size-5 md:[&_svg]:size-4"
+                      className="mobile-chatbar-action inline-flex size-11 items-center justify-center gap-2 rounded-xl text-ink transition-colors hover:bg-toy md:w-auto md:rounded-full md:border-2 md:border-ink md:bg-paper md:px-4 md:text-[16px] md:font-bold [&_svg]:size-5 md:[&_svg]:size-4"
                       aria-label="Share conversation"
                       onClick={() => {
                         const entry = conversations.find((item) => item.id === activeId);
@@ -542,7 +542,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                 ) : null}
                 {guest ? (
                   <a
-                    className="thingy-btn thingy-btn-compact min-h-11 px-4 text-sm shadow-[0_3px_0_var(--thingy-ink)]"
+                    className="thingy-btn thingy-btn-compact min-h-11 px-4 text-[16px] shadow-[0_3px_0_var(--thingy-ink)]"
                     href={session.signInUrl('/chat/')}
                     data-tinylytics-event="librarian.guest_signin_click"
                   >
@@ -563,7 +563,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
             </div>
             {initial.from ? (
               <a
-                className="return-chip mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 py-1.5 text-[13px] font-semibold text-ink hover:border-accent [&_svg]:size-3.5"
+                className="return-chip mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 py-1.5 text-[14px] font-semibold text-ink hover:border-accent [&_svg]:size-3.5"
                 href={withRef(initial.from.href, 'thingy-return')}
                 data-tinylytics-event="network.return"
               >
@@ -582,7 +582,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                   className="thingy-polka w-[18px] shrink-0 border-r-2 border-dashed border-ink"
                   aria-hidden="true"
                 />
-                <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-3.5 py-2.5 text-[14px] leading-snug md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-4 md:px-4 md:text-[15px]">
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-3.5 py-2.5 text-[16px] leading-snug md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-4 md:px-4 md:text-[17px]">
                   <span>
                     {guestRemaining === 0 ? (
                       "You've used today's guest questions."

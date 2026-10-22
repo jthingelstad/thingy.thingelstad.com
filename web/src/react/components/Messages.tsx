@@ -91,7 +91,7 @@ function ResponseTimer() {
   if (!sawRunRef.current && !serverMs) return null;
   const shownMs = !running && serverMs ? serverMs : elapsed;
   return (
-    <span className="thingy-response-timer inline-flex min-w-0 items-center gap-1.5 font-mono text-[12px] text-quiet tabular-nums">
+    <span className="thingy-response-timer inline-flex min-w-0 items-center gap-1.5 text-[14px] text-quiet tabular-nums">
       {formatElapsed(shownMs)}
       {!running && tokens ? <span className="shrink-0">· {formatTokens(tokens)}</span> : null}
       {/* Before the first words the thinking card carries the phrase. */}
@@ -138,7 +138,7 @@ function ThinkingCard() {
   const lines = steps.split('\n').filter(Boolean);
   return (
     <div className="thingy-thinking mb-2 inline-flex max-w-full flex-col gap-1.5 rounded-[22px] border-4 border-bezel bg-screen px-[22px] py-4 text-mint shadow-[0_0_0_2px_var(--thingy-ink),0_6px_0_2px_var(--thingy-ink)]">
-      <span className="thingy-display flex items-center gap-3 text-[18px] text-bg md:text-[19px]">
+      <span className="thingy-display flex items-center gap-3 text-[20px] text-bg md:text-[21px]">
         <span className="min-w-0">{stripEllipsis(phrase || 'Thinking...')}</span>
         <span className="thingy-dots inline-flex shrink-0 gap-[5px]" aria-hidden="true">
           <span />
@@ -147,7 +147,7 @@ function ThinkingCard() {
         </span>
       </span>
       {lines.length ? (
-        <ul className="grid gap-[3px] font-mono text-[12.5px] leading-snug">
+        <ul className="grid gap-[3px] font-mono text-[14px] leading-snug">
           {lines.map((line, index) => {
             const current = index === lines.length - 1;
             const failed = line.startsWith('✗');
@@ -174,14 +174,14 @@ function ActivityPart(props: { text: string }) {
   if (!lines.length || (running && !hasText)) return null;
   return (
     <details className="thingy-aui-activity group/act mb-2">
-      <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 rounded-xl pr-2 font-mono text-[12px] font-semibold tracking-[0.04em] text-meta select-none hover:text-ink [&::-webkit-details-marker]:hidden">
+      <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 rounded-xl pr-2 text-[14px] font-semibold text-meta select-none hover:text-ink [&::-webkit-details-marker]:hidden">
         <span className="inline-block transition-transform group-open/act:rotate-90">›</span>
         Archive work{' '}
         <span className="font-normal">
           · {lines.length} step{lines.length === 1 ? '' : 's'}
         </span>
       </summary>
-      <ul className="mt-1 ml-1 grid gap-1 border-l-2 border-dashed border-rule pl-3 font-mono text-[12.5px] text-quiet">
+      <ul className="mt-1 ml-1 grid gap-1 border-l-2 border-dashed border-rule pl-3 font-mono text-[14px] text-quiet">
         {lines.map((line, index) => (
           // Failed steps arrive prefixed with ✗ from the stream - show them
           // in the error tone so the row reads like a failed command.
@@ -282,7 +282,7 @@ function SourcesFooter() {
             <span
               className={`relative flex shrink-0 items-center gap-2 border-ink max-sm:w-14 max-sm:justify-center max-sm:border-r-2 sm:h-10 sm:px-3 ${
                 kind === 'blog' ? 'sm:border-b-2' : ''
-              } font-mono text-[11px] font-semibold tracking-[0.14em] uppercase ${BAND[kind]}`}
+              } font-label text-[14px] font-semibold tracking-label uppercase ${BAND[kind]}`}
             >
               <SourceMark kind={kind} />
               {kind === 'blog' ? (
@@ -304,13 +304,13 @@ function SourcesFooter() {
               <span className="truncate max-sm:sr-only">{bandLabel}</span>
             </span>
             <span className="flex min-w-0 flex-1 flex-col gap-1 px-3 py-2.5 sm:gap-1.5 sm:px-3.5 sm:py-3">
-              <span className="flex justify-between gap-2 font-mono text-[11.5px] font-semibold">
+              <span className="flex justify-between gap-2 text-[14px] font-semibold">
                 <span className={BADGE[kind]}>{badge}</span>
                 {date ? <span className="text-quiet tabular-nums">{date}</span> : null}
               </span>
-              {label ? <span className="line-clamp-2 text-[15px] leading-snug font-bold text-ink">{label}</span> : null}
+              {label ? <span className="line-clamp-2 text-[17px] leading-snug font-bold text-ink">{label}</span> : null}
               {footer ? (
-                <span className="truncate border-t border-[#e2d4b5] pt-1.5 font-mono text-[11px] text-quiet max-sm:hidden">
+                <span className="truncate border-t border-[#e2d4b5] pt-1.5 text-[14px] text-quiet max-sm:hidden">
                   {footer}
                 </span>
               ) : null}
@@ -357,14 +357,14 @@ export function AssistantMessage() {
           <span className="md:hidden">
             <MessageFace size={40} />
           </span>
-          <span className="shrink-0 text-[15px] font-extrabold md:text-base">Thingy</span>
+          <span className="shrink-0 text-[17px] font-extrabold md:text-[18px]">Thingy</span>
           <ResponseTimer />
         </div>
         <ThinkingCard />
         <MessagePrimitive.Parts components={{ Text: AssistantMarkdown, Reasoning: ActivityPart }} />
         <SourcesFooter />
         <MessagePrimitive.Error>
-          <ErrorPrimitive.Root className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl border-2 border-danger bg-danger-tint px-4 py-3 text-[15px] text-danger">
+          <ErrorPrimitive.Root className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl border-2 border-danger bg-danger-tint px-4 py-3 text-[17px] text-danger">
             <ErrorPrimitive.Message />
             <ActionBarPrimitive.Reload asChild>
               <button
@@ -447,7 +447,7 @@ export function AssistantMessage() {
 
 function BranchPickerFooter() {
   return (
-    <BranchPickerPrimitive.Root hideWhenSingleBranch className="ml-1 flex items-center gap-0.5 text-xs text-quiet">
+    <BranchPickerPrimitive.Root hideWhenSingleBranch className="ml-1 flex items-center gap-0.5 text-[14px] text-quiet">
       <Tip label="Previous version">
         <BranchPickerPrimitive.Previous asChild>
           <button type="button" className={ACTION_BUTTON} aria-label="Previous version">
@@ -455,7 +455,7 @@ function BranchPickerFooter() {
           </button>
         </BranchPickerPrimitive.Previous>
       </Tip>
-      <span className="font-mono tabular-nums">
+      <span className="tabular-nums">
         <BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
       </span>
       <Tip label="Next version">
@@ -475,7 +475,7 @@ export function UserMessage() {
   );
   return (
     <MessagePrimitive.Root className="librarian-message librarian-message-user group flex w-full flex-col items-end pt-3">
-      <div className="max-w-[84%] rounded-[20px_20px_6px_20px] bg-ink px-4 py-3 text-[16px] leading-[1.45] break-words whitespace-pre-wrap text-bg md:max-w-[70%] md:rounded-[22px_22px_6px_22px] md:px-5 md:py-3.5 md:text-[17px] md:leading-normal">
+      <div className="max-w-[84%] rounded-[20px_20px_6px_20px] bg-ink px-4 py-3 text-[18px] leading-[1.45] break-words whitespace-pre-wrap text-bg md:max-w-[70%] md:rounded-[22px_22px_6px_22px] md:px-5 md:py-3.5 md:text-[19px] md:leading-normal">
         <MessagePrimitive.Parts />
       </div>
       <div className={`${ACTIONS_ROW} -mr-2.5 justify-end`}>
@@ -520,7 +520,7 @@ export function EditComposer() {
     <ComposerPrimitive.Root className="my-3 w-full rounded-[22px] border-2 border-ink bg-paper p-3.5 shadow-[0_4px_0_var(--thingy-ink)] focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-(--thingy-focus)">
       <ComposerPrimitive.Input
         aria-label="Edit message"
-        className="max-h-[40dvh] w-full resize-none bg-transparent px-1 font-sans text-base text-ink outline-none md:text-[17px]"
+        className="max-h-[40dvh] w-full resize-none bg-transparent px-1 font-sans text-[18px] text-ink outline-none md:text-[19px]"
       />
       <div className="mt-3 flex justify-end gap-2.5">
         <ComposerPrimitive.Cancel asChild>

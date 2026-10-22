@@ -47,14 +47,14 @@ function ScreenAvatar({ initial, className = '' }: { initial: string; className?
 function TierBadge({ supporting }: { supporting: boolean }) {
   if (supporting) {
     return (
-      <span className="thingy-tier-stamp thingy-display mt-3 ml-1.5 inline-flex -rotate-4 items-center gap-2 rounded-[10px] border-[2.5px] border-weekly-deep bg-weekly-tint py-1.5 pr-3.5 pl-2.5 text-[17px] text-weekly-deep shadow-[0_0_0_3px_var(--thingy-paper),0_0_0_5px_var(--thingy-brass)] [&_svg]:size-[18px] [&_svg]:fill-brass [&_svg]:stroke-weekly-deep [&_svg]:stroke-[1.6]">
+      <span className="thingy-tier-stamp thingy-display mt-3 ml-1.5 inline-flex -rotate-4 items-center gap-2 rounded-[10px] border-[2.5px] border-weekly-deep bg-weekly-tint py-1.5 pr-3.5 pl-2.5 text-[19px] text-weekly-deep shadow-[0_0_0_3px_var(--thingy-paper),0_0_0_5px_var(--thingy-brass)] [&_svg]:size-[18px] [&_svg]:fill-brass [&_svg]:stroke-weekly-deep [&_svg]:stroke-[1.6]">
         <Icon name="star" />
         {TIER_SUPPORTING}
       </span>
     );
   }
   return (
-    <span className="thingy-tier-tag mt-2.5 inline-flex items-center gap-2 rounded-full border-2 border-ink bg-toy py-1 pr-3.5 pl-1 text-[14px] font-bold text-ink">
+    <span className="thingy-tier-tag mt-2.5 inline-flex items-center gap-2 rounded-full border-2 border-ink bg-toy py-1 pr-3.5 pl-1 text-[16px] font-bold text-ink">
       <span className="thingy-w-disc size-6 bg-weekly text-white" aria-hidden="true" />
       {TIER_READER}
     </span>
@@ -178,9 +178,9 @@ function ProfileModal({
               mark={{ icon: 'users-round' }}
               closeLabel="Close Profile"
             />
-            <section className="min-h-5 pt-2 text-[14px] text-meta" aria-live="polite">
+            <section className="min-h-5 pt-2 text-[16px] text-meta" aria-live="polite">
               <span>{busyAction === 'load' ? 'Loading profile...' : ''}</span>
-              {profileError ? <small className="text-[14px] text-danger">{profileError}</small> : null}
+              {profileError ? <small className="text-[16px] text-danger">{profileError}</small> : null}
             </section>
             <div className="thingy-memory-panel grid gap-5 pt-1">
               <div
@@ -189,7 +189,7 @@ function ProfileModal({
                 className="thingy-library-card overflow-hidden rounded-[20px] border-2 border-ink bg-paper shadow-[0_6px_0_var(--thingy-ink)]"
               >
                 <div className="flex h-10 items-center justify-between border-b-2 border-ink bg-tangerine px-5">
-                  <span className="font-mono text-[12px] font-semibold tracking-[0.16em] text-on-tangerine uppercase">
+                  <span className="font-label text-[14px] font-semibold tracking-label text-on-tangerine uppercase">
                     Thingy library card
                   </span>
                   <span className="size-3.5 rounded-full border-2 border-ink bg-bg" aria-hidden="true" />
@@ -201,17 +201,17 @@ function ProfileModal({
                       {cardName}
                     </span>
                     {email && email !== cardName ? (
-                      <span className="max-w-full truncate font-mono text-[14px] text-meta">{email}</span>
+                      <span className="max-w-full truncate text-[16px] text-meta">{email}</span>
                     ) : null}
                     <TierBadge supporting={supporting} />
                   </div>
                   {cardIssued ? (
                     <div className="thingy-card-stamp flex w-[176px] shrink-0 rotate-[1.5deg] flex-col gap-1 rounded-xl border-2 border-ink px-3.5 pt-2.5 pb-3 max-sm:w-full max-sm:rotate-0 max-sm:bg-none max-sm:flex-row max-sm:flex-wrap max-sm:items-baseline max-sm:gap-x-3">
-                      <span className="font-mono text-[11px] font-semibold tracking-[0.14em] text-meta uppercase">
+                      <span className="font-label text-[14px] font-semibold tracking-label text-meta uppercase">
                         Card issued
                       </span>
-                      <span className="thingy-display text-[22px] leading-[1.1]">{cardIssued}</span>
-                      <span className="font-mono text-[11.5px] text-meta">First seen</span>
+                      <span className="thingy-display text-[24px] leading-[1.1]">{cardIssued}</span>
+                      <span className="text-[14px] text-meta">First seen</span>
                     </div>
                   ) : null}
                 </div>
@@ -233,14 +233,14 @@ function ProfileModal({
                 aria-label="Delete Thingy Profile"
               >
                 <div className="grid gap-1">
-                  <h3 className="text-[18px] font-extrabold text-danger">Delete Thingy Profile</h3>
-                  <p className="text-[15px] leading-[1.45] text-ink">
+                  <h3 className="font-heading text-[20px] font-extrabold text-danger">Delete Thingy Profile</h3>
+                  <p className="text-[17px] leading-[1.45] text-ink">
                     This deletes your Thingy profile and conversations. It does not unsubscribe you from Weekly Thing.
                   </p>
                 </div>
                 <button
                   type="button"
-                  className="thingy-btn thingy-btn-danger min-h-[46px] px-5 text-[15px]"
+                  className="thingy-btn thingy-btn-danger min-h-[46px] px-5 text-[17px]"
                   disabled={Boolean(busyAction)}
                   onClick={() => void handleDeleteProfile()}
                 >
@@ -263,7 +263,7 @@ function UsageMeters({ meters }: { meters: ReturnType<typeof usageMeters> }) {
     <div className="thingy-usage-meters mt-2.5 grid grid-cols-2 gap-[18px] max-sm:grid-cols-1" aria-hidden="true">
       {meters.map((meter) => (
         <div key={meter.kind} className="grid gap-[5px]">
-          <div className="flex justify-between font-mono text-[11px] font-semibold tracking-[0.08em] text-meta uppercase">
+          <div className="flex justify-between font-label text-[14px] font-semibold tracking-label text-meta uppercase">
             <span>{meter.label}</span>
             <span>{meter.value}</span>
           </div>
@@ -304,7 +304,7 @@ function AccountMenuBody({
         }
       >
         <div
-          className="border-b-2 border-ink bg-tangerine px-4 py-[7px] font-mono text-[11px] font-semibold tracking-[0.16em] text-on-tangerine uppercase"
+          className="border-b-2 border-ink bg-tangerine px-4 py-[7px] font-label text-[14px] font-semibold tracking-label text-on-tangerine uppercase"
           aria-hidden="true"
         >
           Hello, my name is
@@ -328,7 +328,7 @@ function AccountMenuBody({
               Save
             </button>
           </div>
-          <p className="min-h-5 text-[13px] text-meta" aria-live="polite">
+          <p className="min-h-5 text-[14px] text-meta" aria-live="polite">
             {nameStatus}
           </p>
         </form>
@@ -343,8 +343,8 @@ function AccountMenuBody({
             <Icon name="users-round" />
           </span>
           <span className="grid min-w-0 flex-1 gap-px">
-            <strong className="text-[15px] font-extrabold text-ink">Show Profile</strong>
-            <small className="text-[13px] text-ink">Account details and activity</small>
+            <strong className="text-[17px] font-extrabold text-ink">Show Profile</strong>
+            <small className="text-[14px] text-ink">Account details and activity</small>
           </span>
           {phone ? (
             <span className="text-meta [&_svg]:size-5" aria-hidden="true">
@@ -355,13 +355,13 @@ function AccountMenuBody({
         <div className="mx-1 my-1 border-t-2 border-dashed border-rule" role="separator" />
         <button
           type="button"
-          className="flex min-h-11 items-center gap-2.5 rounded-xl px-2.5 text-left text-[15px] font-extrabold text-danger transition-colors hover:bg-danger-tint [&_svg]:size-[18px]"
+          className="flex min-h-11 items-center gap-2.5 rounded-xl px-2.5 text-left text-[17px] font-extrabold text-danger transition-colors hover:bg-danger-tint [&_svg]:size-[18px]"
           onClick={onLogout}
         >
           <Icon name="log-out" />
           Logout
         </button>
-        <p className="rail-menu-build px-2.5 pt-0.5 font-mono text-[11.5px] text-meta" title="Thingy build">
+        <p className="rail-menu-build px-2.5 pt-0.5 font-mono text-[14px] text-meta" title="Thingy build">
           Build {buildId()}
         </p>
       </div>
@@ -420,7 +420,7 @@ export function AccountPanel() {
 
   const avatar = (size: string): ReactNode => (
     <span
-      className={`grid ${size} shrink-0 place-items-center rounded-full border-2 border-rail-deep bg-mint font-sans text-base font-extrabold text-ink`}
+      className={`grid ${size} shrink-0 place-items-center rounded-full border-2 border-rail-deep bg-mint font-sans text-[18px] font-extrabold text-ink`}
       aria-hidden="true"
     >
       {initial}
@@ -436,8 +436,8 @@ export function AccountPanel() {
     >
       {avatar('size-[38px]')}
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-sans text-[15px] font-bold text-bg">{display || 'Signed in'}</span>
-        <span className="block truncate font-mono text-[11px] tracking-[0.04em] text-rail-field">{tier}</span>
+        <span className="block truncate font-sans text-[17px] font-bold text-bg">{display || 'Signed in'}</span>
+        <span className="block truncate text-[14px] text-rail-field">{tier}</span>
       </span>
       <span className="text-rail-icon [&_svg]:size-4" aria-hidden="true">
         <Icon name="chevron-down" />
@@ -458,14 +458,12 @@ export function AccountPanel() {
               >
                 <SheetGrab />
                 <div className="flex items-center gap-3 pb-3.5">
-                  {avatar('size-11 border-ink text-[18px]')}
+                  {avatar('size-11 border-ink text-[20px]')}
                   <div className="min-w-0 flex-1">
                     <Dialog.Title asChild>
                       <h2 className="thingy-modal-title">Account</h2>
                     </Dialog.Title>
-                    <p className="truncate font-mono text-[12.5px] text-meta">
-                      {display ? `${display} · ${tier}` : tier}
-                    </p>
+                    <p className="truncate text-[14px] text-meta">{display ? `${display} · ${tier}` : tier}</p>
                   </div>
                   <Dialog.Close asChild>
                     <button type="button" className="thingy-icon-btn -mr-1 self-start" aria-label="Close">

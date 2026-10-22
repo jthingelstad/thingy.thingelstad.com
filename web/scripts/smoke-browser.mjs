@@ -217,6 +217,73 @@ function assertNoUiFailures(failures, surface) {
   assert.deepEqual(failures, [], `${surface} emitted browser errors`);
 }
 
+// The shared type (thingelstad.com shared/tokens.css, 2026-10-22): Inter
+// and Archivo are self-hosted, nothing reaches Google Fonts, and no visible
+// text is set below the blog scale's 14px floor.
+const GOOGLE_FONTS = /fonts\.(googleapis|gstatic)\.com/;
+
+function watchFontHosts(page) {
+  const hits = [];
+  page.on('request', (request) => {
+    if (GOOGLE_FONTS.test(request.url())) hits.push(request.url());
+  });
+  return hits;
+}
+
+async function assertSharedType(page, surface, { display = true } = {}) {
+  const report = await page.evaluate(async () => {
+    await document.fonts.ready;
+    const loaded = (family) =>
+      [...document.fonts].some((face) => face.family.replace(/['"]/g, '') === family && face.status === 'loaded');
+    const small = [];
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const text = node.textContent.trim();
+      const element = node.parentElement;
+      if (!text || !element || element.closest('svg, .sr-only, [hidden]')) continue;
+      const box = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      if (box.width <= 1 || box.height <= 1 || style.visibility === 'hidden') continue;
+      const size = Number.parseFloat(style.fontSize);
+      if (size < 13.95)
+        small.push(
+          `${element.tagName.toLowerCase()}.${[...element.classList].join('.')} ${size}px "${text.slice(0, 32)}"`
+        );
+    }
+    return { inter: loaded('Inter'), archivo: loaded('Archivo'), small };
+  });
+  assert.ok(report.inter, `${surface} renders in the self-hosted Inter`);
+  if (display) assert.ok(report.archivo, `${surface} renders its display type in the self-hosted Archivo`);
+  assert.deepEqual(report.small, [], `${surface} sets no visible text below 14px`);
+}
+
+async function checkSharedType(browser) {
+  for (const width of [1280, 500]) {
+    const context = await browser.newContext({ viewport: { width, height: 900 } });
+    const page = await context.newPage();
+    const fontHosts = watchFontHosts(page);
+    // Static pages never need the Librarian; anything unmocked is refused
+    // here rather than reaching it through the preview proxy.
+    await page.route(
+      (url) => url.href.startsWith(`${apiHost}/`),
+      (route) => route.fulfill({ status: 404, contentType: 'application/json', body: '{}' })
+    );
+    await routeMockApi(page);
+    for (const path of ['/', '/about/', '/connect/', '/connect/reference/', '/404.html']) {
+      await page.goto(`${baseUrl}${path}`);
+      await page.waitForLoadState('load');
+      await assertSharedType(page, `${path} at ${width}px`);
+      const widths = await page.evaluate(() => ({
+        doc: document.documentElement.scrollWidth,
+        viewport: window.innerWidth
+      }));
+      assert.ok(widths.doc <= widths.viewport + 1, `${path} must not overflow at ${width}px (${widths.doc})`);
+    }
+    assert.deepEqual(fontHosts, [], `no page at ${width}px requests Google Fonts`);
+    await context.close();
+  }
+}
+
 async function assertAccessible(page, surface) {
   const results = await new AxeBuilder({ page }).analyze();
   assert.deepEqual(
@@ -230,6 +297,7 @@ async function checkSignInRedirect(browser) {
   const context = await browser.newContext();
   const page = await context.newPage();
   const failures = collectUiFailures(page);
+  const fontHosts = watchFontHosts(page);
   await page.goto(
     `${baseUrl}/chat/?email=thingy%40thingelstad.com&prompt=What%20about%20RSS%3F&from=https%3A%2F%2Fweekly.thingelstad.com%2Farchive%2F123%2F&corpus=blog`
   );
@@ -244,6 +312,8 @@ async function checkSignInRedirect(browser) {
     '800',
     'the sign-in heading renders at the display weight'
   );
+  await assertSharedType(page, 'sign-in');
+  assert.deepEqual(fontHosts, [], 'sign-in requests no Google Fonts');
   await assertAccessible(page, 'sign-in');
   assertNoUiFailures(failures, 'sign-in redirect');
   await context.close();
@@ -371,6 +441,7 @@ async function checkChat(browser) {
   await seedSession(context);
   const page = await context.newPage();
   const failures = collectUiFailures(page);
+  const fontHosts = watchFontHosts(page);
   const mocks = await routeMockApi(page, { holdWelcome: true });
   // An inbound cross-site ref (?ref=weekly-issue) must survive the first
   // URL sync: Tinylytics may load after it and still needs to see it.
@@ -439,6 +510,17 @@ async function checkChat(browser) {
   );
   await page.waitForSelector('.thingy-response-timer');
   assert.match(await page.locator('.thingy-response-timer').textContent(), /4s\s*· 12k tokens/);
+  // The answer reads at the shared body size (19px on a wide screen).
+  assert.equal(
+    await page
+      .locator('.librarian-answer-content')
+      .first()
+      .evaluate((node) => getComputedStyle(node).fontSize),
+    '19px',
+    'answers read at the shared body size'
+  );
+  await assertSharedType(page, 'chat with an answer');
+  assert.deepEqual(fontHosts, [], 'chat requests no Google Fonts');
 
   // Permalink + tab title: the URL names the conversation the mock
   // stream minted, and Back returns to the clean new-chat URL.
@@ -566,6 +648,7 @@ async function checkTouchChat(browser) {
   const sheetBox = await sheet.boundingBox();
   assert.ok(sheetBox && Math.abs(sheetBox.y + sheetBox.height - 844) <= 1, 'the action sheet sits on the bottom edge');
   assert.ok(sheetBox && sheetBox.width >= 389, 'the action sheet spans the phone width');
+  await assertSharedType(page, 'touch action sheet', { display: false });
   await assertAccessible(page, 'touch action sheet');
   await sheet.getByRole('button', { name: 'Delete' }).tap();
   const confirm = page.getByRole('dialog', { name: 'Delete this conversation?' });
@@ -696,6 +779,7 @@ async function main() {
     const browser = await browserType.launch();
     try {
       await checkSignInRedirect(browser);
+      await checkSharedType(browser);
       await checkGuestPreview(browser);
       await checkMobileHome(browser);
       await checkReactChatGuest(browser);

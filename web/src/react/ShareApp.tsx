@@ -52,7 +52,7 @@ function friendlyDate(value: unknown) {
 // a toy-cream invitation; a failed load gets the mascot and a retry.
 const STATE_TITLE =
   'thingy-display m-0 max-w-[680px] text-[32px] leading-[1.05] text-balance text-ink sm:text-[48px] sm:leading-[1.02]';
-const STATE_BODY = 'm-0 max-w-[560px] text-[16px] leading-[1.55] text-ink-soft sm:text-[18px]';
+const STATE_BODY = 'm-0 max-w-[560px] text-[18px] leading-[1.55] text-ink-soft sm:text-[20px]';
 
 function Unavailable({ signedIn }: { signedIn: boolean }) {
   return (
@@ -65,12 +65,12 @@ function Unavailable({ signedIn }: { signedIn: boolean }) {
         </p>
       </div>
       <aside className="thingy-shared-cta flex w-full max-w-[560px] flex-col items-center gap-4 rounded-[20px] border-2 border-ink bg-toy p-5 shadow-[0_6px_0_var(--thingy-ink)] sm:gap-[18px] sm:px-7 sm:py-6">
-        <p className="m-0 text-[16px] leading-[1.55] text-ink sm:text-[17px]">
+        <p className="m-0 text-[18px] leading-[1.55] text-ink sm:text-[19px]">
           Thingy answers questions about Jamie Thingelstad&rsquo;s public archive &mdash; more than twenty years of
           writing, with citations.
         </p>
         <a
-          className="thingy-shared-cta-button thingy-btn thingy-btn-primary min-h-[52px] px-6 text-[17px] sm:min-h-14 sm:px-7 sm:text-[18px] [&_svg]:size-5"
+          className="thingy-shared-cta-button thingy-btn thingy-btn-primary min-h-[52px] px-6 text-[19px] sm:min-h-14 sm:px-7 sm:text-[20px] [&_svg]:size-5"
           href="/chat/"
           data-tinylytics-event="librarian.share_cta"
         >
@@ -104,7 +104,7 @@ function LoadFailed({ onRetry }: { onRetry: () => void }) {
       </div>
       <button
         type="button"
-        className="thingy-error-retry thingy-btn thingy-btn-secondary min-h-[52px] px-[26px] text-[17px] font-extrabold [&_svg]:size-[18px]"
+        className="thingy-error-retry thingy-btn thingy-btn-secondary min-h-[52px] px-[26px] text-[19px] font-extrabold [&_svg]:size-[18px]"
         onClick={onRetry}
       >
         <Icon name="rotate-ccw" />
@@ -157,7 +157,7 @@ function Ticket({
         className="thingy-polka w-5 shrink-0 border-r-2 border-dashed border-ink [background-size:12px_12px] sm:w-[30px] sm:[background-size:16px_16px]"
         aria-hidden="true"
       />
-      <div className="flex grow flex-col items-start gap-3 px-3.5 pt-3.5 pb-4 text-[15px] leading-[1.45] text-ink sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4 sm:px-[18px] sm:py-3.5 sm:text-[16px]">
+      <div className="flex grow flex-col items-start gap-3 px-3.5 pt-3.5 pb-4 text-[17px] leading-[1.45] text-ink sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4 sm:px-[18px] sm:py-3.5 sm:text-[18px]">
         {children}
         {action}
       </div>
@@ -241,7 +241,7 @@ export function ShareApp({ token = '' }: { token?: string }) {
         <h1 className="thingy-display m-0 text-[36px] leading-[1.02] text-balance text-ink sm:text-[56px] sm:leading-none">
           {String(payload?.conversation?.title || 'A Thingy conversation')}
         </h1>
-        <p className="m-0 font-mono text-[12px] leading-normal text-meta sm:text-[13px]">
+        <p className="m-0 text-[14px] leading-normal text-meta sm:text-[15px]">
           Shared from a Thingy conversation
           {sharedOn ? ` · ${sharedOn}` : ''}
         </p>

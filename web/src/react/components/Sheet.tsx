@@ -72,7 +72,7 @@ export function DialogHeader({
         <Dialog.Title asChild>
           <h2 className={`thingy-modal-title ${titleClassName}`}>{title}</h2>
         </Dialog.Title>
-        {subtitle ? <p className="mt-1 text-[14px] leading-snug text-meta">{subtitle}</p> : null}
+        {subtitle ? <p className="mt-1 text-[16px] leading-snug text-meta">{subtitle}</p> : null}
       </div>
       <Dialog.Close asChild>
         <button type="button" className="thingy-icon-btn -mr-1.5 self-start" aria-label={closeLabel}>

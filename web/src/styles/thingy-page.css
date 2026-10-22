@@ -25,7 +25,7 @@
 .thingy-page .lede {
   margin: 0 0 2.2rem;
   color: var(--thingy-body);
-  font-size: 1.15rem;
+  font-size: 1.3125rem;
 }
 
 .thingy-page h2 {
@@ -42,7 +42,7 @@
 .thingy-page h3 {
   margin: 1.4rem 0 0.4rem;
   color: var(--thingy-ink);
-  font-size: 1.1rem;
+  font-size: 1.25rem;
 }
 
 .thingy-page p {
@@ -52,7 +52,7 @@
 .thingy-page code,
 .thingy-page pre {
   font-family: var(--font-mono);
-  font-size: 0.86em;
+  font-size: max(0.875rem, 0.86em);
   background: var(--thingy-toy-cream);
   color: var(--thingy-ink);
   border-radius: 6px;
@@ -132,14 +132,15 @@
 .thingy-page footer {
   text-align: center;
   margin-top: 3rem;
-  font-size: 0.95rem;
+  font-size: 1.0625rem;
   color: var(--thingy-meta);
 }
 
 /* Top navigation: the compact one-row header the share page (/c/) uses,
    exactly 57px tall (44px targets + 6px padding + 1px rule) because
-   ShareApp sizes its shell as calc(100dvh - 57px). The static pages add
-   .is-site for the full board header (thingy-static.css). */
+   ShareApp sizes its shell as calc(100dvh - 57px). Its content lines up
+   with the shared frame (--jt-frame less its gutters). The static pages
+   add .is-site for the full board header (thingy-static.css). */
 .thingy-page-nav {
   display: flex;
   align-items: center;
@@ -147,7 +148,7 @@
   width: 100%;
   height: 57px;
   margin: 0 auto;
-  padding: 6px max(16px, calc((100% - 1136px) / 2));
+  padding: 6px max(var(--jt-gutter, 1rem), calc((100% - var(--jt-frame, 70rem)) / 2 + var(--jt-gutter, 1.5rem)));
   border-bottom: 1px solid var(--thingy-rule);
   background: var(--thingy-cream);
 }
@@ -162,7 +163,7 @@
   font-style: italic;
   font-weight: 800;
   font-stretch: 112%;
-  font-size: 22px;
+  font-size: 24px;
   letter-spacing: -0.01em;
   text-decoration: none;
 }
@@ -191,7 +192,7 @@
   color: var(--thingy-ink);
   font-family: var(--font-ui);
   font-weight: 600;
-  font-size: 16px;
+  font-size: 18px;
   text-decoration: none;
 }
 
@@ -225,16 +226,15 @@
 
 .thingy-page .crumbs {
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
+  font-family: var(--font-label);
+  font-size: var(--thingy-size-label);
+  letter-spacing: var(--thingy-label-tracking);
   text-transform: uppercase;
   color: var(--thingy-meta);
 }
 
 .thingy-page .ref-meta {
-  font-family: var(--font-mono);
-  font-size: 0.82rem;
+  font-size: 0.9375rem;
   color: var(--thingy-meta);
   margin: -1.4rem 0 2rem;
 }
@@ -256,7 +256,7 @@
 
 .thingy-page .table-scroll table {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 /* Six budget columns need a readable measure; swipe or use arrow keys on phones. */
@@ -265,9 +265,10 @@
 }
 
 .thingy-page .table-scroll th {
-  font-size: 0.8rem;
+  font-family: var(--font-label);
+  font-size: var(--thingy-size-label);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: var(--thingy-label-tracking);
   color: var(--thingy-meta);
 }
 
@@ -296,7 +297,7 @@
 
 .thingy-page .req {
   display: inline-block;
-  font-size: 0.72rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--thingy-clay);
 }
@@ -311,7 +312,7 @@
 }
 
 .thingy-page .ref-toc h2 {
-  font-size: 1rem;
+  font-size: 1.125rem;
   margin: 0.6rem 0 0.4rem;
 }
 
@@ -332,7 +333,7 @@
 
 .thingy-page .ref-toc .toc-groups ul {
   padding-left: 1rem;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .thingy-page .ref-toc li {
@@ -361,14 +362,15 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 0.2rem 0.6rem;
-  font-size: 1.12rem;
+  font-size: 1.25rem;
 }
 
 .thingy-page .tool h4 {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-family: var(--font-label);
+  font-size: var(--thingy-size-label);
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--thingy-label-tracking);
   color: var(--thingy-meta);
   margin: 1rem 0 0.3rem;
 }
@@ -383,7 +385,7 @@
 }
 
 .thingy-page .tool-name {
-  font-size: 0.85rem;
+  font-size: 0.9375rem;
   font-weight: 400;
 }
 
@@ -395,8 +397,7 @@
 }
 
 .thingy-page .badge {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.875rem;
   font-weight: 600;
   padding: 0.1rem 0.55rem;
   border-radius: 999px;
@@ -417,7 +418,7 @@
 }
 
 .thingy-page .note {
-  font-size: 0.92rem;
+  font-size: 1rem;
   padding: 0.6rem 0.9rem;
   border: 2px dashed var(--thingy-rule);
   border-radius: 12px;
@@ -425,26 +426,28 @@
 }
 
 .thingy-page .fields {
-  font-size: 0.93rem;
+  font-size: 1.0625rem;
 }
 
 .thingy-page .fields .type {
   color: var(--thingy-meta);
-  font-size: 0.85em;
+  font-size: max(0.875rem, 0.85em);
 }
 
 .thingy-page details {
   margin: 0.6rem 0;
 }
 
+/* Flex drops the spaces around an inline <code>; the gap puts them back. */
 .thingy-page summary {
   display: flex;
   align-items: center;
+  gap: 0.3em;
   min-height: 44px;
   cursor: pointer;
   color: var(--thingy-clay);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1.0625rem;
 }
 
 .thingy-page summary:hover {
@@ -454,7 +457,7 @@
 .thingy-page details pre {
   max-height: 32rem;
   overflow: auto;
-  font-size: 0.8rem;
+  font-size: 0.875rem;
 }
 
 .thingy-page details blockquote,
@@ -464,11 +467,11 @@
   border-left: 3px solid var(--thingy-brass);
   color: var(--thingy-body);
   font-style: normal;
-  font-size: 0.93rem;
+  font-size: 1.0625rem;
 }
 
 .thingy-page section > pre {
-  font-size: 0.82rem;
+  font-size: 0.875rem;
 }
 
 .thingy-page section[id] {
@@ -499,7 +502,7 @@
   box-shadow: 0 4px 0 var(--thingy-ink);
   padding: 0.7rem 0.9rem;
   text-align: center;
-  font-size: 0.86rem;
+  font-size: 0.9375rem;
   color: var(--thingy-body);
 }
 
@@ -507,7 +510,7 @@
 .thingy-page .doors-figure .flow-step b {
   display: block;
   color: var(--thingy-ink);
-  font-size: 0.98rem;
+  font-size: 1.125rem;
 }
 
 .thingy-page .doors-figure .door span,
@@ -528,7 +531,7 @@
   left: 50%;
   transform: translateX(-50%);
   color: var(--thingy-clay);
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   line-height: 1;
 }
 
@@ -548,7 +551,7 @@
 
 .thingy-page .doors-figure figcaption {
   margin-top: 0.8rem;
-  font-size: 0.86rem;
+  font-size: 0.9375rem;
   color: var(--thingy-meta);
   text-align: center;
 }
@@ -588,7 +591,7 @@
   }
 
   .thingy-page table.params td:nth-child(3) {
-    font-size: 0.85rem;
+    font-size: 0.9375rem;
     color: var(--thingy-meta);
   }
 

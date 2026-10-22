@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://tinylytics.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.thingelstad.com https://avatars.micro.blog https://tinylytics.app; connect-src 'self' https://fonts.googleapis.com https://tinylytics.app">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://tinylytics.app; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://*.thingelstad.com https://avatars.micro.blog https://tinylytics.app; connect-src 'self' https://tinylytics.app">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <title>Librarian MCP reference - Thingy</title>
@@ -47,7 +47,9 @@
   <link rel="apple-touch-icon" href="/img/icons/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-title" content="Thingy">
   <meta name="theme-color" content="#f6eedc">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Figtree:wght@400..800&family=JetBrains+Mono:wght@400..700&family=Inter:wght@400;600&display=swap">
+  <link rel="preload" href="/shared/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/archivo-latin-wdth-italic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/shared/tokens.css">
 </head>
 <body class="thingy-static thingy-reference-page">
   <a class="skip-link" href="#main-content">Skip to content</a>

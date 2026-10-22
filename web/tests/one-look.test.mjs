@@ -65,33 +65,82 @@ test('no theme switch, theme store or dark palette remains in the app source', a
   assert.ok(!/radiogroup/.test(account), 'the account menu has no System/Light/Dark control');
 });
 
-test('every shell loads the Felt & Tangerine fonts', async () => {
+// The shared type (thingelstad.com shared/tokens.css, 2026-10-22): Inter
+// and Inter Tight from the vendored /shared/ copy, Archivo as Thingy's own
+// display costume, all self-hosted. No shell reaches Google Fonts and the
+// CSP allows fonts from 'self' only.
+test('every shell self-hosts the shared type and Archivo', async () => {
   for (const shell of SHELLS) {
     const html = await source(shell);
-    const link = html.match(/https:\/\/fonts\.googleapis\.com\/css2\?[^"]+/);
-    assert.ok(link, `${shell} links Google Fonts`);
-    for (const family of [
-      'family=Archivo:ital,wdth,wght',
-      'family=Figtree',
-      'family=JetBrains+Mono',
-      'family=Inter:wght@400;600'
-    ]) {
-      assert.ok(link[0].includes(family), `${shell} loads ${family}`);
+    assert.match(html, /<link rel="stylesheet" href="\/shared\/tokens\.css"\s*\/?>/, `${shell} links the shared type`);
+    for (const font of ['/shared/fonts/inter-latin-wght-normal.woff2', '/fonts/archivo-latin-wdth-italic.woff2']) {
+      assert.ok(
+        html.includes(`<link rel="preload" href="${font}" as="font" type="font/woff2" crossorigin`),
+        `${shell} preloads ${font}`
+      );
+      await readFile(new URL(`../public${font}`, import.meta.url));
     }
-    // The CSP must allow exactly the Google Fonts hosts - no wider.
-    assert.match(html, /style-src 'self' 'unsafe-inline' https:\/\/fonts\.googleapis\.com;/);
-    assert.match(html, /font-src https:\/\/fonts\.gstatic\.com;/);
+    const csp = html.match(/http-equiv="Content-Security-Policy"\s+content="([^"]+)"/)[1];
+    assert.match(csp, /font-src 'self';/, `${shell} allows fonts from 'self' only`);
+    assert.match(csp, /style-src 'self' 'unsafe-inline';/, `${shell} allows no remote stylesheets`);
+    assert.ok(!/googleapis|gstatic/.test(csp), `${shell} CSP names no Google host`);
   }
 });
 
-// The Weekly citation chip and source card draw their W disc in Source
-// Serif 4 italic 600, so every shell that renders answers must load it.
-test('answer shells load the Weekly W face', async () => {
-  for (const shell of ['chat/index.html', 'c/index.html']) {
-    const html = await source(shell);
-    const link = html.match(/https:\/\/fonts\.googleapis\.com\/css2\?[^"]+/);
-    assert.ok(link[0].includes('family=Source+Serif+4:ital,opsz,wght@1,8..60,600'), `${shell} loads Source Serif 4`);
+test('no page, style or script references Google Fonts', async () => {
+  const files = [
+    ...SHELLS,
+    ...(await sourceFiles('src')),
+    'vite.config.ts',
+    'vite.page-data.ts',
+    'vite.shared-config.ts'
+  ];
+  for (const file of files) {
+    const text = await source(file);
+    assert.ok(!/fonts\.googleapis\.com|fonts\.gstatic\.com/.test(text), `${file} references Google Fonts`);
+    for (const retired of ['Figtree', 'JetBrains Mono']) {
+      assert.ok(!text.includes(retired), `${file} still names ${retired}`);
+    }
+    assert.ok(!/font(-family)?:[^;]*Source Serif/.test(text), `${file} sets type in Source Serif 4`);
   }
+});
+
+test('the vendored shared type names only fonts it ships', async () => {
+  const tokens = await source('public/shared/tokens.css');
+  assert.match(tokens, /--jt-font-body:/);
+  assert.match(tokens, /--jt-size-base:/);
+  const urls = [...tokens.matchAll(/url\("([^"]+)"\)/g)].map((match) => match[1]);
+  assert.ok(urls.length > 0, 'tokens.css declares its fonts');
+  for (const url of new Set(urls)) await readFile(new URL(`../public/shared/${url}`, import.meta.url));
+  for (const licence of [
+    'public/shared/fonts/OFL-Inter.txt',
+    'public/shared/fonts/OFL-InterTight.txt',
+    'public/fonts/OFL-Archivo.txt'
+  ]) {
+    assert.match(await source(licence), /SIL Open Font License/, `${licence} is the OFL`);
+  }
+  const base = await source('src/styles/thingy-base.css');
+  for (const match of base.matchAll(/url\('(\/fonts\/[^']+)'\)/g)) {
+    await readFile(new URL(`../public${match[1]}`, import.meta.url));
+  }
+  assert.match(base, /--thingy-font-ui: var\(--jt-font-body/, 'body and UI ride the shared Inter');
+  assert.match(base, /--thingy-font-heading: var\(--jt-font-heading/, 'headings ride the shared Inter Tight');
+  assert.match(base, /--size-base: var\(--jt-size-base/, 'body text is the shared 19px');
+});
+
+// The Weekly W is Weekly Thing's own SVG path (its header mark), drawn by
+// one custom property, so the serif survives without loading a font.
+test('the Weekly W discs draw the shared W glyph', async () => {
+  assert.match(await source('src/styles/thingy-base.css'), /--thingy-w-glyph: url\("data:image\/svg\+xml,/);
+  assert.match(
+    await source('src/styles/thingy-components.css'),
+    /\.thingy-w-disc::before \{[^}]*mask: var\(--thingy-w-glyph\)/
+  );
+  assert.match(
+    await source('src/styles/thingy-static.css'),
+    /\.thingy-family-w::before \{[^}]*mask: var\(--thingy-w-glyph\)/
+  );
+  assert.match(await source('src/styles/answer.css'), /a\.thingy-cite-weekly::before \{[^}]*var\(--thingy-w-glyph\)/);
 });
 
 // One favicon everywhere: the static mascot face (2026-10-21; it replaced

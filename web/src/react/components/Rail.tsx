@@ -51,7 +51,7 @@ function timeGroups(conversations: ConversationSummary[]) {
 const RAIL_ICON_BUTTON =
   'grid size-11 shrink-0 place-items-center rounded-xl text-rail-icon transition-colors hover:bg-rail-raised hover:text-white [&_svg]:size-5';
 
-const RAIL_EYEBROW = 'px-3 font-mono text-[11px] font-semibold tracking-[0.14em] text-rail-muted uppercase';
+const RAIL_EYEBROW = 'px-3 font-label text-[14px] font-semibold tracking-label text-rail-muted uppercase';
 
 export function Rail({
   collapsed,
@@ -132,7 +132,7 @@ export function Rail({
     >
       <div className="flex items-center gap-3 pl-1">
         <ThingyFace className="rail-mark" size={40} />
-        <span className="thingy-display flex-1 text-[22px] leading-none">Thingy</span>
+        <span className="thingy-display flex-1 text-[24px] leading-none">Thingy</span>
         <Tip label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
           <button
             type="button"
@@ -156,7 +156,7 @@ export function Rail({
           <Icon name="search" />
           <input
             ref={filterInputRef}
-            className="min-h-10 w-full min-w-0 bg-transparent font-sans text-base text-bg outline-none placeholder:text-rail-field"
+            className="min-h-10 w-full min-w-0 bg-transparent font-sans text-[18px] text-bg outline-none placeholder:text-rail-field"
             type="search"
             placeholder="Search chats"
             aria-label="Search conversations"
@@ -186,11 +186,11 @@ export function Rail({
                 >
                   <button
                     type="button"
-                    className="block min-h-11 w-full truncate px-3 py-2 text-left font-sans text-[15px]"
+                    className="block min-h-11 w-full truncate px-3 py-2 text-left font-sans text-[17px]"
                     onClick={() => onSelect(match.conversation_id, match.title)}
                   >
                     <span className="block truncate">{match.title}</span>
-                    <span className="mt-0.5 block truncate text-[12px] text-rail-field">{match.snippet}</span>
+                    <span className="mt-0.5 block truncate text-[14px] text-rail-field">{match.snippet}</span>
                   </button>
                 </li>
               ))}
@@ -214,7 +214,7 @@ export function Rail({
                   >
                     <button
                       type="button"
-                      className="thingy-aui-recent block min-h-11 min-w-0 flex-1 truncate px-3 py-2.5 text-left font-sans text-[15px]"
+                      className="thingy-aui-recent block min-h-11 min-w-0 flex-1 truncate px-3 py-2.5 text-left font-sans text-[17px]"
                       aria-current={active ? 'true' : undefined}
                       onClick={() => onSelect(entry.id, entry.title)}
                     >
@@ -235,7 +235,7 @@ export function Rail({
                         ) : null}
                       </span>
                       {filter.trim() && contentMatches.has(entry.id) ? (
-                        <span className="mt-0.5 block truncate text-[12px] font-normal text-rail-field">
+                        <span className="mt-0.5 block truncate text-[14px] font-normal text-rail-field">
                           {contentMatches.get(entry.id)}
                         </span>
                       ) : null}
@@ -259,7 +259,7 @@ export function Rail({
       {onOpenHistory ? (
         <button
           type="button"
-          className="flex min-h-11 w-full shrink-0 items-center gap-2.5 rounded-xl px-3 text-left font-sans text-[15px] font-bold text-rail-icon transition-colors hover:bg-rail-raised hover:text-white [&_svg]:size-[18px]"
+          className="flex min-h-11 w-full shrink-0 items-center gap-2.5 rounded-xl px-3 text-left font-sans text-[17px] font-bold text-rail-icon transition-colors hover:bg-rail-raised hover:text-white [&_svg]:size-[18px]"
           onClick={onOpenHistory}
         >
           <Icon name="messages-square" />

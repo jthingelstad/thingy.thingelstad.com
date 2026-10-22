@@ -1,4 +1,33 @@
 /* Base reset, design tokens, typography, and layout utilities. */
+
+/* Archivo, Thingy's display costume (Another Thing's cover type), is
+   Thingy's own font: italic only, variable in weight and width, Fontsource
+   5.3.0, OFL (public/fonts/OFL-Archivo.txt). Inter and Inter Tight come
+   from the shared type, /shared/tokens.css, which every shell links. */
+@font-face {
+  font-family: Archivo;
+  font-style: italic;
+  font-display: swap;
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  src: url('/fonts/archivo-latin-wdth-italic.woff2') format('woff2-variations');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC,
+    U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: Archivo;
+  font-style: italic;
+  font-display: swap;
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  src: url('/fonts/archivo-latin-ext-wdth-italic.woff2') format('woff2-variations');
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F,
+    U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 *,
 *::before,
 *::after {
@@ -132,32 +161,47 @@
   --highlight: var(--thingy-highlight);
   --code-bg: var(--thingy-code-bg);
 
-  /* Typography. Display is Archivo italic 800 at 112% width (H1/H2, the
-     wordmark, big numbers - opt in with .thingy-display or the Tailwind
-     font-display utility); UI and body are Figtree; eyebrows, meta, codes
-     and tool names are JetBrains Mono. Inter is loaded only for the
-     Jamie's sites strip, which every one of Jamie's sites sets in Inter
-     (the shared contract). The shells load all four from Google Fonts. */
-  --thingy-font-display: 'Archivo', 'Figtree', system-ui, sans-serif;
-  --thingy-font-ui: 'Figtree', -apple-system, blinkmacsystemfont, 'Segoe UI', helvetica, arial, sans-serif;
-  --thingy-font-mono: 'JetBrains Mono', ui-monospace, sfmono-regular, 'SF Mono', menlo, consolas, monospace;
-  --thingy-font-sites: 'Inter', -apple-system, blinkmacsystemfont, 'Segoe UI', system-ui, sans-serif;
+  /* Typography: the type Jamie's sites share (thingelstad.com
+     shared/tokens.css, vendored to public/shared/ by npm run sites:sync),
+     with Archivo as Thingy's costume. Display is Archivo italic 800 at 112%
+     width (H1/H2, the wordmark, big numbers - opt in with .thingy-display
+     or the Tailwind font-display utility). Body and UI are Inter; headings
+     that are not the display are Inter Tight 800; eyebrows, labels and
+     meta are Inter (labels uppercase at 14px with the shared tracking);
+     only real code (client IDs, tool names, code blocks) is mono. All
+     self-hosted; the fallbacks cover a shell that has not loaded
+     tokens.css yet. */
+  --thingy-font-display: 'Archivo', var(--jt-font-body, 'Inter', system-ui, sans-serif);
+  --thingy-font-ui: var(--jt-font-body, 'Inter', -apple-system, blinkmacsystemfont, 'Segoe UI', system-ui, sans-serif);
+  --thingy-font-heading: var(--jt-font-heading, 'Inter Tight', 'Inter', system-ui, sans-serif);
+  --thingy-font-label: var(--thingy-font-ui);
+  --thingy-font-mono: var(--jt-font-mono, ui-monospace, 'SF Mono', menlo, consolas, monospace);
+  --thingy-heading-weight: var(--jt-weight-heading, 800);
+  --thingy-label-tracking: var(--jt-tracking-label, 0.06em);
+  --thingy-size-label: var(--jt-size-label, 0.875rem);
   --thingy-display-weight: 800;
   --thingy-display-stretch: 112%;
   --thingy-display-tracking: -0.025em;
+
+  /* The Weekly Thing W: the favicon's Source Serif 4 bold italic W as a
+     path (Weekly Thing's header mark), cobalt, centred in a 32px box, so
+     the serif survives without loading the font. Drawn as a background on
+     the cite chip and as a mask (taking currentcolor) on the W discs. */
+  --thingy-w-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%231f6fd6' d='M8.61 10.6 6 10.45 6.27 9.14H12.47L12.19 10.45L9.73 10.6ZM8.5 22.86 7.19 9.14H10.67L11.23 20.5H11.17L11.99 17.71L15.66 9.14H18.18L19.22 20.5H19.18L19.89 17.71L23.41 9.14H24.94L19.06 22.86H16.45L15.36 12.04H15.64L14.84 14.52L11.15 22.86ZM16.14 10.6 13.63 10.45 13.9 9.14H20.14L19.87 10.45L17.37 10.6ZM23.14 10.6 21.39 10.45 21.66 9.14H26L25.73 10.45L23.89 10.6Z'/%3E%3C/svg%3E");
   --sans: var(--thingy-font-ui);
   --mono: var(--thingy-font-mono);
   --font-display: var(--thingy-font-display);
   --font-body: var(--thingy-font-ui);
-  --font-heading: var(--thingy-font-ui);
+  --font-heading: var(--thingy-font-heading);
+  --font-label: var(--thingy-font-label);
   --font-mono: var(--thingy-font-mono);
   --font-ui: var(--thingy-font-ui);
-  --font-sites: var(--thingy-font-sites);
 
-  /* Sizes */
-  --size-base: 1.0625rem;
-  --size-sm: 0.875rem;
-  --size-xs: 0.75rem;
+  /* Sizes: the blog's scale. Body is 19px (18px on phones, the shared
+     --jt-size-base); nothing is smaller than 14px. */
+  --size-base: var(--jt-size-base, 1.1875rem);
+  --size-sm: 1rem;
+  --size-xs: 0.875rem;
   --size-lg: 1.25rem;
   --size-xl: 1.5rem;
   --size-2xl: 2rem;
@@ -174,7 +218,7 @@
 
   /* Layout */
   --container-width: 48rem;
-  --container-wide: 68rem;
+  --container-wide: var(--jt-frame, 70rem);
   --sidebar-width: 14rem;
 }
 
@@ -201,7 +245,7 @@ html {
 body {
   font-family: var(--font-body);
   font-size: var(--size-base);
-  line-height: 1.65;
+  line-height: var(--jt-line-height, 1.6);
   letter-spacing: 0;
   color: var(--thingy-text);
   background: var(--thingy-bg);
@@ -220,9 +264,9 @@ h4,
 h5,
 h6 {
   font-family: var(--font-heading);
-  font-weight: 700;
+  font-weight: var(--thingy-heading-weight);
   line-height: 1.2;
-  letter-spacing: 0;
+  letter-spacing: var(--jt-tracking-heading, -0.02em);
   margin-top: var(--space-2xl);
   margin-bottom: var(--space-md);
   text-wrap: pretty;
@@ -274,7 +318,7 @@ blockquote ul {
 
 code {
   font-family: var(--font-mono);
-  font-size: 0.9em;
+  font-size: max(0.875rem, 0.9em);
   background: var(--thingy-code-bg);
   padding: 0.15em 0.35em;
   border-radius: 3px;
@@ -373,9 +417,9 @@ th {
 }
 
 .eyebrow {
-  font-family: var(--mono);
-  font-size: 12px;
-  letter-spacing: 0.14em;
+  font-family: var(--font-label);
+  font-size: var(--thingy-size-label);
+  letter-spacing: var(--thingy-label-tracking);
   text-transform: uppercase;
   color: var(--muted);
   font-weight: 600;

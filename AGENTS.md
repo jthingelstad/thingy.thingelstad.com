@@ -218,7 +218,8 @@ Key files:
   the same as on every other site; Thingy, the current site, differs only
   in `sites-strip__item--current` and `aria-current`; every link carries
   `?ref=sites-strip-thingy` for Tinylytics), a vendored copy of the domain's `shared/sites.json` -
-  refresh with `npm run sites:sync`, check with `npm run sites:check`. The
+  refresh with `npm run sites:sync`, check with `npm run sites:check` (the
+  same two commands vendor the shared type; see "Shared type"). The
   markup, classes and values are the shared contract in the domain
   `AGENTS.md` ("The sites strip"), identical on every one of Jamie's sites;
   only the inner width and side padding follow Thingy's header frame, and
@@ -285,9 +286,10 @@ Do:
   surfaces, ink text and borders, tangerine fills (navy text only on
   tangerine), clay links. One look only: there is no dark mode and no theme
   switch.
-- Type: Archivo italic 800 (wide) for display, Figtree for UI and body,
-  JetBrains Mono for eyebrows and meta. Inter only in the sites strip (the
-  shared contract's face on every one of Jamie's sites).
+- Type: Archivo italic 800 (wide) for display, Thingy's own costume; Inter
+  for UI and body, Inter Tight 800 for smaller headings, the shared mono for
+  real code only. These are the shared faces of Jamie's sites; see "Shared
+  type".
 - Toy-like components: 2px ink borders, hard offset shadows, pill buttons that
   lift on hover and press on click, 44px minimum targets.
 - Let the mascot carry the personality: the screen face and its moods (idle,
@@ -318,6 +320,36 @@ Do not:
 - Make Thingy look like the blog's stock Micro.blog theme.
 - Hide the actual chat below large marketing sections.
 - Put text on tangerine in any colour but navy `#1B2540`.
+
+## Shared type
+
+Since 2026-10-22 Thingy reads on the type Jamie's sites share (the domain's
+`shared/tokens.css`, built from the blog's), the way Weekly Thing does.
+
+- `npm run sites:sync` copies `shared/tokens.css` and `shared/fonts/` byte
+  for byte into `web/public/shared/`; `npm run sites:check` fails on any
+  drift or extra file. Edit them in the domain's `shared/`, never here.
+  Every shell links `/shared/tokens.css` before the app CSS and preloads
+  Inter and Archivo.
+- Everything is self-hosted: no Google Fonts anywhere, and every CSP has
+  `font-src 'self'`. `tests/one-look.test.mjs` and the smoke fail on a
+  Google Fonts reference or request.
+- Archivo (variable, italic, width axis, latin and latin-ext, with its OFL
+  licence) lives in `web/public/fonts/` as Thingy's own font, declared at the
+  top of `thingy-base.css`. It is the only display face; add no others.
+- Roles: body and UI `--thingy-font-ui` (Inter), headings below display
+  `--thingy-font-heading` (Inter Tight, `--thingy-heading-weight` 800),
+  labels `--thingy-font-label` with `--thingy-label-tracking` (Tailwind:
+  `font-label tracking-label`, `font-heading`), code `--thingy-font-mono`.
+  Mono is for real code (tool names, URLs to copy, arguments, the build id),
+  never for eyebrows, dates or meta.
+- Sizes follow the blog's scale: body and answers `--jt-size-base` (19px,
+  18px on phones), labels `--jt-size-label`, nothing below 14px (em-relative
+  sizes are floored with `max(0.875rem, ...)`). The smoke fails on visible
+  text under 14px. The marketing frame is `--jt-frame` (1120px) with
+  `--jt-gutter`.
+- The Weekly W in the discs, family tiles and citation chips is Weekly
+  Thing's SVG mark (`--thingy-w-glyph`), not a font.
 
 ## Runtime URL Parameters
 

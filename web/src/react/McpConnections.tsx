@@ -13,10 +13,10 @@
 
 const ROW = 'flex items-center gap-3.5 rounded-[14px] border-2 border-ink bg-paper px-3 py-2.5 max-sm:flex-wrap';
 const OUTLINE_DANGER =
-  'thingy-btn thingy-btn-outline-danger thingy-btn-compact min-h-11 shrink-0 px-4 text-[14px] max-sm:ml-auto';
-const SECONDARY = 'thingy-btn thingy-btn-secondary thingy-btn-compact shrink-0 text-[14px]';
-const ERROR = 'text-[15px] font-semibold text-danger';
-const COPY = 'text-[15px] leading-[1.45] text-ink';
+  'thingy-btn thingy-btn-outline-danger thingy-btn-compact min-h-11 shrink-0 px-4 text-[16px] max-sm:ml-auto';
+const SECONDARY = 'thingy-btn thingy-btn-secondary thingy-btn-compact shrink-0 text-[16px]';
+const ERROR = 'text-[17px] font-semibold text-danger';
+const COPY = 'text-[17px] leading-[1.45] text-ink';
 
 function PlugTile() {
   return (
@@ -107,12 +107,12 @@ export function McpConnectionsSection({
       aria-label="MCP connections"
     >
       <div className="grid gap-1">
-        <h3 className="text-[18px] font-extrabold">MCP connections</h3>
+        <h3 className="font-heading text-[20px] font-extrabold">MCP connections</h3>
         <p className={COPY}>
           Apps you have signed in to the Librarian MCP server. Each one searches the archive as you.
         </p>
       </div>
-      {loading ? <p className="text-[15px] text-ink">Loading connections...</p> : null}
+      {loading ? <p className="text-[17px] text-ink">Loading connections...</p> : null}
       {error ? <p className={ERROR}>{error}</p> : null}
       {!loading && !error && connections.length === 0 ? (
         <p className={COPY}>
@@ -129,8 +129,8 @@ export function McpConnectionsSection({
             <li key={connection.id} className={`thingy-mcp-connection ${ROW}`}>
               <PlugTile />
               <div className="grid min-w-0 flex-1 gap-0.5">
-                <span className="truncate text-base font-extrabold">{connectionLabel(connection)}</span>
-                <span className="text-[13.5px] text-ink">{connectionSummary(connection)}</span>
+                <span className="truncate text-[18px] font-extrabold">{connectionLabel(connection)}</span>
+                <span className="text-[15px] text-ink">{connectionSummary(connection)}</span>
               </div>
               <button
                 type="button"
@@ -148,7 +148,7 @@ export function McpConnectionsSection({
       <div>
         <button
           type="button"
-          className="thingy-btn thingy-btn-secondary min-h-[46px] px-5 text-[15px] [&_svg]:size-[18px]"
+          className="thingy-btn thingy-btn-secondary min-h-[46px] px-5 text-[17px] [&_svg]:size-[18px]"
           onClick={() => onOpenLog(connections)}
         >
           <Icon name="scroll-text" />
@@ -239,7 +239,7 @@ function McpAppsBlock({
   return (
     <div className="thingy-mcp-apps grid gap-2.5 border-t-2 border-dashed border-rule pt-3.5">
       <div className="grid gap-1">
-        <h4 className="text-base font-extrabold">Apps that ask for a client ID</h4>
+        <h4 className="font-heading text-[18px] font-extrabold">Apps that ask for a client ID</h4>
         <p className={COPY}>
           Some apps don&apos;t sign up on their own. They show you a callback (redirect) URL and ask for a client ID.
           Set one up here, then copy the values into the app.
@@ -256,8 +256,8 @@ function McpAppsBlock({
               <div className="flex items-center gap-3.5 max-sm:flex-wrap">
                 <PlugTile />
                 <div className="grid min-w-0 flex-1 gap-0.5">
-                  <span className="truncate text-base font-extrabold">{client.client_name}</span>
-                  <span className="text-[13.5px] text-ink">{clientStatus(client)}</span>
+                  <span className="truncate text-[18px] font-extrabold">{client.client_name}</span>
+                  <span className="text-[15px] text-ink">{clientStatus(client)}</span>
                 </div>
                 <div className="flex shrink-0 gap-2 max-sm:ml-auto">
                   <button
@@ -308,7 +308,7 @@ function McpAppsBlock({
             </label>
             <input
               id={callbackId}
-              className="thingy-input font-mono text-[15px]"
+              className="thingy-input font-mono text-[17px]"
               type="url"
               value={callbackUrl}
               required
@@ -368,16 +368,16 @@ function McpClientSettingsCard({ client }: { client: LibrarianMcpRegisteredClien
 
   return (
     <div className="thingy-mcp-app-settings mt-3 rounded-xl border-2 border-dashed border-rule bg-bg p-3">
-      <p className="mb-2.5 text-[14px] leading-[1.45] text-ink">
+      <p className="mb-2.5 text-[16px] leading-[1.45] text-ink">
         Enter these in the app&apos;s authorization settings. Then start the sign-in from the app: you confirm your
         email with a code, approve it, and it shows up under your connections.
       </p>
       <dl className="grid gap-2">
         {clientSettingRows(client.settings).map((row) => (
           <div key={row.label}>
-            <dt className="font-mono text-[11.5px] font-semibold tracking-[0.1em] text-meta uppercase">{row.label}</dt>
+            <dt className="font-label text-[14px] font-semibold tracking-label text-meta uppercase">{row.label}</dt>
             <dd className="flex items-center gap-1.5">
-              <span className={`min-w-0 flex-1 text-[14px] break-all ${row.copy ? 'font-mono select-all' : ''}`}>
+              <span className={`min-w-0 flex-1 text-[16px] break-all ${row.copy ? 'font-mono select-all' : ''}`}>
                 {row.value}
               </span>
               {row.copy ? (
@@ -394,7 +394,7 @@ function McpClientSettingsCard({ client }: { client: LibrarianMcpRegisteredClien
           </div>
         ))}
       </dl>
-      <p className="mt-2 text-[13px] break-all text-meta">Callback URL: {client.redirect_uri}</p>
+      <p className="mt-2 text-[14px] break-all text-meta">Callback URL: {client.redirect_uri}</p>
     </div>
   );
 }
@@ -452,10 +452,10 @@ export function McpLogDialog({ connections, onClose }: { connections: LibrarianM
               closeLabel="Close MCP request log"
             />
             <label className="flex items-center gap-3">
-              <span className="font-mono text-[12px] font-semibold tracking-[0.14em] text-meta uppercase">Show</span>
+              <span className="font-label text-[14px] font-semibold tracking-label text-meta uppercase">Show</span>
               <span className="relative flex min-w-0 flex-1">
                 <select
-                  className="thingy-input thingy-select min-h-[46px] min-w-0 flex-1 text-[15px] font-semibold"
+                  className="thingy-input thingy-select min-h-[46px] min-w-0 flex-1 text-[17px] font-semibold"
                   value={filter}
                   onChange={(event) => setFilter(event.target.value)}
                 >
@@ -478,7 +478,7 @@ export function McpLogDialog({ connections, onClose }: { connections: LibrarianM
             <div className="min-h-0 flex-1 overflow-y-auto p-0.5 pb-2 max-md:pb-[calc(1rem+env(safe-area-inset-bottom))]">
               {error ? <p className={ERROR}>{error}</p> : null}
               {!loading && !error && entries.length === 0 ? (
-                <p className="mt-2 text-[15px] text-ink">No MCP requests in this window.</p>
+                <p className="mt-2 text-[17px] text-ink">No MCP requests in this window.</p>
               ) : null}
               {entries.length ? (
                 <ol className="thingy-mcp-log-list overflow-hidden rounded-[14px] border-2 border-ink bg-toy">
@@ -487,12 +487,12 @@ export function McpLogDialog({ connections, onClose }: { connections: LibrarianM
                   ))}
                 </ol>
               ) : null}
-              {loading ? <p className="mt-2 text-[15px] text-ink">Loading requests...</p> : null}
+              {loading ? <p className="mt-2 text-[17px] text-ink">Loading requests...</p> : null}
               {!loading && nextCursor ? (
                 <div className="flex justify-center pt-3">
                   <button
                     type="button"
-                    className="thingy-btn thingy-btn-secondary min-h-[46px] px-6 text-[15px]"
+                    className="thingy-btn thingy-btn-secondary min-h-[46px] px-6 text-[17px]"
                     onClick={() => void load(nextCursor, true)}
                   >
                     Load more
@@ -518,15 +518,15 @@ function McpLogRow({ entry }: { entry: LibrarianMcpLogEntry }) {
   return (
     <li className="thingy-mcp-log-entry grid gap-1 px-4 py-3">
       <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-        <code className="font-mono text-[14px] font-semibold text-ink">{entry.tool_name}</code>
+        <code className="font-mono text-[16px] font-semibold text-ink">{entry.tool_name}</code>
         {failed ? <span className="thingy-pill thingy-pill-danger">{entry.status}</span> : null}
         {entry.response_truncated ? <span className="thingy-pill">truncated</span> : null}
-        <time className="ml-auto text-[13px] text-ink" dateTime={entry.created_at}>
+        <time className="ml-auto text-[14px] text-ink" dateTime={entry.created_at}>
           {formatLogTime(entry.created_at)}
         </time>
       </div>
-      {details.length ? <div className="text-[13px] leading-[1.35] text-ink">{details.join(' · ')}</div> : null}
-      {args ? <div className="font-mono text-[12px] leading-[1.4] break-all text-meta">{args}</div> : null}
+      {details.length ? <div className="text-[14px] leading-[1.35] text-ink">{details.join(' · ')}</div> : null}
+      {args ? <div className="font-mono text-[14px] leading-[1.4] break-all text-meta">{args}</div> : null}
     </li>
   );
 }

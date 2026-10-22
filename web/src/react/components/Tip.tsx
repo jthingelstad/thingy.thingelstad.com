@@ -18,7 +18,7 @@ export function Tip({ label, children }: { label: string; children: ReactNode })
       <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>
       <Tooltip.Portal>
         <Tooltip.Content
-          className="z-50 rounded-md bg-ink px-2 py-1 font-sans text-xs font-semibold text-bg shadow-md select-none"
+          className="z-50 rounded-md bg-ink px-2 py-1 font-sans text-[14px] font-semibold text-bg shadow-md select-none"
           side="top"
           sideOffset={6}
           collisionPadding={8}

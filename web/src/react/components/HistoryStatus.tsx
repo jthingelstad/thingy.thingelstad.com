@@ -27,7 +27,7 @@ export function HistoryStatus({
         className="thingy-history-status grid justify-items-center gap-3 px-4 py-8 text-center font-sans"
       >
         <ThingyFace mood={signedOut ? 'idle' : 'oops'} size={72} animated={false} />
-        <p className="max-w-[26rem] text-[15px] text-ink">{message}</p>
+        <p className="max-w-[26rem] text-[17px] text-ink">{message}</p>
         {signedOut ? (
           <a className="thingy-btn thingy-btn-primary thingy-btn-compact" href={signInUrl()}>
             Sign in
@@ -42,7 +42,7 @@ export function HistoryStatus({
   }
   const action = 'inline-flex min-h-11 items-center font-bold text-white underline underline-offset-2';
   return (
-    <div role="alert" className="px-2 py-3 font-sans text-[13px] text-rail-text">
+    <div role="alert" className="px-2 py-3 font-sans text-[14px] text-rail-text">
       <p>{message}</p>
       {signedOut ? (
         <a className={action} href={signInUrl()}>

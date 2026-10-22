@@ -141,7 +141,7 @@ export function Composer({
     <div className="thingy-composer-zone mx-auto w-full max-w-[808px] px-3 pt-2.5 pb-[max(1.125rem,env(safe-area-inset-bottom))] md:px-6 md:pb-8">
       {offline ? (
         <p
-          className="mb-2 rounded-xl border-2 border-rule bg-toy px-3 py-2 text-center text-[13px] text-ink"
+          className="mb-2 rounded-xl border-2 border-rule bg-toy px-3 py-2 text-center text-[14px] text-ink"
           role="status"
         >
           You&rsquo;re offline &mdash; Thingy needs a connection to answer.
@@ -153,7 +153,7 @@ export function Composer({
         </label>
         <ComposerPrimitive.Input
           id="librarian-question"
-          className="thingy-aui-input max-h-[40dvh] min-h-6 w-full resize-none bg-transparent px-[18px] pt-3.5 pb-0.5 font-sans text-base leading-normal text-ink outline-none placeholder:text-(--thingy-placeholder) disabled:cursor-not-allowed md:px-[22px] md:pt-4 md:text-[17px]"
+          className="thingy-aui-input max-h-[40dvh] min-h-6 w-full resize-none bg-transparent px-[18px] pt-3.5 pb-0.5 font-sans text-[18px] leading-normal text-ink outline-none placeholder:text-(--thingy-placeholder) disabled:cursor-not-allowed md:px-[22px] md:pt-4 md:text-[19px]"
           placeholder={locked ? 'Guest limit reached — sign in free to keep asking' : 'Ask Thingy…'}
           rows={1}
           maxLength={MAX_QUESTION_CHARS}
@@ -179,11 +179,11 @@ export function Composer({
             ) : null}
             <span className="flex min-w-0 items-center gap-2" aria-live="polite">
               {voiceStatus ? (
-                <span className="truncate text-[13px] text-quiet">{voiceStatus}</span>
+                <span className="truncate text-[14px] text-quiet">{voiceStatus}</span>
               ) : guest ? (
                 <>
                   <span className="thingy-polka size-4 shrink-0 rounded-[5px] border-2 border-ink" aria-hidden="true" />
-                  <span className="truncate font-mono text-[11px] font-semibold tracking-[0.14em] text-meta uppercase">
+                  <span className="truncate font-label text-[14px] font-semibold tracking-label text-meta uppercase">
                     Guest preview
                   </span>
                 </>
@@ -191,7 +191,7 @@ export function Composer({
             </span>
           </span>
           <span id="librarian-question-count" className={quiet ? 'hidden' : ''} aria-hidden="true">
-            <span className="composer-count font-mono text-xs text-quiet tabular-nums">
+            <span className="composer-count text-[14px] text-quiet tabular-nums">
               {text.length} / {MAX_QUESTION_CHARS}
             </span>
           </span>

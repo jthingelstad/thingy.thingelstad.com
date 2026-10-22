@@ -120,7 +120,7 @@
   border-radius: 14px;
   color: var(--thingy-ink);
   font-family: var(--thingy-font-ui);
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 700;
   text-align: left;
   cursor: pointer;
@@ -176,8 +176,7 @@
   border-radius: 999px;
   background: var(--thingy-paper);
   color: var(--thingy-meta);
-  font-family: var(--thingy-font-mono);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.5;
 }
@@ -201,10 +200,10 @@
   padding: 11px 0 2px;
   border-top: 2px dashed var(--thingy-rule);
   color: var(--thingy-meta);
-  font-family: var(--thingy-font-mono);
-  font-size: 12px;
+  font-family: var(--thingy-font-label);
+  font-size: var(--thingy-size-label);
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--thingy-label-tracking);
   text-transform: uppercase;
 }
 
@@ -212,7 +211,7 @@
   min-width: 0;
   padding: 0 0 10px;
   color: var(--thingy-ink);
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.45;
   overflow-wrap: anywhere;
 }

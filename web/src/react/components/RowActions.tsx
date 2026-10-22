@@ -128,7 +128,7 @@ export function RowActions({
                     </h2>
                   </Dialog.Title>
                   {updatedAt && shortDate(updatedAt) ? (
-                    <p className="mt-1 font-mono text-[12.5px] text-meta">{shortDate(updatedAt)}</p>
+                    <p className="mt-1 text-[14px] text-meta tabular-nums">{shortDate(updatedAt)}</p>
                   ) : null}
                 </div>
                 <Dialog.Close asChild>

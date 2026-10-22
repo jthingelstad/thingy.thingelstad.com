@@ -236,7 +236,7 @@ export function SignInApp({
           </div>
           {inboxBubble ? (
             <span
-              className="absolute top-[18px] right-[calc(50%+36px)] z-[2] -rotate-3 rounded-[16px_16px_5px_16px] border-2 border-ink bg-paper px-3 py-[7px] text-[14px] font-extrabold whitespace-nowrap shadow-[3px_3px_0_var(--thingy-ink)] md:top-[-150px] md:right-auto md:left-[calc(50%+96px)] md:rotate-3 md:rounded-[20px_20px_20px_6px] md:px-[18px] md:py-3 md:text-[17px] md:shadow-[4px_4px_0_var(--thingy-ink)]"
+              className="absolute top-[18px] right-[calc(50%+36px)] z-[2] -rotate-3 rounded-[16px_16px_5px_16px] border-2 border-ink bg-paper px-3 py-[7px] text-[16px] font-extrabold whitespace-nowrap shadow-[3px_3px_0_var(--thingy-ink)] md:top-[-150px] md:right-auto md:left-[calc(50%+96px)] md:rotate-3 md:rounded-[20px_20px_20px_6px] md:px-[18px] md:py-3 md:text-[19px] md:shadow-[4px_4px_0_var(--thingy-ink)]"
               aria-hidden="true"
             >
               Check your inbox!
@@ -247,16 +247,14 @@ export function SignInApp({
             aria-labelledby="thingy-signin-title"
           >
             <div className="flex flex-col gap-1.5 md:gap-2.5">
-              <p className="font-mono text-[12px] font-semibold tracking-[0.16em] text-meta uppercase md:text-[13px]">
-                Come on in
-              </p>
+              <p className="font-label text-[14px] font-semibold tracking-label text-meta uppercase">Come on in</p>
               <h1
                 className="thingy-display text-[34px] leading-[1.02] tracking-[-0.025em] md:text-[46px] md:leading-none"
                 id="thingy-signin-title"
               >
                 Sign in to Thingy
               </h1>
-              <p className="mt-1 text-[16px] leading-normal text-[#3d4654] md:text-[17px] md:leading-[1.55]">
+              <p className="mt-1 text-[18px] leading-normal text-[#3d4654] md:text-[19px] md:leading-[1.55]">
                 {standalone
                   ? 'Enter your email address and Thingy will email you a six-digit sign-in code. Weekly Thing readers can use Chat, and supporting members get the deeper features.'
                   : 'Enter your email address and Thingy will send a private sign-in link. Weekly Thing readers can use Chat, and supporting members get the deeper features.'}
@@ -302,7 +300,7 @@ export function SignInApp({
                 </label>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                   <input
-                    className="thingy-input min-h-[52px] min-w-0 flex-1 rounded-[14px] px-4 font-mono text-[20px] font-semibold tracking-[0.2em] placeholder:font-sans placeholder:text-base placeholder:font-normal placeholder:tracking-normal"
+                    className="thingy-input min-h-[52px] min-w-0 flex-1 rounded-[14px] px-4 font-mono text-[22px] font-semibold tracking-[0.2em] placeholder:font-sans placeholder:text-[18px] placeholder:font-normal placeholder:tracking-normal"
                     id="thingy-signin-code"
                     name="one-time-code"
                     type="text"
@@ -360,7 +358,7 @@ export function SignInApp({
 function SignInStatus({ kind, text }: { kind: string; text: string }) {
   if (kind === 'pending') {
     return (
-      <p className="flex items-center gap-3 px-1 py-3 text-[15px] leading-[1.45] font-semibold text-[#3d4654]">
+      <p className="flex items-center gap-3 px-1 py-3 text-[17px] leading-[1.45] font-semibold text-[#3d4654]">
         <span className="thingy-dots inline-flex shrink-0 gap-[5px]" aria-hidden="true">
           <span />
           <span />
@@ -372,7 +370,7 @@ function SignInStatus({ kind, text }: { kind: string; text: string }) {
   }
   if (kind === 'notice') {
     return (
-      <p className="rounded-[6px_14px_14px_6px] border-[1.5px] border-l-[6px] border-rule border-l-clay bg-paper py-3 pr-4 pl-[18px] text-[15px] leading-[1.45] font-semibold text-ink">
+      <p className="rounded-[6px_14px_14px_6px] border-[1.5px] border-l-[6px] border-rule border-l-clay bg-paper py-3 pr-4 pl-[18px] text-[17px] leading-[1.45] font-semibold text-ink">
         {text}
       </p>
     );
@@ -380,7 +378,7 @@ function SignInStatus({ kind, text }: { kind: string; text: string }) {
   const error = kind === 'error';
   return (
     <p
-      className={`flex items-start gap-2.5 rounded-[14px] border-2 px-4 py-3 text-[15px] leading-[1.45] font-semibold ${
+      className={`flex items-start gap-2.5 rounded-[14px] border-2 px-4 py-3 text-[17px] leading-[1.45] font-semibold ${
         error ? 'border-danger bg-danger-tint text-danger' : 'border-[#2e6b34] bg-[#e3f6e0] text-[#2e6b34]'
       }`}
     >

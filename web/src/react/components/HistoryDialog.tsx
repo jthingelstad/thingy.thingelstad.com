@@ -108,7 +108,7 @@ export function HistoryDialog({
               <DialogHeader
                 title="All chats"
                 titleClassName="text-[28px] max-md:text-[24px]"
-                subtitle={total ? <span className="font-mono text-[13px]">{`${total} total`}</span> : null}
+                subtitle={total ? <span className="text-[14px] tabular-nums">{`${total} total`}</span> : null}
                 mark={{ icon: 'history' }}
               />
               <label htmlFor="thingy-history-search" className="sr-only">
@@ -118,7 +118,7 @@ export function HistoryDialog({
                 <Icon name="search" />
                 <input
                   id="thingy-history-search"
-                  className="min-h-11 w-full min-w-0 bg-transparent text-base text-ink outline-none placeholder:text-meta"
+                  className="min-h-11 w-full min-w-0 bg-transparent text-[18px] text-ink outline-none placeholder:text-meta"
                   type="search"
                   placeholder="Search all conversations"
                   autoFocus
@@ -136,7 +136,7 @@ export function HistoryDialog({
               ) : rows.length === 0 ? (
                 <div className="thingy-history-empty grid justify-items-center gap-3 px-4 py-10 text-center">
                   <ThingyFace mood={pending ? 'thinking' : 'idle'} size={72} />
-                  <p className="text-[15px] text-ink" role={pending ? 'status' : undefined}>
+                  <p className="text-[17px] text-ink" role={pending ? 'status' : undefined}>
                     {pending ? 'Loading…' : searching ? 'No conversations match.' : 'No conversations yet.'}
                   </p>
                 </div>
@@ -157,7 +157,7 @@ export function HistoryDialog({
                     >
                       <span className="flex items-baseline gap-3 max-md:flex-col max-md:gap-0.5">
                         <span className="flex min-w-0 flex-1 items-center gap-2 max-md:w-full">
-                          <span className="min-w-0 truncate text-base font-semibold text-ink">{entry.title}</span>
+                          <span className="min-w-0 truncate text-[18px] font-semibold text-ink">{entry.title}</span>
                           {entry.shared_at ? (
                             <span
                               className="shrink-0 text-clay-hover [&_svg]:size-3.5"
@@ -169,12 +169,12 @@ export function HistoryDialog({
                             </span>
                           ) : null}
                         </span>
-                        <span className="shrink-0 font-mono text-[12.5px] text-meta tabular-nums">
+                        <span className="shrink-0 text-[14px] text-meta tabular-nums">
                           {shortDate(entry.updated_at)}
                         </span>
                       </span>
                       {entry.snippet ? (
-                        <span className="mt-1 block truncate text-[14px] text-ink">{entry.snippet}</span>
+                        <span className="mt-1 block truncate text-[16px] text-ink">{entry.snippet}</span>
                       ) : null}
                     </button>
                     <RowActions

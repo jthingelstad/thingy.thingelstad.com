@@ -72,7 +72,7 @@ export function DialogHost() {
                 <h2 className="thingy-modal-title min-w-0">{request.title}</h2>
               </Dialog.Title>
             </div>
-            {request.body ? <p className="mt-3 text-[15px] leading-normal text-ink-soft">{request.body}</p> : null}
+            {request.body ? <p className="mt-3 text-[17px] leading-normal text-ink-soft">{request.body}</p> : null}
             {isPrompt ? (
               <form
                 className="mt-4"
@@ -99,7 +99,7 @@ export function DialogHost() {
                 ) : (
                   <input
                     ref={inputRef}
-                    className={`thingy-input${readOnly ? ' bg-toy font-mono text-[14px] font-semibold' : ''}`}
+                    className={`thingy-input${readOnly ? ' bg-toy font-mono text-[16px] font-semibold' : ''}`}
                     {...field}
                     type="text"
                     readOnly={readOnly}
