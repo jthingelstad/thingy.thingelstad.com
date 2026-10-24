@@ -28,8 +28,9 @@ export function citationsByIssue(citations: ThingyCitation[]) {
 
 // Which source a citation is, for the chip and card colours: Weekly
 // cobalt, blog clay, Another Thing crimson, Things I've built
-// (thingelstad.xyz) green. Colours label sources only.
-export type CitationKind = 'weekly' | 'blog' | 'podcast' | 'thing';
+// (thingelstad.xyz) green, a saved link (Linking Things) ink, the
+// strip's no-colour. Colours label sources only.
+export type CitationKind = 'weekly' | 'blog' | 'podcast' | 'thing' | 'link';
 
 function isThing(citation: ThingyCitation, kind: string) {
   if (kind === 'thing') return true;
@@ -41,9 +42,20 @@ function isThing(citation: ThingyCitation, kind: string) {
   }
 }
 
+function isLink(citation: ThingyCitation, kind: string) {
+  if (kind === 'link') return true;
+  if (/^link-/.test(String(citation.id || citation.source_id || ''))) return true;
+  try {
+    return new URL(String(citation.url || '')).hostname.toLowerCase() === 'links.thingelstad.xyz';
+  } catch {
+    return false;
+  }
+}
+
 export function citationKind(citation: ThingyCitation): CitationKind {
   if (String(citation.issue_number || '').trim()) return 'weekly';
   const kind = String(citation.source_kind || '').toLowerCase();
+  if (isLink(citation, kind)) return 'link';
   if (isThing(citation, kind)) return 'thing';
   if (kind.startsWith('weekly') || kind === 'faq' || kind === 'site_page') return 'weekly';
   if (/podcast|episode/.test(kind)) return 'podcast';

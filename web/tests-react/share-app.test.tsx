@@ -56,8 +56,17 @@ test('source cards name Things I have built and carry ?ref=thingy-source', async
                 ...PAYLOAD.messages[1],
                 content: 'Jamie built Thingy and wrote about espresso.',
                 citations: [
-                  { source_kind: 'thing', id: 'thing-thingy', url: 'https://thingelstad.xyz/things/thingy/', subject: 'Thingy' },
-                  { source_kind: 'blog', url: 'https://www.thingelstad.com/2024/03/02/espresso.html#top', subject: 'Espresso' },
+                  {
+                    source_kind: 'thing',
+                    id: 'thing-thingy',
+                    url: 'https://thingelstad.xyz/things/thingy/',
+                    subject: 'Thingy'
+                  },
+                  {
+                    source_kind: 'blog',
+                    url: 'https://www.thingelstad.com/2024/03/02/espresso.html#top',
+                    subject: 'Espresso'
+                  },
                   { source_kind: 'web', url: 'https://example.com/elsewhere/', subject: 'Elsewhere' }
                 ]
               }
@@ -79,6 +88,48 @@ test('source cards name Things I have built and carry ?ref=thingy-source', async
   expect(cards[0].textContent).toContain('Project');
   expect(cards[0].getAttribute('data-tinylytics-event-value')).toBe('Project');
   expect(cards[0].querySelector('.thingy-thing-mark')).toBeTruthy();
+});
+
+test('a saved link card names Linking Things, not the blog', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            ...PAYLOAD,
+            messages: [
+              PAYLOAD.messages[0],
+              {
+                ...PAYLOAD.messages[1],
+                content: 'Jamie saved a Facebook how-to.',
+                citations: [
+                  {
+                    source_kind: 'link',
+                    id: 'link-a247e5eef435',
+                    url: 'https://links.thingelstad.xyz/links/a247e5eef435/',
+                    subject: 'How to delete your Facebook account',
+                    publish_date: '2026-10-23',
+                    section: 'Saved link'
+                  }
+                ]
+              }
+            ]
+          }),
+          { status: 200 }
+        )
+    )
+  );
+  render(<ShareApp token="shr_linktoken" />);
+  const sources = await screen.findByRole('navigation', { name: 'Sources' });
+  const card = sources.querySelector('a.thingy-source-card');
+  expect(card?.getAttribute('href')).toBe('https://links.thingelstad.xyz/links/a247e5eef435/?ref=thingy-source');
+  expect(card?.textContent).toContain('Linking Things');
+  expect(card?.textContent).not.toContain('Blog');
+  expect(card?.textContent).not.toContain('links.thingelstad.xyz');
+  expect(card?.getAttribute('data-tinylytics-event-value')).toBe('Saved link');
+  // The badge says "Saved link" once; the section repeating it is dropped.
+  expect(card?.textContent?.match(/Saved link/g)?.length).toBe(1);
 });
 
 test('the owner sees open-the-original instead of a composer', async () => {

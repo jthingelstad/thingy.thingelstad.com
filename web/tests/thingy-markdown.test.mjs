@@ -96,6 +96,27 @@ test('Things I have built citations render as the green thing chip', () => {
   );
 });
 
+test('saved links render as the Linking Things chip, never the blog one', () => {
+  const citations = [
+    {
+      source_kind: 'link',
+      id: 'link-a247e5eef435',
+      url: 'https://links.thingelstad.xyz/links/a247e5eef435/',
+      subject: 'How to delete your Facebook account',
+      section: 'Saved link'
+    },
+    { id: 'link-afd6b0cb6dcd', url: 'https://links.thingelstad.xyz/links/afd6b0cb6dcd/' },
+    { url: 'https://links.thingelstad.xyz/links/0123456789ab/' }
+  ];
+  const kinds = citationKindsByUrl(citations);
+  assert.deepEqual([...new Set(kinds.values())], ['link'], 'kind, id prefix and host each mark a saved link');
+  const html = render('Saved [this](https://links.thingelstad.xyz/links/a247e5eef435/).', citations);
+  assert.match(
+    html,
+    /<a href="https:\/\/links\.thingelstad\.xyz\/links\/a247e5eef435\/\?ref=thingy-source"[^>]*class="thingy-cite thingy-cite-link"[^>]*>this<\/a>/
+  );
+});
+
 test('references without a matching citation stay plain text', () => {
   const html = render('See WT999 for nothing.', [{ issue_number: 127, url: '/archive/127/' }]);
   assert.doesNotMatch(html, /<a[^>]*>WT999/);

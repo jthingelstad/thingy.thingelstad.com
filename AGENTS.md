@@ -427,8 +427,9 @@ Current Tinylytics usage:
 - declarative `data-tinylytics-event` hooks (the embed's click delegation
   handles React-rendered elements): `home.start_chat`, `network.return`,
   `librarian.source_click` (inline WT autolinks and the source cards,
-  value = `WT<N>`/`Blog`/`Podcast`/`Project`, the last for Things I've
-  built), `librarian.guest_signin_click` (both
+  value = `WT<N>`/`Blog`/`Podcast`/`Project`/`Saved link`, `Project` for
+  Things I've built and `Saved link` for Linking Things),
+  `librarian.guest_signin_click` (both
   guest banners), `librarian.share_cta`
 - programmatic events posted straight to the collector
   (`src/shared/thingy-analytics.ts` `trackEvent`), all `librarian.*`:

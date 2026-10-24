@@ -101,7 +101,8 @@
    (white on cobalt 4.9:1). Blog: clay on #FBE7DC (4.6:1) with a clay
    edge. Another Thing: crimson with its three dots (white 6.8:1, the
    quiet dots 3.3:1). Things I've built: green (white 5.8:1). On the
-   cream ground the crimson chip is 5.9:1 and the green 5.0:1. Inline so
+   cream ground the crimson chip is 5.9:1 and the green 5.0:1. Linking
+   Things: ink on paper with an ink edge (the strip gives it no colour). Inline so
    a long post title wraps like the prose around it. */
 
 .librarian-answer-content a.thingy-cite {
@@ -168,6 +169,13 @@
 .librarian-answer-content a.thingy-cite-thing {
   background: var(--thingy-xyz);
   color: var(--thingy-on-fill);
+  font-size: max(0.875rem, 0.9em);
+}
+
+.librarian-answer-content a.thingy-cite-link {
+  border: 1.5px solid var(--thingy-ink);
+  background: var(--thingy-paper);
+  color: var(--thingy-ink);
   font-size: max(0.875rem, 0.9em);
 }
 

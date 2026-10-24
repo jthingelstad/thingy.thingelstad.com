@@ -201,7 +201,8 @@ function ActivityPart(props: { text: string }) {
 // every message, including reloaded history and share transcripts.
 // Each card wears its source's colour band: Weekly cobalt with the W
 // disc, blog toy cream with the host, Another Thing crimson with its dots,
-// Things I've built green with a tilted T. A grid on wide screens, a stack
+// Things I've built green with a tilted T, Linking Things ink with a
+// chain on a phone (the strip gives it no colour). A grid on wide screens, a stack
 // of horizontal cards on a phone. Card links to Jamie's sites carry
 // ?ref=thingy-source.
 function sourceMonth(value: string) {
@@ -222,14 +223,16 @@ const BAND: Record<CitationKind, string> = {
   weekly: 'thingy-source-band-weekly bg-weekly text-white',
   blog: 'bg-toy text-clay-hover',
   podcast: 'bg-another text-white',
-  thing: 'thingy-source-band-thing bg-xyz text-white'
+  thing: 'thingy-source-band-thing bg-xyz text-white',
+  link: 'bg-ink text-paper'
 };
 
 const BADGE: Record<CitationKind, string> = {
   weekly: 'text-weekly-deep',
   blog: 'text-clay',
   podcast: 'text-another-text',
-  thing: 'text-xyz-text'
+  thing: 'text-xyz-text',
+  link: 'text-ink'
 };
 
 // The badge names the kind of source; the band names its site (the blog's
@@ -237,13 +240,15 @@ const BADGE: Record<CitationKind, string> = {
 const BADGE_LABEL: Record<Exclude<CitationKind, 'weekly'>, string> = {
   blog: 'Blog',
   podcast: 'Podcast',
-  thing: 'Project'
+  thing: 'Project',
+  link: 'Saved link'
 };
 
 const BAND_LABEL: Record<Exclude<CitationKind, 'blog'>, string> = {
   weekly: 'Weekly Thing',
   podcast: 'Another Thing',
-  thing: 'Things I’ve built'
+  thing: 'Things I’ve built',
+  link: 'Linking Things'
 };
 
 function SourceMark({ kind }: { kind: CitationKind }) {
@@ -276,7 +281,9 @@ function SourcesFooter() {
         const label = String(citation.subject || '').trim();
         const host = sourceHost(href);
         const bandLabel = kind === 'blog' ? host || 'Blog' : BAND_LABEL[kind];
-        const footer = String(citation.section || '').trim() || (kind === 'blog' ? host : '');
+        const section = String(citation.section || '').trim();
+        // A saved link's section is "Saved link", which the badge already says.
+        const footer = (section.toLowerCase() === badge.toLowerCase() ? '' : section) || (kind === 'blog' ? host : '');
         const card = (
           <>
             <span
@@ -299,6 +306,21 @@ function SourcesFooter() {
                   <path d="M6 3h9l4 4v14H6z" />
                   <path d="M9 11h7" />
                   <path d="M9 15h7" />
+                </svg>
+              ) : null}
+              {kind === 'link' ? (
+                <svg
+                  className="size-[22px] sm:hidden"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" />
+                  <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" />
                 </svg>
               ) : null}
               <span className="truncate max-sm:sr-only">{bandLabel}</span>
