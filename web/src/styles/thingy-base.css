@@ -37,11 +37,14 @@
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: light dark;
 
-  /* Felt & Tangerine (2026-10-01): one look, no dark mode, no theme switch.
-     Raw palette first; the semantic names below map onto it so existing
-     screens restyle without renaming a single utility. */
+  /* Felt & Tangerine (2026-10-01), light and dark: dark follows the
+     reader's system setting (2026-10-23, Jamie: "Approved: add
+     system-following dark mode to Thingy and drop its "one look only"
+     rule"); there is no theme switch. Raw palette first; the semantic
+     names below map onto it so existing screens restyle without renaming a
+     single utility. The dark values are the block after this one. */
   --thingy-cream: #f6eedc; /* ground */
   --thingy-paper: #fffaf0; /* surfaces, cards, dialogs */
   --thingy-toy-cream: #efe3c8; /* sunken wells, icon tiles, code */
@@ -56,6 +59,7 @@
   --thingy-clay: #b5461a; /* links */
   --thingy-clay-hover: #8a3410;
   --thingy-clay-tint: #fbe7dc;
+  --thingy-clay-fill: #b5461a; /* clay as a ground under white text; same in dark */
   --thingy-brass: #c7a04e;
   --thingy-screen: #17191b; /* the mascot's face */
   --thingy-bezel: #ebddbd;
@@ -101,7 +105,7 @@
      text. Contrast on the rail ground #1f2a38: text 11.7:1, muted 5.8:1,
      icons 8.7:1, the search field's border 4.1:1. The cobalt focus ring
      is too dark on navy, so the rail uses the light cobalt ring. */
-  --thingy-rail: var(--thingy-ink);
+  --thingy-rail: var(--thingy-navy);
   --thingy-rail-deep: #0f1628; /* borders and shadows on the rail */
   --thingy-rail-raised: #2c3b5c; /* row hover, the search well */
   --thingy-rail-active: #34466c; /* the open conversation's row */
@@ -113,6 +117,34 @@
   --thingy-rail-rule: #4a587a; /* the dashed divider above the account */
   --thingy-rail-focus: #8fb8f5;
   --thingy-quiet: #4f5a72; /* quiet icon buttons on cream and paper */
+
+  /* The same in both looks: the navy grounds (the rail, the footer, navy
+     cards, the user's bubble, tips) and the cream set on them. In light
+     they equal ink and cream; dark leaves them navy. */
+  --thingy-navy: #1f2a38;
+  --thingy-on-navy: #f6eedc;
+
+  /* The toy edge: the 2px borders and the hard offset shadows. Ink in
+     light; dark softens it to a warm grey so the outlines stay toys
+     instead of glowing. */
+  --thingy-edge: var(--thingy-ink);
+
+  /* Text forms of the colours that are also fills. In light they are the
+     fills; dark lightens the text and leaves the fill (white on it). */
+  --thingy-weekly-text: var(--thingy-weekly);
+  --thingy-another-text: var(--thingy-another);
+  --thingy-xyz-text: var(--thingy-xyz);
+  --thingy-danger-fill: #b3261e;
+
+  /* Small grounds and rules that had been literals. */
+  --thingy-tangerine-tint: #ffe6d3; /* hover on paper chips */
+  --thingy-hairline: #e8dcc0; /* the chat header's rule */
+  --thingy-rule-mid: #e2d4b5; /* source-card and pocket-card rules */
+  --thingy-mascot-shadow: #e4d6b6; /* the ellipse under the mascot */
+  --thingy-ruled: #d9c9a4; /* index-card lines */
+  --thingy-ruled-blue: #dce6f5; /* the Connect card's lines */
+  --thingy-weekly-line: #a9c7f2; /* borders on the weekly tint */
+  --thingy-subtext: #3e4a63; /* the welcome's subtext */
 
   /* Semantic names (the screens use these through Tailwind). */
   --thingy-bg: var(--thingy-cream);
@@ -134,11 +166,11 @@
   --source-podcast: var(--thingy-another);
 
   /* Toy shadows: hard, offset, ink. No blur anywhere. */
-  --thingy-shadow-button: 0 4px 0 var(--thingy-ink);
-  --thingy-shadow-button-lift: 0 6px 0 var(--thingy-ink);
-  --thingy-shadow-button-press: 0 1px 0 var(--thingy-ink);
-  --thingy-shadow-card: 0 6px 0 var(--thingy-ink);
-  --thingy-shadow-modal: 8px 8px 0 var(--thingy-ink);
+  --thingy-shadow-button: 0 4px 0 var(--thingy-edge);
+  --thingy-shadow-button-lift: 0 6px 0 var(--thingy-edge);
+  --thingy-shadow-button-press: 0 1px 0 var(--thingy-edge);
+  --thingy-shadow-card: 0 6px 0 var(--thingy-edge);
+  --thingy-shadow-modal: 8px 8px 0 var(--thingy-edge);
   --shadow-subtle: 0 2px 0 var(--thingy-rule);
 
   /* Radii */
@@ -220,6 +252,55 @@
   --container-width: 48rem;
   --container-wide: var(--jt-frame, 70rem);
   --sidebar-width: 14rem;
+}
+
+/* Dark: the felt at night. The cream ground becomes a warm near-black and
+   paper a shade lighter; ink and body turn cream; clay, cobalt, crimson
+   and green lighten for text (the shared --jt-*-text values where there
+   is one) while their fills stay, white or navy on them as in light. The
+   navy rail and footer stay navy, tangerine stays tangerine, and the
+   mascot keeps its bezel and screen. Contrast on the ground #1c1914 /
+   paper #26221b: ink 15.2 / 13.7, body 11.9 / 10.8, meta 9.5 / 8.6,
+   placeholder 6.4 / 5.7, clay 8.5 / 7.7, every source text 7.5 or more,
+   danger 8.1, success 10.0, focus 8.6; the toy edge 4.5 / 4.0. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --thingy-cream: #1c1914;
+    --thingy-paper: #26221b;
+    --thingy-toy-cream: #322c23;
+    --thingy-rule: #75684f;
+    --thingy-rule-soft: #3f382c;
+    --thingy-ink: #f6eedc;
+    --thingy-body: #ddd4c2;
+    --thingy-meta: #b6c0cd;
+    --thingy-placeholder: #a39b8a;
+    --thingy-clay: #f3a274;
+    --thingy-clay-hover: #f9c3a0;
+    --thingy-clay-tint: #3b2618;
+    --thingy-slate: #8fa3b9;
+    --thingy-weekly-deep: #8db8f5;
+    --thingy-weekly-tint: #18263b;
+    --thingy-highlighter: #574a17;
+    --thingy-weekly-text: #78acf2;
+    --thingy-another-text: #f58aa3;
+    --thingy-xyz-text: #74d3a0;
+    --thingy-danger: #ff9285;
+    --thingy-danger-tint: #3d1a17;
+    --thingy-success: #86d68f;
+    --thingy-success-tint: #18301c;
+    --thingy-focus: #8fb8f5;
+    --thingy-scrim: rgb(0 0 0 / 65%);
+    --thingy-quiet: #aab3c4;
+    --thingy-edge: #8c7f68;
+    --thingy-tangerine-tint: #3f2617;
+    --thingy-hairline: #3a3329;
+    --thingy-rule-mid: #3f382c;
+    --thingy-mascot-shadow: #0f0d0a;
+    --thingy-ruled: #463e30;
+    --thingy-ruled-blue: #24324a;
+    --thingy-weekly-line: #34527f;
+    --thingy-subtext: #c3cad6;
+  }
 }
 
 html {
@@ -389,7 +470,7 @@ th {
   position: absolute;
   top: -100%;
   left: var(--space-md);
-  background: var(--thingy-accent);
+  background: var(--thingy-clay-fill);
   color: #fff;
   padding: var(--space-sm) var(--space-md);
   border-radius: 4px;

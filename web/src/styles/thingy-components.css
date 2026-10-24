@@ -17,7 +17,7 @@
   min-height: 48px;
   min-width: 44px;
   padding: 0 22px;
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 999px;
   background: var(--thingy-paper);
   color: var(--thingy-ink);
@@ -64,7 +64,7 @@
 
 /* Danger keeps the ink border and shadow; white on #B3261E is 6.5:1. */
 .thingy-btn-danger {
-  background: var(--thingy-danger);
+  background: var(--thingy-danger-fill);
   color: var(--thingy-on-danger);
   font-weight: 800;
 }
@@ -134,7 +134,7 @@ a.thingy-btn-danger:hover {
   width: 100%;
   min-height: 48px;
   padding: 0 14px;
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: var(--thingy-radius-input);
   background: var(--thingy-paper);
   color: var(--thingy-ink);
@@ -174,7 +174,7 @@ textarea.thingy-input {
 /* ---- Cards ---- */
 
 .thingy-card {
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: var(--thingy-radius-card);
   background: var(--thingy-paper);
   color: var(--thingy-ink);
@@ -240,7 +240,7 @@ textarea.thingy-input {
   height: 22px;
   border-radius: 6px;
   background: var(--thingy-paper);
-  color: var(--thingy-xyz);
+  color: var(--thingy-xyz-text);
   font: 800 14px / 1 var(--font-ui);
   letter-spacing: 0;
   text-transform: none;
@@ -257,7 +257,7 @@ textarea.thingy-input {
   content: '';
   position: absolute;
   inset: 5px;
-  border: 1px solid #a9c7f2;
+  border: 1px solid var(--thingy-weekly-line);
   border-radius: 6px;
   pointer-events: none;
 }
@@ -270,7 +270,7 @@ textarea.thingy-input {
 
 .thingy-source-card-link:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 0 var(--thingy-ink);
+  box-shadow: 0 5px 0 var(--thingy-edge);
 }
 
 /* ---- Thinking ----
@@ -325,7 +325,7 @@ textarea.thingy-input {
 }
 
 .thingy-modal {
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: var(--thingy-radius-modal);
   background: var(--thingy-paper);
   color: var(--thingy-ink);

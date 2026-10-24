@@ -35,7 +35,7 @@ const TIER_READER = 'Weekly Thing reader';
 function ScreenAvatar({ initial, className = '' }: { initial: string; className?: string }) {
   return (
     <span
-      className={`thingy-card-avatar flex shrink-0 -rotate-3 items-center justify-center rounded-[26px] border-[5px] border-bezel bg-screen shadow-[0_0_0_3px_var(--thingy-ink)] ${className}`}
+      className={`thingy-card-avatar flex shrink-0 -rotate-3 items-center justify-center rounded-[26px] border-[5px] border-bezel bg-screen shadow-[0_0_0_3px_var(--thingy-edge)] ${className}`}
       aria-hidden="true"
     >
       <span className="thingy-display text-[44px] leading-none text-mint max-sm:text-[34px]">{initial}</span>
@@ -54,7 +54,7 @@ function TierBadge({ supporting }: { supporting: boolean }) {
     );
   }
   return (
-    <span className="thingy-tier-tag mt-2.5 inline-flex items-center gap-2 rounded-full border-2 border-ink bg-toy py-1 pr-3.5 pl-1 text-[16px] font-bold text-ink">
+    <span className="thingy-tier-tag mt-2.5 inline-flex items-center gap-2 rounded-full border-2 border-edge bg-toy py-1 pr-3.5 pl-1 text-[16px] font-bold text-ink">
       <span className="thingy-w-disc size-6 bg-weekly text-white" aria-hidden="true" />
       {TIER_READER}
     </span>
@@ -186,13 +186,13 @@ function ProfileModal({
               <div
                 role="group"
                 aria-label="Library card"
-                className="thingy-library-card overflow-hidden rounded-[20px] border-2 border-ink bg-paper shadow-[0_6px_0_var(--thingy-ink)]"
+                className="thingy-library-card overflow-hidden rounded-[20px] border-2 border-edge bg-paper shadow-[0_6px_0_var(--thingy-edge)]"
               >
-                <div className="flex h-10 items-center justify-between border-b-2 border-ink bg-tangerine px-5">
+                <div className="flex h-10 items-center justify-between border-b-2 border-edge bg-tangerine px-5">
                   <span className="font-label text-[14px] font-semibold tracking-label text-on-tangerine uppercase">
                     Thingy library card
                   </span>
-                  <span className="size-3.5 rounded-full border-2 border-ink bg-bg" aria-hidden="true" />
+                  <span className="size-3.5 rounded-full border-2 border-edge bg-bg" aria-hidden="true" />
                 </div>
                 <div className="flex items-center gap-6 px-6 pt-4 pb-[18px] max-sm:flex-wrap max-sm:gap-4 max-sm:px-4">
                   <ScreenAvatar initial={cardInitial} className="h-[84px] w-[104px] max-sm:h-[64px] max-sm:w-[80px]" />
@@ -206,7 +206,7 @@ function ProfileModal({
                     <TierBadge supporting={supporting} />
                   </div>
                   {cardIssued ? (
-                    <div className="thingy-card-stamp flex w-[176px] shrink-0 rotate-[1.5deg] flex-col gap-1 rounded-xl border-2 border-ink px-3.5 pt-2.5 pb-3 max-sm:w-full max-sm:rotate-0 max-sm:bg-none max-sm:flex-row max-sm:flex-wrap max-sm:items-baseline max-sm:gap-x-3">
+                    <div className="thingy-card-stamp flex w-[176px] shrink-0 rotate-[1.5deg] flex-col gap-1 rounded-xl border-2 border-edge px-3.5 pt-2.5 pb-3 max-sm:w-full max-sm:rotate-0 max-sm:bg-none max-sm:flex-row max-sm:flex-wrap max-sm:items-baseline max-sm:gap-x-3">
                       <span className="font-label text-[14px] font-semibold tracking-label text-meta uppercase">
                         Card issued
                       </span>
@@ -299,12 +299,12 @@ function AccountMenuBody({
       <div
         className={
           phone
-            ? 'thingy-account-name overflow-hidden rounded-[18px] border-2 border-ink bg-paper'
+            ? 'thingy-account-name overflow-hidden rounded-[18px] border-2 border-edge bg-paper'
             : 'thingy-account-name'
         }
       >
         <div
-          className="border-b-2 border-ink bg-tangerine px-4 py-[7px] font-label text-[14px] font-semibold tracking-label text-on-tangerine uppercase"
+          className="border-b-2 border-edge bg-tangerine px-4 py-[7px] font-label text-[14px] font-semibold tracking-label text-on-tangerine uppercase"
           aria-hidden="true"
         >
           Hello, my name is
@@ -436,7 +436,7 @@ export function AccountPanel() {
     >
       {avatar('size-[38px]')}
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-sans text-[17px] font-bold text-bg">{display || 'Signed in'}</span>
+        <span className="block truncate font-sans text-[17px] font-bold text-on-navy">{display || 'Signed in'}</span>
         <span className="block truncate text-[14px] text-rail-field">{tier}</span>
       </span>
       <span className="text-rail-icon [&_svg]:size-4" aria-hidden="true">
@@ -458,7 +458,7 @@ export function AccountPanel() {
               >
                 <SheetGrab />
                 <div className="flex items-center gap-3 pb-3.5">
-                  {avatar('size-11 border-ink text-[20px]')}
+                  {avatar('size-11 border-edge text-[20px]')}
                   <div className="min-w-0 flex-1">
                     <Dialog.Title asChild>
                       <h2 className="thingy-modal-title">Account</h2>
@@ -481,7 +481,7 @@ export function AccountPanel() {
           <Popover.Trigger asChild>{trigger}</Popover.Trigger>
           <Popover.Portal>
             <Popover.Content
-              className="thingy-account-menu z-50 w-80 overflow-hidden rounded-[20px] border-2 border-ink bg-paper font-sans text-ink shadow-[6px_6px_0_var(--thingy-rail-deep)]"
+              className="thingy-account-menu z-50 w-80 overflow-hidden rounded-[20px] border-2 border-edge bg-paper font-sans text-ink shadow-[6px_6px_0_var(--thingy-rail-deep)]"
               aria-label="Account"
               side="top"
               align="start"

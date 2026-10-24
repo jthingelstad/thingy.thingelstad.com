@@ -1,6 +1,6 @@
 /* Tailwind v4 substrate (2026-09-03). Utilities ride the EXISTING Thingy
-   token system: thingy-base.css owns the Felt & Tangerine palette (one
-   look, no dark mode since 2026-10-01); the inline theme below maps those
+   token system: thingy-base.css owns the Felt & Tangerine palette (light,
+   and dark by the system setting since 2026-10-23); the inline theme below maps those
    variables into Tailwind color/font names, so `bg-surface text-ink
    border-line` follow the tokens with zero duplication. */
 
@@ -56,6 +56,17 @@
   --color-rail-field-border: var(--thingy-rail-field-border);
   --color-rail-rule: var(--thingy-rail-rule);
   --color-quiet: var(--thingy-quiet);
+  --color-edge: var(--thingy-edge);
+  --color-navy: var(--thingy-navy);
+  --color-on-navy: var(--thingy-on-navy);
+  --color-weekly-text: var(--thingy-weekly-text);
+  --color-another-text: var(--thingy-another-text);
+  --color-xyz-text: var(--thingy-xyz-text);
+  --color-tangerine-tint: var(--thingy-tangerine-tint);
+  --color-hairline: var(--thingy-hairline);
+  --color-rule-mid: var(--thingy-rule-mid);
+  --color-mascot-shadow: var(--thingy-mascot-shadow);
+  --color-subtext: var(--thingy-subtext);
   --color-transparent: transparent;
   --color-current: currentcolor;
 

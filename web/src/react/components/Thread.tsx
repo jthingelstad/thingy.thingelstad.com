@@ -53,7 +53,7 @@ function SuggestionChips({ suggestions, pending = false }: { suggestions: string
           key={suggestion}
           type="button"
           title={suggestion}
-          className={`thingy-aui-suggestion ${CHIP} border-ink bg-paper text-ink transition-colors hover:border-tangerine hover:bg-[#ffe6d3] [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-clay`}
+          className={`thingy-aui-suggestion ${CHIP} border-edge bg-paper text-ink transition-colors hover:border-tangerine hover:bg-tangerine-tint [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-clay`}
           onClick={() => {
             trackEvent('librarian.welcome_suggestion', String(index + 1));
             aui.composer.setText(suggestion);
@@ -155,7 +155,7 @@ function Thread({
                     wide screen, stacked on a phone. */}
                 <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center sm:gap-2">
                   <div className="relative size-[150px] shrink-0 sm:size-[190px]" aria-hidden="true">
-                    <span className="absolute bottom-1 left-5 h-3.5 w-[110px] rounded-[50%] bg-[#e4d6b6] sm:bottom-1.5 sm:left-[22px] sm:h-[18px] sm:w-[150px]" />
+                    <span className="absolute bottom-1 left-5 h-3.5 w-[110px] rounded-[50%] bg-mascot-shadow sm:bottom-1.5 sm:left-[22px] sm:h-[18px] sm:w-[150px]" />
                     <img
                       className="absolute inset-0 size-full select-none"
                       src="/img/thingy.png"
@@ -167,11 +167,11 @@ function Thread({
                     />
                   </div>
                   <div className="thingy-aui-greeting flex max-w-[400px] flex-col gap-2 text-center sm:text-left">
-                    <p className="thingy-display rounded-[20px] border-2 border-ink bg-paper px-[18px] py-3.5 text-[25px] leading-[1.1] text-balance text-ink shadow-[4px_4px_0_var(--thingy-ink)] sm:rounded-[22px_22px_22px_6px] sm:px-[22px] sm:py-[18px] sm:text-[30px]">
+                    <p className="thingy-display rounded-[20px] border-2 border-edge bg-paper px-[18px] py-3.5 text-[25px] leading-[1.1] text-balance text-ink shadow-[4px_4px_0_var(--thingy-edge)] sm:rounded-[22px_22px_22px_6px] sm:px-[22px] sm:py-[18px] sm:text-[30px]">
                       {welcome}
                     </p>
                     {welcomeSubtext ? (
-                      <p className="px-2 text-[17px] leading-normal text-[#3e4a63]">{welcomeSubtext}</p>
+                      <p className="px-2 text-[17px] leading-normal text-subtext">{welcomeSubtext}</p>
                     ) : null}
                   </div>
                 </div>
@@ -199,7 +199,7 @@ function Thread({
         <ThreadPrimitive.ScrollToBottom asChild>
           <button
             type="button"
-            className="sticky bottom-3.5 left-1/2 z-10 grid size-11 -translate-x-1/2 place-items-center rounded-full border-2 border-ink bg-paper text-ink shadow-[0_3px_0_var(--thingy-ink)] transition-colors hover:bg-toy disabled:hidden [&_svg]:size-5"
+            className="sticky bottom-3.5 left-1/2 z-10 grid size-11 -translate-x-1/2 place-items-center rounded-full border-2 border-edge bg-paper text-ink shadow-[0_3px_0_var(--thingy-edge)] transition-colors hover:bg-toy disabled:hidden [&_svg]:size-5"
             aria-label="Jump to latest"
           >
             <Icon name="arrow-down" />

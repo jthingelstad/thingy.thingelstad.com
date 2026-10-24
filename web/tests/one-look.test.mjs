@@ -1,6 +1,8 @@
-// Felt & Tangerine (Jamie, 2026-10-01): one look, no dark mode, no theme
-// switch. These guards keep the retired theme plumbing from creeping back
-// and keep every shell on the same palette and fonts.
+// Felt & Tangerine (Jamie, 2026-10-01), now in two lights: dark follows the
+// system setting (Jamie, 2026-10-23: "Approved: add system-following dark
+// mode to Thingy and drop its "one look only" rule"). There is still no
+// theme switch; these guards keep the retired switch plumbing from creeping
+// back and keep every shell on the same palette and fonts.
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { join, relative } from 'node:path';
@@ -19,6 +21,7 @@ const SHELLS = [
 ];
 
 const CREAM = '#f6eedc';
+const DARK_GROUND = '#1c1914';
 const WEB_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 async function source(path) {
@@ -32,16 +35,44 @@ async function sourceFiles(dir) {
     .map((entry) => relative(WEB_ROOT, join(entry.parentPath, entry.name)));
 }
 
-test('every shell has one light theme-color and no dark variant', async () => {
+test('every shell has a light and a dark theme-color and follows the system', async () => {
   for (const shell of SHELLS) {
     const html = await source(shell);
-    const colors = [...html.matchAll(/<meta name="theme-color" content="([^"]+)"([^>]*)>/g)];
-    assert.equal(colors.length, 1, `${shell} declares exactly one theme-color`);
-    assert.equal(colors[0][1].toLowerCase(), CREAM, `${shell} theme-color is the cream ground`);
-    assert.ok(!colors[0][2].includes('media'), `${shell} theme-color is unconditional`);
-    assert.ok(!html.includes('prefers-color-scheme'), `${shell} has no prefers-color-scheme`);
-    assert.ok(!/color-scheme[^>]*dark/.test(html), `${shell} does not opt into dark form controls`);
+    const colors = [...html.matchAll(/<meta name="theme-color" content="([^"]+)" media="([^"]+)"\s*\/?>/g)].map(
+      (match) => [match[2], match[1].toLowerCase()]
+    );
+    assert.deepEqual(
+      colors,
+      [
+        ['(prefers-color-scheme: light)', CREAM],
+        ['(prefers-color-scheme: dark)', DARK_GROUND]
+      ],
+      `${shell} declares the cream and the dark ground`
+    );
+    assert.equal(
+      [...html.matchAll(/<meta name="theme-color"/g)].length,
+      2,
+      `${shell} has no unconditional theme-color`
+    );
+    const scheme = html.match(/<meta name="color-scheme" content="([^"]+)"/);
+    if (scheme) assert.equal(scheme[1], 'light dark', `${shell} offers both form-control schemes`);
   }
+});
+
+test('the token sheet redefines the palette for a dark system setting', async () => {
+  const base = await source('src/styles/thingy-base.css');
+  assert.match(base, /color-scheme: light dark;/);
+  const dark = base.match(/@media \(prefers-color-scheme: dark\) \{\s*:root \{([^}]+)\}/);
+  assert.ok(dark, 'thingy-base.css has a dark :root block');
+  assert.match(dark[1], new RegExp(`--thingy-cream: ${DARK_GROUND};`), 'the dark ground matches the theme-color');
+  for (const token of ['--thingy-ink', '--thingy-paper', '--thingy-clay', '--thingy-edge']) {
+    assert.ok(dark[1].includes(`${token}:`), `the dark block sets ${token}`);
+  }
+  assert.match(
+    await source('public/404.html'),
+    new RegExp(`@media \\(prefers-color-scheme: dark\\)[\\s\\S]*${DARK_GROUND}`),
+    'the self-contained 404 carries its own dark palette'
+  );
 });
 
 test('the manifest uses the cream ground', async () => {
@@ -50,16 +81,15 @@ test('the manifest uses the cream ground', async () => {
   assert.equal(manifest.background_color.toLowerCase(), CREAM);
 });
 
-test('no theme switch, theme store or dark palette remains in the app source', async () => {
+test('no theme switch or theme store remains in the app source', async () => {
   const files = await sourceFiles('src');
   assert.ok(files.includes('src/styles/thingy-base.css'), 'the scan reaches the token sheet');
   for (const file of files) {
     if (file.includes('/generated/')) continue;
     const text = await source(file);
     assert.ok(!text.includes('data-theme'), `${file} references data-theme`);
-    assert.ok(!text.includes('prefers-color-scheme'), `${file} references prefers-color-scheme`);
     assert.ok(!text.includes('thingy-theme'), `${file} imports the retired theme module`);
-    assert.ok(!/github-dark/.test(text), `${file} loads a dark code theme`);
+    assert.ok(!/localStorage[^;]*theme/i.test(text), `${file} stores a theme choice`);
   }
   const account = await source('src/react/AccountPanel.tsx');
   assert.ok(!/radiogroup/.test(account), 'the account menu has no System/Light/Dark control');
@@ -167,15 +197,27 @@ test('every shell links the same mascot favicon', async () => {
 // Thing moved to crimson and Things I've built to green on 2026-10-22
 // (Jamie: "Approved: phase 2 colours, Another Thing to crimson and
 // thingelstad.xyz to green across their sites, favicons and the sites
-// strip"); the blog stays ink.
+// strip"); the blog stays ink. Dark mode takes the contract's dark values.
 test('the strip and the source labels carry the shared site colours', async () => {
-  const marks = {};
-  for (const match of (await source('src/styles/thingy-static.css')).matchAll(
-    /\.sites-strip__item--([a-z]+) a,\s*\.sites-strip__item--\1 a:hover \{\s*color: (#[0-9a-f]{6});/g
-  )) {
-    marks[match[1]] = match[2];
-  }
+  const staticCss = await source('src/styles/thingy-static.css');
+  const darkAt = staticCss.indexOf('@media (prefers-color-scheme: dark)');
+  assert.ok(darkAt > 0, 'the strip has its dark values');
+  const stripMarks = (css) => {
+    const marks = {};
+    for (const match of css.matchAll(
+      /\.sites-strip__item--([a-z]+) a,\s*\.sites-strip__item--\1 a:hover \{\s*color: (#[0-9a-f]{6});/g
+    )) {
+      marks[match[1]] = match[2];
+    }
+    return marks;
+  };
+  const marks = stripMarks(staticCss.slice(0, darkAt));
   assert.deepEqual(marks, { weekly: '#1a5eb6', another: '#b3123f', thingy: '#b5461a', xyz: '#1d7348' });
+  const dark = staticCss.slice(darkAt, staticCss.indexOf('\n}\n', darkAt));
+  assert.deepEqual(stripMarks(dark), { weekly: '#78acf2', another: '#f58aa3', thingy: '#f3a274', xyz: '#74d3a0' });
+  for (const value of ['background: #1e1e23;', 'color: #9d9daa;', 'color: #ececf0;']) {
+    assert.ok(dark.includes(value), `the dark strip sets ${value}`);
+  }
   const sites = JSON.parse(await source('contracts/sites.json')).sites;
   for (const id of Object.keys(marks)) {
     assert.ok(

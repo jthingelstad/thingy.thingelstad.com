@@ -154,7 +154,7 @@
    the blog v2 strip and every site renders it identically, so these
    values are the contract's, not Thingy's palette; the inner width and
    side padding are the shared frame (--jt-frame, --jt-gutter).
-   Thingy has no dark mode, so the contract's dark values are left out.
+   The contract's dark values follow the light ones below.
    On #f3f3f5: label #5a5a66 6.1:1, links #16161a 16.3:1, the Weekly,
    Another Thing, Thingy and Things I've built marks 5.7:1, 6.2:1, 4.9:1
    and 5.3:1 (the blog stays ink). ---- */
@@ -232,6 +232,47 @@
   color: #1d7348;
 }
 
+/* The contract's dark values: #1e1e23 ground, #9d9daa label, #ececf0
+   links, and the --jt-*-text marks. */
+@media (prefers-color-scheme: dark) {
+  .sites-strip {
+    background: #1e1e23;
+  }
+
+  .sites-strip__label {
+    color: #9d9daa;
+  }
+
+  .sites-strip a,
+  .sites-strip a:hover {
+    color: #ececf0;
+  }
+
+  .sites-strip a:focus-visible {
+    outline-color: #ececf0;
+  }
+
+  .sites-strip__item--weekly a,
+  .sites-strip__item--weekly a:hover {
+    color: #78acf2;
+  }
+
+  .sites-strip__item--another a,
+  .sites-strip__item--another a:hover {
+    color: #f58aa3;
+  }
+
+  .sites-strip__item--thingy a,
+  .sites-strip__item--thingy a:hover {
+    color: #f3a274;
+  }
+
+  .sites-strip__item--xyz a,
+  .sites-strip__item--xyz a:hover {
+    color: #74d3a0;
+  }
+}
+
 /* ---- Site header (static pages): face + wordmark, nav, Sign in pill.
    The compact .thingy-page-nav base (share page) lives in
    thingy-page.css; .is-site is the full board header. ---- */
@@ -268,7 +309,7 @@
   min-height: 44px;
   margin-left: 8px;
   padding: 0 20px;
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 999px;
   background: var(--thingy-paper);
   color: var(--thingy-ink);
@@ -295,8 +336,8 @@
    link hover #FFB98F 8.9:1. ---- */
 .thingy-site-footer {
   margin-top: auto;
-  background: var(--thingy-ink);
-  color: var(--thingy-cream);
+  background: var(--thingy-navy);
+  color: var(--thingy-on-navy);
   border-top: 4px solid var(--thingy-tangerine);
 }
 
@@ -323,7 +364,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0 8px;
-  color: var(--thingy-cream);
+  color: var(--thingy-on-navy);
   font-size: 17px;
 }
 
@@ -332,7 +373,7 @@
   align-items: center;
   gap: 8px;
   min-height: 44px;
-  color: var(--thingy-cream);
+  color: var(--thingy-on-navy);
   font-weight: 700;
   text-decoration: none;
 }
@@ -345,7 +386,7 @@
 .thingy-site-footer .h-card .u-photo {
   width: 28px;
   height: 28px;
-  border: 2px solid var(--thingy-cream);
+  border: 2px solid var(--thingy-on-navy);
   border-radius: 50%;
   object-fit: cover;
 }
@@ -361,7 +402,7 @@
   align-items: center;
   min-height: 44px;
   padding: 0 8px;
-  color: var(--thingy-cream);
+  color: var(--thingy-on-navy);
   font-weight: 700;
   font-size: 17px;
   text-decoration: none;
@@ -381,10 +422,10 @@
   display: inline-flex;
   flex-direction: column;
   overflow: hidden;
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 12px;
   background: var(--thingy-paper);
-  box-shadow: 4px 4px 0 var(--thingy-ink);
+  box-shadow: 4px 4px 0 var(--thingy-edge);
   transform: rotate(-3deg);
 }
 
@@ -410,22 +451,22 @@
 
 /* ---- Big polka disc behind the mascot. ---- */
 .thingy-polka-disc {
-  border: 3px solid var(--thingy-ink);
+  border: 3px solid var(--thingy-edge);
   border-radius: 50%;
   background-color: var(--thingy-tangerine);
   background-image: radial-gradient(var(--thingy-polka) 2px, transparent 2.4px);
   background-size: 16px 16px;
-  box-shadow: 8px 8px 0 var(--thingy-ink);
+  box-shadow: 8px 8px 0 var(--thingy-edge);
 }
 
 /* ---- Speech bubble. ---- */
 .thingy-bubble {
   max-width: 220px;
   padding: 14px 18px;
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 20px 20px 20px 6px;
   background: var(--thingy-paper);
-  box-shadow: 4px 4px 0 var(--thingy-ink);
+  box-shadow: 4px 4px 0 var(--thingy-edge);
   font-weight: 700;
   font-size: 18px;
   line-height: 1.35;
@@ -444,7 +485,7 @@
   align-items: center;
   min-height: 48px;
   padding: 8px 20px;
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 999px;
   background: var(--thingy-paper);
   color: var(--thingy-ink);
@@ -456,7 +497,7 @@
 
 .thingy-ask:hover {
   border-color: var(--thingy-tangerine);
-  background: #ffe6d3;
+  background: var(--thingy-tangerine-tint);
   color: var(--thingy-ink);
 }
 
@@ -473,7 +514,7 @@
   align-items: center;
   gap: 14px;
   padding: 20px;
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 16px;
   background: var(--thingy-toy-cream);
   box-shadow: var(--thingy-shadow-card);
@@ -503,7 +544,7 @@
 }
 
 .thingy-pocket-number.is-weekly {
-  color: var(--thingy-weekly);
+  color: var(--thingy-weekly-text);
 }
 
 .thingy-pocket-number.is-blog {
@@ -511,7 +552,7 @@
 }
 
 .thingy-pocket-number.is-another {
-  color: var(--thingy-another);
+  color: var(--thingy-another-text);
 }
 
 .thingy-pocket-number.is-slate {
@@ -532,30 +573,30 @@
   content: '';
   width: 64px;
   height: 14px;
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 999px;
   background: var(--thingy-brass);
 }
 
 /* ---- Cards and tiles. ---- */
 .thingy-paper-card {
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 24px;
   background: var(--thingy-paper);
   box-shadow: var(--thingy-shadow-card);
 }
 
 .thingy-navy-card {
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-navy);
   border-radius: 24px;
-  background: var(--thingy-ink);
-  color: var(--thingy-cream);
+  background: var(--thingy-navy);
+  color: var(--thingy-on-navy);
   box-shadow: 0 6px 0 #10171f;
 }
 
 .thingy-navy-card h2,
 .thingy-navy-card h3 {
-  color: var(--thingy-cream);
+  color: var(--thingy-on-navy);
 }
 
 /* #D7DCE6 on navy is 10.6:1; links #FFB98F 8.9:1. */
@@ -581,7 +622,7 @@
   place-items: center;
   width: 52px;
   height: 52px;
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 16px;
   background: var(--thingy-toy-cream);
   color: var(--thingy-ink);
@@ -710,7 +751,7 @@
 .thingy-family-lines > span {
   height: 8px;
   border-radius: 4px;
-  background: #e2d4b5;
+  background: var(--thingy-rule-mid);
 }
 
 .thingy-family-lines > span:nth-child(1) {

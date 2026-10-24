@@ -11,7 +11,7 @@
 // above), outlined danger pills for the destructive actions, and the log as
 // a bottom sheet on a phone.
 
-const ROW = 'flex items-center gap-3.5 rounded-[14px] border-2 border-ink bg-paper px-3 py-2.5 max-sm:flex-wrap';
+const ROW = 'flex items-center gap-3.5 rounded-[14px] border-2 border-edge bg-paper px-3 py-2.5 max-sm:flex-wrap';
 const OUTLINE_DANGER =
   'thingy-btn thingy-btn-outline-danger thingy-btn-compact min-h-11 shrink-0 px-4 text-[16px] max-sm:ml-auto';
 const SECONDARY = 'thingy-btn thingy-btn-secondary thingy-btn-compact shrink-0 text-[16px]';
@@ -103,7 +103,7 @@ export function McpConnectionsSection({
 
   return (
     <section
-      className="thingy-mcp-connections flex flex-col gap-3 rounded-[18px] border-2 border-ink bg-toy px-5 pt-[18px] pb-5 max-sm:px-3.5"
+      className="thingy-mcp-connections flex flex-col gap-3 rounded-[18px] border-2 border-edge bg-toy px-5 pt-[18px] pb-5 max-sm:px-3.5"
       aria-label="MCP connections"
     >
       <div className="grid gap-1">
@@ -251,7 +251,7 @@ function McpAppsBlock({
           {clients.map((client) => (
             <li
               key={client.client_id}
-              className="thingy-mcp-app rounded-[14px] border-2 border-ink bg-paper px-3 py-2.5"
+              className="thingy-mcp-app rounded-[14px] border-2 border-edge bg-paper px-3 py-2.5"
             >
               <div className="flex items-center gap-3.5 max-sm:flex-wrap">
                 <PlugTile />
@@ -285,7 +285,7 @@ function McpAppsBlock({
       ) : null}
       {formOpen ? (
         <form
-          className="thingy-mcp-app-form grid gap-3 rounded-[14px] border-2 border-ink bg-paper p-3.5"
+          className="thingy-mcp-app-form grid gap-3 rounded-[14px] border-2 border-edge bg-paper p-3.5"
           onSubmit={handleCreate}
         >
           <div>
@@ -481,7 +481,7 @@ export function McpLogDialog({ connections, onClose }: { connections: LibrarianM
                 <p className="mt-2 text-[17px] text-ink">No MCP requests in this window.</p>
               ) : null}
               {entries.length ? (
-                <ol className="thingy-mcp-log-list overflow-hidden rounded-[14px] border-2 border-ink bg-toy">
+                <ol className="thingy-mcp-log-list overflow-hidden rounded-[14px] border-2 border-edge bg-toy">
                   {entries.map((entry) => (
                     <McpLogRow key={`${entry.created_at}-${entry.request_id}`} entry={entry} />
                   ))}

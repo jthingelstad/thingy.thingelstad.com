@@ -64,7 +64,7 @@
 .thingy-page pre {
   margin: 0.8rem 0;
   padding: 0.9rem 1rem;
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 12px;
   overflow-x: auto;
   white-space: pre-wrap;
@@ -74,10 +74,10 @@
 .thingy-page .card {
   margin: 0.8rem 0;
   padding: 1rem 1.2rem;
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 16px;
   background: var(--thingy-paper);
-  box-shadow: 0 4px 0 var(--thingy-ink);
+  box-shadow: 0 4px 0 var(--thingy-edge);
 }
 
 .thingy-page ul,
@@ -124,7 +124,7 @@
 }
 
 .thingy-page th {
-  border-bottom: 2px solid var(--thingy-ink);
+  border-bottom: 2px solid var(--thingy-edge);
 }
 
 .thingy-page footer {
@@ -301,9 +301,9 @@
 
 .thingy-page .ref-toc {
   background: var(--thingy-paper);
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 16px;
-  box-shadow: 0 4px 0 var(--thingy-ink);
+  box-shadow: 0 4px 0 var(--thingy-edge);
   padding: 0.6rem 1.2rem 0.8rem;
   margin: 0 0 1rem;
 }
@@ -346,9 +346,9 @@
 
 .thingy-page .tool {
   background: var(--thingy-paper);
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 16px;
-  box-shadow: 0 4px 0 var(--thingy-ink);
+  box-shadow: 0 4px 0 var(--thingy-edge);
   padding: 0.2rem 1.2rem 0.8rem;
   margin: 1rem 0;
   scroll-margin-top: 1rem;
@@ -398,7 +398,7 @@
   font-weight: 600;
   padding: 0.1rem 0.55rem;
   border-radius: 999px;
-  border: 1.5px solid var(--thingy-ink);
+  border: 1.5px solid var(--thingy-edge);
   background: var(--thingy-paper);
   color: var(--thingy-ink);
   white-space: nowrap;
@@ -494,9 +494,9 @@
 .thingy-page .doors-figure .door,
 .thingy-page .doors-figure .flow-step {
   background: var(--thingy-paper);
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 16px;
-  box-shadow: 0 4px 0 var(--thingy-ink);
+  box-shadow: 0 4px 0 var(--thingy-edge);
   padding: 0.7rem 0.9rem;
   text-align: center;
   font-size: 0.9375rem;

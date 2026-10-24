@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://tinylytics.app; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://*.thingelstad.com https://avatars.micro.blog https://tinylytics.app; connect-src 'self' https://tinylytics.app">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" content="light dark" />
     <title>About Thingy</title>
     <meta
       name="description"
@@ -26,7 +26,8 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/img/icons/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="Thingy" />
-    <meta name="theme-color" content="#f6eedc" />
+    <meta name="theme-color" content="#f6eedc" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1c1914" media="(prefers-color-scheme: dark)" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -45,7 +46,7 @@
     <!--sites-strip-->
     <header class="thingy-page-nav is-site">
       <a class="brand" href="/">
-        <svg class="thingy-face thingy-face-animated" width="44" height="35" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-ink)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><g fill="none" stroke="var(--thingy-mint)" stroke-width="4" stroke-linecap="round"><g class="thingy-face-blink"><path d="M27 42a9 9 0 0 1 18 0" /><path d="M71 42a9 9 0 0 1 18 0" /></g><path d="M45 50q13 14 26 0" /></g></svg>
+        <svg class="thingy-face thingy-face-animated" width="44" height="35" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-edge)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><g fill="none" stroke="var(--thingy-mint)" stroke-width="4" stroke-linecap="round"><g class="thingy-face-blink"><path d="M27 42a9 9 0 0 1 18 0" /><path d="M71 42a9 9 0 0 1 18 0" /></g><path d="M45 50q13 14 26 0" /></g></svg>
         <span class="thingy-wordmark">Thingy</span>
       </a>
       <nav aria-label="Main">
@@ -300,7 +301,7 @@
           <li class="thingy-staff">
             <span class="thingy-staff-clip" aria-hidden="true"></span>
             <div class="thingy-staff-head" aria-hidden="true">
-              <svg class="thingy-face thingy-face-animated" width="64" height="51" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-ink)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><g fill="none" stroke="var(--thingy-mint)" stroke-width="4" stroke-linecap="round"><g class="thingy-face-blink"><path d="M27 42a9 9 0 0 1 18 0" /><path d="M71 42a9 9 0 0 1 18 0" /></g><path d="M45 50q13 14 26 0" /></g></svg>
+              <svg class="thingy-face thingy-face-animated" width="64" height="51" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-edge)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><g fill="none" stroke="var(--thingy-mint)" stroke-width="4" stroke-linecap="round"><g class="thingy-face-blink"><path d="M27 42a9 9 0 0 1 18 0" /><path d="M71 42a9 9 0 0 1 18 0" /></g><path d="M45 50q13 14 26 0" /></g></svg>
               <span>AGENT-TEAM</span>
             </div>
             <div class="thingy-staff-body">
@@ -312,7 +313,7 @@
           <li class="thingy-staff">
             <span class="thingy-staff-clip" aria-hidden="true"></span>
             <div class="thingy-staff-head" aria-hidden="true">
-              <svg class="thingy-face" width="64" height="51" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-ink)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><g fill="none" stroke="var(--thingy-mint)" stroke-width="4" stroke-linecap="round"><path d="M29 41a9 9 0 0 1 18 0" /><path d="M73 35h14" /><path d="M41 47q17 21 34 0" /></g></svg>
+              <svg class="thingy-face" width="64" height="51" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-edge)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><g fill="none" stroke="var(--thingy-mint)" stroke-width="4" stroke-linecap="round"><path d="M29 41a9 9 0 0 1 18 0" /><path d="M73 35h14" /><path d="M41 47q17 21 34 0" /></g></svg>
               <span>AGENT-TEAM</span>
             </div>
             <div class="thingy-staff-body">
@@ -324,7 +325,7 @@
           <li class="thingy-staff">
             <span class="thingy-staff-clip" aria-hidden="true"></span>
             <div class="thingy-staff-head" aria-hidden="true">
-              <svg class="thingy-face" width="64" height="51" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-ink)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><circle cx="40.5" cy="38" r="5.5" fill="var(--thingy-mint)" /><circle cx="75.5" cy="38" r="5.5" fill="var(--thingy-mint)" /><rect x="48" y="55.5" width="20" height="4" rx="2" fill="var(--thingy-mint)" /></svg>
+              <svg class="thingy-face" width="64" height="51" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-edge)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><circle cx="40.5" cy="38" r="5.5" fill="var(--thingy-mint)" /><circle cx="75.5" cy="38" r="5.5" fill="var(--thingy-mint)" /><rect x="48" y="55.5" width="20" height="4" rx="2" fill="var(--thingy-mint)" /></svg>
               <span>AGENT-TEAM</span>
             </div>
             <div class="thingy-staff-body">

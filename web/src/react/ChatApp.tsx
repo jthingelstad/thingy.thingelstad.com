@@ -483,7 +483,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
           <section className="thingy-conversation flex min-w-0 flex-1 flex-col">
             <div
               className={`mobile-chatbar flex h-[60px] shrink-0 items-center gap-1 pr-2 pl-1 md:h-16 md:gap-2 md:px-6 ${
-                activeId ? 'border-b-2 border-[#e8dcc0]' : ''
+                activeId ? 'border-b-2 border-hairline' : ''
               }`}
             >
               {guest ? null : (
@@ -528,7 +528,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                   <Tip label="Share conversation">
                     <button
                       type="button"
-                      className="mobile-chatbar-action inline-flex size-11 items-center justify-center gap-2 rounded-xl text-ink transition-colors hover:bg-toy md:w-auto md:rounded-full md:border-2 md:border-ink md:bg-paper md:px-4 md:text-[16px] md:font-bold [&_svg]:size-5 md:[&_svg]:size-4"
+                      className="mobile-chatbar-action inline-flex size-11 items-center justify-center gap-2 rounded-xl text-ink transition-colors hover:bg-toy md:w-auto md:rounded-full md:border-2 md:border-edge md:bg-paper md:px-4 md:text-[16px] md:font-bold [&_svg]:size-5 md:[&_svg]:size-4"
                       aria-label="Share conversation"
                       onClick={() => {
                         const entry = conversations.find((item) => item.id === activeId);
@@ -542,7 +542,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                 ) : null}
                 {guest ? (
                   <a
-                    className="thingy-btn thingy-btn-compact min-h-11 px-4 text-[16px] shadow-[0_3px_0_var(--thingy-ink)]"
+                    className="thingy-btn thingy-btn-compact min-h-11 px-4 text-[16px] shadow-[0_3px_0_var(--thingy-edge)]"
                     href={session.signInUrl('/chat/')}
                     data-tinylytics-event="librarian.guest_signin_click"
                   >
@@ -575,11 +575,11 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
             ) : null}
             {guest ? (
               <aside
-                className="thingy-guest-banner mx-3.5 mt-1 flex overflow-hidden rounded-[14px] border-2 border-ink bg-paper text-ink md:mx-auto md:mt-3 md:w-[min(760px,calc(100%-3rem))] md:rounded-2xl md:shadow-[4px_4px_0_var(--thingy-ink)]"
+                className="thingy-guest-banner mx-3.5 mt-1 flex overflow-hidden rounded-[14px] border-2 border-edge bg-paper text-ink md:mx-auto md:mt-3 md:w-[min(760px,calc(100%-3rem))] md:rounded-2xl md:shadow-[4px_4px_0_var(--thingy-edge)]"
                 aria-label="Guest preview"
               >
                 <span
-                  className="thingy-polka w-[18px] shrink-0 border-r-2 border-dashed border-ink"
+                  className="thingy-polka w-[18px] shrink-0 border-r-2 border-dashed border-edge"
                   aria-hidden="true"
                 />
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5 px-3.5 py-2.5 text-[16px] leading-snug md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-4 md:px-4 md:text-[17px]">
@@ -598,7 +598,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
                     )}
                   </span>
                   <a
-                    className="inline-flex min-h-11 items-center font-extrabold text-clay underline underline-offset-2 hover:text-[#8a3410] md:min-h-0"
+                    className="inline-flex min-h-11 items-center font-extrabold text-clay underline underline-offset-2 hover:text-clay-hover md:min-h-0"
                     href={session.signInUrl('/chat/')}
                     data-tinylytics-event="librarian.guest_signin_click"
                   >

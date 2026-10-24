@@ -123,9 +123,9 @@
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 10px;
-  box-shadow: 3px 3px 0 var(--thingy-ink);
+  box-shadow: 3px 3px 0 var(--thingy-edge);
   color: #fff;
   font-family: var(--font-label);
   font-size: var(--thingy-size-label);
@@ -208,7 +208,7 @@
 /* On navy the ink border and shadow vanish: the CTA takes a cream
    border and a deeper shadow. */
 .thingy-btn-on-navy {
-  border-color: var(--thingy-cream);
+  border-color: var(--thingy-on-navy);
   box-shadow: 0 4px 0 #0b1017;
 }
 
@@ -254,9 +254,9 @@
   aspect-ratio: 1;
   margin-bottom: 10px;
   padding: 22px;
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 18px;
-  box-shadow: 0 5px 0 var(--thingy-ink);
+  box-shadow: 0 5px 0 var(--thingy-edge);
   overflow: hidden;
   transition:
     transform 0.15s ease,
@@ -265,7 +265,7 @@
 
 .thingy-family-tile:hover .thingy-family-face {
   transform: translateY(-3px) rotate(-1deg);
-  box-shadow: 0 8px 0 var(--thingy-ink);
+  box-shadow: 0 8px 0 var(--thingy-edge);
 }
 
 .thingy-family-name {
@@ -288,7 +288,7 @@
   content: '';
   position: absolute;
   inset: 10px;
-  border: 1px solid #a9c7f2;
+  border: 1px solid var(--thingy-weekly-line);
   border-radius: 9px;
 }
 
@@ -360,7 +360,7 @@
   aspect-ratio: 1;
   border-radius: 12px;
   background: var(--thingy-paper);
-  color: var(--thingy-xyz);
+  color: var(--thingy-xyz-text);
   font-family: var(--font-ui);
   font-weight: 800;
   font-size: clamp(24px, 2.8vw, 32px);

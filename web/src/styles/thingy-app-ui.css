@@ -42,7 +42,7 @@
   place-items: center;
   width: 48px;
   height: 48px;
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 14px;
   background: var(--thingy-toy-cream);
   color: var(--thingy-ink);
@@ -235,7 +235,7 @@
 .thingy-meter {
   height: 12px;
   overflow: hidden;
-  border: 2px solid var(--thingy-ink);
+  border: 2px solid var(--thingy-edge);
   border-radius: 999px;
   background: var(--thingy-toy-cream);
 }
@@ -243,7 +243,7 @@
 .thingy-meter > span {
   display: block;
   height: 100%;
-  border-right: 2px solid var(--thingy-ink);
+  border-right: 2px solid var(--thingy-edge);
   background: var(--thingy-tangerine);
 }
 
@@ -254,7 +254,7 @@
 /* The "Card issued" stamp: lined index-card paper. */
 .thingy-card-stamp {
   background-color: var(--thingy-toy-cream);
-  background-image: repeating-linear-gradient(180deg, transparent 0 23px, #d9c9a4 23px 24px);
+  background-image: repeating-linear-gradient(180deg, transparent 0 23px, var(--thingy-ruled) 23px 24px);
 }
 
 /* The request log: one toy-cream list, entries split by dashed rules. */
