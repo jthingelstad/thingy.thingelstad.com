@@ -11,7 +11,8 @@ const SISTER_HOSTS = new Set([
   'thingelstad.com',
   'weekly.thingelstad.com',
   'another.thingelstad.com',
-  'thingelstad.xyz'
+  'thingelstad.xyz',
+  'links.thingelstad.xyz'
 ]);
 
 function sisterHost(url: string): string {

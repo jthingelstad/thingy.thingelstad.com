@@ -224,7 +224,12 @@ test('the static pages carry the h-card and rel=me; chat, sign-in, share and 404
   }
 });
 
-test('the home family tiles list every sister site with ?ref=thingy-family', async () => {
+// Linking Things joined the strip on 2026-10-23, but Thingy does not read it
+// yet, so it has no tile under "Thingy reads them all" until the Librarian
+// ingests it. A tile before then is Jamie's call.
+const NOT_READ_BY_THINGY = new Set(['links']);
+
+test('the home family tiles list every sister site Thingy reads, with ?ref=thingy-family', async () => {
   const sites = loadSites(WEB_ROOT);
   const out = pageDataPlugin(WEB_ROOT).transformIndexHtml(await source('index.html'));
   const family = out.slice(
@@ -235,7 +240,10 @@ test('the home family tiles list every sister site with ?ref=thingy-family', asy
   const sisters = stripSites(sites).filter((site) => site.id !== 'thingy');
   assert.deepEqual(
     hrefs.filter((href) => href !== '/').sort(),
-    sisters.map((site) => `${site.url}?ref=thingy-family`).sort()
+    sisters
+      .filter((site) => !NOT_READ_BY_THINGY.has(site.id))
+      .map((site) => `${site.url}?ref=thingy-family`)
+      .sort()
   );
   assert.ok(
     family.includes('<a class="thingy-family-tile" href="/" aria-current="page">'),

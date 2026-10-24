@@ -1,5 +1,5 @@
 {
-  "$comment": "Canonical cross-site data for Jamie's sites. Edit here only; consumers vendor a copy (www.thingelstad.com/scripts/sync-shared.sh -> thing-hugo/data/sites.json; npm run sites:sync in thingy.thingelstad.com/web, weekly.thingelstad.com, another.thingelstad.com and thingelstad.xyz). in_sites_strip picks the sites the \"Jamie's sites\" strip and the blog's footer list, and strip_label is the one label a site has in that strip on every site, its own included; in_publishing_system says only whether WT Builder and librarian-thing work with the site. Call these sites or properties, never a network.",
+  "$comment": "Canonical cross-site data for Jamie's sites. Edit here only; consumers vendor a copy (www.thingelstad.com/scripts/sync-shared.sh -> thing-hugo/data/sites.json; npm run sites:sync in thingy.thingelstad.com/web, weekly.thingelstad.com, another.thingelstad.com, thingelstad.xyz and links.thingelstad.xyz). in_sites_strip picks the sites the \"Jamie's sites\" strip and the blog's footer list, and strip_label is the one label a site has in that strip on every site, its own included; in_publishing_system says only whether WT Builder and librarian-thing work with the site. Call these sites or properties, never a network.",
   "owner": {
     "name": "Jamie Thingelstad",
     "url": "https://www.thingelstad.com/",
@@ -87,6 +87,22 @@
       "feeds": {
         "rss": "https://thingelstad.xyz/feed.xml",
         "json": "https://thingelstad.xyz/feed.json"
+      },
+      "subscribe_url": null
+    },
+    {
+      "id": "links",
+      "name": "Linking Things",
+      "short_name": "Links",
+      "strip_label": "Linking Things",
+      "url": "https://links.thingelstad.xyz/",
+      "description": "Every link Jamie Thingelstad has saved since 2005, as a searchable, connected database.",
+      "kind": "links",
+      "in_publishing_system": false,
+      "in_sites_strip": true,
+      "feeds": {
+        "rss": "https://links.thingelstad.xyz/feed.xml",
+        "json": "https://links.thingelstad.xyz/feed.json"
       },
       "subscribe_url": null
     },
