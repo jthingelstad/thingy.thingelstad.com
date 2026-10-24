@@ -1,5 +1,5 @@
 /* Felt & Tangerine chrome for the static pages (/, /about/, /connect/,
-   /connect/reference/): the Jamie's sites strip, the site header, the navy
+   /connect/reference/): the sites strip, the site header, the navy
    footer and the toy pieces the pages share (name tag, pocket cards, ask
    chips, icon tiles, dashed notes). Scoped under body.thingy-static so none
    of it reaches the SPA. Semantic class names are test hooks. */
@@ -149,7 +149,7 @@
   font-size: 19px;
 }
 
-/* ---- Jamie's sites strip, rendered at build time by vite.page-data.ts.
+/* ---- The sites strip, rendered at build time by vite.page-data.ts.
    The shared contract (thingelstad.com AGENTS.md, "The sites strip") is
    the blog v2 strip and every site renders it identically, so these
    values are the contract's, not Thingy's palette; the inner width and

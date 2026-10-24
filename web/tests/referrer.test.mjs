@@ -50,7 +50,7 @@ test("the from map names Things I've built from sites.json", async () => {
   const xyz = sites.find((site) => site.id === 'xyz');
   const entry = SITE.networkLinks.find((link) => link.href === xyz.url);
   assert.ok(entry, 'thingelstad.xyz has a from entry');
-  assert.equal(entry.label, xyz.strip_label);
+  assert.equal(entry.label, xyz.name);
   assert.equal(entry.label, 'Things I’ve built');
 
   // resolveFromValue reads the links from the page config.

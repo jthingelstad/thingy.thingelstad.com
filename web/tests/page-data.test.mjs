@@ -64,7 +64,7 @@ test('the sites strip renders the shared contract from the vendored sites.json',
   const html = renderSitesStrip(sites);
   assert.match(
     html,
-    /^<nav class="sites-strip" aria-label="Jamie's sites"><div class="sites-strip__inner"><span class="sites-strip__label">Jamie's sites<\/span><ul class="sites-strip__list"><li /
+    /^<nav class="sites-strip" aria-label="Jamie Thingelstad"><div class="sites-strip__inner"><span class="sites-strip__label">Jamie Thingelstad<\/span><ul class="sites-strip__list"><li /
   );
   assert.match(html, /<\/li><\/ul><\/div><\/nav>$/);
   const items = [...html.matchAll(ITEM)];
@@ -88,9 +88,12 @@ test('the sites strip renders the shared contract from the vendored sites.json',
     }))
   );
   assert.equal(items.filter((item) => item[2]).length, 1, 'exactly one site is current');
-  assert.ok(html.includes('>Thingy</a>') && !html.includes('>Ask Thingy</a>'), 'Thingy reads as on every other site');
+  assert.ok(html.includes('>Ask Thingy</a>') && !html.includes('>Thingy</a>'), 'Thingy reads as on every other site');
   assert.ok(html.includes('>Blog</a>') && !html.includes('>Jamie Thingelstad</a>'), 'the blog shows its strip label');
-  assert.ok(html.includes('>Things I’ve built</a>'), 'thingelstad.xyz shows its strip label');
+  assert.ok(
+    html.includes('>Projects</a>') && !html.includes('>Things I’ve built</a>'),
+    'thingelstad.xyz shows its strip label'
+  );
   assert.deepEqual(stripSites(sites), expected);
 });
 

@@ -81,8 +81,8 @@ export function renderSitesStrip(sites: Site[], currentId = THINGY_SITE_ID): str
     );
   });
   return (
-    `<nav class="sites-strip" aria-label="Jamie's sites"><div class="sites-strip__inner">` +
-    `<span class="sites-strip__label">Jamie's sites</span>` +
+    `<nav class="sites-strip" aria-label="Jamie Thingelstad"><div class="sites-strip__inner">` +
+    `<span class="sites-strip__label">Jamie Thingelstad</span>` +
     `<ul class="sites-strip__list">${items.join('')}</ul></div></nav>`
   );
 }

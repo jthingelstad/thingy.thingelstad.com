@@ -212,7 +212,7 @@ Key files:
   `#thingy-copy-status`).
 - `web/vite.page-data.ts`: build-time data for the static pages. It
   replaces a `<!--sites-strip-->` marker on `/`, `/about/`, `/connect/` and
-  `/connect/reference/` with the Jamie's sites strip from
+  `/connect/reference/` with the sites strip from
   `web/contracts/sites.json` (entries with `in_sites_strip: true`, in file
   order; every site shows its `strip_label`, Thingy too, so the strip reads
   the same as on every other site; Thingy, the current site, differs only
@@ -307,7 +307,7 @@ Do:
   slate/red kicker and thinking dots are Thingy's own look, not Another
   Thing's label.
 - Make the chat/auth surface the primary object.
-- Put the shared "Jamie's sites" strip (the blog v2 strip, from
+- Put the shared sites strip (the blog v2 strip, from
   `shared/sites.json`, exactly as the domain `AGENTS.md` contract sets it)
   on the static pages only (`/`, `/about/`, `/connect/`,
   `/connect/reference/`) - never on chat, sign-in, share, or 404 (Jamie,
