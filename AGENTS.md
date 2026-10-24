@@ -179,8 +179,9 @@ Key files:
   stylesheets (`answer.css`, `thingy-page.css`, `share.css`) in
   `layer(components)` - above preflight, which would otherwise strip
   link colors. `thingy-base.css` owns the design tokens - the palette lives at
-  `--thingy-*`, one light palette with no `prefers-color-scheme` or
-  `data-theme` blocks (NEVER name app tokens `--color-*`: Tailwind emits
+  `--thingy-*`, a light palette and a `prefers-color-scheme: dark` block
+  that redefines it, with no `data-theme` switch (NEVER name app tokens
+  `--color-*`: Tailwind emits
   `--color-<name>` theme variables and the collision creates circular
   var() references that silently blank the theme). `answer.css` is the
   one home for rendered-answer typography (chat + share page).
@@ -223,7 +224,7 @@ Key files:
   markup, classes and values are the shared contract in the domain
   `AGENTS.md` ("The sites strip"), identical on every one of Jamie's sites;
   only the inner width and side padding follow Thingy's header frame, and
-  the contract's dark values are left out (Thingy has no dark mode). Change
+  dark mode takes the contract's dark values. Change
   the contract there first. The same file's `owner` block renders the
   footer h-card (`<!--owner-hcard-->`, the bird avatar, so the CSP allows
   `https://avatars.micro.blog`) and the head's `<link rel="me">` links
@@ -255,9 +256,10 @@ Key files:
   canvas height on the any-purpose icons; the maskable variant keeps every
   opaque pixel inside the central 80% safe circle). Regenerate the same
   way when the artwork changes.
-  Every shell links the manifest, apple-touch-icon, ONE `theme-color`
-  (cream `#f6eedc`, matching the manifest) - there is no dark variant -
-  and the same favicon, `/favicon.svg?v=2`: the static mascot screen face
+  Every shell links the manifest, apple-touch-icon, two `theme-color`s
+  (cream `#f6eedc` for light, matching the manifest, and `#1c1914` for
+  dark, each behind its `prefers-color-scheme` media query) and the same
+  favicon, `/favicon.svg?v=2`: the static mascot screen face
   (2026-10-21). SVGs cache for a week in browsers, so bump `?v=` on every
   shell together when the artwork changes (`tests/one-look.test.mjs`
   guards all of this). No service worker -
@@ -284,8 +286,18 @@ Do:
 
 - Build on the warm palette in `thingy-base.css`: cream ground, paper
   surfaces, ink text and borders, tangerine fills (navy text only on
-  tangerine), clay links. One look only: there is no dark mode and no theme
-  switch.
+  tangerine), clay links. Dark mode follows the system setting (Jamie,
+  2026-10-23: "Approved: add system-following dark mode to Thingy and drop
+  its "one look only" rule"); there is no theme switch. The dark block in
+  `thingy-base.css` turns the ground near-black and ink cream; borders and
+  hard shadows ride `--thingy-edge` (ink in light, a warm grey in dark), the
+  navy grounds (footer, navy cards, active rail) ride `--thingy-navy` and
+  stay navy, and the source fills (cobalt, crimson, green, the tangerine
+  buttons) keep their light values. Text in a source colour uses its
+  `-text` token (`--thingy-weekly-text` and friends, the shared
+  `--jt-*-text` values). A fill under white text never uses a token that
+  lightens in dark (`--thingy-clay-fill`, not `--thingy-clay`). Check new
+  colours in both schemes.
 - Type: Archivo 800 (wide, upright) for display, Thingy's own costume; Inter
   for UI and body, Inter Tight 800 for smaller headings, the shared mono for
   real code only. These are the shared faces of Jamie's sites; see "Shared

@@ -64,7 +64,7 @@ function Unavailable({ signedIn }: { signedIn: boolean }) {
           The link may have been turned off by the person who shared it, or it may have expired.
         </p>
       </div>
-      <aside className="thingy-shared-cta flex w-full max-w-[560px] flex-col items-center gap-4 rounded-[20px] border-2 border-ink bg-toy p-5 shadow-[0_6px_0_var(--thingy-ink)] sm:gap-[18px] sm:px-7 sm:py-6">
+      <aside className="thingy-shared-cta flex w-full max-w-[560px] flex-col items-center gap-4 rounded-[20px] border-2 border-edge bg-toy p-5 shadow-[0_6px_0_var(--thingy-edge)] sm:gap-[18px] sm:px-7 sm:py-6">
         <p className="m-0 text-[18px] leading-[1.55] text-ink sm:text-[19px]">
           Thingy answers questions about Jamie Thingelstad&rsquo;s public archive &mdash; more than twenty years of
           writing, with citations.
@@ -86,7 +86,7 @@ function LoadFailed({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="mx-auto flex w-full max-w-[808px] flex-col items-center gap-5 px-4 pt-5 pb-10 text-center sm:gap-6 sm:px-6 sm:pt-10">
       <div className="relative size-40 sm:size-[200px]" aria-hidden="true">
-        <span className="absolute bottom-1 left-6 h-3.5 w-28 rounded-[50%] bg-[#e4d6b6] sm:left-[30px] sm:h-4 sm:w-[140px]" />
+        <span className="absolute bottom-1 left-6 h-3.5 w-28 rounded-[50%] bg-mascot-shadow sm:left-[30px] sm:h-4 sm:w-[140px]" />
         <img
           className="absolute inset-0 size-full select-none"
           src="/img/thingy.png"
@@ -150,11 +150,11 @@ function Ticket({
 }) {
   return (
     <aside
-      className={`${className} mb-[22px] flex overflow-hidden rounded-2xl border-2 border-ink bg-paper shadow-[0_4px_0_var(--thingy-ink)] sm:mb-7`.trim()}
+      className={`${className} mb-[22px] flex overflow-hidden rounded-2xl border-2 border-edge bg-paper shadow-[0_4px_0_var(--thingy-edge)] sm:mb-7`.trim()}
       aria-label={label}
     >
       <div
-        className="thingy-polka w-5 shrink-0 border-r-2 border-dashed border-ink [background-size:12px_12px] sm:w-[30px] sm:[background-size:16px_16px]"
+        className="thingy-polka w-5 shrink-0 border-r-2 border-dashed border-edge [background-size:12px_12px] sm:w-[30px] sm:[background-size:16px_16px]"
         aria-hidden="true"
       />
       <div className="flex grow flex-col items-start gap-3 px-3.5 pt-3.5 pb-4 text-[17px] leading-[1.45] text-ink sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4 sm:px-[18px] sm:py-3.5 sm:text-[18px]">

@@ -137,8 +137,8 @@ function ThinkingCard() {
   if (!running || hasText) return null;
   const lines = steps.split('\n').filter(Boolean);
   return (
-    <div className="thingy-thinking mb-2 inline-flex max-w-full flex-col gap-1.5 rounded-[22px] border-4 border-bezel bg-screen px-[22px] py-4 text-mint shadow-[0_0_0_2px_var(--thingy-ink),0_6px_0_2px_var(--thingy-ink)]">
-      <span className="thingy-display flex items-center gap-3 text-[20px] text-bg md:text-[21px]">
+    <div className="thingy-thinking mb-2 inline-flex max-w-full flex-col gap-1.5 rounded-[22px] border-4 border-bezel bg-screen px-[22px] py-4 text-mint shadow-[0_0_0_2px_var(--thingy-edge),0_6px_0_2px_var(--thingy-edge)]">
+      <span className="thingy-display flex items-center gap-3 text-[20px] text-on-navy md:text-[21px]">
         <span className="min-w-0">{stripEllipsis(phrase || 'Thinking...')}</span>
         <span className="thingy-dots inline-flex shrink-0 gap-[5px]" aria-hidden="true">
           <span />
@@ -220,7 +220,7 @@ function sourceHost(href: string) {
 
 const BAND: Record<CitationKind, string> = {
   weekly: 'thingy-source-band-weekly bg-weekly text-white',
-  blog: 'bg-toy text-[#8a3410]',
+  blog: 'bg-toy text-clay-hover',
   podcast: 'bg-another text-white',
   thing: 'thingy-source-band-thing bg-xyz text-white'
 };
@@ -228,8 +228,8 @@ const BAND: Record<CitationKind, string> = {
 const BADGE: Record<CitationKind, string> = {
   weekly: 'text-weekly-deep',
   blog: 'text-clay',
-  podcast: 'text-another',
-  thing: 'text-xyz'
+  podcast: 'text-another-text',
+  thing: 'text-xyz-text'
 };
 
 // The badge names the kind of source; the band names its site (the blog's
@@ -280,7 +280,7 @@ function SourcesFooter() {
         const card = (
           <>
             <span
-              className={`relative flex shrink-0 items-center gap-2 border-ink max-sm:w-14 max-sm:justify-center max-sm:border-r-2 sm:h-10 sm:px-3 ${
+              className={`relative flex shrink-0 items-center gap-2 border-edge max-sm:w-14 max-sm:justify-center max-sm:border-r-2 sm:h-10 sm:px-3 ${
                 kind === 'blog' ? 'sm:border-b-2' : ''
               } font-label text-[14px] font-semibold tracking-label uppercase ${BAND[kind]}`}
             >
@@ -310,7 +310,7 @@ function SourcesFooter() {
               </span>
               {label ? <span className="line-clamp-2 text-[17px] leading-snug font-bold text-ink">{label}</span> : null}
               {footer ? (
-                <span className="truncate border-t border-[#e2d4b5] pt-1.5 text-[14px] text-quiet max-sm:hidden">
+                <span className="truncate border-t border-rule-mid pt-1.5 text-[14px] text-quiet max-sm:hidden">
                   {footer}
                 </span>
               ) : null}
@@ -318,7 +318,7 @@ function SourcesFooter() {
           </>
         );
         const className =
-          'thingy-source-card flex min-h-16 overflow-hidden rounded-[14px] border-2 border-ink bg-paper text-ink no-underline shadow-[0_3px_0_var(--thingy-ink)] sm:flex-col';
+          'thingy-source-card flex min-h-16 overflow-hidden rounded-[14px] border-2 border-edge bg-paper text-ink no-underline shadow-[0_3px_0_var(--thingy-edge)] sm:flex-col';
         return href ? (
           <a
             key={`${badge}-${index}`}
@@ -475,7 +475,7 @@ export function UserMessage() {
   );
   return (
     <MessagePrimitive.Root className="librarian-message librarian-message-user group flex w-full flex-col items-end pt-3">
-      <div className="max-w-[84%] rounded-[20px_20px_6px_20px] bg-ink px-4 py-3 text-[18px] leading-[1.45] break-words whitespace-pre-wrap text-bg md:max-w-[70%] md:rounded-[22px_22px_6px_22px] md:px-5 md:py-3.5 md:text-[19px] md:leading-normal">
+      <div className="max-w-[84%] rounded-[20px_20px_6px_20px] bg-navy px-4 py-3 text-[18px] leading-[1.45] break-words whitespace-pre-wrap text-on-navy md:max-w-[70%] md:rounded-[22px_22px_6px_22px] md:px-5 md:py-3.5 md:text-[19px] md:leading-normal">
         <MessagePrimitive.Parts />
       </div>
       <div className={`${ACTIONS_ROW} -mr-2.5 justify-end`}>
@@ -517,7 +517,7 @@ export function UserMessage() {
 
 export function EditComposer() {
   return (
-    <ComposerPrimitive.Root className="my-3 w-full rounded-[22px] border-2 border-ink bg-paper p-3.5 shadow-[0_4px_0_var(--thingy-ink)] focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-(--thingy-focus)">
+    <ComposerPrimitive.Root className="my-3 w-full rounded-[22px] border-2 border-edge bg-paper p-3.5 shadow-[0_4px_0_var(--thingy-edge)] focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-(--thingy-focus)">
       <ComposerPrimitive.Input
         aria-label="Edit message"
         className="max-h-[40dvh] w-full resize-none bg-transparent px-1 font-sans text-[18px] text-ink outline-none md:text-[19px]"

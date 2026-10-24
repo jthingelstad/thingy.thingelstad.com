@@ -12,7 +12,7 @@ export const MAX_QUESTION_CHARS = 1200;
 // board's #D9CBA8 ring is 1.55:1 on paper, under the 3:1 a control
 // boundary needs, and the button reads fine as a bare icon.
 const ROUND_BUTTON = 'grid shrink-0 place-items-center rounded-full transition-colors';
-const SEND_BUTTON = `${ROUND_BUTTON} size-12 border-2 border-ink [&_svg]:size-[21px]`;
+const SEND_BUTTON = `${ROUND_BUTTON} size-12 border-2 border-edge [&_svg]:size-[21px]`;
 
 export function Composer({
   guest,
@@ -147,7 +147,7 @@ export function Composer({
           You&rsquo;re offline &mdash; Thingy needs a connection to answer.
         </p>
       ) : null}
-      <ComposerPrimitive.Root className="composer-box rounded-[24px] border-2 border-ink bg-paper shadow-[0_5px_0_var(--thingy-ink)] focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-(--thingy-focus) md:rounded-[26px] md:shadow-[0_6px_0_var(--thingy-ink)]">
+      <ComposerPrimitive.Root className="composer-box rounded-[24px] border-2 border-edge bg-paper shadow-[0_5px_0_var(--thingy-edge)] focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-(--thingy-focus) md:rounded-[26px] md:shadow-[0_6px_0_var(--thingy-edge)]">
         <label htmlFor="librarian-question" className="sr-only">
           Ask Thingy
         </label>
@@ -182,7 +182,10 @@ export function Composer({
                 <span className="truncate text-[14px] text-quiet">{voiceStatus}</span>
               ) : guest ? (
                 <>
-                  <span className="thingy-polka size-4 shrink-0 rounded-[5px] border-2 border-ink" aria-hidden="true" />
+                  <span
+                    className="thingy-polka size-4 shrink-0 rounded-[5px] border-2 border-edge"
+                    aria-hidden="true"
+                  />
                   <span className="truncate font-label text-[14px] font-semibold tracking-label text-meta uppercase">
                     Guest preview
                   </span>
@@ -200,7 +203,7 @@ export function Composer({
               <ComposerPrimitive.Send asChild>
                 <button
                   type="button"
-                  className={`composer-send ${SEND_BUTTON} bg-tangerine text-on-tangerine shadow-[0_3px_0_var(--thingy-ink)] hover:brightness-105 disabled:cursor-default disabled:border-rule disabled:bg-toy disabled:text-quiet disabled:shadow-none`}
+                  className={`composer-send ${SEND_BUTTON} bg-tangerine text-on-tangerine shadow-[0_3px_0_var(--thingy-edge)] hover:brightness-105 disabled:cursor-default disabled:border-rule disabled:bg-toy disabled:text-quiet disabled:shadow-none`}
                   aria-label="Ask Thingy"
                 >
                   <Icon name="arrow-up" />
@@ -213,7 +216,7 @@ export function Composer({
               <ComposerPrimitive.Cancel asChild>
                 <button
                   type="button"
-                  className={`composer-send thingy-aui-stop ${SEND_BUTTON} bg-ink text-bg shadow-[0_3px_0_var(--thingy-ink)] hover:brightness-125 [&_svg]:size-4 [&_svg]:fill-current`}
+                  className={`composer-send thingy-aui-stop ${SEND_BUTTON} bg-navy text-on-navy shadow-[0_3px_0_var(--thingy-edge)] hover:brightness-125 [&_svg]:size-4 [&_svg]:fill-current`}
                   aria-label="Stop answering"
                 >
                   <Icon name="square" />

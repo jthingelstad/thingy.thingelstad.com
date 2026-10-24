@@ -95,7 +95,7 @@ export function ThingyFace({
         height={VIEW_H - 3}
         rx="31.5"
         fill="var(--thingy-bezel)"
-        stroke="var(--thingy-ink)"
+        stroke="var(--thingy-edge)"
         strokeWidth="3"
       />
       <rect x="9" y="9" width={VIEW_W - 18} height={VIEW_H - 18} rx="24" fill="var(--thingy-screen)" />

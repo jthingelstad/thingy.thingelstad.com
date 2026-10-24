@@ -114,7 +114,7 @@ export function HistoryDialog({
               <label htmlFor="thingy-history-search" className="sr-only">
                 Search all conversations
               </label>
-              <div className="mt-4 flex min-h-12 items-center gap-2.5 rounded-[14px] border-2 border-ink bg-paper px-3.5 text-meta focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-weekly [&_svg]:size-[18px] [&_svg]:shrink-0">
+              <div className="mt-4 flex min-h-12 items-center gap-2.5 rounded-[14px] border-2 border-edge bg-paper px-3.5 text-meta focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-weekly [&_svg]:size-[18px] [&_svg]:shrink-0">
                 <Icon name="search" />
                 <input
                   id="thingy-history-search"

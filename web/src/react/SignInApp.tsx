@@ -236,14 +236,14 @@ export function SignInApp({
           </div>
           {inboxBubble ? (
             <span
-              className="absolute top-[18px] right-[calc(50%+36px)] z-[2] -rotate-3 rounded-[16px_16px_5px_16px] border-2 border-ink bg-paper px-3 py-[7px] text-[16px] font-extrabold whitespace-nowrap shadow-[3px_3px_0_var(--thingy-ink)] md:top-[-150px] md:right-auto md:left-[calc(50%+96px)] md:rotate-3 md:rounded-[20px_20px_20px_6px] md:px-[18px] md:py-3 md:text-[19px] md:shadow-[4px_4px_0_var(--thingy-ink)]"
+              className="absolute top-[18px] right-[calc(50%+36px)] z-[2] -rotate-3 rounded-[16px_16px_5px_16px] border-2 border-edge bg-paper px-3 py-[7px] text-[16px] font-extrabold whitespace-nowrap shadow-[3px_3px_0_var(--thingy-edge)] md:top-[-150px] md:right-auto md:left-[calc(50%+96px)] md:rotate-3 md:rounded-[20px_20px_20px_6px] md:px-[18px] md:py-3 md:text-[19px] md:shadow-[4px_4px_0_var(--thingy-edge)]"
               aria-hidden="true"
             >
               Check your inbox!
             </span>
           ) : null}
           <section
-            className="relative z-[1] flex flex-col gap-4 rounded-[22px] border-2 border-ink bg-paper px-5 py-[22px] shadow-[0_6px_0_var(--thingy-ink)] md:gap-5 md:rounded-[24px] md:px-11 md:pt-10 md:pb-9"
+            className="relative z-[1] flex flex-col gap-4 rounded-[22px] border-2 border-edge bg-paper px-5 py-[22px] shadow-[0_6px_0_var(--thingy-edge)] md:gap-5 md:rounded-[24px] md:px-11 md:pt-10 md:pb-9"
             aria-labelledby="thingy-signin-title"
           >
             <div className="flex flex-col gap-1.5 md:gap-2.5">
@@ -254,7 +254,7 @@ export function SignInApp({
               >
                 Sign in to Thingy
               </h1>
-              <p className="mt-1 text-[18px] leading-normal text-[#3d4654] md:text-[19px] md:leading-[1.55]">
+              <p className="mt-1 text-[18px] leading-normal text-ink-soft md:text-[19px] md:leading-[1.55]">
                 {standalone
                   ? 'Enter your email address and Thingy will email you a six-digit sign-in code. Weekly Thing readers can use Chat, and supporting members get the deeper features.'
                   : 'Enter your email address and Thingy will send a private sign-in link. Weekly Thing readers can use Chat, and supporting members get the deeper features.'}
@@ -358,7 +358,7 @@ export function SignInApp({
 function SignInStatus({ kind, text }: { kind: string; text: string }) {
   if (kind === 'pending') {
     return (
-      <p className="flex items-center gap-3 px-1 py-3 text-[17px] leading-[1.45] font-semibold text-[#3d4654]">
+      <p className="flex items-center gap-3 px-1 py-3 text-[17px] leading-[1.45] font-semibold text-ink-soft">
         <span className="thingy-dots inline-flex shrink-0 gap-[5px]" aria-hidden="true">
           <span />
           <span />
@@ -379,7 +379,7 @@ function SignInStatus({ kind, text }: { kind: string; text: string }) {
   return (
     <p
       className={`flex items-start gap-2.5 rounded-[14px] border-2 px-4 py-3 text-[17px] leading-[1.45] font-semibold ${
-        error ? 'border-danger bg-danger-tint text-danger' : 'border-[#2e6b34] bg-[#e3f6e0] text-[#2e6b34]'
+        error ? 'border-danger bg-danger-tint text-danger' : 'border-success bg-success-tint text-success'
       }`}
     >
       <svg

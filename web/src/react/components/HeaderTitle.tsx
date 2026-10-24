@@ -41,7 +41,7 @@ export function HeaderTitle({
   return (
     <div className="mobile-chatbar-title min-w-0 flex-1">
       <input
-        className="min-h-11 w-[min(420px,100%)] rounded-[10px] border-2 border-ink bg-paper px-2.5 font-sans text-[18px] font-bold text-ink outline-none focus:outline-3 focus:outline-offset-2 focus:outline-[var(--thingy-focus)]"
+        className="min-h-11 w-[min(420px,100%)] rounded-[10px] border-2 border-edge bg-paper px-2.5 font-sans text-[18px] font-bold text-ink outline-none focus:outline-3 focus:outline-offset-2 focus:outline-[var(--thingy-focus)]"
         type="text"
         aria-label="Conversation title"
         value={draft}

@@ -154,7 +154,7 @@
 
 .librarian-answer-content a.thingy-cite-blog {
   border: 1.5px solid var(--thingy-clay);
-  background: #fbe7dc;
+  background: var(--thingy-clay-tint);
   color: var(--thingy-clay);
   font-size: max(0.875rem, 0.9em);
 }
@@ -304,6 +304,12 @@
 
 .thingy-shiki pre.shiki span {
   color: var(--shiki-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  .thingy-shiki pre.shiki span {
+    color: var(--shiki-dark);
+  }
 }
 
 /* Inline media in answers: clickable thumbnails that open the source page

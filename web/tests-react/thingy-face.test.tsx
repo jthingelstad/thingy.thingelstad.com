@@ -44,10 +44,10 @@ test('each mood draws its own features on the dark screen', () => {
     const { container, unmount } = render(<ThingyFace mood={mood} />);
     const svg = face(container);
     expect(svg.getAttribute('data-mood')).toBe(mood);
-    // Bezel and screen: the cream ring with the ink outline, then the screen.
+    // Bezel and screen: the cream ring with the edge outline (ink in light), then the screen.
     const [bezel, screenRect] = svg.querySelectorAll('rect');
     expect(bezel.getAttribute('fill')).toBe('var(--thingy-bezel)');
-    expect(bezel.getAttribute('stroke')).toBe('var(--thingy-ink)');
+    expect(bezel.getAttribute('stroke')).toBe('var(--thingy-edge)');
     expect(screenRect.getAttribute('fill')).toBe('var(--thingy-screen)');
     draws[mood](svg);
     unmount();

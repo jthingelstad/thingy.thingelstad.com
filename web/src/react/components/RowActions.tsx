@@ -40,7 +40,7 @@ const VARIANTS = {
     action:
       'grid size-11 place-items-center rounded-xl text-meta transition-colors hover:bg-paper hover:text-ink [&_svg]:size-[18px]',
     danger: 'hover:text-danger',
-    more: 'size-11 shrink-0 place-items-center rounded-xl border-2 border-transparent text-meta transition-colors hover:border-ink hover:bg-paper hover:text-ink aria-expanded:border-ink aria-expanded:bg-paper aria-expanded:text-ink [&_svg]:size-5'
+    more: 'size-11 shrink-0 place-items-center rounded-xl border-2 border-transparent text-meta transition-colors hover:border-edge hover:bg-paper hover:text-ink aria-expanded:border-edge aria-expanded:bg-paper aria-expanded:text-ink [&_svg]:size-5'
   }
 } as const;
 

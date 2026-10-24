@@ -127,7 +127,7 @@ export function Rail({
   }, [conversations, filter, contentMatches]);
   return (
     <nav
-      className="rail thingy-aui-rail thingy-rail flex h-full min-h-0 w-[288px] flex-col gap-3 overflow-hidden border-r-2 border-rail-deep bg-rail px-3 pt-3 pb-3.5 text-bg md:w-[280px] md:px-4 md:pt-5"
+      className="rail thingy-aui-rail thingy-rail flex h-full min-h-0 w-[288px] flex-col gap-3 overflow-hidden border-r-2 border-rail-deep bg-rail px-3 pt-3 pb-3.5 text-on-navy md:w-[280px] md:px-4 md:pt-5"
       aria-label="Conversations"
     >
       <div className="flex items-center gap-3 pl-1">
@@ -156,7 +156,7 @@ export function Rail({
           <Icon name="search" />
           <input
             ref={filterInputRef}
-            className="min-h-10 w-full min-w-0 bg-transparent font-sans text-[18px] text-bg outline-none placeholder:text-rail-field"
+            className="min-h-10 w-full min-w-0 bg-transparent font-sans text-[18px] text-on-navy outline-none placeholder:text-rail-field"
             type="search"
             placeholder="Search chats"
             aria-label="Search conversations"

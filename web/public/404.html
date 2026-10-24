@@ -4,12 +4,13 @@
 <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://tinylytics.app; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://*.thingelstad.com https://tinylytics.app; connect-src 'self' https://tinylytics.app">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light">
+<meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex">
 <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/img/icons/apple-touch-icon.png">
-<meta name="theme-color" content="#f6eedc">
+<meta name="theme-color" content="#f6eedc" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1c1914" media="(prefers-color-scheme: dark)">
 <title>Not found - Thingy</title>
 <!-- public/ is copied raw (no Vite CSS), so the NotFound board's styles
      live inline. Same tokens as thingy-base.css; no sites strip here. Inter
@@ -22,11 +23,18 @@
 @font-face { font-family: Archivo; font-style: normal; font-display: swap; font-weight: 100 900; font-stretch: 62% 125%;
   src: url('/fonts/archivo-latin-ext-wdth-normal.woff2') format('woff2-variations');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
-:root { color-scheme: light;
+:root { color-scheme: light dark;
   --thingy-cream: #f6eedc; --thingy-paper: #fffaf0; --thingy-toy-cream: #efe3c8;
   --thingy-ink: #1f2a38; --thingy-body: #3d4654; --thingy-clay: #b5461a; --thingy-clay-deep: #8a3410;
   --thingy-brass: #c7a04e; --thingy-screen: #17191b; --thingy-bezel: #ebddbd;
-  --thingy-mint: #b9f0b1; --thingy-oops: #ffb98f; --thingy-focus: #1f6fd6; }
+  --thingy-mint: #b9f0b1; --thingy-oops: #ffb98f; --thingy-focus: #1f6fd6;
+  --thingy-edge: var(--thingy-ink); --thingy-navy: #1f2a38; --thingy-meta: #3d526b; --thingy-rule: #c9b994; --thingy-rule-mid: #e4d6b6; }
+/* Dark by the system setting, the values in thingy-base.css. */
+@media (prefers-color-scheme: dark) {
+  :root { --thingy-cream: #1c1914; --thingy-paper: #26221b; --thingy-toy-cream: #322c23;
+    --thingy-ink: #f6eedc; --thingy-body: #ddd4c2; --thingy-clay: #f3a274; --thingy-clay-deep: #f9c3a0;
+    --thingy-focus: #8fb8f5; --thingy-edge: #8c7f68; --thingy-meta: #b6c0cd; --thingy-rule: #75684f; --thingy-rule-mid: #3f382c; }
+}
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; min-height: 100dvh; display: flex; flex-direction: column; overflow-x: clip;
   background: var(--thingy-cream); color: var(--thingy-ink);
@@ -51,26 +59,26 @@ a:focus-visible { outline: 3px solid var(--thingy-focus); outline-offset: 3px; }
 .nf-mascot { left: 26%; top: 0; width: 48%; height: auto; }
 .nf-cabinet { left: 8%; top: 29.06%; width: 84%; height: 40.63%; padding: 3.6cqw; display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.4cqw; background: var(--thingy-toy-cream);
-  border: 2px solid var(--thingy-ink); border-radius: 18px; box-shadow: 0 6px 0 var(--thingy-ink); }
+  border: 2px solid var(--thingy-edge); border-radius: 18px; box-shadow: 0 6px 0 var(--thingy-edge); }
 .nf-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4cqw;
-  background: var(--thingy-paper); border: 2px solid var(--thingy-ink); border-radius: 8px; }
-.nf-cell.is-empty { background: var(--thingy-ink); box-shadow: inset 0 10px 0 #10171f; }
+  background: var(--thingy-paper); border: 2px solid var(--thingy-edge); border-radius: 8px; }
+.nf-cell.is-empty { background: var(--thingy-navy); box-shadow: inset 0 10px 0 #10171f; }
 .nf-label { width: 11.6cqw; height: 4.4cqw; display: flex; flex-direction: column; justify-content: center; gap: 0.6cqw;
   padding: 0 1.6cqw; border: 2px solid var(--thingy-brass); border-radius: 3px; }
-.nf-label i { display: block; height: 2px; background: #c9b994; }
-.nf-pull { width: 5.2cqw; height: 1.8cqw; border: 2.5px solid var(--thingy-ink); border-top: 0; border-radius: 0 0 14px 14px; background: var(--thingy-brass); }
+.nf-label i { display: block; height: 2px; background: var(--thingy-rule); }
+.nf-pull { width: 5.2cqw; height: 1.8cqw; border: 2.5px solid var(--thingy-edge); border-top: 0; border-radius: 0 0 14px 14px; background: var(--thingy-brass); }
 .nf-drawer { left: 33%; top: 56.56%; width: 34%; display: flex; flex-direction: column; }
 .nf-drawer svg { display: block; width: 100%; height: auto; margin-bottom: -4px; }
 .nf-drawer-front { aspect-ratio: 170 / 112; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4cqw;
-  background: var(--thingy-paper); border: 2px solid var(--thingy-ink); border-radius: 10px; box-shadow: 0 6px 0 var(--thingy-ink); }
+  background: var(--thingy-paper); border: 2px solid var(--thingy-edge); border-radius: 10px; box-shadow: 0 6px 0 var(--thingy-edge); }
 .nf-404 { min-width: 20.8cqw; padding: 0.8cqw 2.4cqw; text-align: center; background: var(--thingy-paper);
-  border: 3px solid var(--thingy-brass); border-radius: 4px; box-shadow: inset 0 0 0 2px var(--thingy-paper), inset 0 0 0 3px #e4d6b6;
+  border: 3px solid var(--thingy-brass); border-radius: 4px; box-shadow: inset 0 0 0 2px var(--thingy-paper), inset 0 0 0 3px var(--thingy-rule-mid);
   font-family: 'Archivo', 'Inter', sans-serif; font-weight: 800; font-stretch: 112%; font-size: 6.8cqw; line-height: 1.1; letter-spacing: -0.02em; }
 .nf-drawer-front .nf-pull { width: 7.6cqw; height: 2.6cqw; border-width: 3px; }
 .nf-shelf { left: 0; right: 0; top: 93.75%; margin: 0; text-align: center;
-  font-size: var(--jt-size-label, 14px); font-weight: 600; letter-spacing: var(--jt-tracking-label, 0.06em); text-transform: uppercase; color: #3d526b; }
+  font-size: var(--jt-size-label, 14px); font-weight: 600; letter-spacing: var(--jt-tracking-label, 0.06em); text-transform: uppercase; color: var(--thingy-meta); }
 .nf-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 24px; max-width: 520px; }
-.nf-oops { display: block; filter: drop-shadow(0 6px 0 var(--thingy-ink)); }
+.nf-oops { display: block; filter: drop-shadow(0 6px 0 var(--thingy-edge)); }
 h1 { margin: 0; font-family: 'Archivo', 'Inter', sans-serif; font-weight: 800; font-stretch: 112%;
   font-size: clamp(40px, 6vw, 64px); line-height: 0.98; letter-spacing: -0.025em; }
 p { margin: 0; font-size: 22px; line-height: 1.55; color: var(--thingy-body); }
@@ -92,7 +100,7 @@ p { margin: 0; font-size: 22px; line-height: 1.55; color: var(--thingy-body); }
 <body>
 <header class="nf-header">
   <a class="nf-home" href="/" aria-label="Thingy home">
-    <svg class="thingy-face thingy-face-animated" width="44" height="35" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-ink)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><g fill="none" stroke="var(--thingy-mint)" stroke-width="4" stroke-linecap="round"><g class="thingy-face-blink"><path d="M27 42a9 9 0 0 1 18 0" /><path d="M71 42a9 9 0 0 1 18 0" /></g><path d="M45 50q13 14 26 0" /></g></svg>
+    <svg class="thingy-face thingy-face-animated" width="44" height="35" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-edge)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><g fill="none" stroke="var(--thingy-mint)" stroke-width="4" stroke-linecap="round"><g class="thingy-face-blink"><path d="M27 42a9 9 0 0 1 18 0" /><path d="M71 42a9 9 0 0 1 18 0" /></g><path d="M45 50q13 14 26 0" /></g></svg>
     <span class="nf-wordmark" aria-hidden="true">Thingy</span>
   </a>
 </header>
@@ -112,7 +120,7 @@ p { margin: 0; font-size: 22px; line-height: 1.55; color: var(--thingy-body); }
     <p class="nf-shelf">Shelf 404 &middot; Empty</p>
   </div>
   <div class="nf-copy">
-    <svg class="thingy-face nf-oops" width="110" height="86" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-ink)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><circle cx="40.5" cy="32" r="4.5" fill="var(--thingy-oops)" /><circle cx="75.5" cy="32" r="4.5" fill="var(--thingy-oops)" /><circle cx="58" cy="55.5" r="7" fill="none" stroke="var(--thingy-oops)" stroke-width="4" /></svg>
+    <svg class="thingy-face nf-oops" width="110" height="86" viewBox="0 0 116 92" aria-hidden="true" focusable="false"><rect x="1.5" y="1.5" width="113" height="89" rx="31.5" fill="var(--thingy-bezel)" stroke="var(--thingy-edge)" stroke-width="3" /><rect x="9" y="9" width="98" height="74" rx="24" fill="var(--thingy-screen)" /><circle cx="40.5" cy="32" r="4.5" fill="var(--thingy-oops)" /><circle cx="75.5" cy="32" r="4.5" fill="var(--thingy-oops)" /><circle cx="58" cy="55.5" r="7" fill="none" stroke="var(--thingy-oops)" stroke-width="4" /></svg>
     <h1>That page is not in the archive</h1>
     <p>Thingy looked, but nothing lives at this address. Try the <a href="/">home page</a> or <a href="/chat/">ask Thingy</a> where it went.</p>
   </div>
