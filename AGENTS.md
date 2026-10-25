@@ -238,6 +238,12 @@ Key files:
   `tests/page-data.test.mjs` pins both.
 - `web/public/robots.txt`: `robots.txt`.
 - `web/public/sitemap.xml`: `sitemap.xml`.
+- `web/vite.llms-txt.ts`: emits `/llms.txt` at build time (and serves it
+  in dev) from `content/archive-stats.json` and the vendored MCP surface,
+  so it quotes the pages' counts and names exactly the tools the `/mcp`
+  door serves. The four static pages link it as
+  `<link rel="alternate" type="text/markdown">`; `tests/llms-txt.test.mjs`
+  pins both.
 - `web/vite.mcp-reference.ts`: renders `/connect/reference/` at build time
   from the vendored `web/contracts/mcp-surface.json` (the Librarian's
   exported MCP surface: tools exactly as `tools/list` declares them, doors,
@@ -480,6 +486,9 @@ Current files:
 - `web/public/robots.txt` allows crawling and points to the sitemap.
 - `web/public/sitemap.xml` lists `/`, `/about/`, `/connect/`, and
   `/connect/reference/`.
+- `/llms.txt` (built by `web/vite.llms-txt.ts`) is the site for agents and
+  LLMs: what Thingy is, the pages, and the MCP server's endpoint, auth,
+  tools, prompts and resources.
 - The route HTML files set canonical, Open Graph, Twitter, robots, and sitemap
   tags. Structured data: home carries WebSite/WebApplication/Person JSON-LD,
   `/about/` an AboutPage, `/connect/` a TechArticle about the MCP server,
