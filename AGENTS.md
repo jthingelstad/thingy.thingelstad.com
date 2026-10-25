@@ -243,7 +243,11 @@ Key files:
   so it quotes the pages' counts and names exactly the tools the `/mcp`
   door serves. The four static pages link it as
   `<link rel="alternate" type="text/markdown">`; `tests/llms-txt.test.mjs`
-  pins both.
+  pins both. It keeps the shape the llms.txt reference parser reads: prose
+  only above the first `##`, no `###`, and every line under a `##` one
+  `- [name](https://...): notes` link (tools and prompts link their
+  `/connect/reference/` anchors, facts like auth and budget their section);
+  `llmsTxtShapeProblems` fails the build and the test on anything else.
 - `web/vite.mcp-reference.ts`: renders `/connect/reference/` at build time
   from the vendored `web/contracts/mcp-surface.json` (the Librarian's
   exported MCP surface: tools exactly as `tools/list` declares them, doors,
