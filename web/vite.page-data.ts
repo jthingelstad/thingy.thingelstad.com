@@ -88,12 +88,14 @@ export function renderSitesStrip(sites: Site[], currentId = THINGY_SITE_ID): str
 }
 
 // The shared h-card: owner.avatar (the bird-on-the-hat photo, micro.blog's
-// 200px copy) as a 28px round photo beside the name.
+// 200px copy) as a 28px round photo beside the name. The url is explicit:
+// u-photo turns off the url mf2 would imply from the href.
 export function renderOwnerHcard(owner: Owner): string {
   return (
     `<a class="h-card" href="${escapeHtml(owner.url)}" rel="me author">` +
     `<img class="u-photo" src="${escapeHtml(owner.avatar)}" alt="" width="28" height="28">` +
     `<span class="p-name">${escapeHtml(owner.name)}</span>` +
+    `<data class="u-url" value="${escapeHtml(owner.url)}"></data>` +
     `<data class="p-note" value="${escapeHtml(owner.note)}"></data></a>`
   );
 }

@@ -197,7 +197,8 @@ test('the h-card and rel=me links render the shared owner block', () => {
   assert.equal(
     renderOwnerHcard(owner),
     `<a class="h-card" href="${owner.url}" rel="me author"><img class="u-photo" src="${owner.avatar}" alt="" width="28" height="28">` +
-      `<span class="p-name">${owner.name}</span><data class="p-note" value="${owner.note}"></data></a>`
+      `<span class="p-name">${owner.name}</span><data class="u-url" value="${owner.url}"></data>` +
+      `<data class="p-note" value="${owner.note}"></data></a>`
   );
   assert.ok(owner.rel_me.length > 0, 'the owner has rel=me links');
   assert.equal(renderRelMe(owner), owner.rel_me.map((url) => `<link rel="me" href="${url}">`).join(''));
