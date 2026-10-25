@@ -228,6 +228,21 @@ test('the static pages carry the h-card and rel=me; chat, sign-in, share and 404
   }
 });
 
+// Webmention senders look up the endpoint on the page they link to, so every
+// public static page names it, not just the home page (open-web audit G13,
+// 2026-10-25). The id comes from the build, as on the home page.
+test('the static pages advertise the Webmention endpoint', async () => {
+  for (const page of STRIP_PAGES) {
+    const html = await source(page);
+    const links = html.match(/<link rel="webmention"[^>]*>/g) ?? [];
+    assert.equal(links.length, 1, `${page} has one webmention link`);
+    assert.ok(
+      links[0].includes('href="https://tinylytics.app/webmention/__THINGY_TINYLYTICS_ID__"'),
+      `${page} names the Tinylytics endpoint`
+    );
+  }
+});
+
 // Linking Things joined the strip on 2026-10-23, but Thingy does not read it
 // yet, so it has no tile under "Thingy reads them all" until the Librarian
 // ingests it. A tile before then is Jamie's call.
