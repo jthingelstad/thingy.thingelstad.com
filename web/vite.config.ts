@@ -6,6 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 import { resolve } from 'node:path';
 import { SITE, htmlConfigPlugin, librarianProxy } from './vite.shared-config.ts';
+import { llmsTxtPlugin } from './vite.llms-txt.ts';
 import { mcpReferencePlugin } from './vite.mcp-reference.ts';
 import { pageDataPlugin } from './vite.page-data.ts';
 
@@ -16,7 +17,14 @@ export default defineConfig({
   define: {
     __THINGY_TINYLYTICS_ID__: JSON.stringify(SITE.tinylyticsId)
   },
-  plugins: [react(), tailwindcss(), htmlConfigPlugin(), mcpReferencePlugin(__dirname), pageDataPlugin(__dirname)],
+  plugins: [
+    react(),
+    tailwindcss(),
+    htmlConfigPlugin(),
+    mcpReferencePlugin(__dirname),
+    pageDataPlugin(__dirname),
+    llmsTxtPlugin(__dirname)
+  ],
   build: {
     outDir: '_site',
     emptyOutDir: true,
