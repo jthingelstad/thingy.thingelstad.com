@@ -123,6 +123,20 @@
       },
       "subscribe_url": null,
       "$comment": "Whether this appears in cross-site navigation is Jamie's call (MANUAL-STEPS.md); decided 2026-10-01: leave it out. The blog also shows a site whose in_sites_strip is false when params.sites_include lists its id."
+    },
+    {
+      "id": "t4g",
+      "name": "Things 4 Good",
+      "short_name": "Candles",
+      "strip_label": "Things 4 Good",
+      "url": "https://things4good.xyz/",
+      "description": "The Thingelstad family's hand-poured candle fundraiser: every candle a $25 donation, 100% to good causes.",
+      "kind": "fundraiser",
+      "in_publishing_system": false,
+      "in_sites_strip": false,
+      "feeds": {},
+      "subscribe_url": "https://buttondown.com/things4good",
+      "$comment": "Here for its share cards (cards.thingelstad.com, 2026-10-25). Left out of the sites strip by Jamie's call the same day. No feed, also Jamie's call; its updates are the Buttondown list."
     }
   ]
 }
