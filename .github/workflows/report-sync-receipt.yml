@@ -1,0 +1,61 @@
+name: Report verified native serving receipt
+
+# Called by librarian-thing after the actual native backend promotion.
+# The static web deployment never calls this workflow.
+on:
+  workflow_call:
+    inputs:
+      sender_ref:
+        description: Immutable commit of this reviewed reporting code
+        required: true
+        type: string
+      artifact:
+        required: true
+        type: string
+      bus:
+        type: string
+        default: ''
+      dry_run:
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Require an immutable sender ref
+        env:
+          SENDER_REF: ${{ inputs.sender_ref }}
+        run: '[[ "$SENDER_REF" =~ ^[0-9a-f]{40}$ ]]'
+      - uses: actions/checkout@v7
+        with:
+          repository: jthingelstad/thingy.thingelstad.com
+          ref: ${{ inputs.sender_ref }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - run: npm --prefix infra ci
+      - uses: actions/download-artifact@v7
+        with:
+          name: ${{ inputs.artifact }}
+          path: evidence
+      - uses: aws-actions/configure-aws-credentials@v5
+        if: inputs.dry_run == false && inputs.bus != ''
+        with:
+          # Reusable workflows retain the caller's OIDC subject. This is
+          # the existing backend deployer, not the static web role.
+          role-to-assume: arn:aws:iam::999153317627:role/WeeklyThingLibrarianDeployOidc
+          allowed-account-ids: '999153317627'
+          aws-region: us-east-1
+      - name: Report only changed verified native identities
+        env:
+          SYNC_RECEIVED_BUS: ${{ inputs.bus }}
+          SYNC_RECEIVED_DRY_RUN: ${{ inputs.dry_run }}
+        run: node infra/scripts/serving-receipts.mjs

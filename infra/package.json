@@ -15,5 +15,8 @@
     "@aws-sdk/client-cloudformation": "^3.1101.0",
     "@aws-sdk/client-cloudfront": "^3.1101.0",
     "@aws-sdk/client-s3": "^3.1101.0"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-eventbridge": "^3.1157.0"
   }
 }
