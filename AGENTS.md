@@ -547,6 +547,15 @@ guaranteed present.
 
 ## Deployment
 
+Sync receipts belong to native corpus promotion, not a static frontend
+deploy. `.github/workflows/report-sync-receipt.yml` is a reusable, pinned
+reporter called by `librarian-thing` with verified before/after metadata;
+`infra/scripts/serving-receipts.mjs` selects ids and times only. Unknown
+baselines and unchanged versions announce nothing. It defaults to dry run
+and an empty bus name. The caller uses its existing backend deploy role;
+no second backend, browser feature or API contract is added here.
+`docs/SYNC-RECEIPTS.md` gives the paired-PR and permission activation order.
+
 `main` is pushed to GitHub. CI builds the site and deploys it to AWS: the
 `deploy-aws` workflow job assumes `ThingyWebDeployOidc`, syncs the `thingy-web`
 CloudFormation stack (`infra/template.yaml`), uploads `web/_site` to the private
