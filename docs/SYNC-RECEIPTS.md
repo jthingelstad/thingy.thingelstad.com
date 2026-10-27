@@ -22,13 +22,15 @@ unpublished document, visitor or secret. Transport is best effort and checks
 each entry; failure warns after the healthy backend deploy. Polling remains
 the backstop. Reusable calls default to dry run and an empty bus name.
 
-This PR stays unmerged and undeployed during the night. The Librarian
-companion must pin both this workflow and its checkout to this reviewed
-immutable commit. It provides `sync-before.json` and `sync-after.json` as a
-same-run artifact. Applying the reviewed existing deploy-role boundary
-change requires Jamie's separate administrator approval; the sync stack's
-source-scoped `ThingyReceiverRole` grant cannot bypass it. Configure that
-role as `WeeklyThingLibrarianDeployOidc`, then enable the caller's repository
-variable `SYNC_THINGY_RECEIVED_BUS=thingelstad-publishing` after both PRs and
-the grant are ready. No real permission rehearsal or first delivery is
-claimed here; fixtures are the current proof.
+Merged 2026-10-27; inert until the sync stack lists the caller's deploy
+role, `WeeklyThingLibrarianDeployOidc`, in `ReceiverRoles` and the caller's
+repository variable `SYNC_THINGY_RECEIVED_BUS=thingelstad-publishing` is set.
+`ReceiverRoles` (deploy override `SYNC_RECEIVER_ROLES`, a comma-separated
+list of role names) replaced the sync stack's per-destination role
+parameters on 2026-10-27. The Librarian companion must pin both this
+workflow and its checkout to this reviewed immutable commit. It provides
+`sync-before.json` and `sync-after.json` as a same-run artifact. Applying
+the reviewed existing deploy-role boundary change requires Jamie's separate
+administrator approval; listing the role in `ReceiverRoles` cannot bypass
+it. No real permission rehearsal or first delivery is claimed here;
+fixtures are the current proof.
