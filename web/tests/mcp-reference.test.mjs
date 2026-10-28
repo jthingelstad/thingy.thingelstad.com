@@ -64,8 +64,10 @@ test('the plugin fills only the reference page', async () => {
 });
 
 test('the reference is built, indexed and linked', async () => {
-  const [config, sitemap, connect, about] = await Promise.all(
-    ['../vite.config.ts', '../public/sitemap.xml', '../connect/index.html', '../about/index.html'].map((path) =>
+  const { buildSitemap } = await import('../vite.sitemap.ts');
+  const sitemap = buildSitemap(webRoot);
+  const [config, connect, about] = await Promise.all(
+    ['../vite.config.ts', '../connect/index.html', '../about/index.html'].map((path) =>
       readFile(new URL(path, import.meta.url), 'utf8')
     )
   );
