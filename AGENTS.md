@@ -237,7 +237,11 @@ Key files:
   editing page copy. An unknown or leftover token fails the build.
   `tests/page-data.test.mjs` pins both.
 - `web/public/robots.txt`: `robots.txt`.
-- `web/public/sitemap.xml`: `sitemap.xml`.
+- `web/vite.sitemap.ts`: emits `/sitemap.xml` at build time (and serves it
+  in dev). Each page's `<lastmod>` is the newest git commit touching the
+  files it is made from (`SITEMAP_PAGES`), never the build time, so the
+  build needs full history (CI checks out with `fetch-depth: 0`; a shallow
+  clone fails the build). `tests/sitemap.test.mjs` pins it.
 - `web/vite.llms-txt.ts`: emits `/llms.txt` at build time (and serves it
   in dev) from `content/archive-stats.json` and the vendored MCP surface,
   so it quotes the pages' counts and names exactly the tools the `/mcp`
@@ -488,8 +492,9 @@ equity should concentrate on the real pages).
 Current files:
 
 - `web/public/robots.txt` allows crawling and points to the sitemap.
-- `web/public/sitemap.xml` lists `/`, `/about/`, `/connect/`, and
-  `/connect/reference/`.
+- `/sitemap.xml` (built by `web/vite.sitemap.ts`) lists `/`, `/about/`,
+  `/connect/`, and `/connect/reference/`, each with the date its content
+  last changed.
 - `/llms.txt` (built by `web/vite.llms-txt.ts`) is the site for agents and
   LLMs: what Thingy is, the pages, and the MCP server's endpoint, auth,
   tools, prompts and resources.

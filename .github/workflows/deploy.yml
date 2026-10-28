@@ -26,7 +26,11 @@ jobs:
       run:
         working-directory: web
     steps:
+      # Full history: sitemap.xml dates each page by the last commit that
+      # touched its sources (vite.sitemap.ts), and a shallow clone fails it.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v7
         with:

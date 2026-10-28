@@ -9,6 +9,7 @@ import { SITE, htmlConfigPlugin, librarianProxy } from './vite.shared-config.ts'
 import { llmsTxtPlugin } from './vite.llms-txt.ts';
 import { mcpReferencePlugin } from './vite.mcp-reference.ts';
 import { pageDataPlugin } from './vite.page-data.ts';
+import { sitemapPlugin } from './vite.sitemap.ts';
 
 export default defineConfig({
   publicDir: 'public',
@@ -23,7 +24,8 @@ export default defineConfig({
     htmlConfigPlugin(),
     mcpReferencePlugin(__dirname),
     pageDataPlugin(__dirname),
-    llmsTxtPlugin(__dirname)
+    llmsTxtPlugin(__dirname),
+    sitemapPlugin(__dirname)
   ],
   build: {
     outDir: '_site',
