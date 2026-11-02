@@ -5,8 +5,8 @@
   "server": {
     "name": "librarian",
     "title": "The Librarian - Jamie Thingelstad's archive",
-    "version": "2.7.0",
-    "version_format": "2.7.0+tools.<fingerprint>: the fingerprint hashes every packaged prompt file, the tool specs included, so it changes whenever the declared tools do",
+    "version": "2.11.0",
+    "version_format": "2.11.0+tools.<fingerprint>: the fingerprint hashes every packaged prompt file, the tool specs included, so it changes whenever the declared tools do",
     "website_url": "https://thingy.thingelstad.com/",
     "icons": [
       {
@@ -33,7 +33,7 @@
       "resources": {},
       "prompts": {}
     },
-    "instructions": "Tools for exploring Jamie Thingelstad's public archive: The Weekly Thing newsletter, the thingelstad.com blog, the Another Thing podcast, and Things I've built, the registry of Jamie's projects at thingelstad.xyz. Start broad with search_archive, then deepen with get_source; use archive_lens for how-things-changed-over-time questions, compare_eras for then-versus-now, on_this_day for this date in every year (this one included), list_topics for the topic catalogue, latest_content for freshness, and corpus_stats for what the archive contains. voice: \"jamie\" (search_archive, quote_search, find_evidence, compare_eras and archive_lens) keeps only Jamie's own words, never passages Jamie quoted. year is shorthand for year_range [year, year]. When a result is cut, its truncated block says what was left out and how to get the rest. Sources have one id everywhere (wt-351, blog-<microblog id>, page-<page id>, ep-<n>, thing-<thing id>); pass it back to get_source or source_neighborhood. Cite each source as a markdown link to its url: [WT351](url) for a Weekly Thing issue, the title for a blog post, page or episode. Pages (About, Lists, Collections, Open Loop) are undated: date-anchored tools leave them out, and updated is their last edit. A thing (thing-<id>; thing-index lists them all) is undated too: its status is Jamie's decision and its started/ended dates are the facts, so cite its page by title. Photos: media_search finds them; view_photo shows up to 3 inline and gives you vision over them. Resources: librarian://wt/{n}, librarian://blog/{id} and librarian://page/{id} attach one source as markdown; topic, year and on-this-day templates too. Prompts (thinking_over_time, year_in_review, reading_path, this_week_in_past_years, research_brief) set out the call sequence for the big asks. The tool schemas evolve; serverInfo.version changes whenever they do - if it differs from your cached value, re-fetch tools/list before relying on cached parameter schemas."
+    "instructions": "Tools for exploring Jamie Thingelstad's public archive: The Weekly Thing newsletter, the thingelstad.com blog, the Another Thing podcast, and Things I've built, the registry of Jamie's projects at thingelstad.xyz, plus Linking Things, every public link Jamie has saved. Start broad with search_archive, then deepen with get_source; use archive_lens for how-things-changed-over-time questions, compare_eras for then-versus-now, on_this_day for this date in every year (this one included), list_topics for the topic catalogue, latest_content for freshness, and corpus_stats for what the archive contains. voice: \"jamie\" (search_archive, quote_search, find_evidence, compare_eras and archive_lens) keeps only Jamie's own words, never passages Jamie quoted. year is shorthand for year_range [year, year]. When a result is cut, its truncated block says what was left out and how to get the rest. Sources have one id everywhere (wt-351, blog-<microblog id>, page-<page id>, ep-<n>, thing-<thing id>, doc-<name>, link-<id>); pass it back to get_source or source_neighborhood. Cite each source as a markdown link to its url: [WT351](url) for a Weekly Thing issue, the title for a blog post, page or episode. Pages (About, Lists, Collections, Open Loop) are undated: date-anchored tools leave them out, and updated is their last edit. A thing (thing-<id>; thing-index lists them all) is undated too: its status is Jamie's decision and its started/ended dates are the facts, so cite its page by title. Site pages, the FAQ, things, pages and the reference documents about Jamie (doc-<name>: a bio, a resume; cite by title) are a reference base every search consults whatever the scope or source_kind; no source_kind selects it. A document's document_source and document_date say where it came from and when it was written: say so when you use it. Saved links (link-<id>) are read only when a call names source_kind link (search_archive, find_evidence, quote_search, list_content, latest_content, on_this_day, corpus_stats, compare_eras, archive_lens); no default reads them. Cite a saved link by its title, linked to its url (its Linking Things page). Its title and excerpts are the saved page's words; only a note with note_voice jamie (or the jamie spans of a mixed one) is Jamie's. Photos: media_search finds them; view_photo shows up to 3 inline and gives you vision over them. Resources: librarian://wt/{n}, librarian://blog/{id}, librarian://page/{id} and librarian://link/{id} attach one source as markdown; topic, year and on-this-day templates too. Prompts (thinking_over_time, year_in_review, reading_path, this_week_in_past_years, research_brief) set out the call sequence for the big asks. The tool schemas evolve; serverInfo.version changes whenever they do - if it differs from your cached value, re-fetch tools/list before relying on cached parameter schemas."
   },
   "doors": {
     "mcp": {
@@ -292,7 +292,7 @@
         "readOnlyHint": true,
         "openWorldHint": false
       },
-      "description": "Search the whole archive (Weekly Thing, blog, podcast) by meaning and exact terms. Results are grouped by source, best first: the source's id, label, date, url and skim, then its matching passages. Narrow with year_range, section_family, content_kind, voice, topic (a list_topics cluster) or category (blog). A ranked top-N that does not page: quote_search lists every literal match, archive_lens counts completely.",
+      "description": "Search the whole archive (Weekly Thing, blog, podcast) by meaning and exact terms. The reference base (site pages, the FAQ, things, pages and documents about Jamie such as a bio) is searched every time; no source_kind selects or leaves it out. A document's passages carry document_source and document_date: where it came from and when it was written. Results are grouped by source, best first: the source's id, label, date, url and skim, then its matching passages. Narrow with year_range, section_family, content_kind, voice, topic (a list_topics cluster) or category (blog). A ranked top-N that does not page: quote_search lists every literal match, archive_lens counts completely.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -353,9 +353,10 @@
             "enum": [
               "weekly_thing",
               "blog",
-              "podcast"
+              "podcast",
+              "link"
             ],
-            "description": "Only this source."
+            "description": "Only this source. link is the links Jamie saved on Linking Things: read only when named, and then alone."
           },
           "topic": {
             "type": "string",
@@ -436,7 +437,7 @@
           "server_version"
         ]
       },
-      "chat_description": "Hybrid search over the active archive source scope: Weekly Thing, blog, podcast, or any enabled combination. Default first stop for broad topics, themes, and evidence gathering. Use iteratively when needed: refine query, year_range, section, section_family, content_kind, voice, topic or category based on what comes back. Results are grouped by source, best first: each carries its source's id, facts and skim (the issue's description, the post's abstract; a generated abstract says so) once, then its matching passages. A passage longer than 2,000 characters shows the stretch where the query's words gather, and clipped gives {start, end, chars}; get_source reads it whole. A Weekly Thing Journal passage is a copy of blog posts: copy_of names each post, which is canonical, and the post wins when both match. A passage from an issue with an audio edition carries audio {url, start, chapter}: its section's chapter, the url starting there. An unknown topic or category is an error that lists the valid ones. year_range is [start_year, end_year]; year is one year. voice=jamie keeps only Jamie's own words (quotations and link titles are cut from each passage), and drops a passage left with under 40 characters of them, so a quotation with a line of framing does not rank as Jamie's writing (archive_lens has no floor: it filters, it does not rank). This is a ranked top-N, not every match, and it does not page: quote_search lists every literal match, and archive_lens counts completely. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
+      "chat_description": "Hybrid search over the active archive source scope: Weekly Thing, blog, podcast, or any enabled combination, always with the reference base (site pages, the FAQ, Things I've built, thingelstad.com's pages and reference documents about Jamie such as a bio), which no scope or source_kind leaves out and which, being undated, no year_range keeps. A reference document's passages are its H2 sections and carry document_source and document_date, where the document came from and when it was first written: say so when you use one (\"from Jamie's 2011 wiki\"). source_kind link searches the links Jamie saved on Linking Things (links.thingelstad.xyz) instead, which no other call reads: link-<id>, one passage each, dated the Chicago day it was saved, carrying link_url (the page it saved), host, link_type, tags, note_voice and shared_in_issues. Cite one by its title. Its title and excerpts are the saved page's words; only a note whose note_voice is jamie (or the jamie spans of a mixed one) is Jamie's. topic does not apply to saved links. Default first stop for broad topics, themes, and evidence gathering. Use iteratively when needed: refine query, year_range, section, section_family, content_kind, voice, topic or category based on what comes back. Results are grouped by source, best first: each carries its source's id, facts and skim (the issue's description, the post's abstract; a generated abstract says so) once, then its matching passages. A passage longer than 2,000 characters shows the stretch where the query's words gather, and clipped gives {start, end, chars}; get_source reads it whole. A Weekly Thing Journal passage is a copy of blog posts: copy_of names each post, which is canonical, and the post wins when both match. A passage from an issue with an audio edition carries audio {url, start, chapter}: its section's chapter, the url starting there. An unknown topic or category is an error that lists the valid ones. year_range is [start_year, end_year]; year is one year. voice=jamie keeps only Jamie's own words (quotations and link titles are cut from each passage), and drops a passage left with under 40 characters of them, so a quotation with a line of framing does not rank as Jamie's writing (archive_lens has no floor: it filters, it does not rank). This is a ranked top-N, not every match, and it does not page: quote_search lists every literal match, and archive_lens counts completely. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
       "doors": {
         "mcp": true,
         "webmcp": true,
@@ -452,13 +453,13 @@
         "readOnlyHint": true,
         "openWorldHint": false
       },
-      "description": "Read one source whole: a Weekly Thing issue, blog post or podcast episode, by the id other tools return. format outline gives the facts, skim and section names; text adds the body; full (default) adds the links. section reads one section. An issue's audio edition is audio_url, audio_duration_seconds and audio_chapters; with section, section_audio starts its chapter. readers carries what Tinylytics counted (views, an issue's email opens and feed reads, kudos) since the site was first counted, never all time.",
+      "description": "Read one source whole: a Weekly Thing issue, blog post or podcast episode, by the id other tools return. format outline gives the facts, skim and section names; text adds the body; full (default) adds the links. section reads one section. A reference document (doc-<name>) carries document_source and document_date, where it came from and when it was written. An issue's audio edition is audio_url, audio_duration_seconds and audio_chapters; with section, section_audio starts its chapter. readers carries what Tinylytics counted (views, an issue's email opens and feed reads, kudos) since the site was first counted, never all time.",
       "inputSchema": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
-            "description": "The source id other tools return: wt-351, blog-<microblog id>, page-<page id>, ep-<n>. WT351, a bare issue number or the source's url also work."
+            "description": "The source id other tools return: wt-351, blog-<microblog id>, page-<page id>, ep-<n>, doc-<name> for a reference document, link-<id> for a saved link. WT351, a bare issue number or the source's url also work."
           },
           "section": {
             "type": "string",
@@ -537,7 +538,7 @@
           "server_version"
         ]
       },
-      "chat_description": "Fetch full context for one known archive source in the active scope: a Weekly Thing issue, blog post/micropost, thingelstad.com page, or podcast episode. Use after search_archive, list_content, archive_lens, archive_gems, find_links or source_neighborhood identifies a specific source worth reading more deeply. Identify it by id as other tools emit it (wt-351, blog-<microblog id>, page-<page id>, ep-<n>; WT351, a bare issue number or the source's url also work). Optional section narrows the returned text; format outline skips the body and links, text skips the links. body is the source's full text and sections lists its section names and word counts; a body longer than one result is cut and named in truncated, whose next_offset reads the rest; section reads one section or heading (an exact name wins), and a name that matches nothing is an error listing available_sections. A Weekly Thing issue with an audio edition carries audio_url, audio_duration_seconds and audio_chapters [{start, title}]; with section, section_audio {url, start, chapter} starts that section's chapter. readers is what Tinylytics counted for the source: views (count, last_30_days, prior_30_days, trend rising/falling/steady/new, by_month), an issue's email_opens and feed_reads, and kudos {count, days}; counted since tracked_since (www since July 2024, the other sites since 2026), never all time, so say since when. Email opens are per issue, never per reader. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
+      "chat_description": "Fetch full context for one known archive source in the active scope: a Weekly Thing issue, blog post/micropost, thingelstad.com page, or podcast episode, or a link Jamie saved on Linking Things. Use after search_archive, list_content, archive_lens, archive_gems, find_links or source_neighborhood identifies a specific source worth reading more deeply. Identify it by id as other tools emit it (wt-351, blog-<microblog id>, page-<page id>, ep-<n>, doc-<name> for a reference document about Jamie, link-<id> for a saved link whatever the scope (its links.thingelstad.xyz/links/<id>/ url too); WT351, a bare issue number or the source's url also work). Optional section narrows the returned text; format outline skips the body and links, text skips the links. body is the source's full text and sections lists its section names and word counts; a body longer than one result is cut and named in truncated, whose next_offset reads the rest; section reads one section or heading (an exact name wins), and a name that matches nothing is an error listing available_sections. A reference document carries document_source and document_date (where it came from, when it was first written: cite them, \"from Jamie's 2011 wiki\"), and its sections are its H2 headings. A saved link carries link_url (the page it saved), host, link_type, tags, its note, note_voice (jamie, excerpt: the saved page's words, or mixed) and shared_in_issues; cite it by its title. A Weekly Thing issue with an audio edition carries audio_url, audio_duration_seconds and audio_chapters [{start, title}]; with section, section_audio {url, start, chapter} starts that section's chapter. readers is what Tinylytics counted for the source: views (count, last_30_days, prior_30_days, trend rising/falling/steady/new, by_month), an issue's email_opens and feed_reads, and kudos {count, days}; counted since tracked_since (www since July 2024, the other sites since 2026), never all time, so say since when. Email opens are per issue, never per reader. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
       "doors": {
         "mcp": true,
         "webmcp": true,
@@ -562,9 +563,10 @@
             "enum": [
               "weekly_thing",
               "blog",
-              "podcast"
+              "podcast",
+              "link"
             ],
-            "description": "Only this source."
+            "description": "Only this source. link is the links Jamie saved on Linking Things: read only when named, and then alone."
           },
           "year_range": {
             "type": "array",
@@ -782,7 +784,7 @@
           "server_version"
         ]
       },
-      "chat_description": "List source-level metadata across the active scope: Weekly Thing issues, blog posts/microposts/pages, and podcast episodes. Use for counts and deterministic listings by source_kind, year_range (or year), topic, linked domain, link_kind, link_category, target_resolved, has_also_in_issues, also_in_issue, has_linked_from_issues, linked_from_issue, or has_audio. Prefer this over semantic search for inventory questions like posts by year, which sources mention a domain, which blog posts crossed into Weekly Thing, or which issues have an audio edition. A blog result's also_in_issues names the issues that reprinted it; linked_from_issues the issues that linked it without reprinting it. A Weekly Thing result with an audio edition carries audio_url and audio_duration_seconds. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer. Matching is whole-token/phrase based (see match_mode); match_reasons name the exact span found. Undated thingelstad.com pages list after every dated source; undated_count says how many are in total_count but in no year. sort orders by what readers did instead of by date: most_read (views since counting began), most_read_30d, most_read_90d, most_kudos, or rising (the biggest gain in views, last 30 days over the 30 before; sources from the last 60 days are new and come after); each result then carries readers and readers_counted says since when each site was counted. Reader numbers say what was read, not what matters or what is relevant to a question.",
+      "chat_description": "List source-level metadata across the active scope: Weekly Thing issues, blog posts/microposts/pages, and podcast episodes; source_kind link lists the links Jamie saved on Linking Things (links.thingelstad.xyz) instead, by the year each was saved, which no other call reads. Use for counts and deterministic listings by source_kind, year_range (or year), topic, linked domain, link_kind, link_category, target_resolved, has_also_in_issues, also_in_issue, has_linked_from_issues, linked_from_issue, or has_audio. Prefer this over semantic search for inventory questions like posts by year, which sources mention a domain, which blog posts crossed into Weekly Thing, or which issues have an audio edition. A blog result's also_in_issues names the issues that reprinted it; linked_from_issues the issues that linked it without reprinting it. A Weekly Thing result with an audio edition carries audio_url and audio_duration_seconds. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer. Matching is whole-token/phrase based (see match_mode); match_reasons name the exact span found. Undated thingelstad.com pages list after every dated source; undated_count says how many are in total_count but in no year. sort orders by what readers did instead of by date: most_read (views since counting began), most_read_30d, most_read_90d, most_kudos, or rising (the biggest gain in views, last 30 days over the 30 before; sources from the last 60 days are new and come after); each result then carries readers and readers_counted says since when each site was counted. Reader numbers say what was read, not what matters or what is relevant to a question.",
       "paged_list": "results",
       "doors": {
         "mcp": true,
@@ -805,7 +807,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "Only the links in one source (wt-274, blog-<microblog id>, page-<page id>, ep-<n>), in the order the source carries them; page with offset."
+            "description": "Only the links in one source (wt-274, blog-<microblog id>, page-<page id>, ep-<n>), in the order the source carries them; page with offset. A saved link's id, link-<id>, lists the Weekly Thing and blog links that are it or link its page."
           },
           "domain": {
             "type": "string",
@@ -827,7 +829,7 @@
               "blog",
               "podcast"
             ],
-            "description": "Only this source."
+            "description": "Only this source. A saved link (Linking Things) carries no links of its own: find_links with id link-<id> lists the Weekly Thing and blog links that are one."
           },
           "link_role": {
             "type": "string",
@@ -1007,7 +1009,7 @@
           "server_version"
         ]
       },
-      "chat_description": "Query link metadata in the active source scope by source (id: every link in one issue, post, page or episode), domain, topic, source_kind, link_kind, link_category, target_resolved, and year range. source_kind can be \"weekly_thing\", \"blog\", or \"podcast\" and lets you isolate one corpus even when the active scope is all. link_kind can be \"external\" or \"internal\". link_category includes \"external\", \"cross_source\", \"resolved_post\", \"collection_page\", \"upload_asset\", \"malformed_internal\", \"internal_unresolved\", and \"internal_site\". cross_source means a link between Jamie-owned corpora such as blog to Weekly Thing or podcast to blog. target_resolved applies to links to Jamie's own sites only: true keeps those that resolved to a known post or issue, false those that did not; an external link matches neither. Does not fetch linked pages. Call with url to ask \"has Jamie linked this before\" (matched however the link was spelled: scheme, www, trailing slash, fragment and tracking parameters such as utm_*, ref, fbclid and smid ignored). link_role narrows Weekly Thing links: headline (the pick a link section is built from), commentary (a link inside what Jamie wrote about it) or journal (a link in the Journal). Call with domain for domain history (the domain and its subdomains); call without filters for top external domains, ranked by editorial picks (Weekly Thing headline links; source_kind blog ranks blog links) (the 20 most linked; truncated.omitted.top_domains counts the rest, and top_references pages through them all). year_range is [start_year, end_year]; year is one year. Results are newest first (sort: \"oldest\" reverses); page with offset, and truncated.next_offset names the next page. Each result's id is its source, for get_source. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer. Matching is whole-token/phrase based (see match_mode); match_reasons name the exact span found. Links on undated thingelstad.com pages sort last; undated_count says how many are in total_count but in no year.",
+      "chat_description": "Query link metadata in the active source scope by source (id: every link in one issue, post, page or episode), domain, topic, source_kind, link_kind, link_category, target_resolved, and year range. source_kind can be \"weekly_thing\", \"blog\", or \"podcast\" and lets you isolate one corpus even when the active scope is all. link_kind can be \"external\" or \"internal\". link_category includes \"external\", \"cross_source\", \"resolved_post\", \"collection_page\", \"upload_asset\", \"malformed_internal\", \"internal_unresolved\", and \"internal_site\". cross_source means a link between Jamie-owned corpora such as blog to Weekly Thing or podcast to blog. target_resolved applies to links to Jamie's own sites only: true keeps those that resolved to a known post or issue, false those that did not; an external link matches neither. Does not fetch linked pages. Call with url to ask \"has Jamie linked this before\" (matched however the link was spelled: scheme, www, trailing slash, fragment and tracking parameters such as utm_*, ref, fbclid and smid ignored). link_role narrows Weekly Thing links: headline (the pick a link section is built from), commentary (a link inside what Jamie wrote about it) or journal (a link in the Journal). Call with domain for domain history (the domain and its subdomains); call without filters for top external domains, ranked by editorial picks (Weekly Thing headline links; source_kind blog ranks blog links) (the 20 most linked; truncated.omitted.top_domains counts the rest, and top_references pages through them all). year_range is [start_year, end_year]; year is one year. Results are newest first (sort: \"oldest\" reverses); page with offset, and truncated.next_offset names the next page. Each result's id is its source, for get_source. A link that is a link Jamie saved on Linking Things, or links its page there, names it as saved_link (link-<id>, for get_source); id link-<id> lists those links. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer. Matching is whole-token/phrase based (see match_mode); match_reasons name the exact span found. Links on undated thingelstad.com pages sort last; undated_count says how many are in total_count but in no year.",
       "paged_list": "results",
       "doors": {
         "mcp": true,
@@ -1033,9 +1035,10 @@
             "enum": [
               "weekly_thing",
               "blog",
-              "podcast"
+              "podcast",
+              "link"
             ],
-            "description": "Only this source."
+            "description": "Only this source. link is the links Jamie saved on Linking Things: read only when named, and then alone."
           },
           "year_range": {
             "type": "array",
@@ -1087,7 +1090,7 @@
           },
           "sources": {
             "type": "array",
-            "description": "One entry per source kind: item_count, chunk_count, link_count, domain_count, counts_by_year (oldest first), yearly_signals (newest first), top_domains; for the blog, post_count and page_count (undated pages, in item_count and in no year), issues_referenced_count and also_in_issue_counts (issues that reprinted posts), posts_with_linked_from_issues_count and issues_linking_count (issues that linked posts without reprinting them); for the Weekly Thing, audio_editions {count, total_seconds, first, last}; oldest and newest are sources (by the day the year filter reads). On each source, date is the Chicago day it was published (Jamie publishes in Central time); publish_date is the corpus value as stored: a UTC timestamp for an issue, the Chicago day for a blog post, the day for an episode."
+            "description": "One entry per source kind: item_count, chunk_count, link_count, domain_count, counts_by_year (oldest first), yearly_signals (newest first), top_domains; for the blog, post_count and page_count (undated pages, in item_count and in no year), issues_referenced_count and also_in_issue_counts (issues that reprinted posts), posts_with_linked_from_issues_count and issues_linking_count (issues that linked posts without reprinting them); for the Weekly Thing, audio_editions {count, total_seconds, first, last}; the reference entry (no source_kind or year asked for) has item_count, chunk_count, counts_by_kind, chunk_counts_by_kind and documents [{id, title, url, updated, document_source, document_date}] and no years, and its pages are the blog's pages too; oldest and newest are sources (by the day the year filter reads). On each source, date is the Chicago day it was published (Jamie publishes in Central time); publish_date is the corpus value as stored: a UTC timestamp for an issue, the Chicago day for a blog post, the day for an episode."
           },
           "truncated": {
             "type": "object",
@@ -1130,7 +1133,7 @@
           "server_version"
         ]
       },
-      "chat_description": "Return deterministic inventory statistics for the active source scope: item counts (the blog's are posts plus undated pages; post_count and page_count split them), chunk counts (dated passages; undated_chunk_count holds FAQ answers and site pages), link counts, newest/oldest item, generated_at, counts_by_year (oldest first), year_count_summary, yearly_signals for the newest limit years, each with its top five subject/title terms, five distinctive chunk-text terms, three most linked domains (the same link measure as top_domains), section counts and one sample source id, the limit most linked external domains (domain_count says of how many; headline picks and blog links, www merged), link kind/category counts, blog also_in_issues cross-reference counts (the limit issues most carried; issues_referenced_count says of how many), and for the Weekly Thing audio_editions {count, total_seconds, first, last} (issues with a spoken audio edition). Optional source_kind isolates \"weekly_thing\", \"blog\", or \"podcast\". Use for corpus inventory, freshness, latest indexed date, per-year content breakdowns, year-by-year theme signals, cross-source coverage, and aggregate-domain questions before searching semantically. Pass year_range for earlier years, or a higher limit for more years, domains and issues; truncated counts every list it cut, and top_references pages through every domain.",
+      "chat_description": "Return deterministic inventory statistics for the active source scope: item counts (the blog's are posts plus undated pages; post_count and page_count split them), chunk counts (dated passages; undated_chunk_count holds FAQ answers and site pages), link counts, newest/oldest item, generated_at, counts_by_year (oldest first), year_count_summary, yearly_signals for the newest limit years, each with its top five subject/title terms, five distinctive chunk-text terms, three most linked domains (the same link measure as top_domains), section counts and one sample source id, the limit most linked external domains (domain_count says of how many; headline picks and blog links, www merged), link kind/category counts, blog also_in_issues cross-reference counts (the limit issues most carried; issues_referenced_count says of how many), and for the Weekly Thing audio_editions {count, total_seconds, first, last} (issues with a spoken audio edition). Optional source_kind isolates \"weekly_thing\", \"blog\", or \"podcast\"; with neither source_kind nor year_range, sources ends with one reference entry (source_kind reference, always_searched): the reference base every search consults, counted by kind (site_page, faq, thing, page, document), with no years, and its documents listed (id, title, document_source, document_date, updated), then one link entry (searched_by_default false, no counts) naming the links Jamie saved on Linking Things (links.thingelstad.xyz). source_kind link counts those instead, which no other call reads: item_count, oldest and newest, counts_by_year by the Chicago year each was saved, counts_by_link_type, counts_by_note_voice, shared_in_issues_count, and top_hosts (host_count says of how many). Use for corpus inventory, freshness, latest indexed date, per-year content breakdowns, year-by-year theme signals, cross-source coverage, and aggregate-domain questions before searching semantically. Pass year_range for earlier years, or a higher limit for more years, domains and issues; truncated counts every list it cut, and top_references pages through every domain.",
       "doors": {
         "mcp": true,
         "webmcp": true,
@@ -1146,7 +1149,7 @@
         "readOnlyHint": true,
         "openWorldHint": false
       },
-      "description": "The topic catalogue: the nine clusters every issue is filed under, and the weekly site's topic pages (names among the 40 most-extracted of 3+ issues, counting every issue that names one twice; archive_lens counts every mention) with counts, first and last issue, related topics and page url. query filters by name.",
+      "description": "The topic catalogue: the nine clusters every issue is filed under, and the weekly site's topic pages (names among the 40 most-extracted of 5+ issues, twins folded, counting every issue that names one twice; archive_lens counts every mention) with counts, first and last issue, related topics and page url. query filters by name, or by a name a topic folds.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -1245,7 +1248,7 @@
           "server_version"
         ]
       },
-      "chat_description": "The archive's card catalogue. Returns the nine topic clusters every Weekly Thing issue is filed under (description, first and last seen, representative issues, related clusters; pass one to search_archive as topic) and the Weekly Thing site's topic pages: names among the 40 most-extracted names of 3 or more issues, each with the count of issues that name it twice or more, first and last issue, related topics and the public page URL. An issue that names a topic once is not in its count; archive_lens and list_content count every source that names a topic. query narrows both by name. Use to see what the archive covers before searching, or to find the right name for archive_lens.",
+      "chat_description": "The archive's card catalogue. Returns the nine topic clusters every Weekly Thing issue is filed under (description, first and last seen, representative issues, related clusters; pass one to search_archive as topic) and the Weekly Thing site's topic pages: names (never common words) among the 40 most-extracted names of 5 or more issues, a name's twins folded into one topic (The Verge and theverge.com, MNUFC and Minnesota United), each with the count of issues that name it twice or more, first and last issue, related topics and the public page URL. An issue that names a topic once is not in its count; archive_lens and list_content count every source that names a topic. query narrows both by name. Use to see what the archive covers before searching, or to find the right name for archive_lens.",
       "paged_list": "topics",
       "doors": {
         "mcp": true,
@@ -1271,9 +1274,10 @@
             "enum": [
               "weekly_thing",
               "blog",
-              "podcast"
+              "podcast",
+              "link"
             ],
-            "description": "Only this source."
+            "description": "Only this source. link is the links Jamie saved on Linking Things: read only when named, and then alone."
           },
           "has_also_in_issues": {
             "type": "boolean",
@@ -1376,7 +1380,7 @@
           "server_version"
         ]
       },
-      "chat_description": "Return the newest indexed issues/posts/episodes, newest first by the moment each was published (ties by id). Optional source_kind isolates \"weekly_thing\", \"blog\", or \"podcast\". Optional has_also_in_issues and also_in_issue filter blog posts a Weekly Thing issue reprinted, has_linked_from_issues and linked_from_issue those it linked without reprinting; has_audio keeps Weekly Thing issues with (or without) an audio edition, whose results carry audio_url, audio_duration_seconds and audio_chapters. Use for newest/latest/freshness questions; do not use semantic search for those. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
+      "chat_description": "Return the newest indexed issues/posts/episodes, newest first by the moment each was published (ties by id). Optional source_kind isolates \"weekly_thing\", \"blog\", or \"podcast\", or names \"link\": the links Jamie saved on Linking Things (links.thingelstad.xyz), newest saved first, which no other call returns. Optional has_also_in_issues and also_in_issue filter blog posts a Weekly Thing issue reprinted, has_linked_from_issues and linked_from_issue those it linked without reprinting; has_audio keeps Weekly Thing issues with (or without) an audio edition, whose results carry audio_url, audio_duration_seconds and audio_chapters. Use for newest/latest/freshness questions; do not use semantic search for those. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
       "paged_list": "results",
       "doors": {
         "mcp": true,
@@ -1407,9 +1411,10 @@
             "enum": [
               "weekly_thing",
               "blog",
-              "podcast"
+              "podcast",
+              "link"
             ],
-            "description": "Only this source."
+            "description": "Only this source. link is the links Jamie saved on Linking Things: read only when named, and then alone."
           },
           "year_range": {
             "type": "array",
@@ -1519,7 +1524,7 @@
           "server_version"
         ]
       },
-      "chat_description": "Exact substring search across reconstructed source text in the active archive scope. Use to verify whether a specific phrase, name, or product actually appears in Weekly Thing, blog posts, or podcast episodes. Do not infer exact coverage from related search_archive hits. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer. voice=jamie finds only phrases in Jamie's own words, never words Jamie quoted.",
+      "chat_description": "Exact substring search across reconstructed source text in the active archive scope. Use to verify whether a specific phrase, name, or product actually appears in Weekly Thing, blog posts, or podcast episodes; source_kind link searches the links Jamie saved on Linking Things (links.thingelstad.xyz) instead, which no other call reads (a saved link's title and excerpts are the saved page's words). Do not infer exact coverage from related search_archive hits. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer. voice=jamie finds only phrases in Jamie's own words, never words Jamie quoted.",
       "paged_list": "results",
       "doors": {
         "mcp": true,
@@ -1571,9 +1576,10 @@
             "enum": [
               "weekly_thing",
               "blog",
-              "podcast"
+              "podcast",
+              "link"
             ],
-            "description": "Only this source."
+            "description": "Only this source. link is the links Jamie saved on Linking Things: read only when named, and then alone."
           },
           "voice": {
             "type": "string",
@@ -1785,7 +1791,7 @@
           "server_version"
         ]
       },
-      "chat_description": "Build a deterministic Archive Lens over the active source scope for one topic, or one named person, project, product, place, organization or recurring idea (aliases adds other names for it; known ones such as Ethereum Name Service for ENS are added automatically and reported as aliases_checked). Use for genuinely analytical questions: timelines, first/latest mentions, year-by-year topic/theme slices, source comparisons across Weekly Thing/blog/podcast, and reading paths through a theme. It scans corpus metadata and matching chunks, then returns counts_by_year, first/latest sources, year buckets, source buckets, timeline entries, representative evidence snippets, match reasons, and a suggested reading_path. operation can be \"timeline\", \"first_last\", \"by_year\", \"source_compare\", or \"reading_path\". Optional source_kind isolates \"weekly_thing\", \"blog\", or \"podcast\". year_range is [start_year, end_year]; year is one year. Use this before semantic search when the user asks how a topic evolved or how attention changed over time. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer. Response shape: sources_by_id holds each full source record once, keyed by id (wt-300, blog-987, ep-4); first/latest/results/timeline/latest_sources and sample_sources reference those ids (with operation timeline, results is the timeline) - resolve details by id, and evidence entries carry the matched span that proves the hit. Matching is whole-token/phrase based (see match_mode); match_reasons and evidence attribute the exact span found. If the response carries term_frequency_note, the term is too common to rank meaningfully - reformulate instead of trusting first/latest. match_reasons list every matched case/inflection variant of the term.",
+      "chat_description": "Build a deterministic Archive Lens over the active source scope for one topic, or one named person, project, product, place, organization or recurring idea (aliases adds other names for it; known ones such as Ethereum Name Service for ENS are added automatically and reported as aliases_checked). Use for genuinely analytical questions: timelines, first/latest mentions, year-by-year topic/theme slices, source comparisons across Weekly Thing/blog/podcast, and reading paths through a theme. It scans corpus metadata and matching chunks, then returns counts_by_year, first/latest sources, year buckets, source buckets, timeline entries, representative evidence snippets, match reasons, and a suggested reading_path. operation can be \"timeline\", \"first_last\", \"by_year\", \"source_compare\", or \"reading_path\". Optional source_kind isolates \"weekly_thing\", \"blog\", or \"podcast\", or names \"link\": the links Jamie saved on Linking Things (links.thingelstad.xyz), by the year each was saved, which no other call reads. year_range is [start_year, end_year]; year is one year. Use this before semantic search when the user asks how a topic evolved or how attention changed over time. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer. Response shape: sources_by_id holds each full source record once, keyed by id (wt-300, blog-987, ep-4); first/latest/results/timeline/latest_sources and sample_sources reference those ids (with operation timeline, results is the timeline) - resolve details by id, and evidence entries carry the matched span that proves the hit. Matching is whole-token/phrase based (see match_mode); match_reasons and evidence attribute the exact span found. If the response carries term_frequency_note, the term is too common to rank meaningfully - reformulate instead of trusting first/latest. match_reasons list every matched case/inflection variant of the term.",
       "paged_list": "results",
       "doors": {
         "mcp": true,
@@ -1838,9 +1844,10 @@
             "enum": [
               "weekly_thing",
               "blog",
-              "podcast"
+              "podcast",
+              "link"
             ],
-            "description": "Only this source."
+            "description": "Only this source. link is the links Jamie saved on Linking Things: read only when named, and then alone."
           },
           "voice": {
             "type": "string",
@@ -1937,7 +1944,7 @@
           "server_version"
         ]
       },
-      "chat_description": "Compare how a topic shows up in two eras of the archive: the best passages for the same topic from year_a and from year_b, side by side. Use for \"how did Jamie's view of X change between 2018 and 2025\". year_a and year_b are each [start_year, end_year]. voice=jamie keeps only Jamie's own words. era_a and era_b say how many sources each era published and how many name the topic, with a note when an era has none or never names it. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
+      "chat_description": "Compare how a topic shows up in two eras of the archive: the best passages for the same topic from year_a and from year_b, side by side. Use for \"how did Jamie's view of X change between 2018 and 2025\". year_a and year_b are each [start_year, end_year]. source_kind link compares the links Jamie saved on Linking Things (links.thingelstad.xyz) in each era instead, which no other call reads. voice=jamie keeps only Jamie's own words. era_a and era_b say how many sources each era published and how many name the topic, with a note when an era has none or never names it. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
       "doors": {
         "mcp": true,
         "webmcp": true,
@@ -1953,13 +1960,13 @@
         "readOnlyHint": true,
         "openWorldHint": false
       },
-      "description": "What surrounds one source (by id): its outgoing and incoming links, links between Jamie's own sites, similar issues by meaning, and related sources: sharing at least 3 distinctive words or picked domains (each used by fewer than max(2% of the sources in scope, 20) sources).",
+      "description": "What surrounds one source (by id): its outgoing and incoming links, links between Jamie's own sites, similar issues or similar blog posts by meaning, and related sources: sharing at least 3 distinctive words or picked domains (each used by fewer than max(2% of the sources in scope, 20) sources).",
       "inputSchema": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
-            "description": "The source id other tools return: wt-351, blog-<microblog id>, page-<page id>, ep-<n>. WT351, a bare issue number or the source's url also work."
+            "description": "The source id other tools return: wt-351, blog-<microblog id>, page-<page id>, ep-<n>, doc-<name> for a reference document, link-<id> for a saved link. WT351, a bare issue number or the source's url also work."
           },
           "limit": {
             "type": "integer",
@@ -1985,6 +1992,10 @@
           },
           "similar_issues": {
             "type": "array"
+          },
+          "similar_posts": {
+            "type": "array",
+            "description": "A blog post's nearest other posts by meaning, best first: posts from the same trip left out, at most one from each other trip. Each has id, label, subject, publish_date, url, section, abstract when there is one, categories and score (cosine; compare scores within one list, never across posts)."
           },
           "outgoing_count": {
             "type": "integer",
@@ -2054,7 +2065,7 @@
           "server_version"
         ]
       },
-      "chat_description": "Explore what connects to one known archive source. Given a source id (wt-351, blog-<microblog id>, page-<page id>, ep-<n>, as other tools emit it), return outgoing links, incoming links when known (outgoing_count and incoming_count say how many there are; up to 30 of each are listed; find_links with id pages through every link in a source, and find_links with url lists every link to it; each link names its source id) (an entry with link_category cross_source links Jamie's corpora to each other; cross_source_count totals them), similar issues by meaning, and related sources (related means sharing at least 3 distinctive terms: words of five or more letters from the title and opening, or domains it linked as picks, each used by fewer than max(2% of the sources in scope, 20) sources; related_count counts them all, related_sources lists the top limit). Use for connected-archive questions like \"what else is near this?\", \"where did this link lead?\", \"did this blog post connect to Weekly Thing?\", or to build rabbit-hole style follow-ups. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
+      "chat_description": "Explore what connects to one known archive source. Given a source id (wt-351, blog-<microblog id>, page-<page id>, ep-<n>, link-<id>, as other tools emit it), return outgoing links, incoming links when known (outgoing_count and incoming_count say how many there are; up to 30 of each are listed; find_links with id pages through every link in a source, and find_links with url lists every link to it; each link names its source id) (an entry with link_category cross_source links Jamie's corpora to each other; cross_source_count totals them), similar issues by meaning (for an issue), similar posts by meaning (for a blog post: its nearest other posts, leaving out posts from the same trip and taking at most one from each other trip, each with a score that ranks within this list only), and related sources (related means sharing at least 3 distinctive terms: words of five or more letters from the title and opening, or domains it linked as picks, each used by fewer than max(2% of the sources in scope, 20) sources; related_count counts them all, related_sources lists the top limit). Use for connected-archive questions like \"what else is near this?\", \"where did this link lead?\", \"did this blog post connect to Weekly Thing?\", or to build rabbit-hole style follow-ups. A saved link (link-<id>) is read whatever the scope: its incoming links are the issue and post links that are it or link its page, and its related sources include other saved links. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
       "doors": {
         "mcp": true,
         "webmcp": true,
@@ -2225,9 +2236,10 @@
             "enum": [
               "weekly_thing",
               "blog",
-              "podcast"
+              "podcast",
+              "link"
             ],
-            "description": "Only this source."
+            "description": "Only this source. link is the links Jamie saved on Linking Things: read only when named, and then alone."
           },
           "voice": {
             "type": "string",
@@ -2302,7 +2314,7 @@
           "server_version"
         ]
       },
-      "chat_description": "Find the archive evidence for one to four draft claims. Use sparingly before finalizing an answer that hinges on specific facts, dates, counts or source relationships. For each claim it returns the best passages with their source id and voices (whose words each passage holds: jamie, quoted, link). It makes no verdict: read the passages and decide whether they support the claim; a passage whose voices include quoted may be someone else's words. A passage longer than 450 characters shows the stretch where the claim's words gather, and clipped gives {start, end, chars}; copy_of on a Weekly Thing Journal passage names the canonical blog post; audio {url, start, chapter} on a passage from an issue with an audio edition starts its section's chapter.",
+      "chat_description": "Find the archive evidence for one to four draft claims. Use sparingly before finalizing an answer that hinges on specific facts, dates, counts or source relationships. For each claim it returns the best passages with their source id and voices (whose words each passage holds: jamie, quoted, link). It makes no verdict: read the passages and decide whether they support the claim; a passage whose voices include quoted may be someone else's words. source_kind link looks among the links Jamie saved on Linking Things (links.thingelstad.xyz) instead, which no other call reads; a saved link's link and quoted voices are not Jamie's. A passage longer than 450 characters shows the stretch where the claim's words gather, and clipped gives {start, end, chars}; copy_of on a Weekly Thing Journal passage names the canonical blog post; audio {url, start, chapter} on a passage from an issue with an audio edition starts its section's chapter.",
       "doors": {
         "mcp": true,
         "webmcp": true,
@@ -2866,9 +2878,10 @@
             "enum": [
               "weekly_thing",
               "blog",
-              "podcast"
+              "podcast",
+              "link"
             ],
-            "description": "Only this source."
+            "description": "Only this source. link is the links Jamie saved on Linking Things: read only when named, and then alone."
           },
           "include_microposts": {
             "type": "boolean",
@@ -2945,7 +2958,7 @@
           "server_version"
         ]
       },
-      "chat_description": "What Jamie published on this calendar day, in the date's own year and every year before, across the Weekly Thing, the blog and the podcast: the archive's \"on this day\". Defaults to today in America/Chicago. A source's day is its Chicago date (a Weekly Thing issue's send time, a blog post's published time); Feb 29 folds into Feb 28 in a year without one and is its own day in a year with one. Returns years newest first (years_ago 0 is the date's own year), each year's items in the order issue, episode, blog posts by Chicago time of day (microposts after the other posts; a post with no time last), each with years_ago and items {id, label, source_kind, title, date, url, excerpt, photo?}; read one with get_source(id), show a photo with view_photo. Use for anniversaries, \"what was Jamie writing a year ago\", and daily look-backs. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
+      "chat_description": "What Jamie published on this calendar day, in the date's own year and every year before, across the Weekly Thing, the blog and the podcast: the archive's \"on this day\". source_kind link lists the links Jamie saved on Linking Things (links.thingelstad.xyz) on that day instead, which no other call reads, each excerpt its note. Defaults to today in America/Chicago. A source's day is its Chicago date (a Weekly Thing issue's send time, a blog post's published time); Feb 29 folds into Feb 28 in a year without one and is its own day in a year with one. Returns years newest first (years_ago 0 is the date's own year), each year's items in the order issue, episode, blog posts by Chicago time of day (microposts after the other posts; a post with no time last), each with years_ago and items {id, label, source_kind, title, date, url, excerpt, photo?}; read one with get_source(id), show a photo with view_photo. Use for anniversaries, \"what was Jamie writing a year ago\", and daily look-backs. URLs in results are citation metadata for the app; do not quote or narrate raw URLs/paths in the answer.",
       "paged_list": "years[].items",
       "doors": {
         "mcp": true,
@@ -3080,6 +3093,13 @@
         "name": "page",
         "title": "Page",
         "description": "One thingelstad.com page (About, Resume, a list, a collection, an Open Loop episode) by its page id, the number in page-<id>, e.g. librarian://page/57851.",
+        "mimeType": "text/markdown"
+      },
+      {
+        "uriTemplate": "librarian://link/{id}",
+        "name": "saved-link",
+        "title": "Saved link",
+        "description": "One link Jamie saved on Linking Things (links.thingelstad.xyz) by its id, the 12 characters in link-<id>, e.g. librarian://link/734afb8ff14f: the page it saved, when, its tags, the issues that shared it and its note.",
         "mimeType": "text/markdown"
       },
       {
@@ -3257,7 +3277,7 @@
         "when": "resources/read with a URI no template matches",
         "http_status": 200,
         "code": -32602,
-        "message": "Unknown resource URI; this server serves librarian://wt/{n}, librarian://blog/{id}, librarian://page/{id}, librarian://topic/{slug}, librarian://year/{yyyy}, librarian://on-this-day/{mm-dd}."
+        "message": "Unknown resource URI; this server serves librarian://wt/{n}, librarian://blog/{id}, librarian://page/{id}, librarian://link/{id}, librarian://topic/{slug}, librarian://year/{yyyy}, librarian://on-this-day/{mm-dd}."
       },
       {
         "key": "unknown_method",
