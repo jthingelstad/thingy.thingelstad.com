@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://thingy.thingelstad.com/contracts/librarian-api.json",
   "title": "Thingy Librarian API Contract",
-  "version": "4.17.0",
+  "version": "4.19.0",
   "compatibility": "breaking",
   "$defs": {
     "mode": {
@@ -360,6 +360,33 @@
         },
         "content_kind": {
           "type": "string"
+        },
+        "document_source": {
+          "type": "string"
+        },
+        "document_date": {
+          "type": "string"
+        },
+        "link_id": {
+          "type": "string"
+        },
+        "link_url": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "link_type": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array"
+        },
+        "note_voice": {
+          "type": "string"
+        },
+        "shared_in_issues": {
+          "type": "array"
         },
         "voice": {
           "type": "array"
@@ -1246,10 +1273,31 @@
                 "type": "string"
               },
               "sourceKinds": {
-                "type": "array"
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "weekly_thing",
+                    "blog",
+                    "podcast",
+                    "link"
+                  ]
+                }
               },
               "excludeSourceKinds": {
-                "type": "array"
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "weekly_thing",
+                    "blog",
+                    "podcast",
+                    "link",
+                    "site_page",
+                    "faq",
+                    "thing"
+                  ]
+                }
               },
               "excludeIssues": {
                 "type": "array"

@@ -150,6 +150,15 @@ export interface LibrarianRetrievePassage {
   linked_from_issues?: Array<unknown>;
   section_family?: string;
   content_kind?: string;
+  document_source?: string;
+  document_date?: string;
+  link_id?: string;
+  link_url?: string;
+  host?: string;
+  link_type?: string;
+  tags?: Array<unknown>;
+  note_voice?: string;
+  shared_in_issues?: Array<unknown>;
   voice?: Array<unknown>;
   text: string;
   [key: string]: unknown;
@@ -324,12 +333,12 @@ export interface LibrarianStreamBase {
   [key: string]: unknown;
 }
 
-export const LIBRARIAN_CONTRACT_SHA256 = 'a688ab3f72df3b5ef78fa097ffacfc9a697c8e4f45b892a32e6297fded871e36';
+export const LIBRARIAN_CONTRACT_SHA256 = '931ae16ecc57d4587cbe8968d60c54b5ac6d51ff23a91341a4a8111d3c7ba37a';
 export const LIBRARIAN_CONTRACT = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: 'https://thingy.thingelstad.com/contracts/librarian-api.json',
   title: 'Thingy Librarian API Contract',
-  version: '4.17.0',
+  version: '4.19.0',
   compatibility: 'breaking',
   $defs: {
     mode: {
@@ -679,6 +688,33 @@ export const LIBRARIAN_CONTRACT = {
         },
         content_kind: {
           type: 'string'
+        },
+        document_source: {
+          type: 'string'
+        },
+        document_date: {
+          type: 'string'
+        },
+        link_id: {
+          type: 'string'
+        },
+        link_url: {
+          type: 'string'
+        },
+        host: {
+          type: 'string'
+        },
+        link_type: {
+          type: 'string'
+        },
+        tags: {
+          type: 'array'
+        },
+        note_voice: {
+          type: 'string'
+        },
+        shared_in_issues: {
+          type: 'array'
         },
         voice: {
           type: 'array'
@@ -1501,10 +1537,18 @@ export const LIBRARIAN_CONTRACT = {
                 type: 'string'
               },
               sourceKinds: {
-                type: 'array'
+                type: 'array',
+                items: {
+                  type: 'string',
+                  enum: ['weekly_thing', 'blog', 'podcast', 'link']
+                }
               },
               excludeSourceKinds: {
-                type: 'array'
+                type: 'array',
+                items: {
+                  type: 'string',
+                  enum: ['weekly_thing', 'blog', 'podcast', 'link', 'site_page', 'faq', 'thing']
+                }
               },
               excludeIssues: {
                 type: 'array'
