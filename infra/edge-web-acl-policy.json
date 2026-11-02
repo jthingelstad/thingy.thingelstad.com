@@ -1,0 +1,9 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Sid": "EdgeWebAcl",
+    "Effect": "Allow",
+    "Action": "wafv2:GetWebACL",
+    "Resource": "arn:aws:wafv2:us-east-1:*:global/webacl/edge/*"
+  }]
+}
