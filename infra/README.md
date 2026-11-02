@@ -66,3 +66,13 @@ policy on the existing CloudFormation service role before first deployment. It
 adds origin-request-policy lifecycle, which the existing role did not permit.
 Rollback changes the Librarian's live native revision pins to its protected
 previous revisions; the distribution keeps its stable native live origins.
+
+## Shared edge web ACL
+
+The distribution uses the account's one shared AWS WAF web ACL (`edge`, owned
+by projects-sysadmin's `edge-waf` stack) through
+`WebACLId: !ImportValue edge-waf-WebAclArn`; its rules only count requests
+until tuned, and blocking is Jamie's call. CloudFront reads the web ACL as the
+caller whenever the distribution is updated, so `edge-web-acl-policy.json` is
+installed as the `ThingyEdgeWebAcl` inline policy on the same CloudFormation
+service role (2026-11-02). It grants only `wafv2:GetWebACL` on that web ACL.
