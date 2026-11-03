@@ -20,9 +20,8 @@ migration off GitHub Pages; this site cut over on 2026-09-01
   and clobber the API's JSON errors (verified live 2026-09-01).
 - **Access logging** - CloudFront standard logs v2 into
   `/thingy-web/web-access` (privacy-minimized field set, 731-day (24-month) retention).
-- **Alarm** `thingy-web-distribution-5xx` → the `weekly-thing-librarian-alarms`
-  SNS topic. The `thingy-web-` prefix is load-bearing: the sysadmin auditor's
-  alarm-history grant matches it.
+- **No alarm.** `thingy-web-distribution-5xx` was retired 2026-11-03 (Jamie
+  cut the account to a handful of CloudWatch alarms, none here).
 
 ## Deploying
 
