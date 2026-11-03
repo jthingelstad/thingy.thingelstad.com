@@ -19,9 +19,15 @@ export function loadTinylytics() {
   // script off it entirely (audit W2). The URL scrub above still ran.
   if (window.location.pathname.startsWith('/signin')) return;
 
+  // One tag for every site: the widgets (hits, countries) and options
+  // (events, beacon) are set in the site's Tinylytics settings, not the URL.
+  // Load it once per page load. The script counts pushState, replaceState
+  // and popstate itself (the chat's conversation URL sync), so it must never
+  // be re-injected on a route change: that would double count.
   const script = document.createElement('script');
   script.defer = true;
-  script.src = `https://tinylytics.app/embed/${tinylyticsSiteId}/min.js?events&beacon&hits&countries`;
+  script.src = 'https://tinylytics.app/js/script.js';
+  script.dataset.site = tinylyticsSiteId;
   script.addEventListener('load', () => {
     window.dispatchEvent(new Event('tinylytics:loaded'));
   });

@@ -431,12 +431,19 @@ Thingy has its own Tinylytics site ID in `web/vite.config.ts`, overridable with
 
 Current Tinylytics usage:
 
-- minified embed script, loaded on every page except `/signin/` (magic
-  tokens ride that URL; `librarian.signin_*` events are that page's only
-  signal) (2026-09-01; previously homepage-only, which silenced all app
-  events)
-- `events`, `beacon`, `hits`, `countries`, Webmention endpoint (kudos
-  removed at Jamie's request 2026-09-03)
+- the Tinylytics script, `<script defer src="https://tinylytics.app/js/script.js"
+  data-site="<id>">` as `src/shared/thingy-tinylytics-loader.ts` builds it,
+  loaded once per page load on every page except `/signin/` (magic tokens
+  ride that URL; `librarian.signin_*` events are that page's only signal)
+  (2026-09-01; previously homepage-only, which silenced all app events).
+  Since 2026-11-02 the tag takes no query parameters (no `?events`,
+  `?beacon`, `/min.js`): `events`, `beacon`, `hits` and `countries` are
+  set in the site's Tinylytics dashboard settings. The script counts
+  pushState, replaceState and popstate itself (the chat's `conversation`
+  URL sync), ignoring repeats of the same URL, so never re-inject it on a
+  route change; a view change that does not touch history would call
+  `window.tinylytics?.triggerUpdate()` instead.
+- Webmention endpoint (kudos removed at Jamie's request 2026-09-03)
 - homepage footer hit/country display
 - declarative `data-tinylytics-event` hooks (the embed's click delegation
   handles React-rendered elements): `home.start_chat`, `network.return`,
