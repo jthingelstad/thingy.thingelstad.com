@@ -220,12 +220,19 @@ the production ID in `web/vite.config.ts`.
 
 Enabled Tinylytics features:
 
-- Page hits with the minified embed script.
-- Click/event tracking with `events`.
-- Beacon delivery for outbound links with `beacon`.
+- Page hits with the Tinylytics script
+  (`https://tinylytics.app/js/script.js` with `data-site`, no query
+  parameters; since 2026-11-02 the options below are set in the site's
+  Tinylytics dashboard settings, not in the URL).
+- Click/event tracking (`events`).
+- Beacon delivery for outbound links (`beacon`).
 - Tinylytics Webmention endpoint in the document head.
 
-The minified Tinylytics embed loads on every page (since 2026-09-01;
+The script also counts the chat's history changes (pushState, replaceState,
+popstate) on its own, so the loader adds it once per page load and never
+re-injects it.
+
+The Tinylytics script loads on every page (since 2026-09-01;
 previously homepage-only, which silenced all app events). The loader
 strips one-time login values and other control parameters from the URL
 BEFORE the embed executes, and the session credential is an HttpOnly
