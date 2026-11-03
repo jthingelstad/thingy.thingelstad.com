@@ -373,30 +373,6 @@ Resources:
         - sc-content-type
         - cache-behavior-path-pattern
 
-  # The thingy-web- name prefix is load-bearing: the sysadmin auditor policy
-  # grants DescribeAlarmHistory on alarm:thingy-web-* (projects-sysadmin#37).
-  WebDistributionErrorAlarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmName: thingy-web-distribution-5xx
-      AlarmDescription: CloudFront returned more than 5% 5xx responses for thingy.thingelstad.com in two of three five-minute windows.
-      Namespace: AWS/CloudFront
-      MetricName: 5xxErrorRate
-      Dimensions:
-        - Name: DistributionId
-          Value: !Ref WebDistribution
-        - Name: Region
-          Value: Global
-      Statistic: Average
-      Period: 300
-      EvaluationPeriods: 3
-      DatapointsToAlarm: 2
-      Threshold: 5
-      ComparisonOperator: GreaterThanThreshold
-      TreatMissingData: notBreaching
-      AlarmActions:
-        - !Sub arn:${AWS::Partition}:sns:us-east-1:${AWS::AccountId}:weekly-thing-librarian-alarms
-
 Outputs:
   WebBucketName:
     Value: !Ref WebBucket
