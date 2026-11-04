@@ -1,6 +1,6 @@
 # Scheduled drift checks - external-state comparisons that should alert but
 # never block a deploy: the vendored Librarian contract and MCP surface vs
-# upstream main, and npm advisories. A failure opens (or comments on) a
+# upstream main, Thingy's stills vs his home, and npm advisories. A failure opens (or comments on) a
 # "Drift check failing" issue so it surfaces in Jamie's notifications instead
 # of dying as a red scheduled run nobody is watching. The next passing run
 # closes it.
@@ -41,6 +41,9 @@ jobs:
       - name: Vendored MCP surface matches librarian-thing main
         run: npm run mcp-surface:check
 
+      - name: Thingy's stills are published and registered at his home
+        run: npm run thingy:check
+
       # Every high or critical advisory fails, except UNFIXABLE: braces
       # <=3.0.3 (GHSA-vfj7-8cjw-p6xm, 2026-09-18) has no patched release,
       # and stylelint reaches it through globby, fast-glob and micromatch to
@@ -71,7 +74,7 @@ jobs:
         run: |
           existing=$(gh issue list --state open --search 'Drift check failing in:title' --json number --jq '.[0].number')
           body="Scheduled drift check failed: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          Either the vendored Librarian contract or MCP surface no longer matches librarian-thing main, or npm advisories fired."
+          Either the vendored Librarian contract or MCP surface no longer matches librarian-thing main, a Thingy still is missing at his home, or npm advisories fired."
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --body "$body"
           else
