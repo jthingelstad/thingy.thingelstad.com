@@ -1,7 +1,7 @@
 // The home page's Thingy you can turn. The picture in the hero is a still of
 // this same model from this same angle, so it stands in until the model is
-// ready and stays when it is not: no JavaScript, no WebGL, Save-Data, or
-// thingy.thingelstad.xyz (his home, which serves the component) out of reach.
+// ready and stays when it is not: no JavaScript, no WebGL or Save-Data. Both
+// come from thingy.thingelstad.xyz, his home, and follow the newest model there.
 const COMPONENT = 'https://thingy.thingelstad.xyz/thingy.js';
 
 function canDraw(): boolean {
@@ -32,7 +32,7 @@ export function mountThingy3D(root: Document = document, load = () => import(/* 
     character.className = 'thingy-home-3d';
     for (const [name, value] of Object.entries({
       outfit: 'librarian',
-      version: 'v0.14',
+      version: 'latest',
       // Hello, not present: people can turn him, and the present hand, seen from
       // his side, is one raised finger on the back of a closed hand.
       pose: 'hello',

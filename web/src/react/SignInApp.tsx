@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import * as session from '../shared/thingy-session.ts';
 import { errorMessage } from '../shared/thingy-errors.ts';
 import { runningStandalone, trackEvent } from '../shared/thingy-analytics.ts';
+import { thingyStill } from '../shared/thingy-stills.ts';
 import { useTurnstile } from '../shared/turnstile.ts';
 import { ThingyFace } from './components/ThingyFace.tsx';
 
@@ -227,10 +228,10 @@ export function SignInApp({
           >
             <img
               className="size-[136px] select-none md:size-[220px]"
-              src="/img/thingy.png"
+              src={thingyStill('hello-idle')}
               alt=""
-              width="1022"
-              height="1022"
+              width="1000"
+              height="1000"
               loading="eager"
               draggable={false}
             />

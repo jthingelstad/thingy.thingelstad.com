@@ -72,7 +72,7 @@ test('saying hi cycles the bubble and hops Thingy', () => {
   const bubble = document.querySelector<HTMLElement>('.thingy-home-bubble')!;
   expect(bubble.getAttribute('aria-live')).toBe('polite');
   const first = bubble.textContent?.trim();
-  wireSayHi();
+  wireSayHi(document.querySelector('main')!);
   button.click();
   expect(bubble.textContent).not.toBe(first);
   expect(button.classList.contains('is-hopping')).toBe(true);
@@ -82,19 +82,65 @@ test('saying hi cycles the bubble and hops Thingy', () => {
   expect(bubble.textContent).toBe(first);
 });
 
-test('a tap on the 3D Thingy says hi and hops him, not the hidden still', () => {
+function tappable3D(hop = vi.fn()) {
   loadBody('index.html');
+  const character = Object.assign(document.createElement('thingy-character'), { hop });
+  character.setAttribute('face', 'original');
+  document.querySelector('.thingy-home-hi')!.after(character);
+  return { character, hop, tap: () => character.dispatchEvent(new CustomEvent('thingy-tap', { bubbles: true, composed: true })) };
+}
+
+test('a tap on the 3D Thingy says hi and hops him, not the hidden still', () => {
+  const { character, hop, tap } = tappable3D();
   const bubble = document.querySelector<HTMLElement>('.thingy-home-bubble')!;
   const first = bubble.textContent?.trim();
+  wireSayHi(document.querySelector('main')!);
+  tap();
+  expect(bubble.textContent).not.toBe(first);
+  expect(hop).toHaveBeenCalledOnce();
+  expect(character.classList.contains('is-hopping')).toBe(false);
+  expect(document.querySelector('.thingy-home-hi.is-hopping')).toBeNull();
+});
+
+test('each tap spins him either way, to a height from low to high', () => {
+  const { character, hop, tap } = tappable3D();
+  vi.spyOn(character, 'offsetHeight', 'get').mockReturnValue(400);
+  const rolls = [0, 0.25, 0, 1 - Number.EPSILON, 0.75, 0];
+  wireSayHi(document.querySelector('main')!, () => rolls.shift() ?? 0);
+  tap();
+  tap();
+  expect(hop.mock.calls[0][0].direction).toBe(-1);
+  expect(hop.mock.calls[0][0].height).toBeCloseTo(32);
+  expect(hop.mock.calls[1][0].direction).toBe(1);
+  expect(hop.mock.calls[1][0].height).toBeCloseTo(128);
+});
+
+test('a tap changes his face, never to the same one, and it comes back', () => {
+  vi.useFakeTimers();
+  const { character, tap } = tappable3D();
+  wireSayHi(document.querySelector('main')!);
+  let last = character.getAttribute('face');
+  for (let i = 0; i < 20; i += 1) {
+    tap();
+    const face = character.getAttribute('face');
+    expect(['delighted', 'curious', 'idle']).toContain(face);
+    expect(face).not.toBe(last);
+    last = face;
+  }
+  vi.advanceTimersByTime(3999);
+  expect(character.getAttribute('face')).toBe(last);
+  vi.advanceTimersByTime(1);
+  expect(character.getAttribute('face')).toBe('original');
+  vi.useRealTimers();
+});
+
+test('a component without hop still changes face', () => {
+  loadBody('index.html');
   const character = document.createElement('thingy-character');
   document.querySelector('.thingy-home-hi')!.after(character);
-  wireSayHi();
+  wireSayHi(document.querySelector('main')!);
   character.dispatchEvent(new CustomEvent('thingy-tap', { bubbles: true, composed: true }));
-  expect(bubble.textContent).not.toBe(first);
-  expect(character.classList.contains('is-hopping')).toBe(true);
-  expect(document.querySelector('.thingy-home-hi.is-hopping')).toBeNull();
-  character.dispatchEvent(new Event('animationend', { bubbles: true }));
-  expect(character.classList.contains('is-hopping')).toBe(false);
+  expect(character.getAttribute('face')).toBeTruthy();
 });
 
 function withWebGL() {
@@ -115,7 +161,7 @@ test('the 3D Thingy mounts over his still and takes over when ready', async () =
   const stage = document.querySelector('.thingy-home-stage')!;
   const character = stage.querySelector('thingy-character')!;
   expect(character.previousElementSibling?.classList.contains('thingy-home-hi')).toBe(true);
-  expect(character.getAttribute('version')).toBe('v0.14');
+  expect(character.getAttribute('version')).toBe('latest');
   expect(character.getAttribute('zoom')).toBe('off');
   expect(character.getAttribute('poster')).toBe(stage.querySelector('.thingy-home-hi img')!.getAttribute('src'));
   expect(stage.classList.contains('is-3d')).toBe(false);

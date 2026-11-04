@@ -12,6 +12,7 @@ import {
 import { AssistantMessage, EditComposer, UserMessage } from './Messages.tsx';
 import { Composer } from './Composer.tsx';
 import { Icon } from './Icon.tsx';
+import { thingyStill } from '../../shared/thingy-stills.ts';
 
 // Corpus-grounded follow-up chips from the welcome agent (contract 4.4).
 // Each suggestion is grounded in retrieved archive passages server-side -
@@ -155,13 +156,12 @@ function Thread({
                     wide screen, stacked on a phone. */}
                 <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center sm:gap-2">
                   <div className="relative size-[150px] shrink-0 sm:size-[190px]" aria-hidden="true">
-                    <span className="absolute bottom-1 left-5 h-3.5 w-[110px] rounded-[50%] bg-mascot-shadow sm:bottom-1.5 sm:left-[22px] sm:h-[18px] sm:w-[150px]" />
                     <img
                       className="absolute inset-0 size-full select-none"
-                      src="/img/thingy.png"
+                      src={thingyStill('present-idle')}
                       alt=""
-                      width="1022"
-                      height="1022"
+                      width="1000"
+                      height="1000"
                       loading="eager"
                       draggable={false}
                     />

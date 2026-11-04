@@ -140,7 +140,6 @@
   --thingy-tangerine-tint: #ffe6d3; /* hover on paper chips */
   --thingy-hairline: #e8dcc0; /* the chat header's rule */
   --thingy-rule-mid: #e2d4b5; /* source-card and pocket-card rules */
-  --thingy-mascot-shadow: #e4d6b6; /* the ellipse under the mascot */
   --thingy-ruled: #d9c9a4; /* index-card lines */
   --thingy-ruled-blue: #dce6f5; /* the Connect card's lines */
   --thingy-weekly-line: #a9c7f2; /* borders on the weekly tint */
@@ -295,7 +294,6 @@
     --thingy-tangerine-tint: #3f2617;
     --thingy-hairline: #3a3329;
     --thingy-rule-mid: #3f382c;
-    --thingy-mascot-shadow: #0f0d0a;
     --thingy-ruled: #463e30;
     --thingy-ruled-blue: #24324a;
     --thingy-weekly-line: #34527f;
