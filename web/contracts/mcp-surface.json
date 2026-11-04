@@ -5,8 +5,8 @@
   "server": {
     "name": "librarian",
     "title": "The Librarian - Jamie Thingelstad's archive",
-    "version": "2.11.0",
-    "version_format": "2.11.0+tools.<fingerprint>: the fingerprint hashes every packaged prompt file, the tool specs included, so it changes whenever the declared tools do",
+    "version": "2.12.0",
+    "version_format": "2.12.0+tools.<fingerprint>: the fingerprint hashes every packaged prompt file, the tool specs included, so it changes whenever the declared tools do",
     "website_url": "https://thingy.thingelstad.com/",
     "icons": [
       {
@@ -105,7 +105,7 @@
     "chat": {
       "path": "/chat",
       "auth": "the signed-in Thingy web session",
-      "runtime": "Amazon Bedrock Converse agent loop, tools called in-process",
+      "runtime": "Anthropic Messages API agent loop, tools called in-process",
       "tools": [
         "search_faq",
         "search_archive",
@@ -140,7 +140,7 @@
     "guest_chat": {
       "path": "/chat",
       "auth": "none (guest preview lane)",
-      "runtime": "Amazon Bedrock Converse agent loop, tools called in-process",
+      "runtime": "Anthropic Messages API agent loop, tools called in-process",
       "tools": [
         "search_faq",
         "search_archive",

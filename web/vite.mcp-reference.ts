@@ -150,7 +150,7 @@ const TOOL_GROUPS: { id: string; title: string; blurb: string; tools: string[] }
   {
     id: 'meta',
     title: 'About the archive',
-    blurb: 'What the archive holds, and answers about Thingy itself.',
+    blurb: 'What the archive holds, and answers about Thingy himself.',
     tools: ['corpus_stats', 'search_faq']
   },
   {
@@ -301,7 +301,7 @@ function toolSection(tool: Tool, names: string[]) {
     : '';
   const conditional = tool.conditional ? `<p class="note">${escapeHtml(tool.conditional)}</p>` : '';
   const chat = tool.chat_description
-    ? `<details><summary>What Thingy&rsquo;s own agent is told</summary><p>The chat loop binds the same schema with the description written for Thingy&rsquo;s app:</p><blockquote>${linkTools(tool.chat_description, names)}</blockquote></details>`
+    ? `<details><summary>What Thingy is told in chat</summary><p>The chat loop binds the same schema with the description written for Thingy&rsquo;s app:</p><blockquote>${linkTools(tool.chat_description, names)}</blockquote></details>`
     : '';
   return `<section class="tool" id="tool-${escapeHtml(tool.name)}">
       <h3><a class="anchor" href="#tool-${escapeHtml(tool.name)}">${escapeHtml(tool.title)}</a> <code class="tool-name">${escapeHtml(tool.name)}</code></h3>
@@ -379,7 +379,7 @@ function doorsFigure(surface: McpSurface) {
   const { chat, mcp, webmcp } = surface.doors;
   return `<figure class="doors-figure" aria-label="One tool registry, three doors">
       <div class="doors">
-        <div class="door"><b>Thingy&rsquo;s chat</b><span>Bedrock Converse agent loop, up to ${chat.max_tool_turns} tool turns</span><span>${toolCount(surface, chat)} tools, called in-process</span></div>
+        <div class="door"><b>Thingy&rsquo;s chat</b><span>Anthropic Messages API agent loop, up to ${chat.max_tool_turns} tool turns</span><span>${toolCount(surface, chat)} tools, called in-process</span></div>
         <div class="door"><b>MCP</b><span>Claude, ChatGPT, Claude Code, any client</span><span>${toolCount(surface, mcp)} tools over OAuth 2.1</span></div>
         <div class="door"><b>WebMCP</b><span>an agent in your browser</span><span>${toolCount(surface, webmcp)} tools through your Thingy session</span></div>
       </div>
@@ -395,10 +395,10 @@ function howItWorks(surface: McpSurface) {
   const notOnWeb = mcp.tools.filter((name) => !webmcp.tools.includes(name));
   return `<section id="how-it-works">
     <h2>How it works</h2>
-    <p>Thingy is not a chatbot with private powers. Its agent answers from one registry of archive tools in the Librarian (the open-source <a href="https://github.com/jthingelstad/librarian-thing">librarian-thing</a>), each declared once in a published spec. The same registry is open through three doors, so an outside agent gets exactly the tools Thingy uses.</p>
+    <p>Thingy is not a chatbot with private powers. He answers from one registry of archive tools in the Librarian (the open-source <a href="https://github.com/jthingelstad/librarian-thing">librarian-thing</a>), each declared once in a published spec. The same registry is open through three doors, so an outside agent gets exactly the tools Thingy uses.</p>
     ${doorsFigure(surface)}
     <ul>
-      <li><b>Thingy&rsquo;s chat.</b> Claude on Amazon Bedrock runs a Converse agent loop with ${toolCount(surface, chat)} tools bound as Converse tool specs. Tool results stay whole there, since model context in the loop is cheap, but the loop holds itself to the same argument checks and error records as the outside doors. Guests get the ${toolCount(surface, surface.doors.guest_chat)} archive-only tools.</li>
+      <li><b>Thingy&rsquo;s chat.</b> Claude runs the agent loop through the Anthropic Messages API, with ${toolCount(surface, chat)} tools bound from the same published specs. Tool results stay whole there, since model context in the loop is cheap, but the loop holds itself to the same argument checks and error records as the outside doors. Guests get the ${toolCount(surface, surface.doors.guest_chat)} archive-only tools.</li>
       <li><b>MCP.</b> <code>${escapeHtml(mcp.url || '')}</code> serves the registry over MCP to any client, behind OAuth 2.1. Results are sized for clients that pay for every byte: compact JSON, cut structurally under ${number(surface.limits.result_max_chars)} characters.</li>
       <li><b>WebMCP.</b> While you are signed in, the <a href="/chat/">chat page</a> registers the tools with your browser&rsquo;s model context and proxies calls to <code>/api/tools</code> with your session. It leaves out ${notOnWeb.map(code).join(', ')}: a page agent has its own web access and renders archive images natively.</li>
     </ul>
@@ -589,7 +589,7 @@ function promptsSection(surface: McpSurface, names: string[]) {
     .join('\n');
   return `<section id="prompts">
     <h2>Prompts</h2>
-    <p>Prompts publish the good call sequences. The routing knowledge Thingy&rsquo;s own agent carries in its system prompt reaches MCP clients here: a client that offers prompts shows them as ready-made asks, and each expands into the tool sequence that answers it well. They instruct the calling model, and never speak as Jamie.</p>
+    <p>Prompts publish the good call sequences. The routing knowledge Thingy carries in his system prompt reaches MCP clients here: a client that offers prompts shows them as ready-made asks, and each expands into the tool sequence that answers it well. They instruct the calling model, and never speak as Jamie.</p>
     ${prompts}
   </section>`;
 }

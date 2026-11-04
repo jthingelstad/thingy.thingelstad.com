@@ -8,32 +8,32 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' https://tinylytics.app; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://avatars.micro.blog https://tinylytics.app; connect-src 'self' https://tinylytics.app"
     />
-    <title>Thingy — Jamie Thingelstad&#39;s Archive Agent</title>
+    <title>Thingy — Jamie Thingelstad&#39;s Sidekick</title>
     <meta
       name="description"
-      content="Thingy is Jamie Thingelstad&#39;s public archive agent for exploring his writing, newsletter, and podcast."
+      content="Thingy is Jamie Thingelstad&#39;s sidekick, an AI agent who answers from everything Jamie has published: his newsletter, blog, podcast and more."
     />
     <meta name="robots" content="index, follow, max-image-preview:large" />
 
-    <meta property="og:title" content="Thingy — Jamie Thingelstad's Archive Agent" />
+    <meta property="og:title" content="Thingy — Jamie Thingelstad's Sidekick" />
     <meta
       property="og:description"
-      content="Thingy is Jamie Thingelstad&#39;s public archive agent for exploring his writing, newsletter, and podcast."
+      content="Thingy is Jamie Thingelstad&#39;s sidekick, an AI agent who answers from everything Jamie has published: his newsletter, blog, podcast and more."
     />
     <meta property="og:url" content="https://thingy.thingelstad.com/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Thingy" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:image" content="https://thingy.thingelstad.com/img/thingy.png" />
-    <meta property="og:image:alt" content="Thingy, Jamie Thingelstad's archive agent" />
+    <meta property="og:image:alt" content="Thingy, Jamie Thingelstad's sidekick" />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Thingy — Jamie Thingelstad's Archive Agent" />
+    <meta name="twitter:title" content="Thingy — Jamie Thingelstad's Sidekick" />
     <meta
       name="twitter:description"
-      content="Thingy is Jamie Thingelstad&#39;s public archive agent for exploring his writing, newsletter, and podcast."
+      content="Thingy is Jamie Thingelstad&#39;s sidekick, an AI agent who answers from everything Jamie has published: his newsletter, blog, podcast and more."
     />
     <meta name="twitter:image" content="https://thingy.thingelstad.com/img/thingy.png" />
-    <meta name="twitter:image:alt" content="Thingy, Jamie Thingelstad's archive agent" />
+    <meta name="twitter:image:alt" content="Thingy, Jamie Thingelstad's sidekick" />
 
     <link rel="canonical" href="https://thingy.thingelstad.com/" />
     <link rel="alternate" type="text/markdown" title="LLM-friendly site index" href="/llms.txt" />
@@ -63,7 +63,7 @@
             "@id": "https://thingy.thingelstad.com/#website",
             "url": "https://thingy.thingelstad.com/",
             "name": "Thingy",
-            "description": "Thingy is Jamie Thingelstad's public archive agent for exploring his writing, newsletter, and podcast.",
+            "description": "Thingy is Jamie Thingelstad's sidekick, an AI agent who answers from everything Jamie has published: his newsletter, blog, podcast and more.",
             "publisher": { "@id": "https://www.thingelstad.com/#jamie" }
           },
           {
@@ -74,7 +74,7 @@
             "applicationCategory": "ReferenceApplication",
             "operatingSystem": "Web",
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-            "description": "An AI archive agent that answers questions across The Weekly Thing newsletter, the thingelstad.com blog, and the Another Thing podcast — with citations back to the original writing. Also available as an MCP server for Claude, Codex, and other AI assistants.",
+            "description": "Jamie Thingelstad's sidekick, an AI agent that answers questions across The Weekly Thing newsletter, the thingelstad.com blog, the Another Thing podcast, Things I've Built and Linking Things — with citations back to the original writing. Also available as an MCP server for Claude, Codex, and other AI assistants.",
             "author": { "@id": "https://www.thingelstad.com/#jamie" },
             "about": [
               { "@type": "CreativeWorkSeries", "name": "The Weekly Thing", "url": "https://weekly.thingelstad.com/" },
@@ -121,17 +121,18 @@
     <main id="main-content" class="thingy-home">
       <section class="thingy-home-hero thingy-wrap" aria-labelledby="home-title">
         <div class="thingy-home-copy">
-          <!-- Human-facing copy says sidekick; meta/JSON-LD deliberately
-               keeps "archive agent" (the descriptive term searchers use). -->
+          <!-- Thingy is Jamie's sidekick everywhere, meta and JSON-LD included
+               (persona, thingy.thingelstad.xyz persona/THINGY.md, 2026-11-03);
+               "AI agent" carries the descriptive term. -->
           <p class="thingy-kicker eyebrow">
             <span class="thingy-kicker-dots" aria-hidden="true"><span></span><span></span><span></span></span>
-            Jamie Thingelstad&rsquo;s publishing sidekick
+            Jamie Thingelstad&rsquo;s sidekick
           </p>
           <p class="thingy-nametag" aria-hidden="true"><span>Hello, my name is</span><span>Thingy</span></p>
           <h1 id="home-title" class="thingy-h1">Meet Thingy<span class="dot">.</span></h1>
           <p class="thingy-lede thingy-home-lede">
             Thingy is the librarian for Jamie&rsquo;s public archive &mdash; {{archive.weekly.issues}} newsletter issues, ten
-            thousand blog posts since {{archive.blog.since}}, photos, links, and the podcast. Ask it anything and it answers with citations back to
+            thousand blog posts since {{archive.blog.since}}, photos, links, and the podcast. Ask him about any of it and he answers with citations back to
             <span class="thingy-mark">the original writing</span>.
           </p>
           <div class="thingy-cta-row thingy-home-actions">
@@ -248,7 +249,7 @@
           <h2 class="thingy-h2">About Thingy</h2>
           <p>
             What the archive holds &mdash; {{archive.years}} years of writing, photos, and links &mdash; and how an
-            open-source AI librarian answers from it.
+            open-source AI agent answers from it.
           </p>
           <div class="thingy-surface-foot">
             <a class="thingy-arrow-link" href="/about/">About Thingy&nbsp;&rarr;</a>

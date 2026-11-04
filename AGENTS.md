@@ -318,8 +318,16 @@ Do:
   type".
 - Toy-like components: 2px ink borders, hard offset shadows, pill buttons that
   lift on hover and press on click, 44px minimum targets.
-- Let the mascot carry the personality: the screen face and its moods (idle,
-  thinking, found-it, oops) in the avatar, loaders, empty and error states.
+- Let the mascot carry the personality: the screen face and its moods in the
+  avatar, loaders, empty and error states. The moods mean what the persona
+  (thingy.thingelstad.xyz `persona/THINGY.md`, 2026-11-03) says: idle is
+  ready and listening; thinking is at work; found-it only for a real find
+  (beside an answer, the finished text cites a source the Librarian
+  returned for it, `src/react/components/answer-mood.ts`); oops only when
+  something went wrong on his side (a failed turn or load, never a delete
+  warning or a link its owner closed - those take an icon or the mascot); off is never
+  shown. Thingy is he/him and Jamie's sidekick in copy; the old labels
+  (AI librarian, archive agent, robot librarian) are retired.
 - Motion is CSS only and only when it says something (the blinking face, the
   three thinking dots). No PixiJS, no confetti, no ambient animation; all of it
   off under `prefers-reduced-motion`.

@@ -252,7 +252,10 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
       body: 'The conversation and its saved history are removed for good.',
       confirmLabel: 'Delete',
       danger: true,
-      face: 'oops'
+      // A warning, not a failure: the oops face is only for something that
+      // went wrong on Thingy's side (persona, 2026-11-03).
+      icon: 'trash',
+      iconDanger: true
     });
     if (!ok) return;
     if (id === activeId) newConversation();
@@ -353,7 +356,9 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
       readOnly: true,
       confirmLabel: 'Done',
       hideCancel: true,
-      ...(copied ? { face: 'found-it' as const } : { icon: 'link' })
+      // The found-it face means Thingy found something real; a copied
+      // link is not a find.
+      icon: 'link'
     });
   }
 

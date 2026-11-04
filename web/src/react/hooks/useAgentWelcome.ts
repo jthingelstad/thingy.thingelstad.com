@@ -14,7 +14,7 @@ import * as session from '../../shared/thingy-session.ts';
 // timeless (no counts that will drift stale).
 const FALLBACK_LINES = [
   'More than twenty years of writing is in here somewhere.',
-  'I can trace one idea across the newsletter, the blog, and the podcast.',
+  'Some threads run from the blog to the newsletter to the podcast and back.',
   'The archive reaches back to 2004. Name a year.',
   'Jamie keeps writing about the same things - the fun part is finding out when.'
 ];
@@ -66,7 +66,7 @@ function composeGreeting(guest: boolean): { text: string; subtext: string } {
   }
   const name = String(session.storedProfile().preferred_name || '').trim();
   // Half the opens are a warm salutation, half are Thingy holding up
-  // something it found. One line either way, never both.
+  // something he found. One line either way, never both.
   return { text: pool.length && Math.random() < 0.5 ? tease : salutationPhrase(name), subtext: '' };
 }
 

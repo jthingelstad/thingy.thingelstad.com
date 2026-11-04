@@ -73,7 +73,7 @@ export function renderLlmsTxt(stats: ArchiveStats, surface: McpSurface): string 
 
   lines.push('# Thingy', '');
   lines.push(
-    `> Thingy is an AI librarian for Jamie Thingelstad's public archive: ${stat(stats, 'blog.posts')} thingelstad.com blog posts since ${stat(stats, 'blog.since')}, ${stat(stats, 'weekly.issues')} issues of The Weekly Thing newsletter since ${stat(stats, 'weekly.since')}, and the Another Thing podcast since ${stat(stats, 'podcast.since')}. It answers questions with citations back to the original posts and issues, in chat on this site or inside your own AI through the Librarian MCP server.`,
+    `> Thingy is Jamie Thingelstad's sidekick, an AI agent and the librarian for his public archive: ${stat(stats, 'blog.posts')} thingelstad.com blog posts since ${stat(stats, 'blog.since')}, ${stat(stats, 'weekly.issues')} issues of The Weekly Thing newsletter since ${stat(stats, 'weekly.since')}, and the Another Thing podcast since ${stat(stats, 'podcast.since')}. He answers questions with citations back to the original posts and issues, in chat on this site or inside your own AI through the Librarian MCP server.`,
     ''
   );
   lines.push(
@@ -84,7 +84,7 @@ export function renderLlmsTxt(stats: ArchiveStats, surface: McpSurface): string 
   // Every line from here down is one "- [name](url): notes" link under a
   // "##" heading (see llmsTxtShapeProblems).
   lines.push('## Pages', '');
-  lines.push(`- [Home](${SITE_URL}/): what Thingy is and what to ask it`);
+  lines.push(`- [Home](${SITE_URL}/): what Thingy is and what to ask him`);
   lines.push(
     `- [Chat](${SITE_URL}/chat/): ask Thingy about the archive; guests get a short daily preview, subscribers sign in`
   );
