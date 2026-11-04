@@ -37,6 +37,7 @@ const CONTENT_TYPES = new Map([
   [".svg", "image/svg+xml"],
   [".txt", "text/plain; charset=utf-8"],
   [".webmanifest", "application/manifest+json"],
+  [".webp", "image/webp"],
   [".woff2", "font/woff2"],
   [".xml", "application/xml; charset=utf-8"],
 ]);
@@ -53,7 +54,7 @@ export function cacheControlFor(key) {
   if (key.endsWith(".html")) return "public, max-age=0, s-maxage=300";
   if (/^assets\/[^/]+-[A-Za-z0-9_-]{8,}\.(?:css|js)$/.test(key))
     return "public, max-age=31536000, immutable";
-  if (/\.(?:png|svg|woff2?)$/.test(key)) return "public, max-age=604800";
+  if (/\.(?:png|svg|webp|woff2?)$/.test(key)) return "public, max-age=604800";
   return "public, max-age=3600";
 }
 
