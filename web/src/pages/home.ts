@@ -2,6 +2,7 @@ import '../styles/thingy-home-entry.css';
 import { loadTinylytics } from '../shared/thingy-tinylytics-loader.ts';
 import { refreshAuth, sessionActive } from '../shared/thingy-session.ts';
 import { wireSayHi } from '../shared/thingy-say-hi.ts';
+import { mountThingy3D } from '../shared/thingy-3d.ts';
 
 // Emailed magic links land here (THINGY_MAGIC_LINK_BASE_URL is the site
 // root). Hand the token to the sign-in route before analytics scrubs it.
@@ -13,6 +14,7 @@ if (magicToken) {
 
 loadTinylytics();
 wireSayHi();
+mountThingy3D();
 
 // Any visit slides the 30-day session window, not just /chat/ - a signed-in
 // reader landing on the home page stays signed in.

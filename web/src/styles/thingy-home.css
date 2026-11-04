@@ -59,9 +59,9 @@
 
 .thingy-home-hi {
   position: absolute;
-  top: 0;
-  left: 7%;
-  width: 86%;
+  top: 9%;
+  left: 9%;
+  width: 78%;
   aspect-ratio: 1;
   padding: 0;
   border: 0;
@@ -72,6 +72,32 @@
 
 .thingy-home-hi:focus-visible {
   outline-offset: -6px;
+}
+
+/* The Thingy you can turn sits exactly over the still of himself, which
+   stays below until he is ready and is the whole story when he never is. */
+.thingy-home-3d {
+  position: absolute;
+  top: 9%;
+  left: 9%;
+  width: 78%;
+  aspect-ratio: 1;
+  min-height: 0;
+  visibility: hidden;
+
+  --thingy-character-focus: var(--thingy-edge);
+}
+
+.thingy-home-stage.is-3d .thingy-home-3d {
+  visibility: visible;
+}
+
+.thingy-home-stage.is-3d .thingy-home-hi {
+  visibility: hidden;
+}
+
+.thingy-home-3d.is-hopping {
+  animation: thingy-hop 0.65s cubic-bezier(0.3, 1.5, 0.5, 1);
 }
 
 /* The tap hop, CSS only: pressing lifts Thingy, releasing drops him
@@ -396,7 +422,18 @@
     align-self: stretch;
   }
 
+  /* A narrow bubble runs taller, so it rides higher to stay off his face. */
+  .thingy-home-stage {
+    margin-top: 28px;
+  }
+
+  .thingy-home-hi,
+  .thingy-home-3d {
+    left: 5%;
+  }
+
   .thingy-bubble.thingy-home-bubble {
+    top: -7%;
     max-width: 168px;
     padding: 10px 14px;
     font-size: 16px;
@@ -449,6 +486,7 @@
   .thingy-home-hi img,
   .thingy-home-hi:active img,
   .thingy-home-hi.is-hopping img,
+  .thingy-home-3d.is-hopping,
   .thingy-family-face,
   .thingy-family-tile:hover .thingy-family-face {
     transform: none;

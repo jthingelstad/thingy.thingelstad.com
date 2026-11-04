@@ -330,7 +330,15 @@ Do:
   (AI librarian, archive agent, robot librarian) are retired.
 - Motion is CSS only and only when it says something (the blinking face, the
   three thinking dots). No PixiJS, no confetti, no ambient animation; all of it
-  off under `prefers-reduced-motion`.
+  off under `prefers-reduced-motion`. The one exception is the front page's
+  Thingy (Jamie, 2026-11-04: "we should use a webgl one that the user can
+  rotate"): `<thingy-character>` from thingy.thingelstad.xyz, the home of his
+  character, mounted over a still of the same model and angle
+  (`src/shared/thingy-3d.ts`). He moves only when turned, tapped or blinking; no
+  auto-rotate. Every other page keeps `thingy.png`. The still is the character
+  home's `character/v0.14/poses/librarian-hello.webp`; copy it across when the
+  model changes. Only `index.html`'s CSP allows that host, `blob:` and
+  `'wasm-unsafe-eval'`, which the component's textures and decoder need.
 - Use the source colours (Weekly cobalt, Another Thing crimson `#b3123f`,
   blog clay, Things I've built green `#1d7348`) only to identify sources:
   citation chips, source cards, the home family tiles and About's source

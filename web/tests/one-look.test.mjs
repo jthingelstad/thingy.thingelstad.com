@@ -117,6 +117,22 @@ test('every shell self-hosts the shared type and Archivo', async () => {
   }
 });
 
+// The 3D Thingy needs his home's component, its Meshopt decoder and the model's
+// textures. Only the front page shows him, so only its policy opens up.
+test('only the front page lets in the 3D Thingy', async () => {
+  for (const shell of SHELLS) {
+    const html = await source(shell);
+    const csp = html.match(/http-equiv="Content-Security-Policy"\s+content="([^"]+)"/)[1];
+    if (shell === 'index.html') {
+      assert.match(csp, /script-src [^;]*'wasm-unsafe-eval'[^;]*https:\/\/thingy\.thingelstad\.xyz/);
+      assert.match(csp, /img-src [^;]*blob:/);
+      assert.match(csp, /connect-src [^;]*blob:[^;]*https:\/\/thingy\.thingelstad\.xyz/);
+    } else {
+      assert.ok(!/thingy\.thingelstad\.xyz|wasm-unsafe-eval/.test(csp), `${shell} stays closed to it`);
+    }
+  }
+});
+
 test('no page, style or script references Google Fonts', async () => {
   const files = [
     ...SHELLS,
