@@ -17,6 +17,7 @@ import { liveActivityStatus } from '../thingy-runtime.ts';
 import { trackEvent } from '../../shared/thingy-analytics.ts';
 import { Icon } from './Icon.tsx';
 import { ThingyFace } from './ThingyFace.tsx';
+import { answerMood } from './answer-mood.ts';
 import { Tip } from './Tip.tsx';
 import { AssistantMarkdown } from './MarkdownText.tsx';
 import { citationKind, thingyUrlTransform, type CitationKind } from './markdown-config.ts';
@@ -100,17 +101,20 @@ function ResponseTimer() {
   );
 }
 
-// The face beside each answer: scanning while Thingy works, a wink once
-// an answer has landed, the oops face when the turn failed. Only the
-// working face moves.
+// The face beside each answer: scanning while Thingy works, the found-it
+// wink only when the finished answer cites a source he found, the oops
+// face when the turn failed, idle otherwise (answer-mood.ts has the
+// rule). Only the working face moves.
 function MessageFace({ size }: { size: number }) {
   const status = useAuiState((state) => state.message.status);
-  const hasText = useAuiState((state) =>
-    state.message.content.some((part) => part.type === 'text' && String(part.text || '').trim())
+  const text = useAuiState((state) =>
+    state.message.content.map((part) => (part.type === 'text' ? String(part.text || '') : '')).join('\n')
   );
+  const metadata = useAuiState((state) => state.message.metadata);
+  const citations = (metadata?.custom as { citations?: ThingyCitation[] } | undefined)?.citations || [];
   const running = status?.type === 'running';
   const failed = status?.type === 'incomplete' && status.reason === 'error';
-  const mood = running ? 'thinking' : failed ? 'oops' : hasText ? 'found-it' : 'idle';
+  const mood = answerMood({ running, failed, text, citations });
   return <ThingyFace mood={mood} size={size} animated={running} className="thingy-message-face" />;
 }
 

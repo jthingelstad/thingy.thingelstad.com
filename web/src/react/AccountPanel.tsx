@@ -136,7 +136,8 @@ function ProfileModal({
       body: 'Conversations, activity, and preferences are removed for good. Your Weekly Thing subscription is unaffected.',
       confirmLabel: 'Delete profile',
       danger: true,
-      face: 'oops'
+      icon: 'trash',
+      iconDanger: true
     });
     if (!confirmed) return;
     setBusyAction('delete_profile');

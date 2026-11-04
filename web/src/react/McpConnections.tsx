@@ -87,7 +87,8 @@ export function McpConnectionsSection({
       body: `${label} loses access to the Librarian right away. To use it again you will sign in from that app and approve it again.`,
       confirmLabel: 'Disconnect',
       danger: true,
-      face: 'oops'
+      icon: 'plug',
+      iconDanger: true
     });
     if (!confirmed) return;
     setBusyId(connection.id);
@@ -220,7 +221,8 @@ function McpAppsBlock({
       body: `Its client ID stops working and any connection made with it is disconnected right away. To use ${label} again you would set it up again and paste the new client ID into it.`,
       confirmLabel: 'Delete',
       danger: true,
-      face: 'oops'
+      icon: 'trash',
+      iconDanger: true
     });
     if (!confirmed) return;
     setBusyId(client.client_id);

@@ -1,6 +1,7 @@
 # Thingy
 
-Thingy is the standalone web home for Jamie Thingelstad's archive agent:
+This repo is the standalone web home of Thingy, Jamie Thingelstad's sidekick
+and the librarian for his public archive:
 `https://thingy.thingelstad.com/`.
 
 Surfaces: the chat app (`/chat/`), sign-in (`/signin/`), the live

@@ -131,7 +131,7 @@ export function SignInApp({
         setCode('');
         window.localStorage.setItem(session.userEmailKey, address);
       } else if (data.status === 'not_found') {
-        setMessage('That email is not subscribed yet. Thingy can help add you to The Weekly Thing.');
+        setMessage('That email is not subscribed to The Weekly Thing yet. The button below subscribes it.');
         setMessageKind('notice');
         setSecondary('subscribe');
       } else if (data.status === 'unconfirmed') {

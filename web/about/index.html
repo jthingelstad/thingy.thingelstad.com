@@ -8,14 +8,14 @@
     <title>About Thingy</title>
     <meta
       name="description"
-      content="What Thingy is, what it has archived, and how it works - Jamie Thingelstad's open-source archive agent."
+      content="What Thingy is, what he has read, and how he works - Jamie Thingelstad's sidekick, an open-source AI agent."
     />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://thingy.thingelstad.com/about/" />
     <link rel="alternate" type="text/markdown" title="LLM-friendly site index" href="/llms.txt" />
     <!--rel-me-->
     <meta property="og:title" content="About Thingy" />
-    <meta property="og:description" content="What Thingy is, what it has archived, and how it works." />
+    <meta property="og:description" content="What Thingy is, what he has read, and how he works." />
     <meta property="og:url" content="https://thingy.thingelstad.com/about/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Thingy" />
@@ -65,9 +65,9 @@
           <p class="thingy-nametag" aria-hidden="true"><span>Hello, my name is</span><span>Thingy</span></p>
           <h1 id="about-title" class="thingy-h1">About Thingy<span class="dot" aria-hidden="true">.</span></h1>
           <p class="thingy-lede">
-            Thingy is an AI librarian for one writer&rsquo;s public archive. Ask it anything about more than twenty years of
-            Jamie Thingelstad&rsquo;s writing and it answers with citations back to the original posts and issues &mdash;
-            in chat here, or inside your own AI via MCP.
+            Thingy is Jamie Thingelstad&rsquo;s sidekick, an AI agent and the librarian for his public archive. Ask him
+            about more than twenty years of Jamie&rsquo;s writing and he answers with citations back to the original posts
+            and issues &mdash; in chat here, or inside your own AI via MCP.
           </p>
         </div>
         <div class="thingy-page-hero-art" aria-hidden="true">
@@ -94,8 +94,8 @@
             <li><a class="thingy-ask" href="/chat/?prompt=what%20was%20Jamie%20reading%20in%202019%3F">&ldquo;what was Jamie reading in 2019?&rdquo;</a></li>
             </ul>
             <p>
-              &mdash; and Thingy finds the sources, quotes them, and links you to the originals. It only knows the
-              published archive; it holds no private data. Weekly Thing subscribers sign in with just their email.
+              &mdash; and Thingy finds the sources, quotes them, and links you to the originals. He only knows the
+              published archive and holds no private data. Weekly Thing subscribers sign in with just their email.
             </p>
           </div>
         </div>
@@ -212,8 +212,8 @@
             <p>
               <strong><a href="https://github.com/jthingelstad/librarian-thing">librarian-thing</a></strong> &mdash; the
               brain. A corpus pipeline (Python) builds embedded, chunked indexes of every source; a serverless API (Node
-              on AWS Lambda) answers from them. Retrieval is hybrid: TF-IDF lexical search and semantic embeddings fused
-              with reciprocal-rank fusion, then reranked. An agentic loop (Claude on Amazon Bedrock) plans tool calls,
+              on AWS Lambda) answers from them. Retrieval is hybrid: full-text keyword search (SQLite FTS5) and semantic embeddings fused
+              with reciprocal-rank fusion, then reranked. An agentic loop (Claude, through the Anthropic API) plans tool calls,
               gathers evidence, and writes cited answers. Filtering runs through a single canonical matcher with declared
               semantics &mdash; whole-token exact, contiguous phrase, opt-in stemming &mdash; enforced by an eval suite of
               850+ invariants and known-answer fixtures that runs on every deploy and blocks it on failure.

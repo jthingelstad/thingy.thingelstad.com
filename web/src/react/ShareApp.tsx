@@ -48,8 +48,26 @@ function friendlyDate(value: unknown) {
   return new Date(time).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-// Felt & Tangerine share states: the closed link gets the oops face and
-// a toy-cream invitation; a failed load gets the mascot and a retry.
+// Felt & Tangerine share states: the closed link gets the mascot and a
+// toy-cream invitation; a failed load gets the oops face and a retry. Oops
+// means something went wrong on Thingy's side (persona, 2026-11-03), and a
+// link its owner turned off is not that.
+function ShareMascot() {
+  return (
+    <div className="relative size-40 sm:size-[200px]" aria-hidden="true">
+      <span className="absolute bottom-1 left-6 h-3.5 w-28 rounded-[50%] bg-mascot-shadow sm:left-[30px] sm:h-4 sm:w-[140px]" />
+      <img
+        className="absolute inset-0 size-full select-none"
+        src="/img/thingy.png"
+        alt=""
+        width="1022"
+        height="1022"
+        draggable={false}
+      />
+    </div>
+  );
+}
+
 const STATE_TITLE =
   'thingy-display m-0 max-w-[680px] text-[32px] leading-[1.05] text-balance text-ink sm:text-[48px] sm:leading-[1.02]';
 const STATE_BODY = 'm-0 max-w-[560px] text-[18px] leading-[1.55] text-ink-soft sm:text-[20px]';
@@ -57,7 +75,7 @@ const STATE_BODY = 'm-0 max-w-[560px] text-[18px] leading-[1.55] text-ink-soft s
 function Unavailable({ signedIn }: { signedIn: boolean }) {
   return (
     <div className="mx-auto flex w-full max-w-[808px] flex-col items-center gap-6 px-4 pt-7 pb-10 text-center sm:gap-7 sm:px-6 sm:pt-12">
-      <ThingyFace mood="oops" animated={false} className="w-[118px] sm:w-[136px]" size={136} />
+      <ShareMascot />
       <div className="thingy-shared-header flex flex-col items-center gap-3.5">
         <h1 className={STATE_TITLE}>This shared conversation has been closed up.</h1>
         <p className={STATE_BODY}>
@@ -85,17 +103,7 @@ function Unavailable({ signedIn }: { signedIn: boolean }) {
 function LoadFailed({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="mx-auto flex w-full max-w-[808px] flex-col items-center gap-5 px-4 pt-5 pb-10 text-center sm:gap-6 sm:px-6 sm:pt-10">
-      <div className="relative size-40 sm:size-[200px]" aria-hidden="true">
-        <span className="absolute bottom-1 left-6 h-3.5 w-28 rounded-[50%] bg-mascot-shadow sm:left-[30px] sm:h-4 sm:w-[140px]" />
-        <img
-          className="absolute inset-0 size-full select-none"
-          src="/img/thingy.png"
-          alt=""
-          width="1022"
-          height="1022"
-          draggable={false}
-        />
-      </div>
+      <ThingyFace mood="oops" animated={false} className="w-[118px] sm:w-[136px]" size={136} />
       <div className="thingy-shared-header flex flex-col items-center gap-3.5">
         <h1 className={STATE_TITLE}>Couldn&rsquo;t load this conversation.</h1>
         <p className={STATE_BODY}>

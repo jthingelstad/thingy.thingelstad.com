@@ -29,7 +29,7 @@ test('llms.txt opens with the H1 and a blockquote summary', () => {
   const lines = text.split('\n');
   assert.equal(lines[0], '# Thingy');
   assert.equal(lines[1], '');
-  assert.match(lines[2], /^> Thingy is an AI librarian/);
+  assert.match(lines[2], /^> Thingy is Jamie Thingelstad's sidekick/);
   assert.ok(text.endsWith('\n') && !text.endsWith('\n\n'));
 });
 
@@ -126,7 +126,7 @@ test('llms.txt names exactly the tools the /mcp door serves', () => {
 test('llms.txt links only to absolute https URLs and is never HTML-escaped', () => {
   for (const [, url] of text.matchAll(/\]\(([^)]+)\)/g)) assert.match(url, /^https:\/\//);
   assert.ok(!/&(?:amp|lt|gt|quot|#39);/.test(text));
-  assert.ok(text.includes("Jamie Thingelstad's public archive"));
+  assert.ok(text.includes("Jamie Thingelstad's sidekick"));
 });
 
 test('firstSentence keeps one sentence and collapses whitespace', () => {
