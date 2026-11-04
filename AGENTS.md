@@ -348,7 +348,12 @@ Do:
   Each page has its own (Jamie, 2026-11-04: "use different poses on the different
   pages"): home `hello`, About `present-proud`, Connect `rest-delighted`, chat
   welcome `present-idle`, sign-in `hello-idle`, closed share link `rest-idle`, 404
-  `thinking-curious`. Each name must be in `stills` in his home's manifest. Only
+  `thinking-curious`. Each name must be in `stills` in his home's manifest and in
+  this site's entry in `kit/surfaces.json` there (`npm run thingy:check`, run daily
+  by the drift workflow), and his home's tests then hold every new model to it.
+  Take anything else about him from [Thingy Kit](https://thingy.thingelstad.xyz/kit/)
+  rather than keeping a copy here; the same list records what this site does keep
+  (the small screen face, `answer-mood.ts`, the illustration). Only
   `index.html`'s CSP allows `blob:` and `'wasm-unsafe-eval'`, which the component's
   textures and decoder need. `public/img/thingy.png`, the illustration, is left for
   `og:image`, the MCP icon and as the source of the PWA icons.

@@ -5,6 +5,12 @@ Thingy has two public surfaces: the web application at
 the Librarian MCP server at `librarian.thingelstad.com/mcp` (the same tool
 registry, served to third-party AI clients over OAuth 2.1).
 
+His character comes from his home, [Thingy Kit](https://thingy.thingelstad.xyz/kit/)
+at thingy.thingelstad.xyz: persona, model, stills and component. This site follows
+`character/latest/`, so a new model arrives with no change here. A change to the
+persona opens an issue there listing the words this repository and librarian-thing
+keep of their own to reread.
+
 ## Surface Map
 
 | Surface | Audience | Responsibility |
