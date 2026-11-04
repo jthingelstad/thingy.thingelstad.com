@@ -48,7 +48,7 @@ async function seedSession(context) {
   }, fakeToken());
 }
 
-async function routeMockApi(page, { holdWelcome = false } = {}) {
+async function routeMockApi(page, { holdWelcome = false, memberThanks = '' } = {}) {
   let releaseWelcome = () => {};
   const welcomeGate = new Promise((resolve) => {
     releaseWelcome = resolve;
@@ -76,6 +76,7 @@ async function routeMockApi(page, { holdWelcome = false } = {}) {
         status: 'premium',
         supporting_member: true,
         entitlements: ['supporting_member'],
+        ...(memberThanks ? { message: memberThanks } : {}),
         profile: {
           preferred_name: 'Smoke',
           supporting_member: true,
@@ -739,6 +740,106 @@ async function checkSessionRecovery(browser, browserName) {
   await context.close();
 }
 
+// A Supporting Member's thank-you from signing in shows once, under the
+// greeting of the next empty chat, and on no chat after it.
+async function checkMemberThanks(browser, browserName) {
+  const memberThanks = 'Thank you for giving through The Weekly Thing. I am glad you are here.';
+  async function signIn(path, landing) {
+    const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await context.newPage();
+    await routeMockApi(page, { memberThanks });
+    await page.route(`${apiHost}/auth`, async (route) => {
+      const { action } = JSON.parse(route.request().postData() || '{}');
+      if (action === 'verify_code' || action === 'session') return route.fallback();
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ status: 'magic_link_sent' }) });
+    });
+    await page.goto(`${baseUrl}${path}`);
+    await page.getByLabel('Email address').fill('thingy@thingelstad.com');
+    await page.getByRole('button', { name: 'Email Me a Code' }).click();
+    await page.getByLabel('Sign-in code').fill('123456');
+    await page.getByRole('button', { name: 'Sign In', exact: true }).click();
+    await page.waitForURL(landing);
+    return { context, page, failures: collectUiFailures(page), greeting: page.locator('.thingy-aui-greeting') };
+  }
+
+  const first = await signIn('/signin/', '**/chat/');
+  await first.greeting.getByText(memberThanks).waitFor();
+  await first.page.screenshot({ path: `/tmp/thingy-member-thanks-${browserName}.png` });
+  await first.page.locator('.thingy-aui-newchat').click();
+  await first.greeting.waitFor();
+  assert.equal(await first.greeting.getByText(memberThanks).count(), 0, 'a new chat does not thank again');
+  await first.page.reload();
+  await first.greeting.waitFor();
+  assert.equal(await first.greeting.getByText(memberThanks).count(), 0, 'a reload does not thank again');
+  assertNoUiFailures(first.failures, 'member thanks');
+  await first.context.close();
+
+  // Signing in to a conversation link: the thanks waits for the next new chat.
+  const linked = await signIn(
+    `/signin/?return=${encodeURIComponent('/chat/?conversation=conv-smoke')}`,
+    '**/chat/?conversation=conv-smoke'
+  );
+  await linked.page.getByText('Jamie wrote about smoke tests').waitFor();
+  assert.equal(await linked.page.getByText(memberThanks).count(), 0, 'a conversation link shows no thanks');
+  await linked.page.locator('.thingy-aui-newchat').click();
+  await linked.greeting.getByText(memberThanks).waitFor();
+  await linked.page.locator('.thingy-aui-newchat').click();
+  await linked.greeting.waitFor();
+  assert.equal(await linked.greeting.getByText(memberThanks).count(), 0, 'the next new chat does not thank again');
+  assertNoUiFailures(linked.failures, 'member thanks after a conversation link');
+  await linked.context.close();
+}
+
+// A sharing failure went wrong on Thingy's side, so it wears his oops face.
+async function checkSharingFailures(browser, browserName) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  await seedSession(context);
+  const page = await context.newPage();
+  await routeMockApi(page);
+  let sharedAt = '';
+  await page.route(`${apiHost}/conversations`, async (route) => {
+    const { action } = JSON.parse(route.request().postData() || '{}');
+    if (action === 'share' || action === 'unshare') {
+      return route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Sharing is unavailable right now.' })
+      });
+    }
+    if (action !== 'list') return route.fallback();
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        conversations: [
+          {
+            conversation_id: 'conv-smoke',
+            title: 'Smoke conversation',
+            updated_at: '2026-01-01T00:00:00Z',
+            shared_at: sharedAt
+          }
+        ],
+        total: 1
+      })
+    });
+  });
+  for (const [shared, choice, title] of [
+    ['', 'Share', 'Sharing failed'],
+    ['2026-01-01T00:00:00Z', 'Stop sharing', 'Could not stop sharing']
+  ]) {
+    sharedAt = shared;
+    await page.goto(`${baseUrl}/chat/?conversation=conv-smoke`);
+    await page.locator('.thingy-aui-recent').first().waitFor();
+    await page.getByRole('button', { name: 'Share conversation' }).click();
+    const dialog = page.locator('.thingy-dialog');
+    await dialog.getByRole('button', { name: choice, exact: true }).click();
+    await dialog.getByText(title).waitFor();
+    assert.equal(await dialog.locator('.thingy-face[data-mood="oops"]').count(), 1, `${title} wears the oops face`);
+    assert.equal(await dialog.locator('.thingy-icon-tile').count(), 0, `${title} has no warning triangle`);
+    await page.screenshot({ path: `/tmp/thingy-sharing-failure-${shared ? 'stop' : 'start'}-${browserName}.png` });
+  }
+  await context.close();
+}
+
 // The cookie lapsed between visits (30-day TTL) while localStorage still
 // holds the signed-in hint and profile. The chat must not render a
 // half-signed-in shell (rail: "sign in again", account menu: the reader);
@@ -794,6 +895,8 @@ async function main() {
       await checkMobileChat(browser);
       await checkTouchChat(browser);
       await checkSessionRecovery(browser, name);
+      await checkMemberThanks(browser, name);
+      await checkSharingFailures(browser, name);
       await checkExpiredSession(browser);
     } finally {
       await browser.close();

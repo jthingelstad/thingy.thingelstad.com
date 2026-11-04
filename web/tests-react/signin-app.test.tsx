@@ -27,8 +27,10 @@ vi.mock('../src/shared/turnstile.ts', () => ({
 }));
 
 const { SignInApp } = await import('../src/react/SignInApp.tsx');
+const session = await import('../src/shared/thingy-session.ts');
 
 beforeEach(() => {
+  vi.mocked(session.persistAuth).mockClear();
   postJson.mockReset();
   tokenFor.mockReset();
   tokenFor.mockResolvedValue('');
@@ -62,6 +64,27 @@ test('magic_link_sent reveals the six-digit code entry', async () => {
   expect((signIn as HTMLButtonElement).disabled).toBe(true);
   await user.type(codeInput, '123456');
   expect((signIn as HTMLButtonElement).disabled).toBe(false);
+});
+
+async function signInWithCode(user: ReturnType<typeof userEvent.setup>, verified: Record<string, unknown>) {
+  postJson.mockResolvedValueOnce({ status: 'magic_link_sent' }).mockResolvedValueOnce(verified);
+  render(<SignInApp />);
+  await user.type(screen.getByLabelText('Email address'), 'reader@example.com');
+  await user.click(screen.getByRole('button', { name: 'Email Me a Code' }));
+  await user.type(await screen.findByLabelText('Sign-in code'), '123456');
+  await user.click(screen.getByRole('button', { name: 'Sign In' }));
+  await vi.waitFor(() => expect(session.persistAuth).toHaveBeenCalled());
+}
+
+test('a Supporting Member’s thank-you waits for the chat, which reads it once', async () => {
+  await signInWithCode(userEvent.setup(), { status: 'premium', token: 't', message: 'Thank you for giving.' });
+  expect(session.takeMemberThanks()).toBe('Thank you for giving.');
+  expect(session.takeMemberThanks()).toBe('');
+});
+
+test('any other sign-in holds no thank-you', async () => {
+  await signInWithCode(userEvent.setup(), { status: 'active', token: 't', message: 'Something else.' });
+  expect(session.takeMemberThanks()).toBe('');
 });
 
 test('not_found offers the subscribe path', async () => {

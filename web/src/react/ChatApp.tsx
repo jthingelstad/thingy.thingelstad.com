@@ -42,6 +42,17 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
   // exchange, so onConversationId updates activeId (rail highlight) only.
   const [mountedId, setMountedId] = useState(() => String(initial.conversationId || ''));
   const [threadEpoch, setThreadEpoch] = useState(0);
+  // A Supporting Member's thank-you from signing in, under the greeting of the
+  // next empty chat and no other. A link to a conversation or a seeded prompt
+  // arrives with something else to do, so the thanks waits for the new chat
+  // they open after it. Tied to its thread, so it never comes back with a later one.
+  const [memberThanks, setMemberThanks] = useState(() => ({
+    epoch: 0,
+    text: signedIn && !initial.conversationId && !initial.prompt ? session.takeMemberThanks() : ''
+  }));
+  useEffect(() => {
+    if (threadEpoch > 0) setMemberThanks({ epoch: threadEpoch, text: session.takeMemberThanks() });
+  }, [threadEpoch]);
   const [guestRemaining, setGuestRemaining] = useState<number | null>(null);
   const [mobileRailOpen, setMobileRailOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -304,8 +315,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
           body: errorMessage(error, 'Thingy could not revoke the link. Please try again.'),
           confirmLabel: 'OK',
           hideCancel: true,
-          icon: 'triangle-alert',
-          iconDanger: true
+          face: 'oops'
         });
         return;
       }
@@ -331,8 +341,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
         body: errorMessage(error, 'Thingy could not create the share link. Please try again.'),
         confirmLabel: 'OK',
         hideCancel: true,
-        icon: 'triangle-alert',
-        iconDanger: true
+        face: 'oops'
       });
       return;
     }
@@ -617,7 +626,9 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
               binding={binding}
               guest={guest}
               welcome={mountedId ? '' : welcome}
-              welcomeSubtext={mountedId ? '' : welcomeSubtext}
+              welcomeSubtext={
+                mountedId ? '' : (memberThanks.epoch === threadEpoch && memberThanks.text) || welcomeSubtext
+              }
               suggestions={mountedId ? [] : suggestions}
               suggestionsPending={mountedId ? false : suggestionsPending}
               initialPrompt={activeId || threadEpoch > 0 ? undefined : initial.prompt}
