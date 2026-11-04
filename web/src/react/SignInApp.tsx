@@ -39,6 +39,7 @@ export function SignInApp({
     // immediate redirect.
     trackEvent('librarian.signin_success', method);
     session.persistAuth(data, session.normalizeEmail(address));
+    if (data.status === 'premium' && data.message) session.holdMemberThanks(String(data.message));
     window.location.replace(destinationPath());
   }
 

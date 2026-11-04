@@ -11,6 +11,7 @@ const signedInHintKey = 'thingySignedIn';
 const userEmailKey = 'thingyUserEmail';
 const userProfileKey = 'thingyUserProfile';
 const pendingReturnParamsKey = 'thingyPendingReturnParams';
+const memberThanksKey = 'thingyMemberThanks';
 const privateReturnParams = [
   'email',
   'prompt',
@@ -239,7 +240,29 @@ function persistAuth(data: ThingyAuthData, email: string): LibrarianProfile | nu
   return mergeProfile(data, email);
 }
 
+// The thank-you the Librarian writes when a Supporting Member signs in. It
+// waits here for the chat page, which reads it once, so it shows on that one
+// arrival and never again.
+function holdMemberThanks(message: string) {
+  try {
+    window.sessionStorage.setItem(memberThanksKey, message);
+  } catch {
+    /* storage denied: the sign-in still works, without the thanks */
+  }
+}
+
+function takeMemberThanks(): string {
+  try {
+    const message = window.sessionStorage.getItem(memberThanksKey) || '';
+    window.sessionStorage.removeItem(memberThanksKey);
+    return message;
+  } catch {
+    return '';
+  }
+}
+
 function clearAuth() {
+  takeMemberThanks();
   const headers: Record<string, string> = {
     'content-type': 'application/json',
     ...contractRequestHeaders()
@@ -362,6 +385,8 @@ export {
   mergeProfile,
   updateStoredProfile,
   persistAuth,
+  holdMemberThanks,
+  takeMemberThanks,
   clearAuth,
   storedEmail,
   storedProfile,

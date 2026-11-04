@@ -35,6 +35,12 @@ export interface ChatInitial {
 export function ChatApp({ initial }: { initial: ChatInitial }) {
   const [signedIn] = useState(() => session.sessionActive());
   const guest = !signedIn;
+  // A Supporting Member's thank-you from signing in, under the greeting of
+  // this first empty chat only. A link to a conversation or a seeded prompt
+  // arrives with something else to do, so the thanks keeps waiting.
+  const [memberThanks] = useState(() =>
+    signedIn && !initial.conversationId && !initial.prompt ? session.takeMemberThanks() : ''
+  );
   const [activeId, setActiveId] = useState(() => String(initial.conversationId || ''));
   // The thread's mount identity. Only explicit navigation (rail click, New
   // chat) may change it: when the FIRST turn of a new thread streams its
@@ -304,8 +310,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
           body: errorMessage(error, 'Thingy could not revoke the link. Please try again.'),
           confirmLabel: 'OK',
           hideCancel: true,
-          icon: 'triangle-alert',
-          iconDanger: true
+          face: 'oops'
         });
         return;
       }
@@ -331,8 +336,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
         body: errorMessage(error, 'Thingy could not create the share link. Please try again.'),
         confirmLabel: 'OK',
         hideCancel: true,
-        icon: 'triangle-alert',
-        iconDanger: true
+        face: 'oops'
       });
       return;
     }
@@ -617,7 +621,7 @@ export function ChatApp({ initial }: { initial: ChatInitial }) {
               binding={binding}
               guest={guest}
               welcome={mountedId ? '' : welcome}
-              welcomeSubtext={mountedId ? '' : welcomeSubtext}
+              welcomeSubtext={mountedId ? '' : (threadEpoch === 0 && memberThanks) || welcomeSubtext}
               suggestions={mountedId ? [] : suggestions}
               suggestionsPending={mountedId ? false : suggestionsPending}
               initialPrompt={activeId || threadEpoch > 0 ? undefined : initial.prompt}
