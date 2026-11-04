@@ -87,6 +87,11 @@ npm run qa:real -- --cleanup-only
 - Homepage: primary CTA is the teal button, guest note + three example
   question chips render under it, and the footer shows the kudos robot plus
   hit/country counts once Tinylytics loads.
+- Homepage Thingy: a sideways drag turns him and a vertical swipe on a phone
+  scrolls the page; the mouse wheel scrolls the page; a tap cycles the bubble
+  and hops him. With the keyboard, arrows turn him and Enter says hi. With WebGL
+  off, Save-Data on or thingy.thingelstad.xyz blocked, the still stays and its
+  button says hi.
 - Account panel shows "Today's usage" (chat pool; MCP pool once used).
 
 ## Guest Preview

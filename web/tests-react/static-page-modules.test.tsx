@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { COPIED_MS, wireCopyButtons } from '../src/shared/thingy-copy-buttons.ts';
+import { mountThingy3D } from '../src/shared/thingy-3d.ts';
 import { wireSayHi } from '../src/shared/thingy-say-hi.ts';
 
 function loadBody(page: string) {
@@ -15,6 +16,7 @@ function loadBody(page: string) {
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.useRealTimers();
   document.body.innerHTML = '';
 });
@@ -78,6 +80,80 @@ test('saying hi cycles the bubble and hops Thingy', () => {
   expect(button.classList.contains('is-hopping')).toBe(false);
   for (let i = 0; i < 3; i += 1) button.click();
   expect(bubble.textContent).toBe(first);
+});
+
+test('a tap on the 3D Thingy says hi and hops him, not the hidden still', () => {
+  loadBody('index.html');
+  const bubble = document.querySelector<HTMLElement>('.thingy-home-bubble')!;
+  const first = bubble.textContent?.trim();
+  const character = document.createElement('thingy-character');
+  document.querySelector('.thingy-home-hi')!.after(character);
+  wireSayHi();
+  character.dispatchEvent(new CustomEvent('thingy-tap', { bubbles: true, composed: true }));
+  expect(bubble.textContent).not.toBe(first);
+  expect(character.classList.contains('is-hopping')).toBe(true);
+  expect(document.querySelector('.thingy-home-hi.is-hopping')).toBeNull();
+  character.dispatchEvent(new Event('animationend', { bubbles: true }));
+  expect(character.classList.contains('is-hopping')).toBe(false);
+});
+
+function withWebGL() {
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as RenderingContext);
+}
+
+async function settle() {
+  await vi.advanceTimersByTimeAsync(2000);
+}
+
+test('the 3D Thingy mounts over his still and takes over when ready', async () => {
+  loadBody('index.html');
+  withWebGL();
+  const load = vi.fn(async () => ({}));
+  mountThingy3D(document, load);
+  await settle();
+  expect(load).toHaveBeenCalledOnce();
+  const stage = document.querySelector('.thingy-home-stage')!;
+  const character = stage.querySelector('thingy-character')!;
+  expect(character.previousElementSibling?.classList.contains('thingy-home-hi')).toBe(true);
+  expect(character.getAttribute('version')).toBe('v0.14');
+  expect(character.getAttribute('zoom')).toBe('off');
+  expect(character.getAttribute('poster')).toBe(stage.querySelector('.thingy-home-hi img')!.getAttribute('src'));
+  expect(stage.classList.contains('is-3d')).toBe(false);
+  character.dispatchEvent(new CustomEvent('thingy-ready'));
+  expect(stage.classList.contains('is-3d')).toBe(true);
+});
+
+test('when the model fails he goes and the still stays', async () => {
+  loadBody('index.html');
+  withWebGL();
+  mountThingy3D(document, async () => ({}));
+  await settle();
+  const stage = document.querySelector('.thingy-home-stage')!;
+  stage.querySelector('thingy-character')!.dispatchEvent(new CustomEvent('thingy-fallback'));
+  expect(stage.querySelector('thingy-character')).toBeNull();
+  expect(stage.classList.contains('is-3d')).toBe(false);
+});
+
+test('the still stays with no WebGL, with Save-Data, or when the component will not load', async () => {
+  loadBody('index.html');
+  const load = vi.fn(async () => ({}));
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+  mountThingy3D(document, load);
+  await settle();
+  expect(load).not.toHaveBeenCalled();
+
+  withWebGL();
+  Object.defineProperty(navigator, 'connection', { value: { saveData: true }, configurable: true });
+  mountThingy3D(document, load);
+  await settle();
+  expect(load).not.toHaveBeenCalled();
+  Reflect.deleteProperty(navigator, 'connection');
+
+  mountThingy3D(document, async () => {
+    throw new Error('blocked');
+  });
+  await settle();
+  expect(document.querySelector('thingy-character')).toBeNull();
 });
 
 test('the say-hi module does nothing on a page without the stage', () => {
