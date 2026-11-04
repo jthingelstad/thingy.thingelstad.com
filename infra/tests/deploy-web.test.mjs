@@ -22,6 +22,7 @@ test("hashed bundles are immutable for a year", () => {
 
 test("images and icons cache for a week, the rest for an hour", () => {
   assert.equal(cacheControlFor("img/thingy.png"), "public, max-age=604800");
+  assert.equal(cacheControlFor("img/thingy-3d-librarian.webp"), "public, max-age=604800");
   assert.equal(cacheControlFor("favicon.svg"), "public, max-age=604800");
   assert.equal(cacheControlFor("robots.txt"), "public, max-age=3600");
   assert.equal(cacheControlFor("sitemap.xml"), "public, max-age=3600");
@@ -31,5 +32,6 @@ test("content types resolve by extension with a safe fallback", () => {
   assert.equal(contentTypeFor("chat/index.html"), "text/html; charset=utf-8");
   assert.equal(contentTypeFor("assets/a-12345678.js"), "text/javascript; charset=utf-8");
   assert.equal(contentTypeFor("favicon.svg"), "image/svg+xml");
+  assert.equal(contentTypeFor("img/thingy-3d-librarian.webp"), "image/webp");
   assert.equal(contentTypeFor("mystery.bin"), "application/octet-stream");
 });
