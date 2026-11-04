@@ -118,19 +118,48 @@ test('every shell self-hosts the shared type and Archivo', async () => {
 });
 
 // The 3D Thingy needs his home's component, its Meshopt decoder and the model's
-// textures. Only the front page shows him, so only its policy opens up.
+// textures. Only the front page shows him, so only its policy opens up. Every
+// page may show a still of him from there, and no page but the front loads code.
 test('only the front page lets in the 3D Thingy', async () => {
   for (const shell of SHELLS) {
     const html = await source(shell);
     const csp = html.match(/http-equiv="Content-Security-Policy"\s+content="([^"]+)"/)[1];
+    const directive = (name) => csp.match(new RegExp(`${name} ([^;]*)`))?.[1] ?? '';
     if (shell === 'index.html') {
       assert.match(csp, /script-src [^;]*'wasm-unsafe-eval'[^;]*https:\/\/thingy\.thingelstad\.xyz/);
       assert.match(csp, /img-src [^;]*blob:/);
       assert.match(csp, /connect-src [^;]*blob:[^;]*https:\/\/thingy\.thingelstad\.xyz/);
     } else {
-      assert.ok(!/thingy\.thingelstad\.xyz|wasm-unsafe-eval/.test(csp), `${shell} stays closed to it`);
+      assert.ok(
+        !/thingy\.thingelstad\.xyz|wasm-unsafe-eval/.test(directive('script-src') + directive('connect-src')),
+        `${shell} stays closed to his code`
+      );
+      assert.ok(!directive('img-src').includes('blob:'), `${shell} needs no blob images`);
     }
   }
+});
+
+// A still a page names must be one his home publishes, or the page has no Thingy.
+test('every still of Thingy is one his home publishes', async () => {
+  const published = new Set(
+    'hello present thinking rest hello-idle present-idle present-proud rest-delighted rest-idle thinking-curious'.split(
+      ' '
+    )
+  );
+  const files = [...SHELLS, 'public/404.html', ...(await sourceFiles('src'))];
+  let seen = 0;
+  for (const file of files) {
+    const text = await source(file);
+    for (const [, name] of text.matchAll(/character\/latest\/poses\/librarian-([a-z-]+)\.webp/g)) {
+      assert.ok(published.has(name), `${file} names ${name}`);
+      seen += 1;
+    }
+    for (const [, name] of text.matchAll(/thingyStill\('([a-z-]+)'\)/g)) {
+      assert.ok(published.has(name), `${file} names ${name}`);
+      seen += 1;
+    }
+  }
+  assert.ok(seen >= 7, 'the pages still name their stills');
 });
 
 test('no page, style or script references Google Fonts', async () => {

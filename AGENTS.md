@@ -335,10 +335,23 @@ Do:
   rotate"): `<thingy-character>` from thingy.thingelstad.xyz, the home of his
   character, mounted over a still of the same model and angle
   (`src/shared/thingy-3d.ts`). He moves only when turned, tapped or blinking; no
-  auto-rotate. Every other page keeps `thingy.png`. The still is the character
-  home's `character/v0.14/poses/librarian-hello.webp`; copy it across when the
-  model changes. Only `index.html`'s CSP allows that host, `blob:` and
-  `'wasm-unsafe-eval'`, which the component's textures and decoder need.
+  auto-rotate. A tap (Jamie, 2026-11-04) jumps and spins him, either way and to a
+  different height each time, with a new face for four seconds; under reduced
+  motion only the face changes (`src/shared/thingy-say-hi.ts`). `TAP_FACES` holds
+  only delighted, curious and idle, because the persona gives the others a meaning
+  a tap has not earned.
+- Every page's Thingy comes from his home's stable address,
+  `https://thingy.thingelstad.xyz/character/latest/poses/librarian-<still>.webp`,
+  and the component loads `version="latest"`, so a new model reaches this site
+  with no change here (Jamie, 2026-11-04: "Is there a stable URL to just use the
+  newest model?"). The price: his host being down costs these pages the picture.
+  Each page has its own (Jamie, 2026-11-04: "use different poses on the different
+  pages"): home `hello`, About `present-proud`, Connect `rest-delighted`, chat
+  welcome `present-idle`, sign-in `hello-idle`, closed share link `rest-idle`, 404
+  `thinking-curious`. Each name must be in `stills` in his home's manifest. Only
+  `index.html`'s CSP allows `blob:` and `'wasm-unsafe-eval'`, which the component's
+  textures and decoder need. `public/img/thingy.png`, the illustration, is left for
+  `og:image`, the MCP icon and as the source of the PWA icons.
 - Use the source colours (Weekly cobalt, Another Thing crimson `#b3123f`,
   blog clay, Things I've built green `#1d7348`) only to identify sources:
   citation chips, source cards, the home family tiles and About's source

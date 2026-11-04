@@ -15,6 +15,7 @@ import { TipProvider } from './components/Tip.tsx';
 import { ThreadHost } from './components/Thread.tsx';
 import { DialogHost } from './components/DialogHost.tsx';
 import { Icon } from './components/Icon.tsx';
+import { thingyStill } from '../shared/thingy-stills.ts';
 import { ThingyFace } from './components/ThingyFace.tsx';
 import type { ThingyThreadBinding } from './thingy-runtime.ts';
 
@@ -55,13 +56,12 @@ function friendlyDate(value: unknown) {
 function ShareMascot() {
   return (
     <div className="relative size-40 sm:size-[200px]" aria-hidden="true">
-      <span className="absolute bottom-1 left-6 h-3.5 w-28 rounded-[50%] bg-mascot-shadow sm:left-[30px] sm:h-4 sm:w-[140px]" />
       <img
         className="absolute inset-0 size-full select-none"
-        src="/img/thingy.png"
+        src={thingyStill('rest-idle')}
         alt=""
-        width="1022"
-        height="1022"
+        width="1000"
+        height="1000"
         draggable={false}
       />
     </div>
@@ -311,7 +311,7 @@ export function ShareApp({ token = '' }: { token?: string }) {
     <TipProvider>
       <header className="thingy-page-nav">
         <a className="brand" href="/">
-          <img src="/img/thingy.png" alt="" />
+          <img src={thingyStill('hello')} alt="" />
           Thingy
         </a>
         <nav>

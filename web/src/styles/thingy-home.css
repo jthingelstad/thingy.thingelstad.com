@@ -96,10 +96,6 @@
   visibility: hidden;
 }
 
-.thingy-home-3d.is-hopping {
-  animation: thingy-hop 0.65s cubic-bezier(0.3, 1.5, 0.5, 1);
-}
-
 /* The tap hop, CSS only: pressing lifts Thingy, releasing drops him
    back with a bounce. home.ts adds .is-hopping for a full hop on any
    activation (keyboard included). Off under reduced motion. */
@@ -486,7 +482,6 @@
   .thingy-home-hi img,
   .thingy-home-hi:active img,
   .thingy-home-hi.is-hopping img,
-  .thingy-home-3d.is-hopping,
   .thingy-family-face,
   .thingy-family-tile:hover .thingy-family-face {
     transform: none;
