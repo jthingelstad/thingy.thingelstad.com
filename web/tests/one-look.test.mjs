@@ -150,7 +150,7 @@ test('every still of Thingy is one his home publishes', async () => {
   let seen = 0;
   for (const file of files) {
     const text = await source(file);
-    for (const [, name] of text.matchAll(/character\/latest\/poses\/librarian-([a-z-]+)\.webp/g)) {
+    for (const [, name] of text.matchAll(/character\/latest\/poses\/library-([a-z-]+)\.webp/g)) {
       assert.ok(published.has(name), `${file} names ${name}`);
       seen += 1;
     }
