@@ -31,7 +31,7 @@ export function mountThingy3D(root: Document = document, load = () => import(/* 
     const character = root.createElement('thingy-character');
     character.className = 'thingy-home-3d';
     for (const [name, value] of Object.entries({
-      outfit: 'librarian',
+      scene: 'library',
       version: 'latest',
       // Hello, not present: people can turn him, and the present hand, seen from
       // his side, is one raised finger on the back of a closed hand.
