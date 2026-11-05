@@ -341,7 +341,7 @@ Do:
   only delighted, curious and idle, because the persona gives the others a meaning
   a tap has not earned.
 - Every page's Thingy comes from his home's stable address,
-  `https://thingy.thingelstad.xyz/character/latest/poses/librarian-<still>.webp`,
+  `https://thingy.thingelstad.xyz/character/latest/poses/library-<still>.webp`,
   and the component loads `version="latest"`, so a new model reaches this site
   with no change here (Jamie, 2026-11-04: "Is there a stable URL to just use the
   newest model?"). The price: his host being down costs these pages the picture.

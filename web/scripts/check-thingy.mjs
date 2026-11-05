@@ -18,7 +18,7 @@ function files(dir) {
 
 function stillsNamedIn(source) {
   const direct = [...source.matchAll(/character\/latest\/poses\/([a-z-]+)\.webp/g)].map((m) => m[1]);
-  const viaHelper = [...source.matchAll(/thingyStill\(['"]([a-z-]+)['"]\)/g)].map((m) => `librarian-${m[1]}`);
+  const viaHelper = [...source.matchAll(/thingyStill\(['"]([a-z-]+)['"]\)/g)].map((m) => `library-${m[1]}`);
   return [...direct, ...viaHelper];
 }
 
@@ -40,7 +40,7 @@ const [manifest, { surfaces }] = await Promise.all([
   json('/kit/surfaces.json')
 ]);
 const published = new Set(
-  Object.values(manifest.outfits).flatMap((outfit) => Object.values(outfit.stills ?? {}).map((still) => still.webp))
+  Object.values(manifest.scenes).flatMap((scene) => Object.values(scene.stills ?? {}).map((still) => still.webp))
 );
 const registered = new Set(surfaces.find((surface) => surface.url === SITE)?.stills);
 
