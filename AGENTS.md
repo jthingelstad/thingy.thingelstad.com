@@ -218,7 +218,10 @@ Key files:
   order; every site shows its `strip_label`, Thingy too, so the strip reads
   the same as on every other site; Thingy, the current site, differs only
   in `sites-strip__item--current` and `aria-current`; every link carries
-  `?ref=sites-strip-thingy` for Tinylytics), a vendored copy of the domain's `shared/sites.json` -
+  `?ref=sites-strip-thingy` for Tinylytics; the strip ends with All Things,
+  after the list, from `strip_all` - label, URL and title, never current
+  here - and on phones the list scrolls while All Things stays in view;
+  a sites.json without a valid `strip_all` fails the build), a vendored copy of the domain's `shared/sites.json` -
   refresh with `npm run sites:sync`, check with `npm run sites:check` (the
   same two commands vendor the shared type; see "Shared type"). The
   markup, classes and values are the shared contract in the domain
