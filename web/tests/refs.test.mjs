@@ -1,7 +1,7 @@
 // Outbound ref tags: links Thingy renders to Jamie's other sites carry
 // ?ref=thingy-<placement> (src/shared/thingy-refs.ts).
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { glob, readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const { SISTER_HOSTS, withRef } = await import('../src/shared/thingy-refs.ts');
@@ -62,7 +62,9 @@ test('withRef keeps a link that already names a ref, and leaves other links alon
 // text link for the pointer only: it sits in the aria-hidden art and never
 // takes focus.
 // Anchors only: the front page preconnects to the host for his 3D model.
-const HOME_LINK = /<a [^>]*href="(https:\/\/thingy\.thingelstad\.xyz[^"]*)"/g;
+// Built and vendored output is not source.
+const SKIPPED_DIRS = new Set(['node_modules', '_site', 'coverage']);
+const HOME_LINK = /<a\s[^>]*href="(https?:\/\/thingy\.thingelstad\.xyz[^"]*)"/g;
 
 test('the About page links Thingy’s home with ?ref=thingy-about', async () => {
   const html = await readFile(new URL('../about/index.html', import.meta.url), 'utf8');
@@ -77,26 +79,26 @@ test('the About page links Thingy’s home with ?ref=thingy-about', async () => 
   );
   assert.match(
     copy,
-    /Thingy&rsquo;s home is <a href="https:\/\/thingy\.thingelstad\.xyz\/\?ref=thingy-about">thingy\.thingelstad\.xyz<\/a>:/,
-    'the text link sits in the hero copy'
+    /<p class="thingy-prose">\s*Thingy&rsquo;s home is <a href="https:\/\/thingy\.thingelstad\.xyz\/\?ref=thingy-about">thingy\.thingelstad\.xyz<\/a>:\s+meet\s+him,\s+play\s+with\s+him,\s+take\s+him\s+along,\s+print\s+him\.\s*<\/p>/,
+    'the line in the hero copy keeps the persona’s words, whole'
   );
   const art = html.slice(html.indexOf('<div class="thingy-page-hero-art"'), html.indexOf('</section>'));
   assert.ok(art.startsWith('<div class="thingy-page-hero-art" aria-hidden="true">'), 'the art stays hidden');
-  const mascotLink = art.match(/<a [^>]*href="https:\/\/thingy\.thingelstad\.xyz[^>]*>/)?.[0] ?? '';
+  const mascotLink = art.match(/<a\s[^>]*href="https:\/\/thingy\.thingelstad\.xyz[^>]*>/)?.[0] ?? '';
   assert.match(mascotLink, /tabindex="-1"/, 'the mascot link never takes focus');
 });
 
 test('no other page links Thingy’s home', async () => {
-  for (const page of [
-    'index.html',
-    'chat/index.html',
-    'signin/index.html',
-    'c/index.html',
-    'connect/index.html',
-    'connect/reference/index.html',
-    'public/404.html'
-  ]) {
-    const html = await readFile(new URL(`../${page}`, import.meta.url), 'utf8');
+  const web = new URL('../', import.meta.url);
+  const pages = [];
+  for await (const entry of glob('**/*.html', { cwd: web, exclude: (name) => SKIPPED_DIRS.has(name) })) {
+    if (entry !== 'about/index.html') pages.push(entry);
+  }
+  for (const page of ['index.html', 'chat/index.html', 'signin/index.html', 'c/index.html', 'public/404.html']) {
+    assert.ok(pages.includes(page), `${page} is among the pages read`);
+  }
+  for (const page of pages) {
+    const html = await readFile(new URL(page, web), 'utf8');
     assert.equal(html.match(HOME_LINK), null, `${page} does not link thingy.thingelstad.xyz`);
   }
 });
