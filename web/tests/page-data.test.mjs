@@ -14,7 +14,9 @@ const {
   loadArchiveStats,
   loadOwner,
   loadSites,
+  loadStripAll,
   pageDataPlugin,
+  parseSites,
   renderArchiveStats,
   renderOwnerHcard,
   renderRelMe,
@@ -61,12 +63,23 @@ test('the sites strip renders the shared contract from the vendored sites.json',
   );
   assert.ok(!expected.some((site) => site.id === 'escape'), 'Escaping Things stays out');
 
-  const html = renderSitesStrip(sites);
+  const all = loadStripAll(WEB_ROOT);
+  const html = renderSitesStrip(sites, all);
   assert.match(
     html,
     /^<nav class="sites-strip" aria-label="Jamie Thingelstad"><div class="sites-strip__inner"><span class="sites-strip__label">Jamie Thingelstad<\/span><ul class="sites-strip__list"><li /
   );
-  assert.match(html, /<\/li><\/ul><\/div><\/nav>$/);
+  // All Things ends the strip, after the list and outside it, with the same
+  // ref; it is no site, so it has no current state here.
+  const allLink = html.match(
+    /<\/li><\/ul><a class="sites-strip__all" href="([^"]+)" title="([^"]+)">([^<]+)<\/a><\/div><\/nav>$/
+  );
+  assert.ok(allLink, 'All Things ends the strip, after the list, with no aria-current');
+  assert.deepEqual(
+    { href: allLink[1], title: decode(allLink[2]), text: decode(allLink[3]) },
+    { href: 'https://thingelstad.xyz/all/?ref=sites-strip-thingy', title: all.description, text: 'All Things' }
+  );
+  assert.equal(all.label, 'All Things', 'the label is read from strip_all');
   const items = [...html.matchAll(ITEM)];
   assert.equal(html.match(/<li /g).length, items.length, 'every item matches the contract markup');
   assert.deepEqual(
@@ -98,23 +111,48 @@ test('the sites strip renders the shared contract from the vendored sites.json',
 });
 
 test('the sites strip escapes every value', () => {
-  const html = renderSitesStrip([
-    {
-      id: 'a"b',
-      name: 'Name',
-      short_name: 'Short',
-      strip_label: '<b>Bold</b> & "quoted"',
-      url: 'https://example.com/?a=1&b="2"',
-      description: 'Tag <i> & "quote"',
-      in_sites_strip: true
-    }
-  ]);
+  const html = renderSitesStrip(
+    [
+      {
+        id: 'a"b',
+        name: 'Name',
+        short_name: 'Short',
+        strip_label: '<b>Bold</b> & "quoted"',
+        url: 'https://example.com/?a=1&b="2"',
+        description: 'Tag <i> & "quote"',
+        in_sites_strip: true
+      }
+    ],
+    { label: '<b>All</b> & "co"', url: 'https://example.com/all/?x="1"', description: 'All <i> & "every"' }
+  );
   assert.ok(!html.includes('<b>') && !html.includes('<i>'), 'no markup leaks from the data');
   assert.ok(html.includes('sites-strip__item--a&quot;b"'));
   assert.ok(html.includes('href="https://example.com/?a=1&amp;b=&quot;2&quot;&amp;ref=sites-strip-thingy"'));
   assert.ok(html.includes('title="Tag &lt;i&gt; &amp; &quot;quote&quot;"'));
   assert.ok(html.includes('>&lt;b&gt;Bold&lt;/b&gt; &amp; &quot;quoted&quot;</a>'));
   assert.ok(!html.includes('aria-current'), 'no current site when Thingy is not listed');
+  assert.ok(
+    html.includes(
+      '<a class="sites-strip__all" href="https://example.com/all/?x=&quot;1&quot;&amp;ref=sites-strip-thingy" ' +
+        'title="All &lt;i&gt; &amp; &quot;every&quot;">&lt;b&gt;All&lt;/b&gt; &amp; &quot;co&quot;</a>'
+    ),
+    'All Things escapes its values too'
+  );
+});
+
+test('sites.json must carry strip_all, with an HTTPS url, a label and a description', async () => {
+  const text = await source('contracts/sites.json');
+  const data = JSON.parse(text);
+  assert.deepEqual(parseSites(text).strip_all, data.strip_all);
+  assert.match(data.strip_all.url, /^https:\/\//);
+  const withAll = (strip_all) => JSON.stringify({ ...data, strip_all });
+  assert.throws(() => parseSites(withAll(undefined)), /has no strip_all/);
+  assert.throws(() => parseSites(withAll({ ...data.strip_all, label: '' })), /strip_all has no label/);
+  assert.throws(
+    () => parseSites(withAll({ ...data.strip_all, description: undefined })),
+    /strip_all has no description/
+  );
+  assert.throws(() => parseSites(withAll({ ...data.strip_all, url: 'http://thingelstad.xyz/all/' })), /must be HTTPS/);
 });
 
 test('the strip sits on the static pages and never on chat, sign-in, share or 404', async () => {

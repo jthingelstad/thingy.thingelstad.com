@@ -6,7 +6,8 @@
 //   replaces a <!--sites-strip--> marker with the strip, so the pages carry
 //   real links with no client JavaScript. The markup is the shared contract
 //   in the thingelstad.com AGENTS.md ("The sites strip"): every site renders
-//   it identically, so change it there first.
+//   it identically, so change it there first. It ends with All Things
+//   (strip_all), the link to every live thing on thingelstad.xyz/all/.
 // - Jamie. The same file's owner block renders the footer h-card
 //   (<!--owner-hcard-->) and the head's rel=me links (<!--rel-me-->), the
 //   shared markup in the thingelstad.com AGENTS.md ("Jamie on every site").
@@ -47,10 +48,37 @@ export interface Owner {
   rel_me: string[];
 }
 
+// The link that ends the strip on every site, after the list: All Things,
+// to the list of everything live on thingelstad.xyz/all/.
+export interface StripAll {
+  label: string;
+  url: string;
+  description: string;
+}
+
 export type ArchiveStats = Record<string, unknown>;
 
-function loadSitesFile(root: string) {
-  return JSON.parse(readFileSync(resolve(root, 'contracts/sites.json'), 'utf8')) as { owner: Owner; sites: Site[] };
+interface SitesFile {
+  owner: Owner;
+  sites: Site[];
+  strip_all: StripAll;
+}
+
+// strip_all is required: a sites.json without it, or with an empty label or
+// description or a URL that is not HTTPS, fails the build.
+export function parseSites(text: string, path = 'contracts/sites.json'): SitesFile {
+  const data = JSON.parse(text) as Partial<SitesFile> & { strip_all?: Partial<StripAll> };
+  const all = data.strip_all;
+  if (!all || typeof all !== 'object') throw new Error(`${path} has no strip_all.`);
+  for (const field of ['label', 'url', 'description'] as const) {
+    if (typeof all[field] !== 'string' || !all[field]) throw new Error(`${path}: strip_all has no ${field}.`);
+  }
+  if (!all.url!.startsWith('https://')) throw new Error(`${path}: strip_all's url must be HTTPS.`);
+  return data as SitesFile;
+}
+
+function loadSitesFile(root: string): SitesFile {
+  return parseSites(readFileSync(resolve(root, 'contracts/sites.json'), 'utf8'));
 }
 
 export function loadSites(root: string): Site[] {
@@ -61,6 +89,10 @@ export function loadOwner(root: string): Owner {
   return loadSitesFile(root).owner;
 }
 
+export function loadStripAll(root: string): StripAll {
+  return loadSitesFile(root).strip_all;
+}
+
 export function stripSites(sites: Site[]): Site[] {
   return sites.filter((site) => site.in_sites_strip);
 }
@@ -68,11 +100,17 @@ export function stripSites(sites: Site[]): Site[] {
 // Every site shows its strip_label, Thingy included; the current site
 // differs only in its class and aria-current. Every link carries
 // ?ref=sites-strip-<current site> so Tinylytics' Sources report on the
-// destination shows which site's strip sent the visit.
-export function renderSitesStrip(sites: Site[], currentId = THINGY_SITE_ID): string {
+// destination shows which site's strip sent the visit. All Things ends the
+// strip, after the list and outside it, with the same ref; it is no site, so
+// it has no id, no mark and (here) no current state.
+function withStripRef(url: string, currentId: string): string {
+  return `${url}${url.includes('?') ? '&' : '?'}ref=sites-strip-${encodeURIComponent(currentId)}`;
+}
+
+export function renderSitesStrip(sites: Site[], all: StripAll, currentId = THINGY_SITE_ID): string {
   const items = stripSites(sites).map((site) => {
     const current = site.id === currentId;
-    const href = `${site.url}${site.url.includes('?') ? '&' : '?'}ref=sites-strip-${encodeURIComponent(currentId)}`;
+    const href = withStripRef(site.url, currentId);
     const itemClass = `sites-strip__item sites-strip__item--${escapeHtml(site.id)}${current ? ' sites-strip__item--current' : ''}`;
     return (
       `<li class="${itemClass}">` +
@@ -83,7 +121,9 @@ export function renderSitesStrip(sites: Site[], currentId = THINGY_SITE_ID): str
   return (
     `<nav class="sites-strip" aria-label="Jamie Thingelstad"><div class="sites-strip__inner">` +
     `<span class="sites-strip__label">Jamie Thingelstad</span>` +
-    `<ul class="sites-strip__list">${items.join('')}</ul></div></nav>`
+    `<ul class="sites-strip__list">${items.join('')}</ul>` +
+    `<a class="sites-strip__all" href="${escapeHtml(withStripRef(all.url, currentId))}" title="${escapeHtml(all.description)}">` +
+    `${escapeHtml(all.label)}</a></div></nav>`
   );
 }
 
@@ -152,7 +192,8 @@ export function pageDataPlugin(root: string): Plugin {
     name: 'thingy-page-data',
     transformIndexHtml(html: string) {
       let out = html;
-      if (out.includes(SITES_STRIP_MARKER)) out = out.replace(SITES_STRIP_MARKER, renderSitesStrip(loadSites(root)));
+      if (out.includes(SITES_STRIP_MARKER))
+        out = out.replace(SITES_STRIP_MARKER, renderSitesStrip(loadSites(root), loadStripAll(root)));
       if (out.includes(OWNER_HCARD_MARKER)) out = out.replace(OWNER_HCARD_MARKER, renderOwnerHcard(loadOwner(root)));
       if (out.includes(REL_ME_MARKER)) out = out.replace(REL_ME_MARKER, renderRelMe(loadOwner(root)));
       if (out.includes('{{site.')) out = renderSiteTokens(out, loadSites(root));

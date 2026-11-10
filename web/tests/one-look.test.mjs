@@ -278,6 +278,28 @@ test('the strip and the source labels carry the shared site colours', async () =
   }
 });
 
+// All Things ends the strip (Jamie, 2026-11-10: "Approved: build
+// thingelstad.xyz/all/ and add an "All Things" link at the end of the sites
+// strip on all six strip sites, keeping the "Jamie Thingelstad" label"). It
+// is no site, so it takes the strip's ink link values and no mark. On a phone
+// the list scrolls inside the row and All Things stays at its right end.
+test('All Things takes the strip link values, and stays in view on a phone', async () => {
+  const staticCss = await source('src/styles/thingy-static.css');
+  assert.ok(!/\.sites-strip__all[^{]*\{[^}]*color:/.test(staticCss), 'All Things has no colour of its own');
+  assert.match(staticCss, /\.sites-strip a \{\s*color: #16161a;\s*font-weight: 600;/, 'strip links are ink, 600');
+  const phoneAt = staticCss.indexOf('/* Phone strip:');
+  assert.ok(phoneAt > 0, 'the strip has its phone rule');
+  const phone = staticCss.slice(phoneAt, staticCss.indexOf('.thingy-page-nav.is-site', phoneAt));
+  const rule = (selector) =>
+    phone.match(new RegExp(`\\n  ${selector.replaceAll('.', '\\.')} \\{([^}]*)\\}`))?.[1] ?? '';
+  assert.ok(!rule('.sites-strip__inner').includes('overflow-x'), 'the row itself does not scroll');
+  assert.match(rule('.sites-strip__inner'), /white-space: nowrap;/);
+  for (const value of ['flex: 1 1 auto;', 'min-width: 0;', 'margin: -6px;', 'padding: 6px;', 'overflow-x: auto;']) {
+    assert.ok(rule('.sites-strip__list').includes(value), `the phone list sets ${value}`);
+  }
+  assert.match(rule('.sites-strip__all'), /flex: none;/, 'All Things never shrinks out of sight');
+});
+
 // No slanted sans in the design (Jamie, 2026-10-22: "I really dislike
 // italics with san serif fonts … I like the color and I like using font
 // weight with san serif"; then "Approved: Thingy display face upright,

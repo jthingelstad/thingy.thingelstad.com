@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
 let chromium;
 let webkit;
@@ -287,6 +288,74 @@ async function checkSharedType(browser) {
       assert.ok(widths.doc <= widths.viewport + 1, `${path} must not overflow at ${width}px (${widths.doc})`);
     }
     assert.deepEqual(fontHosts, [], `no page at ${width}px requests Google Fonts`);
+    await context.close();
+  }
+}
+
+// The sites strip on the static pages ends with All Things, after the list
+// (thingelstad.com AGENTS.md "The sites strip"). On a phone the list scrolls
+// sideways inside the row and All Things stays in view at its right end.
+// Offline like the type check: nothing leaves the preview.
+async function checkSitesStrip(browser) {
+  const shared = JSON.parse(await readFile(new URL('../contracts/sites.json', import.meta.url), 'utf8'));
+  const stripSites = shared.sites.filter((site) => site.in_sites_strip);
+  for (const [width, colorScheme, ink] of [
+    [1280, 'light', 'rgb(22, 22, 26)'],
+    [390, 'light', 'rgb(22, 22, 26)'],
+    [390, 'dark', 'rgb(236, 236, 240)']
+  ]) {
+    const context = await browser.newContext({ viewport: { width, height: 844 }, colorScheme });
+    const page = await context.newPage();
+    await page.route(
+      (url) => !url.href.startsWith(`${baseUrl}/`),
+      (route) => route.abort()
+    );
+    await page.route(
+      (url) => url.href.startsWith(`${apiHost}/`),
+      (route) => route.fulfill({ status: 404, contentType: 'application/json', body: '{}' })
+    );
+    for (const path of ['/', '/about/', '/connect/', '/connect/reference/']) {
+      const surface = `${path} strip at ${width}px ${colorScheme}`;
+      await page.goto(`${baseUrl}${path}`);
+      const strip = page.locator('nav.sites-strip');
+      await strip.waitFor();
+      assert.equal(
+        await strip.getByRole('link').count(),
+        stripSites.length + 1,
+        `${surface}: the sites plus All Things`
+      );
+      const all = strip.locator('.sites-strip__list + a.sites-strip__all');
+      assert.equal(await all.count(), 1, `${surface}: All Things follows the list`);
+      assert.equal((await all.textContent()).trim(), shared.strip_all.label);
+      assert.equal(await all.getAttribute('href'), 'https://thingelstad.xyz/all/?ref=sites-strip-thingy');
+      assert.equal(await all.getAttribute('title'), shared.strip_all.description);
+      assert.equal(await all.getAttribute('aria-current'), null, `${surface}: All Things is never current here`);
+      const style = await all.evaluate((link) => {
+        const computed = getComputedStyle(link);
+        return { color: computed.color, weight: computed.fontWeight, line: computed.textDecorationLine };
+      });
+      assert.deepEqual(style, { color: ink, weight: '600', line: 'underline' }, `${surface}: strip link values`);
+      if (width <= 640) {
+        const list = strip.locator('.sites-strip__list');
+        const rows = await list
+          .locator('.sites-strip__item')
+          .evaluateAll((items) => new Set(items.map((item) => Math.round(item.getBoundingClientRect().top))).size);
+        assert.equal(rows, 1, `${surface}: one row`);
+        assert.ok(await list.evaluate((el) => el.scrollWidth > el.clientWidth), `${surface}: the list scrolls`);
+        await list.evaluate((el) => {
+          el.scrollLeft = el.scrollWidth;
+        });
+        const listBox = await list.boundingBox();
+        const allBox = await all.boundingBox();
+        assert.ok(allBox.x >= listBox.x + listBox.width - 7, `${surface}: All Things sits after the list`);
+        assert.ok(allBox.x >= 0 && allBox.x + allBox.width <= width, `${surface}: All Things stays in view`);
+      }
+      const widths = await page.evaluate(() => ({
+        doc: document.documentElement.scrollWidth,
+        viewport: window.innerWidth
+      }));
+      assert.ok(widths.doc <= widths.viewport + 1, `${surface} must not overflow (${widths.doc})`);
+    }
     await context.close();
   }
 }
@@ -887,6 +956,7 @@ async function main() {
     try {
       await checkSignInRedirect(browser);
       await checkSharedType(browser);
+      await checkSitesStrip(browser);
       await checkGuestPreview(browser);
       await checkMobileHome(browser);
       await checkReactChatGuest(browser);
